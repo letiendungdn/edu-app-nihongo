@@ -4,8 +4,11 @@ import com.edu.nihongo.domain.entity.SrsCard
 import com.edu.nihongo.domain.entity.SyncStatus
 import kotlin.math.roundToInt
 
+/** SM-2. Hàm thuần: cùng đầu vào → cùng kết quả, kể cả thời gian (truyền [now] vào). */
 object SrsAlgorithm {
-    fun calculateNextReview(card: SrsCard, quality: Int): SrsCard {
+    const val DAY_MS = 86_400_000L
+
+    fun calculateNextReview(card: SrsCard, quality: Int, now: Long): SrsCard {
         val q = quality.coerceIn(0, 5)
         var ease = card.easeFactor
         var interval = card.interval
@@ -26,7 +29,7 @@ object SrsAlgorithm {
         ease += 0.1f - (5 - q) * (0.08f + (5 - q) * 0.02f)
         if (ease < 1.3f) ease = 1.3f
 
-        val nextReviewAt = System.currentTimeMillis() + interval * 86_400_000L
+        val nextReviewAt = now + interval * DAY_MS
         val mastered = reps >= 5 && interval >= 21
 
         return card.copy(
@@ -36,7 +39,7 @@ object SrsAlgorithm {
             nextReviewAt = nextReviewAt,
             mastered = mastered,
             syncStatus = SyncStatus.PENDING,
-            updatedAt = System.currentTimeMillis(),
+            updatedAt = now,
         )
     }
 }

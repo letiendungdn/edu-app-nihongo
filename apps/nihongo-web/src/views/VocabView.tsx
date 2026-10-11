@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { playAudio } from '../utils/speech';
+import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
 import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import VocabWordList from '../components/VocabWordList';
@@ -80,15 +80,17 @@ function useCopyText() {
 
 export default function VocabView({
   initialLessonNumber,
+  initialVocabId,
 }: {
   initialLessonNumber?: number;
+  initialVocabId?: number;
 } = {}) {
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [pendingVocabId, setPendingVocabId] = useState<number | null>(null);
+  const [pendingVocabId, setPendingVocabId] = useState<number | null>(initialVocabId ?? null);
   const vocabLoggedRef = useRef(false);
   const { copied: flashcardCopied, copy: copyFlashcard } = useCopyText();
   const { isAdmin } = useAuth();
@@ -104,6 +106,12 @@ export default function VocabView({
       setCurrentLesson(initialLessonNumber);
     }
   }, [initialLessonNumber]);
+
+  useEffect(() => {
+    if (initialVocabId != null && initialVocabId > 0) {
+      setPendingVocabId(initialVocabId);
+    }
+  }, [initialVocabId]);
 
   const currentLessonMeta = lessons.find((l) => l.lessonNumber === currentLesson);
   const lessonId = currentLessonMeta?.id ?? null;
@@ -159,9 +167,12 @@ export default function VocabView({
 
   useEffect(() => {
     if (isPlayingAll || !currentVocab?.kana) return undefined;
-    const timer = setTimeout(() => playAudio(currentVocab.kana), 200);
+    const timer = setTimeout(
+      () => speakJapaneseThenMeaning(currentVocab.kana, currentVocab.meaning),
+      200,
+    );
     return () => clearTimeout(timer);
-  }, [currentIndex, currentLesson, currentVocab?.kana, isPlayingAll]);
+  }, [currentIndex, currentLesson, currentVocab?.kana, currentVocab?.meaning, isPlayingAll]);
 
   const handleNext = () => {
     if (!lessonVocab.length) return;
@@ -195,7 +206,7 @@ export default function VocabView({
     });
   };
   pronounceRef.current = () => {
-    if (currentVocab?.kana) playAudio(currentVocab.kana);
+    if (currentVocab?.kana) speakJapaneseThenMeaning(currentVocab.kana, currentVocab.meaning);
   };
 
   useEffect(() => {
@@ -240,16 +251,16 @@ export default function VocabView({
 
   const handlePronounce = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (currentVocab) playAudio(currentVocab.kana);
+    if (currentVocab) speakJapaneseThenMeaning(currentVocab.kana, currentVocab.meaning);
   };
 
-  const handleExamplePronounce = (e: React.MouseEvent, speak: string) => {
+  const handleExamplePronounce = (e: React.MouseEvent, speak: string, meaning: string) => {
     e.stopPropagation();
-    playAudio(speak);
+    speakJapaneseThenMeaning(speak, meaning);
   };
 
   const handleStrokeCharClick = () => {
-    if (currentVocab) playAudio(currentVocab.kana);
+    if (currentVocab) speakJapaneseThenMeaning(currentVocab.kana, currentVocab.meaning);
   };
 
   const handleCopyVocab = (e: React.MouseEvent) => {
@@ -261,7 +272,14 @@ export default function VocabView({
 
   const handlePlayAll = () => {
     startPlayAll(
-      lessonVocab.map((v) => v.kana),
+      lessonVocab.flatMap((vocab, index) => {
+        const clips: { text: string; lang: string; cue?: number }[] = [
+          { text: vocab.kana, lang: 'ja-JP', cue: index },
+        ];
+        const meaning = meaningForSpeech(vocab.meaning);
+        if (meaning) clips.push({ text: meaning, lang: 'vi-VN' });
+        return clips;
+      }),
       {
         onItemIndex: (index) => {
           setIsFlipped(false);
@@ -305,6 +323,9 @@ export default function VocabView({
       <div className="vocab-topbar">
         <h2 className="view-title vocab-topbar__title">{vocabTitle}</h2>
         <nav className="vocab-topbar__links" aria-label="Công cụ từ vựng">
+          <Link href={`/vocab/list?lesson=${currentLesson}`} className="btn btn-outline btn-sm">
+            Danh sách bài
+          </Link>
           <Link href="/vocab/quiz" className="btn btn-primary btn-sm">
             Trắc nghiệm JP ↔ VI
           </Link>
@@ -381,7 +402,7 @@ export default function VocabView({
                           className="btn-audio-small"
                           title="Nghe phát âm"
                           aria-label={`Nghe ${hit.kana}`}
-                          onClick={() => playAudio(hit.kana)}
+                          onClick={() => speakJapaneseThenMeaning(hit.kana, hit.meaning)}
                         >
                           🔊
                         </button>
@@ -541,7 +562,7 @@ export default function VocabView({
                             className="btn-audio-small"
                             title="Nghe ví dụ"
                             aria-label="Nghe ví dụ"
-                            onClick={(e) => handleExamplePronounce(e, example.speak)}
+                            onClick={(e) => handleExamplePronounce(e, example.speak, example.vi)}
                           >
                             🔊
                           </button>
@@ -603,7 +624,7 @@ export default function VocabView({
                             className="btn-audio-small"
                             title="Nghe ví dụ"
                             aria-label="Nghe ví dụ"
-                            onClick={(e) => handleExamplePronounce(e, example.speak)}
+                            onClick={(e) => handleExamplePronounce(e, example.speak, example.vi)}
                           >
                             🔊
                           </button>

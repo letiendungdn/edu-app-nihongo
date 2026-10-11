@@ -18,19 +18,11 @@ import { CurrentUser, JwtAuthGuard, type AuthUserPayload } from "@app/common";
 import { GroupChatService } from "../realtime/group-chat.service";
 import { VideoPresenceService } from "../realtime/video-presence.service";
 import { ChatEventsService } from "../realtime/chat-events.service";
-
-class CreateGroupDto {
-  name!: string;
-  memberIds!: number[];
-}
-
-class DirectChatDto {
-  userId!: number;
-}
-
-class AddMembersDto {
-  memberIds!: number[];
-}
+import {
+  AddMembersDto,
+  CreateGroupDto,
+  DirectChatDto,
+} from "./dto/community.dto";
 
 @ApiTags("Community")
 @ApiBearerAuth()

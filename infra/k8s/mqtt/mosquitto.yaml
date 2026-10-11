@@ -1,0 +1,130 @@
+# Broker MQTT trên cụm. deploy.yml apply file này cùng Postgres/Redis.
+# Mật khẩu tài khoản `gateway` lấy từ Secret edu-app-secrets, key MQTT_PASSWORD.
+#
+# Không có PVC là cố ý: gateway nối với clean session, tin chat đã nằm trong
+# Postgres. Broker chỉ chuyển tiếp, mất trạng thái khi restart không sao.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: edu-app
+  labels:
+    app: mosquitto
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  type: ClusterIP
+  ports:
+    - port: 1883
+      targetPort: 1883
+      name: mqtt
+    - port: 9001
+      targetPort: 9001
+      name: ws
+  selector:
+    app: mosquitto
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: edu-app
+  labels:
+    app: mosquitto
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2
+          command: ['/bin/sh', '/mosquitto/scripts/entrypoint.sh']
+          env:
+            - name: MQTT_GATEWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: edu-app-secrets
+                  key: MQTT_PASSWORD
+          ports:
+            - containerPort: 1883
+              name: mqtt
+            - containerPort: 9001
+              name: ws
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: config
+              mountPath: /mosquitto/config/acl.conf
+              subPath: acl.conf
+            - name: config
+              mountPath: /mosquitto/scripts/entrypoint.sh
+              subPath: entrypoint.sh
+            - name: data
+              mountPath: /mosquitto/data
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: edu-app
+data:
+  mosquitto.conf: |
+    persistence false
+    log_dest stdout
+    allow_anonymous false
+    password_file /mosquitto/passwd
+    acl_file /mosquitto/acl
+    listener 1883
+    protocol mqtt
+    listener 9001
+    protocol websockets
+  # Giống infra/mqtt/acl.conf
+  acl.conf: |
+    user gateway
+    topic readwrite chat/#
+    topic write user/+/notify
+    topic read $SYS/#
+
+    pattern read user/%u/notify
+  # Giống infra/mqtt/entrypoint.sh
+  entrypoint.sh: |
+    set -eu
+    : "${MQTT_GATEWAY_PASSWORD:?Thiếu MQTT_GATEWAY_PASSWORD}"
+    PASSWD=/mosquitto/passwd
+    rm -f "$PASSWD"
+    mosquitto_passwd -c -b "$PASSWD" gateway "$MQTT_GATEWAY_PASSWORD"
+    chown mosquitto:mosquitto "$PASSWD"
+    chmod 0700 "$PASSWD"
+    install -o mosquitto -g mosquitto -m 0700 /mosquitto/config/acl.conf /mosquitto/acl
+    chown -R mosquitto:mosquitto /mosquitto/data
+    exec mosquitto -c /mosquitto/config/mosquitto.conf

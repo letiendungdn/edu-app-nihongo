@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.edu.nihongo.data.remote.LessonDto
+import com.edu.nihongo.domain.entity.Lesson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +94,7 @@ fun LessonListScreen(
                     if (uiState.error != null) {
                         item {
                             Text(
-                                text = uiState.error!!,
+                                text = uiState.error.orEmpty(),
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -114,10 +114,10 @@ fun LessonListScreen(
 
 @Composable
 private fun LessonRow(
-    lesson: LessonDto,
+    lesson: Lesson,
     onClick: () -> Unit,
 ) {
-    val vocabCount = lesson.count?.vocabularies
+    val vocabCount = lesson.vocabCount
     Card(
         modifier = Modifier
             .fillMaxWidth()

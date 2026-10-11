@@ -22,12 +22,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -49,12 +52,13 @@ fun CameraTranslateScreen(
     val context = LocalContext.current
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
 
-    DisposableEffect(Unit) {
+    // Không có gì để dọn → LaunchedEffect, không phải DisposableEffect với onDispose rỗng
+    LaunchedEffect(Unit) {
         if (!cameraPermission.status.isGranted) {
             cameraPermission.launchPermissionRequest()
         }
-        onDispose { }
     }
+    val density = LocalDensity.current
 
     Scaffold(
         topBar = {
@@ -116,9 +120,8 @@ fun CameraTranslateScreen(
                         }
                     }
 
-                    DisposableEffect(lifecycleOwner, previewView) {
+                    LaunchedEffect(lifecycleOwner, previewView) {
                         viewModel.bindCamera(lifecycleOwner, previewView)
-                        onDispose { }
                     }
 
                     AndroidView(
@@ -130,17 +133,20 @@ fun CameraTranslateScreen(
                     )
 
                     uiState.labels.forEach { label ->
-                        val width = (label.rect.width()).coerceIn(48f, 360f)
+                        // label.rect tính bằng pixel của PreviewView. Trước đây dùng `.dp` trực tiếp
+                        // nên bị nhân thêm density (×2.75 trên nhiều máy) → nhãn lệch khỏi chữ.
+                        val maxWidth = with(density) {
+                            label.rect.width().coerceIn(48.dp.toPx(), 360.dp.toPx()).toDp()
+                        }
                         Text(
                             text = label.translated,
                             color = Color.White,
                             fontSize = 13.sp,
                             modifier = Modifier
-                                .offset(
-                                    x = label.rect.left.dp,
-                                    y = label.rect.top.dp,
-                                )
-                                .widthIn(max = width.dp)
+                                .offset {
+                                    IntOffset(label.rect.left.roundToInt(), label.rect.top.roundToInt())
+                                }
+                                .widthIn(max = maxWidth)
                                 .background(Color(0xCC1D4ED8))
                                 .padding(horizontal = 6.dp, vertical = 4.dp),
                         )

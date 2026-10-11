@@ -17,19 +17,30 @@ private val Context.tokenDataStore: DataStore<Preferences> by preferencesDataSto
 @Singleton
 class TokenStore @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
-    private val key = stringPreferencesKey("access_token")
+) : TokenStorage {
+    private val accessKey = stringPreferencesKey("access_token")
+    private val refreshCookieKey = stringPreferencesKey("refresh_cookie")
 
-    suspend fun save(token: String) {
-        context.tokenDataStore.edit { it[key] = token }
+    override suspend fun save(token: String) {
+        context.tokenDataStore.edit { it[accessKey] = token }
     }
 
-    suspend fun clear() {
-        context.tokenDataStore.edit { it.remove(key) }
+    override suspend fun clear() {
+        context.tokenDataStore.edit { it.remove(accessKey) }
     }
 
-    suspend fun get(): String? =
+    override suspend fun get(): String? = read(accessKey)
+
+    override suspend fun getRefreshCookie(): String? = read(refreshCookieKey)
+
+    override suspend fun saveRefreshCookie(raw: String) {
+        context.tokenDataStore.edit { it[refreshCookieKey] = raw }
+    }
+
+    override suspend fun clearRefreshCookie() {
+        context.tokenDataStore.edit { it.remove(refreshCookieKey) }
+    }
+
+    private suspend fun read(key: Preferences.Key<String>): String? =
         context.tokenDataStore.data.map { it[key] }.first()
-
-    suspend fun isLoggedIn(): Boolean = !get().isNullOrBlank()
 }

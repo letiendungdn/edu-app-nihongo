@@ -12,12 +12,12 @@ import io.livekit.android.events.RoomEvent
 import io.livekit.android.events.collect
 import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalVideoTrack
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,8 +42,8 @@ class LiveHostViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LiveHostUiState())
     val uiState: StateFlow<LiveHostUiState> = _uiState.asStateFlow()
 
-    private val _finished = MutableSharedFlow<Unit>()
-    val finished: SharedFlow<Unit> = _finished.asSharedFlow()
+    private val _finished = Channel<Unit>(Channel.BUFFERED)
+    val finished: Flow<Unit> = _finished.receiveAsFlow()
 
     var room: Room? = null
         private set
@@ -131,7 +131,7 @@ class LiveHostViewModel @Inject constructor(
             }
             room?.disconnect()
             room = null
-            _finished.emit(Unit)
+            _finished.send(Unit)
         }
     }
 

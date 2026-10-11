@@ -2,28 +2,46 @@ package com.edu.nihongo.presentation.lessons
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.edu.nihongo.data.remote.LessonDto
-import com.edu.nihongo.data.remote.LessonsApi
+import com.edu.nihongo.domain.entity.Lesson
+import com.edu.nihongo.domain.repository.LessonRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.edu.nihongo.utils.userMessage
 import javax.inject.Inject
 
 data class LessonListUiState(
-    val lessons: List<LessonDto> = emptyList(),
+    val lessons: List<Lesson> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
 )
 
+/**
+ * Đọc bài từ Room qua [LessonRepository] (trước đây gọi thẳng API và đưa DTO lên UI).
+ * Offline vẫn thấy danh sách đã tải lần trước, kèm thông báo lỗi làm mới.
+ */
 @HiltViewModel
 class LessonListViewModel @Inject constructor(
-    private val lessonsApi: LessonsApi,
+    private val lessons: LessonRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LessonListUiState())
-    val uiState: StateFlow<LessonListUiState> = _uiState.asStateFlow()
+    private val refreshing = MutableStateFlow(true)
+    private val refreshError = MutableStateFlow<String?>(null)
+
+    val uiState: StateFlow<LessonListUiState> = combine(
+        lessons.observeLessons(),
+        refreshing,
+        refreshError,
+    ) { list, isRefreshing, error ->
+        LessonListUiState(
+            lessons = list,
+            isLoading = list.isEmpty() && isRefreshing,
+            error = error,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LessonListUiState())
 
     init {
         refresh()
@@ -31,22 +49,11 @@ class LessonListViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            runCatching {
-                lessonsApi.list().data.orEmpty()
-                    .sortedBy { it.lessonNumber }
-            }.onSuccess { list ->
-                _uiState.update {
-                    it.copy(lessons = list, isLoading = false, error = null)
-                }
-            }.onFailure { e ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Không tải được danh sách bài",
-                    )
-                }
-            }
+            refreshing.value = true
+            lessons.refreshLessons()
+                .onSuccess { refreshError.value = null }
+                .onFailure { e -> refreshError.value = e.userMessage() }
+            refreshing.value = false
         }
     }
 }

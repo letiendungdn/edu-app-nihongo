@@ -6,6 +6,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import com.edu.nihongo.data.notifications.SRS_DEEP_LINK
+import com.edu.nihongo.presentation.community.ChatScreen
+import com.edu.nihongo.presentation.community.RoomsScreen
+import com.edu.nihongo.presentation.exam.ExamListScreen
+import com.edu.nihongo.presentation.exam.ExamScreen
+import com.edu.nihongo.presentation.kana.KanaScreen
+import com.edu.nihongo.presentation.lessons.LessonDetailScreen
+import com.edu.nihongo.presentation.progress.ProgressScreen
+import com.edu.nihongo.presentation.reading.ReadingDetailScreen
+import com.edu.nihongo.presentation.reading.ReadingListScreen
 import com.edu.nihongo.presentation.ai_tutor.AiTutorScreen
 import com.edu.nihongo.presentation.camera.CameraTranslateScreen
 import com.edu.nihongo.presentation.home.HomeScreen
@@ -18,7 +29,6 @@ import com.edu.nihongo.presentation.login.LoginScreen
 import com.edu.nihongo.presentation.pronunciation.PronunciationScreen
 import com.edu.nihongo.presentation.sentence_practice.SentencePracticeScreen
 import com.edu.nihongo.presentation.srs.SrsScreen
-import com.edu.nihongo.presentation.vocab.VocabScreen
 
 object Routes {
     const val HOME = "home"
@@ -34,6 +44,18 @@ object Routes {
     const val AI_TUTOR = "ai-tutor"
     const val PRONUNCIATION = "pronunciation/{kana}/{meaning}"
     const val KANJI_DRAW = "kanji-draw/{kanji}/{kana}"
+    const val PROGRESS = "progress"
+    const val COMMUNITY = "community"
+    const val CHAT = "community/{roomId}"
+    const val READING = "reading"
+    const val READING_DETAIL = "reading/{id}"
+    const val EXAMS = "exams"
+    const val EXAM = "exams/{examId}"
+    const val KANA = "kana"
+
+    fun chat(roomId: Long) = "community/$roomId"
+    fun reading(id: Long) = "reading/$id"
+    fun exam(examId: String) = "exams/$examId"
 
     fun vocab(lesson: Int) = "vocab/$lesson"
     fun pronunciation(kana: String, meaning: String) =
@@ -62,6 +84,11 @@ fun NihongoApp() {
                 onKanjiDraw = {
                     navController.navigate(Routes.kanjiDraw("行", "いく"))
                 },
+                onProgress = { navController.navigate(Routes.PROGRESS) },
+                onCommunity = { navController.navigate(Routes.COMMUNITY) },
+                onReading = { navController.navigate(Routes.READING) },
+                onExams = { navController.navigate(Routes.EXAMS) },
+                onKana = { navController.navigate(Routes.KANA) },
             )
         }
         composable(Routes.LESSONS) {
@@ -75,13 +102,54 @@ fun NihongoApp() {
             arguments = listOf(navArgument("lesson") { type = NavType.IntType }),
         ) { entry ->
             val lesson = entry.arguments?.getInt("lesson") ?: 1
-            VocabScreen(
+            LessonDetailScreen(
                 lessonNumber = lesson,
                 onBack = { navController.popBackStack() },
             )
         }
-        composable(Routes.SRS) {
+        // Thông báo nhắc ôn và widget mở nihongo://srs → vào thẳng màn này
+        composable(Routes.SRS, deepLinks = listOf(navDeepLink { uriPattern = SRS_DEEP_LINK })) {
             SrsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.PROGRESS) {
+            ProgressScreen(
+                onBack = { navController.popBackStack() },
+                onLogin = { navController.navigate(Routes.LOGIN) },
+            )
+        }
+        composable(Routes.COMMUNITY) {
+            RoomsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRoom = { navController.navigate(Routes.chat(it)) },
+                onLogin = { navController.navigate(Routes.LOGIN) },
+            )
+        }
+        composable(Routes.CHAT, arguments = listOf(navArgument("roomId") { type = NavType.LongType })) {
+            ChatScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.READING) {
+            ReadingListScreen(
+                onBack = { navController.popBackStack() },
+                onOpen = { navController.navigate(Routes.reading(it)) },
+            )
+        }
+        composable(Routes.READING_DETAIL, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+            ReadingDetailScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.EXAMS) {
+            ExamListScreen(
+                onBack = { navController.popBackStack() },
+                onOpenExam = { navController.navigate(Routes.exam(it)) },
+            )
+        }
+        composable(Routes.EXAM, arguments = listOf(navArgument("examId") { type = NavType.StringType })) {
+            ExamScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.KANA) {
+            KanaScreen(
+                onBack = { navController.popBackStack() },
+                onPracticeWriting = { kana, romaji -> navController.navigate(Routes.kanjiDraw(kana, romaji)) },
+            )
         }
         composable(Routes.LOGIN) {
             LoginScreen(onBack = { navController.popBackStack() })

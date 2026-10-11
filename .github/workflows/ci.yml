@@ -66,6 +66,15 @@ jobs:
       - run: npm run migrate:deploy -w @edu/prisma-nihongo
         env:
           DATABASE_URL: postgresql://nihongo:nihongo@localhost:5432/nihongo
+      # Prisma tạo bảng xong mới tới Flyway tạo view/materialized view (infra/flyway/sql)
+      - name: Flyway migrate (read model views)
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/infra/flyway/sql:/flyway/sql:ro" \
+            flyway/flyway:10 \
+            -url=jdbc:postgresql://localhost:5432/nihongo -user=nihongo -password=nihongo \
+            -defaultSchema=flyway -schemas=flyway \
+            migrate
       - run: npm run lint -w @edu/nihongo-services
       - run: npm test -w @edu/nihongo-services -- --coverage
         env:
@@ -125,3 +134,63 @@ jobs:
       - run: npm run build -w @edu/nihongo-web
         env:
           API_URL: http://localhost:3000
+
+  # ── Android: unit test (JVM) + bản release qua R8 ───────────────────────────
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/nihongo-android
+    steps:
+      - uses: actions/checkout@v4
+      # AGP 8.7 / Kotlin 2.0 cần JDK 17 (JDK mới hơn làm Kotlin không đọc được phiên bản)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - name: Unit test
+        run: ./gradlew testDebugUnitTest
+      # Build release để bắt sớm lỗi R8 (thiếu quy tắc giữ class) trước khi tới tay người dùng
+      - name: Release build (R8)
+        run: ./gradlew assembleRelease
+      - name: Test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-unit-test-report
+          path: apps/nihongo-android/app/build/reports/tests/
+
+  # ── Android: test trên emulator (migration Room, Compose UI, deep link, Worker, widget) ──
+  android-instrumented:
+    runs-on: ubuntu-latest
+    needs: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      # Runner Linux có KVM nhưng mặc định không cho user dùng: thiếu bước này emulator chạy cực chậm
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instrumented test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          working-directory: apps/nihongo-android
+          script: chmod +x gradlew && ./gradlew connectedDebugAndroidTest
+      - name: Test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-instrumented-report
+          path: apps/nihongo-android/app/build/reports/androidTests/

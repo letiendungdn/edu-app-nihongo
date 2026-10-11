@@ -8,12 +8,14 @@ import {
   grammarExampleSpeechText,
 } from '../utils/grammarExample';
 import {
-  grammarExplanationSpeechText,
-  grammarSpeechSegments,
+  grammarExplanationSpeechParts,
   loadSpeechVoices,
   playAudioSequence,
+  speechPartsFromMixedText,
+  speechTextFromGrammarPattern,
   SPEECH_LANG,
   stopAudio,
+  type SpeechSequenceItem,
 } from '../utils/speech';
 import type { Grammar } from '../types/api';
 import LessonSelector from '../components/LessonSelector';
@@ -85,10 +87,30 @@ function readAutoReadPreference(): boolean {
   return localStorage.getItem(AUTO_READ_KEY) === '1';
 }
 
-function allLessonExplanationTexts(grammars: Grammar[]): string[] {
-  return grammars
-    .map((g) => grammarExplanationSpeechText(g))
-    .filter(Boolean);
+function allLessonExplanationTexts(grammars: Grammar[]): SpeechSequenceItem[] {
+  return grammars.flatMap((grammar, index) =>
+    grammarExplanationSpeechParts(grammar).map((part, partIndex) => ({
+      ...part,
+      cue: partIndex === 0 ? index : undefined,
+    })),
+  );
+}
+
+function grammarCardSpeechParts(grammar: Grammar): SpeechSequenceItem[] {
+  const parts: SpeechSequenceItem[] = [...grammarExplanationSpeechParts(grammar)];
+  const pattern = speechTextFromGrammarPattern(grammar.pattern);
+  if (pattern) parts.push({ text: pattern, lang: SPEECH_LANG.ja, cue: 0 });
+
+  const seen = new Set<string>();
+  (grammar.examples ?? []).forEach((example, exampleIndex) => {
+    const line = grammarExampleSpeechText(example.jp);
+    if (!line || seen.has(line)) return;
+    seen.add(line);
+    parts.push({ text: line, lang: SPEECH_LANG.ja, cue: exampleIndex + 1 });
+    parts.push(...speechPartsFromMixedText(example.vi || example.en || ''));
+  });
+
+  return parts;
 }
 
 function grammarCardId(grammar: Grammar, index: number): string {
@@ -179,46 +201,32 @@ export default function GrammarView({
   }, []);
 
   const playGrammarExplanation = useCallback(async (grammar: Grammar, index: number) => {
-    const text = grammarExplanationSpeechText(grammar);
-    if (!text) return;
+    const parts = grammarExplanationSpeechParts(grammar);
+    if (!parts.length) return;
 
     stopPlayAll();
     focusGrammar(index);
 
-    await playAudioSequence([text], {
-      lang: SPEECH_LANG.vi,
-      rate: 1,
+    await playAudioSequence(parts, {
       onEnd: clearFocus,
       onStop: clearFocus,
     });
   }, [stopPlayAll, focusGrammar, clearFocus]);
 
   const playGrammarCard = useCallback(async (grammar: Grammar, index: number) => {
-    const viText = grammarExplanationSpeechText(grammar);
-    const jpSegments = grammarSpeechSegments(grammar.pattern, grammar.examples ?? []);
-    if (!viText && !jpSegments.length) return;
+    const parts = grammarCardSpeechParts(grammar);
+    if (!parts.length) return;
 
     stopPlayAll();
     focusGrammar(index);
 
-    if (viText) {
-      await playAudioSequence([viText], {
-        lang: SPEECH_LANG.vi,
-        rate: 1,
-      });
-    }
-
-    if (jpSegments.length) {
-      await playAudioSequence(jpSegments, {
-        lang: SPEECH_LANG.ja,
-        onItem: (itemIndex) => {
-          // 0 = mẫu ngữ pháp; 1+ = ví dụ
-          focusGrammar(index, itemIndex > 0 ? itemIndex - 1 : null);
-        },
-      });
-    }
-
-    clearFocus();
+    await playAudioSequence(parts, {
+      onItem: (itemIndex) => {
+        focusGrammar(index, itemIndex > 0 ? itemIndex - 1 : null);
+      },
+      onEnd: clearFocus,
+      onStop: clearFocus,
+    });
   }, [stopPlayAll, focusGrammar, clearFocus]);
 
   useEffect(() => {
@@ -232,8 +240,6 @@ export default function GrammarView({
     const run = async () => {
       stopPlayAll();
       await playAudioSequence(segments, {
-        lang: SPEECH_LANG.vi,
-        rate: 1,
         pauseMs: 600,
         onItem: (index) => {
           if (!cancelled) focusGrammar(index);
@@ -262,8 +268,6 @@ export default function GrammarView({
 
   const handlePlayAll = () => {
     startPlayAll(allSegments, {
-      lang: SPEECH_LANG.vi,
-      rate: 1,
       pauseMs: 600,
       onItemIndex: (index) => focusGrammar(index),
     }).finally(clearFocus);
@@ -274,14 +278,19 @@ export default function GrammarView({
     clearFocus();
   };
 
-  const playExample = (grammarIndex: number, exampleIndex: number, jp: string) => {
+  const playExample = (grammarIndex: number, exampleIndex: number, jp: string, vi?: string | null) => {
     stopPlayAll();
     focusGrammar(grammarIndex, exampleIndex);
-    void playAudioSequence([grammarExampleSpeechText(jp)], {
-      lang: SPEECH_LANG.ja,
-      onEnd: clearFocus,
-      onStop: clearFocus,
-    });
+    void playAudioSequence(
+      [
+        { text: grammarExampleSpeechText(jp), lang: SPEECH_LANG.ja },
+        ...speechPartsFromMixedText(vi ?? ''),
+      ],
+      {
+        onEnd: clearFocus,
+        onStop: clearFocus,
+      },
+    );
   };
 
   async function invalidateGrammar() {
@@ -649,8 +658,8 @@ export default function GrammarView({
                     type="button"
                     className="btn-audio-small"
                     onClick={() => void playGrammarExplanation(grammar, index)}
-                    title="Đọc giải thích tiếng Việt"
-                    aria-label="Đọc giải thích tiếng Việt"
+                    title="Đọc giải thích: tiếng Việt và chữ Nhật"
+                    aria-label="Đọc giải thích tiếng Việt và chữ Nhật"
                   >
                     🔊
                   </button>
@@ -658,7 +667,7 @@ export default function GrammarView({
                     type="button"
                     className="btn-grammar-read-card"
                     onClick={() => void playGrammarCard(grammar, index)}
-                    title="Đọc giải thích tiếng Việt rồi mẫu và ví dụ tiếng Nhật"
+                    title="Đọc giải thích, rồi mẫu và ví dụ: tiếng Nhật xong nghĩa tiếng Việt"
                   >
                     Đọc mục này
                   </button>
@@ -732,7 +741,7 @@ export default function GrammarView({
                               <button
                                 type="button"
                                 className="btn-audio-small"
-                                onClick={() => playExample(index, exIndex, ex.jp)}
+                                onClick={() => playExample(index, exIndex, ex.jp, ex.vi || ex.en)}
                                 title="Nghe phát âm"
                                 aria-label="Nghe phát âm ví dụ"
                               >

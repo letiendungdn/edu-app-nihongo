@@ -102,6 +102,25 @@ services:
       timeout: 5s
       retries: 10
 
+  flyway:
+    image: flyway/flyway:10
+    container_name: edu-flyway
+    command: -connectRetries=60 migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres-nihongo:5432/nihongo
+      FLYWAY_USER: nihongo
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-nihongo}
+      # Bảng lịch sử nằm schema riêng để Prisma không thấy drift trong public.
+      # Schema flyway mới tạo nên trống, không cần baseline.
+      FLYWAY_DEFAULT_SCHEMA: flyway
+      FLYWAY_SCHEMAS: flyway
+    volumes:
+      - ./infra/flyway/sql:/flyway/sql:ro
+    depends_on:
+      postgres-nihongo:
+        condition: service_healthy
+    restart: "no"
+
   postgres-keycloak:
     image: postgres:16-alpine
     container_name: edu-postgres-keycloak
@@ -225,6 +244,9 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       SENTRY_DSN: ${SENTRY_DSN:-}
       REDIS_URL: redis://redis:6379
+      MQTT_URL: mqtt://mosquitto:1883
+      MQTT_USERNAME: gateway
+      MQTT_PASSWORD: ${MQTT_GATEWAY_PASSWORD:-gateway-dev}
       MONGODB_URL: mongodb://mongodb:27017/nihongo_audit
       KAFKA_BROKERS: kafka:9092
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
@@ -256,6 +278,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      mosquitto:
+        condition: service_healthy
       livekit:
         condition: service_started
       keycloak:
@@ -399,7 +423,31 @@ services:
     ports:
       - '8025:8025'
 
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: edu-mosquitto
+    restart: unless-stopped
+    # Tạo password file từ env rồi mới start broker (xem infra/mqtt/entrypoint.sh)
+    entrypoint: ['/bin/sh', '/mosquitto/entrypoint.sh']
+    environment:
+      MQTT_GATEWAY_PASSWORD: ${MQTT_GATEWAY_PASSWORD:-gateway-dev}
+    # Chỉ mở trên máy local, không ra mạng LAN
+    ports:
+      - '127.0.0.1:1883:1883'
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - ./infra/mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./infra/mqtt/acl.conf:/mosquitto/config/acl.conf:ro
+      - ./infra/mqtt/entrypoint.sh:/mosquitto/entrypoint.sh:ro
+      - mosquitto_data:/mosquitto/data
+    healthcheck:
+      test: ['CMD-SHELL', 'mosquitto_sub -h 127.0.0.1 -u gateway -P "$$MQTT_GATEWAY_PASSWORD" -t \$$SYS/broker/uptime -C 1 -W 3']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
+  mosquitto_data:
   # Giữ data từ stack cũ `nihongo-app` (chỉ DB tiếng Nhật)
   postgres_nihongo_data:
     external: true

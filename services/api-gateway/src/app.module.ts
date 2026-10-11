@@ -35,6 +35,7 @@ import { MailSchedulerModule } from "./mail-scheduler/mail-scheduler.module";
 import { EmailTemplateModule } from "./email-template/email-template.module";
 import { HttpMetricsInterceptor } from "./metrics/http-metrics.interceptor";
 import { MetricsController } from "./metrics/metrics.controller";
+import { LearningProgressModule } from "./learning-progress/learning-progress.module";
 
 const mongoEnabled = !["false", "0", "off"].includes(
   process.env.MONGODB_ENABLED ?? "",
@@ -100,6 +101,7 @@ class NoopAuditService {
     WebhooksModule,
     MailSchedulerModule,
     EmailTemplateModule,
+    LearningProgressModule,
   ],
   controllers: [AppController],
   providers: [

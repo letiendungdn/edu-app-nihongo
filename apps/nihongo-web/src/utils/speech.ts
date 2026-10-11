@@ -142,13 +142,27 @@ function shouldUseServerTts(
   return !pickVoiceForLang(voices, lang);
 }
 
+async function fetchServerTts(text: string, lang: string, sessionId: number): Promise<Response> {
+  const request = () =>
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, lang }),
+    });
+
+  const first = await request();
+  // Edge TTS đôi lúc không trả audio khi bị gọi dồn (phát tất cả). Gửi lại một lần.
+  if (first.ok || (first.status !== 400 && first.status !== 429 && first.status !== 503)) {
+    return first;
+  }
+  await new Promise((resolve) => window.setTimeout(resolve, 800));
+  if (sessionId !== playSessionId) return first;
+  return request();
+}
+
 async function playServerAudio(text: string, lang: string): Promise<void> {
   const sessionId = playSessionId;
-  const res = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, lang }),
-  });
+  const res = await fetchServerTts(text, lang, sessionId);
 
   if (!res.ok) {
     throw new Error(`Server TTS failed (${res.status})`);
@@ -293,6 +307,24 @@ function cleanViForSpeech(text: string): string {
     .trim();
 }
 
+/** Nghĩa ngắn để đọc: bỏ ngoặc, dấu ngã, tách nghĩa bằng dấu phẩy. */
+export function meaningForSpeech(meaning: string): string {
+  return meaning
+    .replace(/[～~]/g, '')
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/[/／]/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Đọc cách đọc tiếng Nhật, xong rồi đọc nghĩa tiếng Việt. */
+export function speakJapaneseThenMeaning(japanese: string, vietnamese: string): void {
+  playAudioParts([
+    { text: japanese, lang: 'ja-JP' },
+    { text: meaningForSpeech(vietnamese), lang: 'vi-VN' },
+  ]);
+}
+
 /** Văn bản tiếng Việt: ý nghĩa + giải thích (+ chú ý trong explanation). */
 export function grammarExplanationSpeechText(grammar: {
   meaning: string;
@@ -308,6 +340,88 @@ export function grammarExplanationSpeechText(grammar: {
   }
 
   return parts.join('. ');
+}
+
+const JAPANESE_CHAR = /[\u3040-\u30ff\u3400-\u9fff\u3005\u3006]/;
+const OPENING_PUNCT = /[(\（「『［【]/;
+
+function letterLang(ch: string): 'ja-JP' | 'vi-VN' | null {
+  if (JAPANESE_CHAR.test(ch)) return 'ja-JP';
+  if (/\p{L}/u.test(ch)) return 'vi-VN';
+  return null;
+}
+
+/**
+ * Tách câu trộn tiếng Việt và tiếng Nhật để mỗi đoạn đọc đúng giọng.
+ * Dấu ngoặc mở đi theo đoạn sau; dấu câu còn lại đi theo đoạn trước.
+ */
+export function speechPartsFromMixedText(text: string): { text: string; lang: string }[] {
+  const source = text.replace(/\s+/g, ' ').trim();
+  const parts: { text: string; lang: string }[] = [];
+  let current = '';
+  let currentLang: string | null = null;
+  let pending = '';
+
+  const push = (value: string, lang: string) => {
+    const cleaned = value.replace(/\s+/g, ' ').trim();
+    if (!cleaned) return;
+    const last = parts[parts.length - 1];
+    if (last && last.lang === lang) {
+      last.text = `${last.text} ${cleaned}`.replace(/\s+/g, ' ').trim();
+    } else {
+      parts.push({ text: cleaned, lang });
+    }
+  };
+
+  const flush = () => {
+    if (currentLang) push(current, currentLang);
+    current = '';
+    currentLang = null;
+  };
+
+  for (const ch of source) {
+    const lang = letterLang(ch);
+    if (!lang) {
+      pending += ch;
+      continue;
+    }
+
+    if (!currentLang || currentLang === lang) {
+      current += pending + ch;
+      pending = '';
+      currentLang = lang;
+      continue;
+    }
+
+    const openAt = pending.search(OPENING_PUNCT);
+    if (openAt >= 0) {
+      current += pending.slice(0, openAt);
+      const nextPrefix = pending.slice(openAt);
+      flush();
+      current = nextPrefix + ch;
+      pending = '';
+      currentLang = lang;
+      continue;
+    }
+
+    current += pending;
+    pending = '';
+    flush();
+    current = ch;
+    currentLang = lang;
+  }
+
+  current += pending;
+  flush();
+  return parts;
+}
+
+/** Ý nghĩa và giải thích, chữ Nhật trong câu được tách riêng để đọc bằng giọng Nhật. */
+export function grammarExplanationSpeechParts(grammar: {
+  meaning: string;
+  explanation?: string | null;
+}): { text: string; lang: string }[] {
+  return speechPartsFromMixedText(grammarExplanationSpeechText(grammar));
 }
 
 export const stopAudio = (): void => {
@@ -334,6 +448,42 @@ export const playAudio = (text: string, lang = 'ja-JP', options: PlayAudioOption
     .catch((err) => console.warn('[TTS]', err));
 };
 
+/** Đọc lần lượt từng đoạn, mỗi đoạn một ngôn ngữ. Đoạn sau bắt đầu khi đoạn trước đọc xong. */
+export function playAudioParts(
+  parts: { text: string; lang: string }[],
+  pauseMs = 400,
+): void {
+  const items = parts.filter((part) => part.text.trim());
+  if (!items.length || typeof window === 'undefined') return;
+
+  const sessionId = ++playSessionId;
+  stopHtmlAudio();
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+  void loadSpeechVoices()
+    .then((voices) => {
+      const speakAt = (index: number) => {
+        if (sessionId !== playSessionId || index >= items.length) return;
+        const item = items[index];
+        void speakText(item.text, item.lang, voices, speechRateForLang(item.lang))
+          .catch((err) => console.warn('[TTS]', err))
+          .finally(() => {
+            if (sessionId !== playSessionId) return;
+            window.setTimeout(() => speakAt(index + 1), pauseMs);
+          });
+      };
+      speakAt(0);
+    })
+    .catch((err) => console.warn('[TTS]', err));
+}
+
+export type SpeechSequenceItem = {
+  text: string;
+  lang?: string;
+  /** Chỉ số mục gốc. Đoạn không có cue không gọi onItem. */
+  cue?: number;
+};
+
 export interface PlayAudioSequenceOptions {
   lang?: string;
   rate?: number;
@@ -346,7 +496,7 @@ export interface PlayAudioSequenceOptions {
 }
 
 export function playAudioSequence(
-  texts: string[],
+  texts: Array<string | SpeechSequenceItem>,
   options: PlayAudioSequenceOptions = {},
 ): Promise<void> {
   const {
@@ -360,14 +510,13 @@ export function playAudioSequence(
     onStop,
   } = options;
 
-  const items = texts.filter(Boolean);
+  const items = texts.filter((item) => (typeof item === 'string' ? item : item.text).trim());
   if (!items.length || typeof window === 'undefined') {
     return Promise.resolve();
   }
 
   const sessionId = ++playSessionId;
   let index = 0;
-  const speechRate = rate ?? speechRateForLang(lang);
 
   return loadSpeechVoices().then((voices) => {
     return new Promise<void>((resolve) => {
@@ -390,10 +539,14 @@ export function playAudioSequence(
           return;
         }
 
-        const text = items[index];
-        onItem?.(index, text);
+        const item = items[index];
+        const text = typeof item === 'string' ? item : item.text;
+        const itemLang = typeof item === 'string' ? lang : (item.lang ?? lang);
+        const speechRate = rate ?? speechRateForLang(itemLang);
+        const cue = typeof item === 'string' ? index : item.cue;
+        if (cue != null) onItem?.(cue, text);
 
-        void speakText(text, lang, voices, speechRate, forceServer)
+        void speakText(text, itemLang, voices, speechRate, forceServer)
           .catch((err) => console.warn('[TTS]', err))
           .finally(() => {
             if (!isActive()) {

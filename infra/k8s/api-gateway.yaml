@@ -71,6 +71,11 @@ spec:
                 secretKeyRef:
                   name: edu-app-secrets
                   key: ADMIN_PASSWORD
+            - name: MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: edu-app-secrets
+                  key: MQTT_PASSWORD
           resources:
             requests:
               cpu: 100m

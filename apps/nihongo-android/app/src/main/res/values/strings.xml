@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nihongo EDU</string>
+    <string name="widget_due_cards_description">Số thẻ SRS cần ôn hôm nay</string>
 </resources>

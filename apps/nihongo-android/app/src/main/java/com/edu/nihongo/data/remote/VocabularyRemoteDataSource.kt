@@ -12,16 +12,22 @@ class VocabularyRemoteDataSource @Inject constructor(
         var page = 1
         val limit = 100
 
-        while (true) {
+        // Có giới hạn trang: server lỗi mà trang nào cũng đủ `limit` dòng thì không lặp mãi
+        while (page <= MAX_PAGES) {
             val envelope = api.list(lessonNumber = lessonNumber, page = page, limit = limit)
             val batch = envelope.data?.data.orEmpty()
             if (batch.isEmpty()) break
             all += batch
-            if (batch.size < limit) break
+            val total = envelope.data?.total
+            if (batch.size < limit || (total != null && all.size >= total)) break
             page += 1
         }
 
         return all
+    }
+
+    private companion object {
+        const val MAX_PAGES = 50
     }
 
     suspend fun syncReviewBank(items: List<ReviewSyncItem>) {

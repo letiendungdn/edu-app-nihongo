@@ -18,6 +18,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/kana',      icon: 'あ',  label: 'Kana' },
       { href: '/vocab',     icon: '単',  label: 'Từ vựng' },
+      { href: '/vocab/list', icon: '表', label: 'Danh sách từ' },
       { href: '/vocab/mindmap', icon: '🗺', label: 'Sơ đồ từ vựng' },
       { href: '/vocab/picture', icon: '🖼️', label: 'Từ điển tranh' },
       { href: '/grammar',   icon: '文',  label: 'Ngữ pháp' },
@@ -343,6 +344,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                     href={item.href}
                     icon={item.icon}
                     label={item.label}
+                    exact={item.href === '/vocab'}
                     compact={collapsed}
                     onClick={close}
                   />

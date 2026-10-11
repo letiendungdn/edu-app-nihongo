@@ -23,10 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.edu.nihongo.data.remote.KeycloakAuth
+import com.edu.nihongo.utils.runCatchingCancellable
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +47,9 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var email by remember { mutableStateOf("") }
+    // rememberSaveable: xoay màn hình không mất email đã gõ.
+    // Mật khẩu cố ý chỉ `remember`: không ghi vào saved state (Bundle) của hệ thống.
+    var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -52,6 +57,14 @@ fun LoginScreen(
 
     DisposableEffect(Unit) {
         onDispose { keycloakAuth.dispose() }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                LoginEvent.LoggedIn -> onBack()
+            }
+        }
     }
 
     val launcher = rememberLauncherForActivityResult(
@@ -62,9 +75,9 @@ fun LoginScreen(
             return@rememberLauncherForActivityResult
         }
         scope.launch {
-            runCatching {
+            runCatchingCancellable {
                 val tokens = keycloakAuth.exchangeCode(result.data)
-                viewModel.loginWithOidc(tokens.accessToken, tokens.idToken, onBack)
+                viewModel.loginWithOidc(tokens.accessToken, tokens.idToken)
             }.onFailure { e ->
                 viewModel.setError(e.message ?: "Keycloak thất bại")
             }
@@ -93,7 +106,7 @@ fun LoginScreen(
                 onClick = {
                     scope.launch {
                         viewModel.setLoading(true)
-                        runCatching {
+                        runCatchingCancellable {
                             val config = keycloakAuth.fetchServiceConfig()
                             launcher.launch(keycloakAuth.createAuthIntent(config))
                             viewModel.setLoading(false)
@@ -130,7 +143,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(16.dp))
             OutlinedButton(
-                onClick = { viewModel.login(email, password, onBack) },
+                onClick = { viewModel.login(email, password) },
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth(),
             ) {

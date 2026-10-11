@@ -2,6 +2,7 @@ package com.edu.nihongo.presentation.srs
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.edu.nihongo.domain.TimeSource
 import com.edu.nihongo.domain.entity.ReviewCard
 import com.edu.nihongo.domain.repository.VocabularyRepository
 import com.edu.nihongo.domain.usecase.GetReviewQueueUseCase
@@ -26,6 +27,7 @@ data class SrsUiState(
 class SrsViewModel @Inject constructor(
     getReviewQueue: GetReviewQueueUseCase,
     private val vocabRepo: VocabularyRepository,
+    private val timeSource: TimeSource,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SrsUiState())
     val uiState: StateFlow<SrsUiState> = _uiState.asStateFlow()
@@ -51,7 +53,7 @@ class SrsViewModel @Inject constructor(
                     sessionCorrect = if (quality >= 3) state.sessionCorrect + 1 else state.sessionCorrect,
                 )
             }
-            val updated = SrsAlgorithm.calculateNextReview(card.card, quality)
+            val updated = SrsAlgorithm.calculateNextReview(card.card, quality, timeSource.now())
             vocabRepo.updateSrsCard(updated).onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
             }

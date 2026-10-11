@@ -72,13 +72,21 @@ export class SupportChatService {
 
     const isFromUser = thread.userId === senderId;
 
+    const preview = content.length > 80 ? `${content.slice(0, 80)}…` : content;
+
     if (!isFromUser) {
       await this.notifications.send({
         userId: thread.userId,
         type: NotificationType.SUPPORT_MESSAGE,
         title: "Admin đã trả lời",
-        body: content.length > 80 ? `${content.slice(0, 80)}…` : content,
+        body: preview,
         metadata: { threadId, messageId: message.id },
+      });
+      this.chatEvents.notifyUsers([thread.userId], {
+        type: "SUPPORT_MESSAGE",
+        threadId,
+        messageId: message.id,
+        preview,
       });
     }
 

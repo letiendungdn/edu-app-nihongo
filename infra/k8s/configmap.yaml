@@ -21,6 +21,9 @@ data:
   EXAM_GRPC_PORT: "50052"
   REDIS_URL: redis://redis:6379
   KAFKA_BROKERS: kafka:9092
+  # Mosquitto (infra/k8s/mqtt/mosquitto.yaml); mật khẩu ở Secret MQTT_PASSWORD
+  MQTT_URL: mqtt://mosquitto:1883
+  MQTT_USERNAME: gateway
 
   # nihongo-web
   API_URL: http://api-gateway:3000

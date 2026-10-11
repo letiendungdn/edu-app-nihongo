@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "nihongo-android"
 include(":app")
+// Sinh Baseline Profile và đo thời gian khởi động (Macrobenchmark)
+include(":baselineprofile")

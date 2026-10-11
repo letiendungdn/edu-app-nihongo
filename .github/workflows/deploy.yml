@@ -95,6 +95,7 @@ jobs:
             --from-literal=DATABASE_URL_NIHONGO="${{ secrets.DATABASE_URL_NIHONGO }}" \
             --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             --from-literal=ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
+            --from-literal=MQTT_PASSWORD="${{ secrets.MQTT_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
           kubectl create secret docker-registry ghcr-pull-secret \
@@ -104,10 +105,11 @@ jobs:
             --docker-password=${{ secrets.GITHUB_TOKEN }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Postgres/Redis phải có trước khi migrate (lần deploy đầu tiên)
+      # Postgres/Redis phải có trước khi migrate (lần deploy đầu tiên).
+      # Mosquitto cũng apply ở đây vì api-gateway đọc MQTT_URL từ configmap.
       - name: Apply data stores
         run: |
-          kubectl apply -f infra/k8s/postgres.yaml -f infra/k8s/redis.yaml
+          kubectl apply -f infra/k8s/postgres.yaml -f infra/k8s/redis.yaml -f infra/k8s/mqtt/mosquitto.yaml
           kubectl rollout status statefulset/postgres -n edu-app --timeout=300s
 
       # Migration TRƯỚC khi đổi code: lỗi → dừng deploy, pod đang chạy không bị đụng tới

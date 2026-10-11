@@ -1222,6 +1222,9 @@ model StudySession {
   @@unique([userId, date])
 }
 
+// Read model (view learner_daily_study + materialized view learner_progress_summary)
+// do Flyway quản lý: infra/flyway/sql/V1__learner_progress_views.sql
+
 // Streak tách riêng để tránh recompute từ StudySession mỗi lần hiển thị
 model StudyStreak {
   id            Int      @id @default(autoincrement())

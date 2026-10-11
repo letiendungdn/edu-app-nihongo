@@ -13,9 +13,9 @@ import net.openid.appauth.connectivity.ConnectionBuilder
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 object KeycloakConfig {
     val discoveryUri: Uri =
@@ -85,15 +85,20 @@ class KeycloakAuth(context: Context) {
         return authService.getAuthorizationRequestIntent(request)
     }
 
+    /**
+     * suspendCancellableCoroutine (không phải suspendCoroutine): rời màn hình giữa chừng thì
+     * coroutine kết thúc ngay thay vì treo chờ mạng; callback về muộn bị bỏ qua.
+     */
     suspend fun exchangeCode(intent: Intent?): KeycloakTokens =
-        suspendCoroutine { cont ->
+        suspendCancellableCoroutine { cont ->
             val response = net.openid.appauth.AuthorizationResponse.fromIntent(intent ?: Intent())
             val ex = net.openid.appauth.AuthorizationException.fromIntent(intent)
             if (response == null) {
                 cont.resumeWithException(ex ?: IllegalStateException("Keycloak auth bị hủy"))
-                return@suspendCoroutine
+                return@suspendCancellableCoroutine
             }
             authService.performTokenRequest(response.createTokenExchangeRequest()) { tokenResponse, tokenEx ->
+                if (!cont.isActive) return@performTokenRequest
                 val access = tokenResponse?.accessToken
                 if (access.isNullOrBlank()) {
                     cont.resumeWithException(tokenEx ?: IllegalStateException("Không nhận access_token"))

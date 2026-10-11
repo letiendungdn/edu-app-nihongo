@@ -37,8 +37,10 @@ data class ReviewCard(
     val romaji: String,
 )
 
-data class OverlayLabel(
-    val rect: android.graphics.RectF,
-    val original: String,
-    val translated: String,
+data class Lesson(
+    val id: Long,
+    val lessonNumber: Int,
+    val title: String?,
+    val description: String?,
+    val vocabCount: Int?,
 )

@@ -15,7 +15,7 @@ import javax.inject.Singleton
 @Singleton
 class NetworkMonitor @Inject constructor(
     @ApplicationContext context: Context,
-) {
+) : NetworkStatus {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -24,7 +24,7 @@ class NetworkMonitor @Inject constructor(
      * được máy host qua 10.0.2.2 (Docker API). Coi có link WIFI/ETHERNET/CELLULAR
      * là "online" cho sync local — không đòi NET_CAPABILITY_VALIDATED.
      */
-    fun isOnline(): Boolean {
+    override fun isOnline(): Boolean {
         val network = connectivityManager.activeNetwork ?: return false
         val caps = connectivityManager.getNetworkCapabilities(network) ?: return false
         return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
@@ -33,7 +33,7 @@ class NetworkMonitor @Inject constructor(
             caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    val isOnlineFlow: Flow<Boolean> = callbackFlow {
+    override val isOnlineFlow: Flow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 trySend(isOnline())

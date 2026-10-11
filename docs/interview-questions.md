@@ -2,6 +2,8 @@
 
 Mỗi câu trả lời đều dựa vào **code thực trong project**. Không trả lời chung chung.
 
+Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Flyway, DDD): [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md).
+
 ---
 
 ## PostgreSQL & Database

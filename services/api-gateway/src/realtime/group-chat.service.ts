@@ -323,6 +323,15 @@ export class GroupChatService {
     );
 
     this.chatEvents.emit({ type: "community", roomId, message });
+    this.chatEvents.notifyUsers(
+      members.map((member) => member.userId),
+      {
+        type: "GROUP_MESSAGE",
+        roomId,
+        messageId: message.id,
+        preview,
+      },
+    );
 
     return message;
   }

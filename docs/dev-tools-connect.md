@@ -60,6 +60,8 @@ Tài khoản app: [accounts.md](./accounts.md).
 
 ## 3. pgAdmin — PostgreSQL
 
+Học từng thao tác trên DB `nihongo`: [learn-pgadmin.md](./learn-pgadmin.md).
+
 1. Cài [pgAdmin 4](https://www.pgadmin.org/download/).
 2. **Object → Register → Server…**
 

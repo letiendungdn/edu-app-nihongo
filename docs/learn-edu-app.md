@@ -188,7 +188,7 @@ npm run prisma:generate
 npx prisma studio --schema packages/prisma-nihongo/schema.prisma
 ```
 
-- Query vocab theo bài bằng Prisma.
+- Query vocab theo bài bằng Prisma. Xem cùng dữ liệu đó trong pgAdmin: [learn-pgadmin.md](./learn-pgadmin.md).
 - Giải thích index `(userId, nextReviewAt)` của SRS.
 - Tạo migration nhỏ trên DB thử nghiệm, sau đó rollback bằng backup.
 
@@ -747,7 +747,9 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 8. [canvas-tools.md](./canvas-tools.md) ← Canvas Tools + Japan Map (tùy chọn, sau Tuần 6)
 9. [learn-testing.md](./learn-testing.md)
 10. [learn-kafka.md](./learn-kafka.md)
-11. [interview-questions.md](./interview-questions.md) + [interview-mobile.md](./interview-mobile.md)
+11. [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) ← MQTT, RxJS, Flyway, view, DDD
+12. [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) ← câu hỏi phỏng vấn theo JD backend NestJS
+13. [interview-questions.md](./interview-questions.md) + [interview-mobile.md](./interview-mobile.md)
 
 
 

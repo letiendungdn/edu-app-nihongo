@@ -1,8 +1,10 @@
 package com.edu.nihongo.data.local
 
 import com.edu.nihongo.data.local.dao.ReviewRow
+import com.edu.nihongo.data.local.entity.LessonEntity
 import com.edu.nihongo.data.local.entity.SrsCardEntity
 import com.edu.nihongo.data.local.entity.VocabularyEntity
+import com.edu.nihongo.domain.entity.Lesson
 import com.edu.nihongo.domain.entity.ReviewCard
 import com.edu.nihongo.domain.entity.SrsCard
 import com.edu.nihongo.domain.entity.SyncStatus
@@ -59,4 +61,12 @@ fun SrsCard.toEntity(): SrsCardEntity = SrsCardEntity(
     mastered = mastered,
     syncStatus = syncStatus.name,
     updatedAt = updatedAt,
+)
+
+fun LessonEntity.toDomain(): Lesson = Lesson(
+    id = id,
+    lessonNumber = lessonNumber,
+    title = title,
+    description = description,
+    vocabCount = vocabCount,
 )

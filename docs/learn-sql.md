@@ -4,6 +4,7 @@
 > Mọi câu lệnh trong tài liệu đã chạy thật; kết quả in kèm là dữ liệu thật tại thời điểm viết.
 > Phần nâng cao (EXPLAIN, index, isolation, keyset pagination) ở [learn-postgres.md](./learn-postgres.md);
 > thiết kế bảng ở [learn-db-design.md](./learn-db-design.md); sơ đồ bảng ở [db-erd.md](./db-erd.md).
+> Xem bảng bằng app desktop: [learn-pgadmin.md](./learn-pgadmin.md).
 
 ## 0. Mở psql
 

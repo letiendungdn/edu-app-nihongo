@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { playAudioSequence, stopAudio } from '../utils/speech';
+import { playAudioSequence, stopAudio, type SpeechSequenceItem } from '../utils/speech';
 
 interface PlayAllOptions {
   onItemIndex?: (index: number) => void;
@@ -10,7 +10,7 @@ interface PlayAllOptions {
 
 export function usePlayAll(): {
   isPlayingAll: boolean;
-  startPlayAll: (texts: string[], options?: PlayAllOptions) => Promise<void>;
+  startPlayAll: (texts: Array<string | SpeechSequenceItem>, options?: PlayAllOptions) => Promise<void>;
   stopPlayAll: () => void;
 } {
   const [isPlayingAll, setIsPlayingAll] = useState(false);
@@ -25,7 +25,7 @@ export function usePlayAll(): {
   }, []);
 
   const startPlayAll = useCallback(
-    async (texts: string[], { onItemIndex, lang, rate, pauseMs }: PlayAllOptions = {}) => {
+    async (texts: Array<string | SpeechSequenceItem>, { onItemIndex, lang, rate, pauseMs }: PlayAllOptions = {}) => {
       const items = texts?.filter(Boolean) ?? [];
       if (!items.length || playingRef.current) return;
 

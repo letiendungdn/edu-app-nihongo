@@ -11,7 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.edu.nihongo.domain.entity.OverlayLabel
 import com.edu.nihongo.domain.repository.TranslateRepository
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -48,8 +48,9 @@ class CameraTranslateViewModel @Inject constructor(
     private val recognizer =
         TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
     private val cameraExecutor = Executors.newSingleThreadExecutor()
-    private var processing = false
-    private var lastProcessedAt = 0L
+    // Đọc/ghi từ luồng camera, luồng main (callback ML Kit) và coroutine → phải atomic
+    private val processing = AtomicBoolean(false)
+    @Volatile private var lastProcessedAt = 0L
     private var previewWidth = 1
     private var previewHeight = 1
 
@@ -77,17 +78,16 @@ class CameraTranslateViewModel @Inject constructor(
                 }
 
                 val now = System.currentTimeMillis()
-                if (processing || now - lastProcessedAt < 900) {
+                // compareAndSet: chỉ một frame được "giành" quyền xử lý
+                if (now - lastProcessedAt < 900 || !processing.compareAndSet(false, true)) {
                     imageProxy.close()
                     return@setAnalyzer
                 }
-
-                processing = true
                 lastProcessedAt = now
 
                 val mediaImage = imageProxy.image
                 if (mediaImage == null) {
-                    processing = false
+                    processing.set(false)
                     imageProxy.close()
                     return@setAnalyzer
                 }
@@ -104,7 +104,7 @@ class CameraTranslateViewModel @Inject constructor(
                         }
                     }
                     .addOnFailureListener {
-                        processing = false
+                        processing.set(false)
                     }
                     .addOnCompleteListener {
                         imageProxy.close()
@@ -163,7 +163,7 @@ class CameraTranslateViewModel @Inject constructor(
 
             _uiState.update { it.copy(labels = labels, error = null) }
         } finally {
-            processing = false
+            processing.set(false)
         }
     }
 

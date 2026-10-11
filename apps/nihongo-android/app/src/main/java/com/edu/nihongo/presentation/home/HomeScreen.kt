@@ -1,5 +1,7 @@
 package com.edu.nihongo.presentation.home
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Quiz
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.rounded.AccountCircle
@@ -42,6 +50,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 
 private val OnlineGreen = Color(0xFF16A34A)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +67,11 @@ fun HomeScreen(
     onAiTutor: () -> Unit,
     onPronunciation: () -> Unit,
     onKanjiDraw: () -> Unit,
+    onProgress: () -> Unit,
+    onCommunity: () -> Unit,
+    onReading: () -> Unit,
+    onExams: () -> Unit,
+    onKana: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle(initialValue = true)
@@ -105,12 +121,24 @@ fun HomeScreen(
                 }
             }
 
+            item { NotificationPermissionCard() }
+
             item { SectionLabel("HỌC TẬP") }
 
             item {
                 NavCard(
-                    title = "Từ vựng",
-                    subtitle = "50 bài Minna — sync khi có mạng",
+                    title = "Tiến độ học",
+                    subtitle = "Chuỗi ngày học, thống kê, biểu đồ 14 ngày",
+                    icon = Icons.Rounded.Insights,
+                    onClick = onProgress,
+                    badge = "MỚI",
+                )
+            }
+
+            item {
+                NavCard(
+                    title = "Bài học",
+                    subtitle = "Từ vựng · ngữ pháp · kanji, dùng được offline",
                     icon = Icons.Rounded.LibraryBooks,
                     onClick = onVocab,
                 )
@@ -124,7 +152,33 @@ fun HomeScreen(
                 )
             }
 
+            item {
+                NavCard(
+                    title = "Đọc hiểu",
+                    subtitle = "Bài đọc + câu hỏi, chấm cả khi offline",
+                    icon = Icons.AutoMirrored.Rounded.MenuBook,
+                    onClick = onReading,
+                )
+            }
+            item {
+                NavCard(
+                    title = "Thi thử JLPT",
+                    subtitle = "Đếm giờ, tắt app vẫn làm tiếp được",
+                    icon = Icons.Rounded.Quiz,
+                    onClick = onExams,
+                )
+            }
+
             item { SectionLabel("LUYỆN TẬP") }
+
+            item {
+                NavCard(
+                    title = "Luyện kana",
+                    subtitle = "Hiragana · Katakana, chữ hay sai hỏi lại nhiều hơn",
+                    icon = Icons.Rounded.TextFields,
+                    onClick = onKana,
+                )
+            }
 
             item {
                 NavCard(
@@ -160,6 +214,17 @@ fun HomeScreen(
                 )
             }
 
+            item { SectionLabel("CỘNG ĐỒNG") }
+
+            item {
+                NavCard(
+                    title = "Chat cộng đồng",
+                    subtitle = "Nhắn tin realtime với học viên khác",
+                    icon = Icons.Rounded.Forum,
+                    onClick = onCommunity,
+                )
+            }
+
             item { SectionLabel("AI & LIVESTREAM") }
 
             item {
@@ -188,6 +253,24 @@ fun HomeScreen(
             }
         }
     }
+}
+
+/**
+ * Android 13+ phải xin quyền thông báo lúc chạy. Xin trong ngữ cảnh (người dùng hiểu để làm gì)
+ * thay vì bật hộp thoại ngay khi mở app: tỉ lệ đồng ý cao hơn, và từ chối 2 lần là hệ thống không hỏi nữa.
+ */
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun NotificationPermissionCard() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+    val permission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    if (permission.status.isGranted) return
+    NavCard(
+        title = "Bật nhắc ôn tập",
+        subtitle = "Mỗi tối 20:00 nhắc khi có thẻ SRS đến hạn",
+        icon = Icons.Rounded.NotificationsActive,
+        onClick = { permission.launchPermissionRequest() },
+    )
 }
 
 @Composable

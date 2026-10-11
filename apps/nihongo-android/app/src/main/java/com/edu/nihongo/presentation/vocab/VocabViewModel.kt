@@ -8,10 +8,12 @@ import com.edu.nihongo.domain.usecase.GetVocabByLessonUseCase
 import com.edu.nihongo.domain.usecase.SyncLessonUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.edu.nihongo.utils.userMessage
 import javax.inject.Inject
 
 data class VocabUiState(
@@ -28,29 +30,31 @@ class VocabViewModel @Inject constructor(
 ) : ViewModel() {
     private val lessonNumber: Int = savedStateHandle.get<Int>("lesson") ?: 1
 
-    private val _uiState = MutableStateFlow(VocabUiState())
-    val uiState: StateFlow<VocabUiState> = _uiState.asStateFlow()
+    private val syncing = MutableStateFlow(true)
+    private val syncError = MutableStateFlow<String?>(null)
+
+    /**
+     * Room phát list rỗng ngay khi DB chưa có bài này. Chỉ coi là "đang tải" khi
+     * chưa có dữ liệu VÀ sync chưa xong; có dữ liệu cũ thì hiện luôn trong lúc sync.
+     */
+    val uiState: StateFlow<VocabUiState> = combine(
+        getVocabByLesson(lessonNumber),
+        syncing,
+        syncError,
+    ) { items, isSyncing, error ->
+        VocabUiState(
+            items = items,
+            isLoading = items.isEmpty() && isSyncing,
+            error = error,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), VocabUiState())
 
     init {
         viewModelScope.launch {
-            getVocabByLesson(lessonNumber).collect { list ->
-                _uiState.update { it.copy(items = list, isLoading = false) }
-            }
-        }
-
-        viewModelScope.launch {
             syncLesson(lessonNumber)
-                .onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = e.message,
-                        )
-                    }
-                }
-                .onSuccess {
-                    _uiState.update { it.copy(isLoading = false, error = null) }
-                }
+                .onSuccess { syncError.value = null }
+                .onFailure { e -> syncError.value = e.userMessage() }
+            syncing.value = false
         }
     }
 }

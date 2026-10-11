@@ -62,3 +62,17 @@ data class SyncQueueEntity(
     @ColumnInfo(name = "retry_count") val retryCount: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
 )
+
+/** Cache danh sách bài để màn chọn bài chạy offline (thêm ở DB version 2). */
+@Entity(
+    tableName = "lesson",
+    indices = [Index(value = ["lesson_number"], unique = true)],
+)
+data class LessonEntity(
+    @PrimaryKey val id: Long,
+    @ColumnInfo(name = "lesson_number") val lessonNumber: Int,
+    val title: String?,
+    val description: String?,
+    @ColumnInfo(name = "vocab_count") val vocabCount: Int?,
+    @ColumnInfo(name = "updated_at") val updatedAt: Long,
+)
