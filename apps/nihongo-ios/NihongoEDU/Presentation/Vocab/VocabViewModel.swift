@@ -71,8 +71,10 @@ final class VocabViewModel {
             }
 
             try modelContext.save()
+            // Thẻ mới tạo đến hạn ngay: cập nhật widget và giờ nhắc
+            DueCardsReporter.shared.report(from: modelContext)
         } catch {
-            if !silent { syncError = error.localizedDescription }
+            if !silent { syncError = error.userMessage }
         }
     }
 

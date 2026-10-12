@@ -1,8 +1,10 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 enum AppRoute: Hashable {
-    case vocab, srs, sentencePractice, login, cameraTranslate, live
+    case vocab, srs, sentencePractice, login, cameraTranslate, live, progress
+    case reading, readingDetail(id: Int), exams, exam(id: String), kana, community, chat(roomId: Int)
     case aiTutor, pronunciation(kana: String, meaning: String), kanjiDraw(kanji: String, kana: String)
 }
 
@@ -11,6 +13,8 @@ struct HomeView: View {
     @Environment(PushService.self) private var pushService
     @Environment(NetworkMonitor.self) private var network
     @Environment(\.modelContext) private var modelContext
+    @Environment(SyncEngine.self) private var engine
+    @Environment(AppRouter.self) private var router
     @State private var path = NavigationPath()
 
     var body: some View {
@@ -56,15 +60,30 @@ struct HomeView: View {
                         }
                     }
 
+                    ReminderPermissionCard()
+
                     SectionLabel("HỌC TẬP")
-                    NavCard(title: "Từ vựng", subtitle: "Đọc offline từ SwiftData, sync khi có mạng", icon: "📖") {
+                    NavCard(title: "Tiến độ học", subtitle: "Chuỗi ngày học, thống kê, biểu đồ 14 ngày", icon: "📈", badge: "MỚI") {
+                        path.append(AppRoute.progress)
+                    }
+                    NavCard(title: "Bài học", subtitle: "Từ vựng · ngữ pháp · kanji, dùng được offline", icon: "📖") {
                         path.append(AppRoute.vocab)
                     }
                     NavCard(title: "Ôn tập SRS", subtitle: "Spaced repetition — SM-2 algorithm", icon: "🔁") {
                         path.append(AppRoute.srs)
                     }
 
+                    NavCard(title: "Đọc hiểu", subtitle: "Bài đọc + câu hỏi, chấm cả khi offline", icon: "📰") {
+                        path.append(AppRoute.reading)
+                    }
+                    NavCard(title: "Thi thử JLPT", subtitle: "Đếm giờ, tắt app vẫn làm tiếp được", icon: "📝") {
+                        path.append(AppRoute.exams)
+                    }
+
                     SectionLabel("LUYỆN TẬP")
+                    NavCard(title: "Luyện kana", subtitle: "Hiragana · Katakana, chữ hay sai hỏi lại nhiều hơn", icon: "あ") {
+                        path.append(AppRoute.kana)
+                    }
                     NavCard(title: "Luyện câu AI", subtitle: "Phân tích & sửa câu bằng Gemini", icon: "🤖", badge: "MỚI") {
                         path.append(AppRoute.sentencePractice)
                     }
@@ -76,6 +95,11 @@ struct HomeView: View {
                     }
                     NavCard(title: "Vẽ Kanji", subtitle: "Luyện viết tay trên màn hình", icon: "✍️") {
                         path.append(AppRoute.kanjiDraw(kanji: "行", kana: "いく"))
+                    }
+
+                    SectionLabel("CỘNG ĐỒNG")
+                    NavCard(title: "Chat cộng đồng", subtitle: "Nhắn tin realtime với học viên khác", icon: "💬") {
+                        path.append(AppRoute.community)
                     }
 
                     SectionLabel("AI & LIVESTREAM")
@@ -104,20 +128,48 @@ struct HomeView: View {
                     PronunciationView(kana: kana, meaning: meaning)
                 case .kanjiDraw(let kanji, let kana):
                     KanjiDrawView(kanji: kanji, kana: kana)
+                case .progress:          ProgressScreen()
+                case .reading:           ReadingListView()
+                case .readingDetail(let id): ReadingDetailView(id: id)
+                case .exams:             ExamListView()
+                case .exam(let id):      ExamView(examId: id)
+                case .kana:              KanaView()
+                case .community:         RoomsView()
+                case .chat(let roomId):  ChatView(roomId: roomId)
                 }
             }
-            .onAppear { authState.refresh() }
+            // Mạng vừa có lại: gửi hàng đợi ôn tập
             .task(id: network.isOnline) {
-                await SyncService.flushPending(
-                    modelContext: modelContext,
-                    isOnline: network.isOnline,
-                    isLoggedIn: authState.isLoggedIn
-                )
+                await engine.flush(in: modelContext, isOnline: network.isOnline, isLoggedIn: authState.isLoggedIn)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .navigateToSRS)) { _ in
-                path.append(AppRoute.srs)
+            // Route từ thông báo / widget. .task chạy cả khi route đã có TRƯỚC khi Home hiện (khởi động lạnh).
+            .task(id: router.pending) {
+                if let route = router.consume() { path.append(route) }
             }
         }
+    }
+}
+
+/// Hỏi quyền thông báo trong ngữ cảnh (người dùng hiểu để làm gì), không bật hộp thoại ngay khi mở app:
+/// iOS chỉ hỏi ĐÚNG MỘT LẦN, từ chối rồi thì phải vào Cài đặt.
+private struct ReminderPermissionCard: View {
+    @Environment(PushService.self) private var push
+    @Environment(\.modelContext) private var context
+    @State private var status: UNAuthorizationStatus = .authorized
+
+    var body: some View {
+        Group {
+            if status == .notDetermined {
+                NavCard(title: "Bật nhắc ôn tập", subtitle: "20:00 mỗi tối khi có thẻ SRS đến hạn", icon: "🔔") {
+                    Task {
+                        await push.requestPermissionIfNeeded()
+                        status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+                        DueCardsReporter.shared.report(from: context)
+                    }
+                }
+            }
+        }
+        .task { status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus }
     }
 }
 

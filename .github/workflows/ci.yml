@@ -194,3 +194,30 @@ jobs:
         with:
           name: android-instrumented-report
           path: apps/nihongo-android/app/build/reports/androidTests/
+
+  # ── iOS: unit test + UI test trên simulator (cần runner macOS) ──────────────
+  ios:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: apps/nihongo-ios
+    steps:
+      - uses: actions/checkout@v4
+      # Sinh lại .xcodeproj từ project.yml: CI luôn build đúng cấu hình trong project.yml,
+      # kể cả khi ai đó quên chạy xcodegen trước khi commit file project
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      # Tên simulator đổi theo phiên bản image của runner: chọn iPhone đầu tiên có sẵn
+      - name: Pick simulator
+        run: |
+          UDID=$(xcrun simctl list devices available | grep -m1 -E "iPhone" | grep -oE "[0-9A-F-]{36}")
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+      - name: Unit test
+        run: xcodebuild test -project NihongoEDU.xcodeproj -scheme NihongoEDU -destination "id=$SIM_UDID" -only-testing:NihongoEDUTests
+      # UI test luồng offline (deep link, kana); bỏ test đo khởi động vì runner CI quá nhiễu
+      - name: UI test
+        run: >
+          xcodebuild test -project NihongoEDU.xcodeproj -scheme NihongoEDU -destination "id=$SIM_UDID"
+          -only-testing:NihongoEDUUITests -skip-testing:NihongoEDUUITests/NihongoEDUUITests/testLaunchPerformance
+      - name: Release build
+        run: xcodebuild build -project NihongoEDU.xcodeproj -scheme NihongoEDU -configuration Release -destination "generic/platform=iOS Simulator"

@@ -126,7 +126,7 @@ struct PronunciationView: View {
                 }
             }
         } catch {
-            errorText = error.localizedDescription
+            errorText = error.userMessage
             stop()
         }
     }

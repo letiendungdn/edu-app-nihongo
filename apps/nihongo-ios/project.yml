@@ -6,6 +6,20 @@ options:
   createIntermediateGroups: true
   defaultConfig: Debug
 
+# Áp cho mọi target. Trước đây SWIFT_VERSION chỉ đặt ở target app, nên target test
+# không biên dịch được ("SWIFT_VERSION '' is unsupported"): 8 test cũ chưa từng chạy.
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    # Target test phải build cùng kiến trúc với app, nếu không sẽ báo
+    # "Unable to resolve Swift module dependency to a compatible module"
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+  configs:
+    Debug:
+      ONLY_ACTIVE_ARCH: YES
+      # @testable import cần app build với testability
+      ENABLE_TESTABILITY: YES
+
 packages:
   LiveKitClient:
     url: https://github.com/livekit/client-sdk-swift
@@ -18,15 +32,16 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: NihongoEDU
+      - path: Shared
     dependencies:
       - package: LiveKitClient
         product: LiveKit
+      # Widget màn hình chính: XcodeGen tự nhúng extension vào app
+      - target: NihongoWidget
     settings:
       base:
-        SWIFT_VERSION: "5.9"
         PRODUCT_NAME: NihongoEDU
         PRODUCT_BUNDLE_IDENTIFIER: com.edu.nihongo.ios
-        "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
@@ -41,6 +56,25 @@ targets:
         Release:
           DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
           SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+  NihongoWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: NihongoWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_NAME: NihongoWidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.edu.nihongo.ios.widget
+        INFOPLIST_FILE: NihongoWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: NihongoWidget/NihongoWidget.entitlements
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
 
   NihongoEDUTests:
     type: bundle.unit-test
@@ -58,12 +92,28 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/NihongoEDU.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/NihongoEDU"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
+  NihongoEDUUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: NihongoEDUUITests
+    dependencies:
+      - target: NihongoEDU
+    settings:
+      base:
+        PRODUCT_NAME: NihongoEDUUITests
+        PRODUCT_BUNDLE_IDENTIFIER: com.edu.nihongo.ios.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: NihongoEDU
+
 schemes:
   NihongoEDU:
     build:
       targets:
         NihongoEDU: all
         NihongoEDUTests: [test]
+        NihongoEDUUITests: [test]
     run:
       config: Debug
       environmentVariables:
@@ -86,6 +136,7 @@ schemes:
       config: Debug
       targets:
         - NihongoEDUTests
+        - NihongoEDUUITests
     profile:
       config: Release
     analyze:

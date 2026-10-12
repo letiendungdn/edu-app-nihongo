@@ -77,7 +77,7 @@ struct LoginView: View {
             authState.refresh()
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 
@@ -87,12 +87,12 @@ struct LoginView: View {
         defer { kcLoading = false }
         do {
             let tokens = try await KeycloakAuth().login()
-            try await AuthAPI().loginOidc(accessToken: tokens.accessToken, idToken: tokens.idToken,
-                                          refreshToken: tokens.refreshToken)
+            // Refresh token của Keycloak không cần lưu: app dùng refresh token của gateway (cookie)
+            try await AuthAPI().loginOidc(accessToken: tokens.accessToken, idToken: tokens.idToken)
             authState.refresh()
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }

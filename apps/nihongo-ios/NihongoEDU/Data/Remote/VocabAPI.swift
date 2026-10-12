@@ -1,6 +1,6 @@
 import Foundation
 
-enum APIError: LocalizedError {
+enum APIError: LocalizedError, Equatable {
     case invalidURL, badStatus(Int), decodingFailed
 
     var errorDescription: String? {
@@ -13,46 +13,37 @@ enum APIError: LocalizedError {
 }
 
 struct VocabAPI {
-    private let session: URLSession
+    var client: APIClient = .shared
+    static let pageSize = 100
+    static let maxPages = 50
 
-    init(session: URLSession = .shared) {
-        self.session = session
-    }
-
-    func fetchPage(lessonNumber: Int, page: Int, limit: Int = 100) async throws -> [[String: Any]] {
-        guard var components = URLComponents(string: "\(APIConfig.baseURL)/vocabularies") else {
-            throw APIError.invalidURL
-        }
-        components.queryItems = [
+    func fetchPage(lessonNumber: Int, page: Int, limit: Int = VocabAPI.pageSize) async throws -> (items: [[String: Any]], total: Int?) {
+        let req = try client.request("vocabularies", query: [
             URLQueryItem(name: "lessonNumber", value: "\(lessonNumber)"),
-            URLQueryItem(name: "page",         value: "\(page)"),
-            URLQueryItem(name: "limit",        value: "\(limit)"),
-        ]
-        guard let url = components.url else { throw APIError.invalidURL }
-
-        let (data, response) = try await session.data(from: url)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
-
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return []
-        }
-
-        // Unwrap { data: { data: [...] } } or { data: [...] }
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+        ])
+        let (data, _) = try await client.send(req)
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return ([], nil) }
+        // { data: { data: [...], total } } hoặc { data: [...] }
         var field = json["data"]
-        if let nested = field as? [String: Any] { field = nested["data"] }
-        return (field as? [[String: Any]]) ?? []
+        var total: Int?
+        if let nested = field as? [String: Any] {
+            total = nested["total"] as? Int
+            field = nested["data"]
+        }
+        return ((field as? [[String: Any]]) ?? [], total)
     }
 
+    /// Có giới hạn trang: bản cũ `while true` dừng khi một trang ít hơn 100 dòng. Server lỗi mà
+    /// trang nào cũng đủ 100 dòng thì lặp mãi.
     func fetchAll(lessonNumber: Int) async throws -> [[String: Any]] {
         var all: [[String: Any]] = []
-        var page = 1
-        while true {
-            let batch = try await fetchPage(lessonNumber: lessonNumber, page: page)
+        for page in 1...Self.maxPages {
+            let (batch, total) = try await fetchPage(lessonNumber: lessonNumber, page: page)
             all.append(contentsOf: batch)
-            if batch.count < 100 { break }
-            page += 1
+            if batch.count < Self.pageSize { break }
+            if let total, all.count >= total { break }
         }
         return all
     }

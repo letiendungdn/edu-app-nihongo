@@ -19,10 +19,7 @@ struct AiTutorAPI {
             body["context"] = context
         }
         let req = try HTTPClient.authorizedRequest(url: url, method: "POST", jsonBody: body)
-        let (data, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
+        let (data, _) = try await APIClient.shared.send(req) // gặp 401 tự refresh token
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         return (json?["answer"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }

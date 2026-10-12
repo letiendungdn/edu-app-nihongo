@@ -4,5 +4,10 @@
 <dict>
     <key>aps-environment</key>
     <string>development</string>
+    <!-- Dùng chung dữ liệu với widget (UserDefaults suite) -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.edu.nihongo.ios</string>
+    </array>
 </dict>
 </plist>

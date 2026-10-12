@@ -28,10 +28,7 @@ struct LiveAPI {
             throw APIError.invalidURL
         }
         let req = try HTTPClient.authorizedRequest(url: url)
-        let (data, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
+        let (data, _) = try await APIClient.shared.send(req) // gặp 401 tự refresh token
         let root = try JSONSerialization.jsonObject(with: data)
         let list: [[String: Any]]
         if let arr = root as? [[String: Any]] {
@@ -73,17 +70,11 @@ struct LiveAPI {
             throw APIError.invalidURL
         }
         let req = try HTTPClient.authorizedRequest(url: url, method: "DELETE")
-        let (_, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
+        let (_, _) = try await APIClient.shared.send(req) // gặp 401 tự refresh token
     }
 
     private func decodeJoin(_ req: URLRequest) async throws -> LiveJoinResponse {
-        let (data, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
+        let (data, _) = try await APIClient.shared.send(req) // gặp 401 tự refresh token
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw APIError.decodingFailed
         }

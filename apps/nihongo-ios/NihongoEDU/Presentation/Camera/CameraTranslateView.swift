@@ -48,7 +48,7 @@ struct CameraTranslateView: View {
                 Spacer()
                 HStack {
                     Button(model.paused ? "Tiếp tục" : "Tạm dừng") {
-                        model.paused.toggle()
+                        model.setPaused(!model.paused)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(model.paused ? .green : .orange)
@@ -82,8 +82,8 @@ final class CameraTranslateViewModel: NSObject, ObservableObject {
 
     let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
-    private let queue = DispatchQueue(label: "com.edu.nihongo.camera")
-    private var lastScan = Date.distantPast
+    nonisolated let cameraQueue = DispatchQueue(label: "com.edu.nihongo.camera")
+    nonisolated let gate = FrameGate()
     private let translateAPI = TranslateAPI()
     private var started = false
 
@@ -95,12 +95,20 @@ final class CameraTranslateViewModel: NSObject, ObservableObject {
             return
         }
         configureSession()
-        queue.async { [weak self] in self?.session.startRunning() }
+        let session = self.session
+        cameraQueue.async { session.startRunning() }
         started = true
     }
 
     func stop() {
-        queue.async { [weak self] in self?.session.stopRunning() }
+        let session = self.session
+        cameraQueue.async { session.stopRunning() }
+    }
+
+    func setPaused(_ value: Bool) {
+        paused = value
+        let gate = self.gate
+        cameraQueue.async { gate.setPaused(value) }
     }
 
     private func requestCameraAccess() async -> Bool {
@@ -128,7 +136,7 @@ final class CameraTranslateViewModel: NSObject, ObservableObject {
         output.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
         ]
-        output.setSampleBufferDelegate(self, queue: queue)
+        output.setSampleBufferDelegate(self, queue: cameraQueue)
         if session.canAddOutput(output) {
             session.addOutput(output)
         }
@@ -137,72 +145,83 @@ final class CameraTranslateViewModel: NSObject, ObservableObject {
         }
     }
 
-    fileprivate func handleFrame(_ pixelBuffer: CVPixelBuffer) {
-        Task { @MainActor in
-            guard !paused, !isProcessing else { return }
-            let now = Date()
-            guard now.timeIntervalSince(lastScan) >= 0.95 else { return }
-            lastScan = now
-            isProcessing = true
+    /// Kết quả OCR (đã chạy xong trên camera queue) → dịch → hiện. Chạy trên main.
+    fileprivate func show(_ lines: [RecognizedLine], imageSize size: CGSize) async {
+        isProcessing = true
+        var next: [OverlayLabel] = []
+        for line in lines {
+            let translated = (try? await translateAPI.translateJapanese(line.text)) ?? line.text
+            next.append(OverlayLabel(rect: line.rect, original: line.text, translated: translated))
+        }
+        imageSize = size
+        labels = next
+        isProcessing = false
+    }
+}
 
-            let width = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
-            let height = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+struct RecognizedLine {
+    let rect: CGRect
+    let text: String
+}
 
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["ja-JP", "ja"]
-            request.usesLanguageCorrection = true
+/// Bộ chặn frame. CHỈ dùng trên camera queue (serial), nên không cần khóa.
+final class FrameGate {
+    private var lastScan = Date.distantPast
+    private var busy = false
+    private(set) var paused = false
 
-            do {
-                let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up)
-                try handler.perform([request])
-                let observations = Array((request.results ?? []).prefix(8))
-                var next: [OverlayLabel] = []
+    /// Cho qua tối đa 1 frame mỗi `minInterval` giây, và không khi frame trước chưa xong.
+    func shouldProcess(at now: Date, minInterval: TimeInterval = 0.95) -> Bool {
+        guard !paused, !busy, now.timeIntervalSince(lastScan) >= minInterval else { return false }
+        busy = true
+        lastScan = now
+        return true
+    }
 
-                for obs in observations {
-                    guard let candidate = obs.topCandidates(1).first else { continue }
-                    let text = candidate.string.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !text.isEmpty else { continue }
+    func finish() { busy = false }
+    func setPaused(_ value: Bool) { paused = value }
+}
 
-                    let box = obs.boundingBox
-                    let rect = CGRect(
-                        x: box.minX * width,
-                        y: (1 - box.maxY) * height,
-                        width: box.width * width,
-                        height: box.height * height
-                    )
-                    guard rect.width >= 8, rect.height >= 8 else { continue }
-
-                    let translated: String
-                    do {
-                        translated = try await translateAPI.translateJapanese(text)
-                    } catch {
-                        translated = text
-                    }
-                    next.append(OverlayLabel(rect: rect, original: text, translated: translated))
-                }
-
-                imageSize = CGSize(width: width, height: height)
-                labels = next
-            } catch {
-                // bỏ qua frame lỗi
-            }
-            isProcessing = false
+/// OCR tiếng Nhật bằng Vision. Hàm đồng bộ, gọi trên camera queue (KHÔNG phải main).
+enum JapaneseOCR {
+    static func recognize(_ pixelBuffer: CVPixelBuffer) -> [RecognizedLine] {
+        let width = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+        let height = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages = ["ja-JP", "ja"]
+        request.usesLanguageCorrection = true
+        guard (try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up).perform([request])) != nil else {
+            return []
+        }
+        return (request.results ?? []).prefix(8).compactMap { obs in
+            guard let text = obs.topCandidates(1).first?.string.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !text.isEmpty else { return nil }
+            let box = obs.boundingBox // Vision: gốc ở góc DƯỚI trái, giá trị 0...1
+            let rect = CGRect(x: box.minX * width, y: (1 - box.maxY) * height,
+                              width: box.width * width, height: box.height * height)
+            return rect.width >= 8 && rect.height >= 8 ? RecognizedLine(rect: rect, text: text) : nil
         }
     }
 }
 
+/// Bản cũ: mỗi frame (30 lần/giây) tạo một Task nhảy lên main, rồi chạy Vision `.accurate`
+/// ĐỒNG BỘ TRÊN MAIN THREAD: giao diện khựng 0,1–0,5 giây mỗi giây. Giờ: chặn frame và chạy Vision
+/// ngay trên camera queue; chỉ kết quả (vài dòng chữ) mới lên main.
 extension CameraTranslateViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
     nonisolated func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        let retained = Unmanaged.passRetained(pixelBuffer)
+        guard gate.shouldProcess(at: Date()),
+              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let size = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
+        let lines = JapaneseOCR.recognize(pixelBuffer)
+        let gate = self.gate, queue = self.cameraQueue
         Task { @MainActor in
-            let buffer = retained.takeRetainedValue()
-            self.handleFrame(buffer)
+            await self.show(lines, imageSize: size)
+            queue.async { gate.finish() }
         }
     }
 }

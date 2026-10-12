@@ -1,5 +1,7 @@
 import Foundation
 
+/// Dựng request cho các API cũ dùng `[String: Any]`. Token không gắn ở đây nữa: `APIClient.send`
+/// gắn token và xử lý 401 (refresh rồi gửi lại).
 enum HTTPClient {
     static func authorizedRequest(
         url: URL,
@@ -10,9 +12,6 @@ enum HTTPClient {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let token = TokenStore.accessToken() {
-            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         if let jsonBody {
             req.httpBody = try JSONSerialization.data(withJSONObject: jsonBody)
         }

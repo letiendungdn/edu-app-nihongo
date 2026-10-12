@@ -1,11 +1,18 @@
 import Foundation
 import Security
 
+extension Notification.Name {
+    /// Token vừa được lưu hoặc xóa: AuthState cập nhật theo.
+    static let authTokensChanged = Notification.Name("authTokensChanged")
+}
+
 enum TokenStore {
     private static let service = "com.edu.nihongo.ios"
+    private static let installFlagKey = "hasLaunchedBefore"
 
     static func saveAccessToken(_ token: String) {
         write(token, account: "access_token")
+        NotificationCenter.default.post(name: .authTokensChanged, object: nil)
     }
 
     static func saveRefreshToken(_ token: String) {
@@ -18,9 +25,19 @@ enum TokenStore {
     static func clear() {
         delete(account: "access_token")
         delete(account: "refresh_token")
+        NotificationCenter.default.post(name: .authTokensChanged, object: nil)
     }
 
     static var isLoggedIn: Bool { accessToken() != nil }
+
+    /// Keychain KHÔNG bị xóa khi gỡ app (khác UserDefaults và file trong sandbox). Cài lại app thì
+    /// token cũ vẫn còn: app tưởng đang đăng nhập với một token đã hết hạn hoặc của người khác.
+    /// Cờ trong UserDefaults thì bị xóa theo app, nên "chưa có cờ" nghĩa là lần chạy đầu sau khi cài.
+    static func clearIfFreshInstall(defaults: UserDefaults = .standard, clearKeychain: () -> Void = { TokenStore.clear() }) {
+        guard !defaults.bool(forKey: installFlagKey) else { return }
+        clearKeychain()
+        defaults.set(true, forKey: installFlagKey)
+    }
 
     private static func write(_ token: String, account: String) {
         let data = Data(token.utf8)

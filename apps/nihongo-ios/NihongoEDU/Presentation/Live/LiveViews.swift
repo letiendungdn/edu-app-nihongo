@@ -67,7 +67,7 @@ struct LiveListView: View {
         do {
             sessions = try await LiveAPI().listSessions()
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
         }
         loading = false
     }
@@ -76,7 +76,7 @@ struct LiveListView: View {
         do {
             joinPayload = try await LiveAPI().joinSession(id: id)
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
         }
     }
 
@@ -84,7 +84,7 @@ struct LiveListView: View {
         do {
             hostPayload = try await LiveAPI().createSession(title: titleInput)
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
         }
     }
 }
@@ -162,7 +162,7 @@ struct LiveHostView: View {
             try await room.localParticipant.setMicrophone(enabled: true)
             connecting = false
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
             connecting = false
         }
     }
@@ -264,7 +264,7 @@ struct LiveViewerView: View {
             try await room.connect(url: join.wsUrl, token: join.token)
             connecting = false
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
             connecting = false
         }
     }

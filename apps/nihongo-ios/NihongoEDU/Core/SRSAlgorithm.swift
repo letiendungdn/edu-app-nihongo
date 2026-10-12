@@ -9,12 +9,16 @@ enum SRSAlgorithm {
         let mastered: Bool
     }
 
-    /// SM-2 algorithm. quality: 1=Lại, 2=Khó, 3=Ổn, 4=Dễ
+    /// SM-2. quality: 1=Lại, 2=Khó, 3=Ổn, 4=Dễ.
+    /// Hàm thuần: `now` và `calendar` truyền vào để test chính xác tuyệt đối
+    /// (bản cũ đọc thẳng `.now`, test không kiểm tra được ngày ôn kế tiếp).
     static func calculateNextReview(
         easeFactor: Double,
         interval: Int,
         repetitions: Int,
-        quality: Int
+        quality: Int,
+        now: Date,
+        calendar: Calendar = .current
     ) -> ReviewResult {
         var ef = easeFactor
         var ivl = interval
@@ -34,7 +38,8 @@ enum SRSAlgorithm {
 
         ef = max(1.3, ef + 0.1 - Double(5 - quality) * (0.08 + Double(5 - quality) * 0.02))
 
-        let nextReview = Calendar.current.date(byAdding: .day, value: max(1, ivl), to: .now) ?? .now
+        // Cộng "ngày lịch" (không cộng cứng 86 400 giây): đúng cả ngày đổi giờ mùa hè
+        let nextReview = calendar.date(byAdding: .day, value: max(1, ivl), to: now) ?? now
         let mastered = reps >= 5 && ivl >= 21
 
         return ReviewResult(

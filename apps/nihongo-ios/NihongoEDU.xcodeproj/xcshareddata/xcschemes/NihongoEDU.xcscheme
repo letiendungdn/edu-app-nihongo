@@ -35,6 +35,20 @@
                ReferencedContainer = "container:NihongoEDU.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "220B6CA673A676883860D45C"
+               BuildableName = "NihongoEDUUITests.xctest"
+               BlueprintName = "NihongoEDUUITests"
+               ReferencedContainer = "container:NihongoEDU.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "FBFE8CE42AEA20C5DC47A387"
                BuildableName = "NihongoEDUTests.xctest"
                BlueprintName = "NihongoEDUTests"
+               ReferencedContainer = "container:NihongoEDU.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "220B6CA673A676883860D45C"
+               BuildableName = "NihongoEDUUITests.xctest"
+               BlueprintName = "NihongoEDUUITests"
                ReferencedContainer = "container:NihongoEDU.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -98,22 +123,22 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "GEMINI_API_KEY"
-            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;&quot;]"
+            value = "[&quot;value&quot;: &quot;&quot;, &quot;isEnabled&quot;: false]"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "KEYCLOAK_CLIENT_ID"
-            value = "[&quot;value&quot;: &quot;nihongo-mobile&quot;, &quot;isEnabled&quot;: false]"
+            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;nihongo-mobile&quot;]"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "KEYCLOAK_REALM"
-            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;edu-app&quot;]"
+            value = "[&quot;value&quot;: &quot;edu-app&quot;, &quot;isEnabled&quot;: false]"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "KEYCLOAK_URL"
-            value = "[&quot;value&quot;: &quot;http://localhost:8080&quot;, &quot;isEnabled&quot;: false]"
+            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;http://localhost:8080&quot;]"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

@@ -1,26 +1,39 @@
 import Foundation
 
-struct ProgressAPI {
-    private let session: URLSession
-
-    init(session: URLSession = .shared) {
-        self.session = session
+struct LearningProgressDTO: Decodable {
+    struct Summary: Decodable {
+        let currentStreak: Int?
+        let longestStreak: Int?
+        let totalSeconds: Int?
+        let totalCards: Int?
+        let vocabTotal: Int?
+        let kanjiTotal: Int?
     }
+    struct Day: Decodable {
+        let studyDate: String?
+        let seconds: Int?
+        let cardsReviewed: Int?
+        let vocabCount: Int?
+        let kanjiCount: Int?
+    }
+    let summary: Summary?
+    let recentDays: [Day]?
+}
 
-    /// Đồng bộ review bank lên server (giống Flutter syncReviewBank).
-    func syncReviewBank(items: [[String: Any]]) async throws {
-        guard !items.isEmpty else { return }
-        guard let url = URL(string: "\(APIConfig.baseURL)/progress/review") else {
-            throw APIError.invalidURL
+/// Gateway bọc mọi response: `{ success, data: ... }`.
+struct Envelope<T: Decodable>: Decodable {
+    let data: T?
+}
+
+struct ProgressAPI {
+    var client: APIClient = .shared
+
+    /// `GET /api/learning-progress`: view + materialized view ở backend.
+    func mine() async throws -> LearningProgressDTO {
+        let (data, _) = try await client.send(try client.request("learning-progress"))
+        guard let dto = try JSONDecoder().decode(Envelope<LearningProgressDTO>.self, from: data).data else {
+            throw APIError.decodingFailed
         }
-        let req = try HTTPClient.authorizedRequest(
-            url: url,
-            method: "POST",
-            jsonBody: ["items": items]
-        )
-        let (_, response) = try await session.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw APIError.badStatus(http.statusCode)
-        }
+        return dto
     }
 }

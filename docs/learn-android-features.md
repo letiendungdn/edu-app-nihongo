@@ -1,6 +1,6 @@
 # Android — 9 Tính Năng Mới Và Những Gì Học Được Khi Làm
 
-Tiếp nối [learn-android-kotlin.md](./learn-android-kotlin.md) (Kotlin, Compose, kiến trúc, 14 lỗi đã sửa). File này kể từng tính năng đã thêm vào `apps/nihongo-android`:
+Tiếp nối [learn-android-kotlin.md](./learn-android-kotlin.md) (Kotlin, Compose, kiến trúc, 14 lỗi đã sửa). Cùng 9 tính năng này làm bằng SwiftUI: [learn-swift-ios.md](./learn-swift-ios.md). File này kể từng tính năng đã thêm vào `apps/nihongo-android`:
 
 - Tính năng làm gì, nằm ở file nào.
 - Kỹ thuật Android chính và lý do chọn.

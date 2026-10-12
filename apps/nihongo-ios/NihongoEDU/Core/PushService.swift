@@ -12,55 +12,53 @@ final class PushService: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().delegate = self
     }
 
-    /// Ask for permission only if the user hasn't decided yet.
-    /// Call this once after the user logs in.
-    func requestPermissionIfNeeded() async {
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else { return }
-
-        let granted = (try? await center.requestAuthorization(options: [.alert, .badge, .sound])) ?? false
-        if granted {
-            await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
-        }
+    /// Gọi MỖI lần mở app. APNs có thể cấp token mới (cài lại app, khôi phục máy); bản cũ chỉ gọi
+    /// registerForRemoteNotifications đúng lần đầu cấp quyền, nên lần mở sau không bao giờ có token,
+    /// và server giữ token cũ đã chết.
+    func registerIfAuthorized() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return }
+        await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
     }
 
-    /// Called by AppDelegate when APNs returns a device token.
+    /// Hỏi quyền nếu người dùng chưa quyết định. Gọi sau khi đăng nhập hoặc khi bấm "Bật nhắc ôn".
+    @discardableResult
+    func requestPermissionIfNeeded() async -> Bool {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        if settings.authorizationStatus == .notDetermined {
+            let granted = (try? await center.requestAuthorization(options: [.alert, .badge, .sound])) ?? false
+            if granted { await MainActor.run { UIApplication.shared.registerForRemoteNotifications() } }
+            return granted
+        }
+        return settings.authorizationStatus == .authorized
+    }
+
+    /// AppDelegate gọi khi APNs trả token.
     func setDeviceToken(_ data: Data) {
         deviceToken = data.map { String(format: "%02x", $0) }.joined()
         Task { await registerWithBackend() }
     }
 
-    private func registerWithBackend() async {
-        guard let token = deviceToken,
-              let accessToken = TokenStore.accessToken(),
-              let url = URL(string: "\(APIConfig.baseURL)/push/register") else { return }
-
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        req.httpBody = try? JSONEncoder().encode(["token": token, "platform": "ios"])
-        _ = try? await URLSession.shared.data(for: req)
+    /// Token có thể tới trước khi đăng nhập: gọi lại ngay sau khi đăng nhập xong.
+    func registerWithBackend(client: APIClient = .shared) async {
+        guard let token = deviceToken, client.tokens.accessToken() != nil,
+              let req = try? client.request("push/register", method: "POST", body: ["token": token, "platform": "ios"])
+        else { return }
+        _ = try? await client.send(req)
     }
 
-    func unregisterFromBackend() async {
-        guard let token = deviceToken,
-              let accessToken = TokenStore.accessToken(),
-              let url = URL(string: "\(APIConfig.baseURL)/push/unregister") else { return }
-
-        var req = URLRequest(url: url)
-        req.httpMethod = "DELETE"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        req.httpBody = try? JSONEncoder().encode(["token": token])
-        _ = try? await URLSession.shared.data(for: req)
+    func unregisterFromBackend(client: APIClient = .shared) async {
+        guard let token = deviceToken, client.tokens.accessToken() != nil,
+              let req = try? client.request("push/unregister", method: "DELETE", body: ["token": token])
+        else { return }
+        _ = try? await client.send(req)
         deviceToken = nil
     }
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    // Show notification banner even when app is in foreground
+    // Hiện banner cả khi app đang mở
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -69,20 +67,16 @@ final class PushService: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .badge, .sound])
     }
 
-    // Deep-link handling: payload { screen: "srs" } navigates to SRS tab
+    // Bấm thông báo (push từ server hoặc nhắc ôn cục bộ): payload { screen: "srs" }
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        let userInfo = response.notification.request.content.userInfo
-        if let screen = userInfo["screen"] as? String, screen == "srs" {
-            NotificationCenter.default.post(name: .navigateToSRS, object: nil)
+        let screen = response.notification.request.content.userInfo["screen"] as? String
+        Task { @MainActor in
+            if screen == "srs" { AppRouter.shared.open(.srs) }
+            completionHandler()
         }
-        completionHandler()
     }
-}
-
-extension Notification.Name {
-    static let navigateToSRS = Notification.Name("navigateToSRS")
 }

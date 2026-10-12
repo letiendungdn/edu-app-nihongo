@@ -455,7 +455,7 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 | 5    | SRS algorithm + XCTest | `Core/SRSAlgorithm.swift`, `NihongoEDUTests/` |
 
 
-**Đọc thêm:** [roadmap-swift.md](./roadmap-swift.md)
+**Đọc thêm:** [learn-swift-ios.md](./learn-swift-ios.md) (18 lỗi đã sửa, 9 tính năng, sơ đồ, câu hỏi phỏng vấn), [roadmap-swift.md](./roadmap-swift.md)
 
 **Sản phẩm tuần:** chạy XCTest `SRSAlgorithmTests` trên simulator.
 
@@ -700,7 +700,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 | React Native  | [roadmap-react-native.md](./roadmap-react-native.md)                                              |
 | Android       | [learn-android-kotlin.md](./learn-android-kotlin.md) · [roadmap-android.md](./roadmap-android.md) |
 | Flutter       | [roadmap-flutter.md](./roadmap-flutter.md)                                                        |
-| Swift         | [roadmap-swift.md](./roadmap-swift.md)                                                            |
+| Swift         | [learn-swift-ios.md](./learn-swift-ios.md) · [roadmap-swift.md](./roadmap-swift.md)               |
 | ReactJS (web) | [roadmap-reactjs.md](./roadmap-reactjs.md)                                                        |
 | Senior mobile | [learn-mobile-senior.md](./learn-mobile-senior.md)                                                |
 

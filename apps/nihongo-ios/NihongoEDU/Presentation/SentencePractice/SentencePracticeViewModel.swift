@@ -25,7 +25,7 @@ final class SentencePracticeViewModel {
             let feedback = try await GeminiAPI.analyze(trimmed)
             history.insert(FeedbackEntry(sentence: trimmed, feedback: feedback), at: 0)
         } catch {
-            self.error = error.localizedDescription
+            self.error = error.userMessage
         }
     }
 }

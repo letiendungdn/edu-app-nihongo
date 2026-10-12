@@ -4,12 +4,32 @@ import SwiftData
 struct VocabView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = VocabViewModel()
+    /// Tab đang chọn: @SceneStorage để xoay máy hay bị hệ thống giết app vẫn ở đúng tab.
+    @SceneStorage("lesson.tab") private var tab: LessonTab = .vocab
 
     var body: some View {
-        VocabContent(lesson: viewModel.selectedLesson, viewModel: viewModel, modelContext: modelContext)
-            // .id forces @Query to rebuild with new predicate when lesson changes
-            .id(viewModel.selectedLesson)
-            .navigationTitle("Từ vựng")
+        VStack(spacing: 0) {
+            Picker("Nội dung", selection: $tab) {
+                ForEach(LessonTab.allCases) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+
+            switch tab {
+            case .vocab:
+                VocabContent(lesson: viewModel.selectedLesson, viewModel: viewModel, modelContext: modelContext)
+                    // .id forces @Query to rebuild with new predicate when lesson changes
+                    .id(viewModel.selectedLesson)
+            case .grammar:
+                LessonPickerOnly(viewModel: viewModel)
+                GrammarList(lesson: viewModel.selectedLesson).id(viewModel.selectedLesson)
+            case .kanji:
+                LessonPickerOnly(viewModel: viewModel)
+                KanjiList(lesson: viewModel.selectedLesson).id(viewModel.selectedLesson)
+            }
+        }
+            .navigationTitle("Bài học")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -108,6 +128,16 @@ private struct VocabContent: View {
 }
 
 // MARK: - Subviews
+
+private struct LessonPickerOnly: View {
+    let viewModel: VocabViewModel
+    var body: some View {
+        Picker("Bài học", selection: Binding(get: { viewModel.selectedLesson }, set: { viewModel.selectedLesson = $0 })) {
+            ForEach(1...50, id: \.self) { Text("Bài \($0)").tag($0) }
+        }
+        .padding(.horizontal, 16)
+    }
+}
 
 private struct LessonPickerBar: View {
     @Binding var selected: Int

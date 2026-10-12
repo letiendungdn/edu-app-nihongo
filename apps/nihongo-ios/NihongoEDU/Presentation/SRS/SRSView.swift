@@ -6,7 +6,12 @@ struct SRSView: View {
     @State private var viewModel = SRSViewModel()
 
     var body: some View {
-        SRSContent(viewModel: viewModel, modelContext: modelContext)
+        // Dựng lại hàng ôn mỗi phút với `now` mới: thẻ đến hạn trong lúc đang mở màn hình cũng hiện ra.
+        // Bản cũ tính Date.now một lần lúc vẽ (giống lỗi L1 bên Android).
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            SRSContent(now: context.date, viewModel: viewModel, modelContext: modelContext)
+                .id(Int(context.date.timeIntervalSince1970 / 60))
+        }
             .navigationTitle("Ôn tập SRS")
             .navigationBarTitleDisplayMode(.inline)
     }
@@ -18,11 +23,12 @@ private struct SRSContent: View {
     let viewModel: SRSViewModel
     let modelContext: ModelContext
 
-    @Query(sort: \SRSCard.nextReviewAt) private var allCards: [SRSCard]
+    @Query private var dueCards: [SRSCard]
 
-    private var dueCards: [SRSCard] {
-        let now = Date.now
-        return allCards.filter { !$0.mastered && $0.nextReviewAt <= now }
+    init(now: Date, viewModel: SRSViewModel, modelContext: ModelContext) {
+        self.viewModel = viewModel
+        self.modelContext = modelContext
+        _dueCards = Query(filter: SRSQueries.due(at: now), sort: \SRSCard.nextReviewAt)
     }
 
     var body: some View {
@@ -60,6 +66,7 @@ private struct SRSContent: View {
 private struct ReviewView: View {
     @Environment(AuthState.self) private var authState
     @Environment(NetworkMonitor.self) private var network
+    @Environment(SyncEngine.self) private var engine
     let card: SRSCard
     let viewModel: SRSViewModel
     let progress: Double
@@ -93,6 +100,7 @@ private struct ReviewView: View {
                     card: card,
                     viewModel: viewModel,
                     modelContext: modelContext,
+                    engine: engine,
                     network: network,
                     auth: authState
                 )
@@ -148,6 +156,7 @@ private struct RatingButtons: View {
     let card: SRSCard
     let viewModel: SRSViewModel
     let modelContext: ModelContext
+    let engine: SyncEngine
     let network: NetworkMonitor
     let auth: AuthState
 
@@ -167,6 +176,7 @@ private struct RatingButtons: View {
                         btn.q,
                         card: card,
                         modelContext: modelContext,
+                        engine: engine,
                         network: network,
                         auth: auth
                     )

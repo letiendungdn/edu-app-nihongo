@@ -48,3 +48,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# macOS Finder và trạng thái cửa sổ Xcode (máy local)
+.DS_Store
+xcuserdata/
+*.xcuserstate
