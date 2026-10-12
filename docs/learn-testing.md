@@ -1,5 +1,7 @@
 # Học Testing — Từ Project Này
 
+Cách dùng Jest cụ thể (mock, fake timers, NestJS testing module, supertest, coverage): xem [learn-jest.md](./learn-jest.md).
+
 ## 1. Triết lý testing của senior
 
 ```

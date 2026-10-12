@@ -745,7 +745,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 6. [run-mobile.md](./run-mobile.md) ← chạy 4 app mobile + unit test
 7. Roadmap stack đã chọn: [roadmap-react-native.md](./roadmap-react-native.md) / [roadmap-android.md](./roadmap-android.md) / [roadmap-flutter.md](./roadmap-flutter.md) / [roadmap-swift.md](./roadmap-swift.md) / [roadmap-reactjs.md](./roadmap-reactjs.md)
 8. [canvas-tools.md](./canvas-tools.md) ← Canvas Tools + Japan Map (tùy chọn, sau Tuần 6)
-9. [learn-testing.md](./learn-testing.md)
+9. [learn-testing.md](./learn-testing.md) · [learn-jest.md](./learn-jest.md) (Jest qua test thật của backend)
 10. [learn-kafka.md](./learn-kafka.md)
 11. [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) ← MQTT, RxJS, Flyway, view, DDD
 12. [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) ← câu hỏi phỏng vấn theo JD backend NestJS
