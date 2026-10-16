@@ -29,12 +29,19 @@ export default function PronunciationView() {
   const { data: lessonVocab = [], isLoading: vocabLoading } = useVocabulariesQuery(
     source === 'vocab' ? currentLesson : 0,
   );
-  const loading = source === 'vocab' && vocabLoading;
 
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
-  const recorder = useAudioRecorder();
+  const {
+    isRecording,
+    hasRecording,
+    error: recorderError,
+    startRecording,
+    stopRecording,
+    playRecording,
+    clearRecording,
+  } = useAudioRecorder();
 
-  const { data: kanaCharts } = useKanaChartsQuery();
+  const { data: kanaCharts, isLoading: kanaLoading } = useKanaChartsQuery();
 
   const kanaItems = useMemo(() => {
     const sections =
@@ -57,9 +64,10 @@ export default function PronunciationView() {
 
   const items: PronunciationItem[] = source === 'kana' ? kanaItems : vocabItems;
   const current = items[currentIndex];
+  const loading = source === 'vocab' ? vocabLoading : kanaLoading;
 
   useEffect(() => {
-    recorder.clearRecording();
+    clearRecording();
     setIsFlipped(false);
     if (!current?.speakText) return undefined;
 
@@ -68,26 +76,28 @@ export default function PronunciationView() {
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [currentIndex, current?.speakText, autoPlay, source, kanaType, currentLesson, recorder]);
+    // clearRecording is stable; do not depend on the whole recorder object
+    // or stop/start recording will wipe the blob via this effect.
+  }, [currentIndex, current?.speakText, autoPlay, clearRecording]);
 
   useEffect(() => {
     stopPlayAll();
-    recorder.clearRecording();
+    clearRecording();
     setCurrentIndex(0);
     setIsFlipped(false);
-  }, [source, kanaType, currentLesson, stopPlayAll, recorder]);
+  }, [source, kanaType, currentLesson, stopPlayAll, clearRecording]);
 
   const goNext = () => {
     if (!items.length) return;
     stopAudio();
-    recorder.clearRecording();
+    clearRecording();
     setCurrentIndex((prev) => (prev + 1) % items.length);
   };
 
   const goPrev = () => {
     if (!items.length) return;
     stopAudio();
-    recorder.clearRecording();
+    clearRecording();
     setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
   };
 
@@ -100,7 +110,7 @@ export default function PronunciationView() {
       items.map((item) => item.speakText),
       {
         onItemIndex: (index) => {
-          recorder.clearRecording();
+          clearRecording();
           setIsFlipped(false);
           setCurrentIndex(index);
         },
@@ -110,10 +120,10 @@ export default function PronunciationView() {
 
   const handleRecordToggle = () => {
     stopAudio();
-    if (recorder.isRecording) {
-      recorder.stopRecording();
+    if (isRecording) {
+      stopRecording();
     } else {
-      void recorder.startRecording();
+      void startRecording();
     }
   };
 
@@ -225,27 +235,27 @@ export default function PronunciationView() {
               <span className="step-num">2</span>
               <button
                 type="button"
-                className={`btn ${recorder.isRecording ? 'btn-danger' : 'btn-primary'}`}
+                className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'}`}
                 onClick={handleRecordToggle}
               >
-                {recorder.isRecording ? '⏹ Dừng ghi' : '🎤 Ghi âm'}
+                {isRecording ? '⏹ Dừng ghi' : '🎤 Ghi âm'}
               </button>
-              {recorder.isRecording && <span className="recording-dot">Đang ghi...</span>}
+              {isRecording && <span className="recording-dot">Đang ghi...</span>}
             </div>
             <div className="step-item">
               <span className="step-num">3</span>
               <button
                 type="button"
                 className="btn btn-outline"
-                onClick={recorder.playRecording}
-                disabled={!recorder.hasRecording}
+                onClick={playRecording}
+                disabled={!hasRecording}
               >
                 ▶️ Nghe bản ghi
               </button>
             </div>
           </div>
 
-          {recorder.error && <p className="pronunciation-error">{recorder.error}</p>}
+          {recorderError && <p className="pronunciation-error">{recorderError}</p>}
 
           <div className="pronunciation-controls">
             <PlayAllButton

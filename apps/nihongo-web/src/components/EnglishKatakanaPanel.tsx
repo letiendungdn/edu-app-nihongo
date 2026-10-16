@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   loadSpeechVoices,
   playAudio,
@@ -50,11 +50,30 @@ function AudioButton({
 }
 
 export default function EnglishKatakanaPanel({ data }: EnglishKatakanaPanelProps) {
-  const [openId, setOpenId] = useState<string>(data.sections[0]?.id ?? '');
+  // Mở hết mặc định + cho nhiều mục cùng mở: Chrome Read aloud / đọc trang mới thấy đủ nội dung
+  // (accordion cũ chỉ giữ 1 mục → đóng là gỡ DOM → trình duyệt đọc bị cắt).
+  const allIdsKey = data.sections.map((s) => s.id).join('\0');
+  const allIds = useMemo(() => allIdsKey.split('\0').filter(Boolean), [allIdsKey]);
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(allIds));
+
+  useEffect(() => {
+    setOpenIds(new Set(allIds));
+  }, [allIds]);
 
   useEffect(() => {
     void loadSpeechVoices();
   }, []);
+
+  const allOpen = openIds.size === allIds.length && allIds.length > 0;
+
+  const toggleSection = (id: string) => {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <div className="english-katakana">
@@ -72,22 +91,37 @@ export default function EnglishKatakanaPanel({ data }: EnglishKatakanaPanelProps
         </ul>
       </div>
 
+      <div className="english-katakana-toolbar">
+        <button
+          type="button"
+          className="btn btn-outline english-katakana-toolbar-btn"
+          onClick={() => setOpenIds(allOpen ? new Set() : new Set(allIds))}
+        >
+          {allOpen ? 'Thu gọn tất cả' : 'Mở tất cả'}
+        </button>
+      </div>
+
       <div className="english-katakana-sections">
         {data.sections.map((section) => {
-          const isOpen = openId === section.id;
+          const isOpen = openIds.has(section.id);
+          const panelId = `english-katakana-panel-${section.id}`;
           return (
             <div key={section.id} className="english-katakana-section glass-panel">
               <button
                 type="button"
                 className="english-katakana-section-header"
-                onClick={() => setOpenId(isOpen ? '' : section.id)}
+                onClick={() => toggleSection(section.id)}
                 aria-expanded={isOpen}
+                aria-controls={panelId}
               >
                 <span className="english-katakana-section-title">{section.title}</span>
                 <span className="english-katakana-section-chevron">{isOpen ? '▲' : '▼'}</span>
               </button>
-              {isOpen && (
-                <div className="english-katakana-section-body">
+              <div
+                id={panelId}
+                className="english-katakana-section-body"
+                hidden={!isOpen}
+              >
                   <p className="english-katakana-summary">
                     <AudioButton
                       onClick={() => speakVietnamese(section.summary)}
@@ -208,8 +242,7 @@ export default function EnglishKatakanaPanel({ data }: EnglishKatakanaPanelProps
                       </ul>
                     </div>
                   )}
-                </div>
-              )}
+              </div>
             </div>
           );
         })}

@@ -142,22 +142,35 @@ function shouldUseServerTts(
   return !pickVoiceForLang(voices, lang);
 }
 
+const SERVER_TTS_TIMEOUT_MS = 8_000;
+
 async function fetchServerTts(text: string, lang: string, sessionId: number): Promise<Response> {
-  const request = () =>
-    fetch('/api/tts', {
+  const request = () => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), SERVER_TTS_TIMEOUT_MS);
+    return fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, lang }),
-    });
+      signal: controller.signal,
+    }).finally(() => window.clearTimeout(timer));
+  };
 
-  const first = await request();
-  // Edge TTS đôi lúc không trả audio khi bị gọi dồn (phát tất cả). Gửi lại một lần.
-  if (first.ok || (first.status !== 400 && first.status !== 429 && first.status !== 503)) {
-    return first;
+  try {
+    const first = await request();
+    // Edge TTS đôi lúc không trả audio khi bị gọi dồn (phát tất cả). Gửi lại một lần.
+    if (first.ok || (first.status !== 400 && first.status !== 429 && first.status !== 503)) {
+      return first;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 800));
+    if (sessionId !== playSessionId) return first;
+    return request();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Server TTS timed out');
+    }
+    throw err;
   }
-  await new Promise((resolve) => window.setTimeout(resolve, 800));
-  if (sessionId !== playSessionId) return first;
-  return request();
 }
 
 async function playServerAudio(text: string, lang: string): Promise<void> {
@@ -241,17 +254,20 @@ async function speakText(
   rate: number,
   forceServer = false,
 ): Promise<void> {
-  if (shouldUseServerTts(lang, voices, forceServer)) {
-    await playServerAudio(text, lang);
-    return;
-  }
-
   const voice = pickVoiceForLang(voices, lang);
-  if (!voice) {
-    await playServerAudio(text, lang);
-    return;
+  const preferServer = shouldUseServerTts(lang, voices, forceServer);
+
+  if (preferServer || !voice) {
+    try {
+      await playServerAudio(text, lang);
+      return;
+    } catch {
+      // Edge TTS hay bị 403/timeout — fallback giọng trình duyệt nếu có.
+      if (!voice) return;
+    }
   }
 
+  if (!voice) return;
   await speakWithBrowser(text, lang, voice, rate);
 }
 

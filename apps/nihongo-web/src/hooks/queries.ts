@@ -40,6 +40,7 @@ import {
   searchVocabularies,
   fetchFeatureFlags,
   fetchKanjiByJlpt,
+  fetchGrammarCountByJlpt,
   fetchVocabulariesRange,
   fetchListeningPlaylist,
 } from '../api';
@@ -76,6 +77,7 @@ export const queryKeys = {
   vocabSearch: (query: string) => ['vocab-search', query] as const,
   featureFlags: (withToken: boolean) => ['feature-flags', withToken] as const,
   kanjiByJlpt: (level: string) => ['kanji-jlpt', level] as const,
+  grammarCountByJlpt: (level: string) => ['grammar-count-jlpt', level] as const,
   vocabRange: (from: number, to: number) => domainQueryKeys.vocab.byRange(from, to),
   listeningPlaylist: (from: number, to: number, level?: string) =>
     ['listening-playlist', from, to, level] as const,
@@ -191,6 +193,15 @@ export function useKanjiByJlptQuery(jlptLevel: string) {
   return useQuery({
     queryKey: queryKeys.kanjiByJlpt(jlptLevel),
     queryFn: () => fetchKanjiByJlpt(jlptLevel),
+    enabled: Boolean(jlptLevel),
+    staleTime: STALE_5M,
+  });
+}
+
+export function useGrammarCountByJlptQuery(jlptLevel: string) {
+  return useQuery({
+    queryKey: queryKeys.grammarCountByJlpt(jlptLevel),
+    queryFn: () => fetchGrammarCountByJlpt(jlptLevel),
     enabled: Boolean(jlptLevel),
     staleTime: STALE_5M,
   });

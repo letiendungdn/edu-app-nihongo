@@ -1,8 +1,72 @@
 .conversation-view {
-  max-width: 820px;
+  max-width: 960px;
 }
 
 .intro-script {
+  text-align: center;
+}
+
+.intro-script-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.intro-script-full-ja {
+  margin: 0;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  text-align: left;
+}
+
+.intro-script-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.intro-script-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.intro-script-table th,
+.intro-script-table td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.55rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+.intro-script-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.intro-script-table tbody tr {
+  cursor: pointer;
+}
+
+.intro-script-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.intro-script-table tbody tr.is-active {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.intro-script-table td:first-child,
+.intro-script-table th:first-child {
+  width: 2rem;
+  color: var(--text-secondary);
+}
+
+.intro-script-table td:last-child,
+.intro-script-table th:last-child {
+  width: 2.5rem;
   text-align: center;
 }
 
@@ -23,9 +87,31 @@
   gap: 0.6rem;
 }
 
-.intro-slot h4 {
+.intro-slot h4,
+.intro-slot-heading {
   margin: 0;
   font-size: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.intro-slot-audio {
+  flex-shrink: 0;
+}
+
+.phrase-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.phrase-card-audio {
+  flex-shrink: 0;
+  opacity: 0.75;
+  pointer-events: none;
 }
 
 .phrase-grid {

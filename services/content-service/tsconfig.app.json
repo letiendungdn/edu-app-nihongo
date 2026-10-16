@@ -9,5 +9,10 @@
     "../../packages/nest-contracts/src/**/*",
     "../../packages/nest-prisma/src/**/*"
   ],
-  "exclude": ["**/*.spec.ts"]
+  "exclude": [
+    "**/*.spec.ts",
+    "../../packages/nest-common/**/*.spec.ts",
+    "../../packages/nest-contracts/**/*.spec.ts",
+    "../../packages/nest-prisma/**/*.spec.ts"
+  ]
 }

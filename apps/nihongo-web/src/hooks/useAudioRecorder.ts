@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 function getSupportedMimeType(): string {
   const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
@@ -117,13 +117,24 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     [revokeUrl, stopStream],
   );
 
-  return {
-    isRecording,
-    hasRecording,
-    error,
-    startRecording,
-    stopRecording,
-    playRecording,
-    clearRecording,
-  };
+  return useMemo(
+    () => ({
+      isRecording,
+      hasRecording,
+      error,
+      startRecording,
+      stopRecording,
+      playRecording,
+      clearRecording,
+    }),
+    [
+      isRecording,
+      hasRecording,
+      error,
+      startRecording,
+      stopRecording,
+      playRecording,
+      clearRecording,
+    ],
+  );
 }

@@ -176,6 +176,14 @@ export function fetchGrammars(lessonNumber: number) {
   );
 }
 
+/** Chỉ lấy total — không tải hết mẫu ngữ pháp theo cấp. */
+export async function fetchGrammarCountByJlpt(jlptLevel: string): Promise<number> {
+  const res = await apiRequest<PaginatedResponse<Grammar>>(
+    `/grammars?jlptLevel=${encodeURIComponent(jlptLevel)}&page=1&limit=1`,
+  );
+  return res.total ?? 0;
+}
+
 export type GrammarExampleInput = {
   jp: string;
   romaji: string;

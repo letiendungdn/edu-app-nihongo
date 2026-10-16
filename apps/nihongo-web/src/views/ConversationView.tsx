@@ -73,7 +73,8 @@ export default function ConversationView() {
       <header className="drill-header">
         <h2 className="view-title">会話 — Giao tiếp thông dụng</h2>
         <p className="drill-subtitle">
-          Bài 自己紹介 đầy đủ, rồi kho câu hay dùng hằng ngày (N5). Bấm thẻ để nghe.{' '}
+          Bài 自己紹介 mẫu (lập trình viên 30 tuổi, Đà Nẵng), rồi kho câu hay dùng hằng ngày (N5).
+          Bấm thẻ để nghe.{' '}
           <Link href="/roleplay">Đóng vai hội thoại</Link>
         </p>
       </header>
@@ -93,7 +94,9 @@ export default function ConversationView() {
       {mode === 'intro' && line && (
         <>
           <section className="drill-card intro-script">
-            <p className="drill-meta">Bài mẫu — đổi tên / quê / nghề cho đúng bạn</p>
+            <p className="drill-meta">
+              Bài mẫu của Dũng — lập trình viên · Đà Nẵng · đổi tên / quê / nghề cho đúng bạn
+            </p>
             <p className="drill-prompt japanese-text" style={{ fontSize: '1.25rem' }}>
               {hideJa ? '……' : line.ja}
             </p>
@@ -119,14 +122,80 @@ export default function ConversationView() {
             </div>
           </section>
 
+          <section className="intro-script-table-wrap glass-panel">
+            <h3 className="conv-section-title">Bảng 自己紹介 đầy đủ</h3>
+            <p className="drill-meta intro-script-full-ja japanese-text">
+              {introScript.map((l) => l.ja).join('')}
+            </p>
+            <div className="intro-script-table-scroll">
+              <table className="intro-script-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>日本語</th>
+                    <th>かな</th>
+                    <th>Romaji</th>
+                    <th>Tiếng Việt</th>
+                    <th aria-label="Nghe" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {introScript.map((row, idx) => (
+                    <tr
+                      key={`${row.ja}-${idx}`}
+                      className={idx === lineIndex ? 'is-active' : undefined}
+                      onClick={() => setLineIndex(idx)}
+                    >
+                      <td>{idx + 1}</td>
+                      <td className="japanese-text">{hideJa ? '……' : row.ja}</td>
+                      <td>{row.kana}</td>
+                      <td>{row.romaji}</td>
+                      <td>{row.vi}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn-audio-small"
+                          title="Nghe câu này"
+                          aria-label={`Nghe: ${row.ja}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLineIndex(idx);
+                            playAudio(row.ja);
+                          }}
+                        >
+                          🔊
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <h3 className="conv-section-title">Ghép bài của bạn</h3>
           {introSlots.map((slot) => (
             <section key={slot.slot} className="intro-slot">
-              <h4>{slot.slot} <span className="japanese-text">· {slot.question}</span></h4>
+              <h4 className="intro-slot-heading">
+                <span>{slot.slot}</span>
+                <span className="japanese-text">· {slot.question}</span>
+                <button
+                  type="button"
+                  className="btn-audio-small intro-slot-audio"
+                  title="Nghe câu hỏi"
+                  aria-label={`Nghe: ${slot.question}`}
+                  onClick={() => playAudio(slot.question.replace(/\s*\/\s*/g, '。'))}
+                >
+                  🔊
+                </button>
+              </h4>
               <div className="phrase-grid">
                 {slot.examples.map((item) => (
                   <button key={item.ja} type="button" className="phrase-card" onClick={() => playAudio(item.ja)}>
-                    <strong className="japanese-text">{item.ja}</strong>
+                    <span className="phrase-card-top">
+                      <strong className="japanese-text">{item.ja}</strong>
+                      <span className="btn-audio-small phrase-card-audio" aria-hidden="true">🔊</span>
+                    </span>
                     <span>{item.romaji}</span>
                     <span>{item.vi}</span>
                   </button>

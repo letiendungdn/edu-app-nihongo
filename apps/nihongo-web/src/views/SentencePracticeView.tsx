@@ -64,7 +64,14 @@ export default function SentencePracticeView() {
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        setError(data.error ?? 'Lỗi không xác định.');
+        const err = data.error;
+        const message =
+          typeof err === 'string'
+            ? err
+            : err && typeof err === 'object' && 'message' in err
+              ? String((err as { message: unknown }).message)
+              : 'Lỗi không xác định.';
+        setError(message);
         setLoading(false);
         return;
       }

@@ -7,6 +7,8 @@ const SERVER_VOICES: Record<string, string> = {
   "ja-JP": "ja-JP-NanamiNeural",
 };
 
+const SYNTHESIZE_TIMEOUT_MS = 10_000;
+
 @Injectable()
 export class TtsService {
   private readonly logger = new Logger(TtsService.name);
@@ -24,7 +26,15 @@ export class TtsService {
 
     try {
       const tts = new EdgeTTS(trimmed, voice);
-      const result = await tts.synthesize();
+      const result = await Promise.race([
+        tts.synthesize(),
+        new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error("Edge TTS timed out")),
+            SYNTHESIZE_TIMEOUT_MS,
+          );
+        }),
+      ]);
       const arrayBuffer = await result.audio.arrayBuffer();
       return Buffer.from(arrayBuffer);
     } catch (err) {

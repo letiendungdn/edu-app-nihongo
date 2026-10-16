@@ -259,6 +259,11 @@ services:
       LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-devsecret}
+      # AI local trên Mac host (Ollama). host.docker.internal = máy chạy Docker Desktop.
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-qwen2.5:7b}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     # /health/live không gọi DB/service khác — chỉ báo process Nest đã nghe cổng 3000.
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:3000/health/live || exit 1']
@@ -331,6 +336,10 @@ services:
       - '5173:5173'
     environment:
       API_URL: http://api-gateway:3000
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-qwen2.5:7b}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     volumes:
       - ./apps/nihongo-web/public/media/book-audio:/app/apps/nihongo-web/public/media/book-audio
     healthcheck:

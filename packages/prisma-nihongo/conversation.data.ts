@@ -27,6 +27,7 @@ export type IntroSlot = {
   examples: PhraseItem[];
 };
 
+/** Bài mẫu 自己紹介 — Lê Tiến Dũng, lập trình viên 30 tuổi (Đà Nẵng). */
 export const SELF_INTRO_SCRIPT: IntroLine[] = [
   {
     ja: 'はじめまして。',
@@ -36,35 +37,55 @@ export const SELF_INTRO_SCRIPT: IntroLine[] = [
     tip: 'Nói đầu tiên khi gặp người mới.',
   },
   {
-    ja: 'ズンと申します。',
-    kana: 'ズンともうします。',
-    romaji: 'Zun to mōshimasu.',
-    vi: 'Tôi tên là Dũng. (khiêm nhường)',
+    ja: 'レ・ティエン・ズンと申します。',
+    kana: 'レ・ティエン・ズンともうします。',
+    romaji: 'Re Tien Zun to mōshimasu.',
+    vi: 'Tôi tên là Lê Tiến Dũng. (khiêm nhường)',
     tip: 'と申します lịch sự hơn です khi tự giới thiệu tên.',
   },
   {
-    ja: 'ベトナムから来ました。',
-    kana: 'ベトナムからきました。',
-    romaji: 'Betonamu kara kimashita.',
-    vi: 'Tôi đến từ Việt Nam.',
+    ja: '三十歳です。',
+    kana: 'さんじゅっさいです。',
+    romaji: 'Sanjussai desu.',
+    vi: 'Tôi 30 tuổi.',
+    tip: '歳（さい）= tuổi. 三十歳 đọc さんじゅっさい.',
   },
   {
-    ja: 'ホーチミン市の出身です。',
-    kana: 'ホーチミンしのしゅっしんです。',
-    romaji: 'Hōchimin-shi no shusshin desu.',
-    vi: 'Tôi quê ở TP. Hồ Chí Minh.',
+    ja: 'ベトナムのダナンから来ました。',
+    kana: 'ベトナムのダナンからきました。',
+    romaji: 'Betonamu no Danan kara kimashita.',
+    vi: 'Tôi đến từ Đà Nẵng, Việt Nam.',
   },
   {
-    ja: '大学生です。日本語を勉強しています。',
-    kana: 'だいがくせいです。にほんごをべんきょうしています。',
-    romaji: 'Daigakusei desu. Nihongo o benkyō shite imasu.',
-    vi: 'Tôi là sinh viên. Đang học tiếng Nhật.',
+    ja: 'ダナンの出身です。',
+    kana: 'ダナンのしゅっしんです。',
+    romaji: 'Danan no shusshin desu.',
+    vi: 'Tôi quê ở Đà Nẵng.',
   },
   {
-    ja: '趣味は音楽を聞くことです。',
-    kana: 'しゅみはおんがくをきくことです。',
-    romaji: 'Shumi wa ongaku o kiku koto desu.',
-    vi: 'Sở thích của tôi là nghe nhạc.',
+    ja: 'プログラマーです。',
+    kana: 'プログラマーです。',
+    romaji: 'Puroguramā desu.',
+    vi: 'Tôi là lập trình viên.',
+    tip: 'Cũng nói エンジニアです / モバイルエンジニアです.',
+  },
+  {
+    ja: '四年以上、アプリとウェブサイトを作っています。',
+    kana: 'よねんいじょう、アプリとウェブサイトをつくっています。',
+    romaji: 'Yonen ijō, apuri to webusaito o tsukutte imasu.',
+    vi: 'Hơn 4 năm nay tôi làm app và website.',
+  },
+  {
+    ja: 'スマホのアプリやバックエンドの開発が得意です。',
+    kana: 'スマホのアプリやバックエンドのかいはつがとくいです。',
+    romaji: 'Sumaho no apuri ya bakkuendo no kaihatsu ga tokui desu.',
+    vi: 'Tôi giỏi phát triển app điện thoại và backend.',
+  },
+  {
+    ja: '日本語を勉強しています。',
+    kana: 'にほんごをべんきょうしています。',
+    romaji: 'Nihongo o benkyō shite imasu.',
+    vi: 'Tôi đang học tiếng Nhật.',
   },
   {
     ja: 'どうぞよろしくお願いします。',
@@ -90,27 +111,39 @@ export const INTRO_SLOTS: IntroSlot[] = [
     question: 'どこの国の人ですか。',
     examples: [
       { ja: 'ベトナム人です。', kana: 'ベトナムじんです。', romaji: 'Betonamu-jin desu.', vi: 'Tôi là người Việt.' },
-      { ja: 'ベトナムから来ました。', kana: 'ベトナムからきました。', romaji: 'Betonamu kara kimashita.', vi: 'Tôi đến từ Việt Nam.' },
-      { ja: 'ハノイの出身です。', kana: 'ハノイのしゅっしんです。', romaji: 'Hanoi no shusshin desu.', vi: 'Tôi quê Hà Nội.' },
+      { ja: 'ベトナムのダナンから来ました。', kana: 'ベトナムのダナンからきました。', romaji: 'Betonamu no Danan kara kimashita.', vi: 'Tôi đến từ Đà Nẵng, Việt Nam.' },
+      { ja: 'ダナンの出身です。', kana: 'ダナンのしゅっしんです。', romaji: 'Danan no shusshin desu.', vi: 'Tôi quê Đà Nẵng.' },
+      { ja: 'ダナンに住んでいます。', kana: 'ダナンにすんでいます。', romaji: 'Danan ni sunde imasu.', vi: 'Tôi đang sống ở Đà Nẵng.' },
+    ],
+  },
+  {
+    slot: 'Tuổi',
+    question: 'おいくつですか。',
+    examples: [
+      { ja: '三十歳です。', kana: 'さんじゅっさいです。', romaji: 'Sanjussai desu.', vi: 'Tôi 30 tuổi.' },
+      { ja: '二十代です。', kana: 'にじゅうだいです。', romaji: 'Nijūdai desu.', vi: 'Tôi ngoài hai mươi.' },
+      { ja: '三十代です。', kana: 'さんじゅうだいです。', romaji: 'Sanjūdai desu.', vi: 'Tôi ngoài ba mươi.' },
     ],
   },
   {
     slot: 'Nghề / trường',
     question: 'お仕事は？ / 学生ですか。',
     examples: [
-      { ja: '学生です。', kana: 'がくせいです。', romaji: 'Gakusei desu.', vi: 'Tôi là học sinh / sinh viên.' },
-      { ja: '会社員です。', kana: 'かいしゃいんです。', romaji: 'Kaishain desu.', vi: 'Tôi là nhân viên công ty.' },
+      { ja: 'プログラマーです。', kana: 'プログラマーです。', romaji: 'Puroguramā desu.', vi: 'Tôi là lập trình viên.' },
       { ja: 'エンジニアです。', kana: 'エンジニアです。', romaji: 'Enjinia desu.', vi: 'Tôi là kỹ sư.' },
-      { ja: '日本語学校で勉強しています。', kana: 'にほんごがっこうでべんきょうしています。', romaji: 'Nihongo gakkō de benkyō shite imasu.', vi: 'Tôi đang học ở trường tiếng Nhật.' },
+      { ja: 'モバイルエンジニアです。', kana: 'モバイルエンジニアです。', romaji: 'Mobairu enjinia desu.', vi: 'Tôi là kỹ sư mobile.' },
+      { ja: '会社員です。', kana: 'かいしゃいんです。', romaji: 'Kaishain desu.', vi: 'Tôi là nhân viên công ty.' },
+      { ja: '学生です。', kana: 'がくせいです。', romaji: 'Gakusei desu.', vi: 'Tôi là học sinh / sinh viên.' },
     ],
   },
   {
     slot: 'Sở thích',
     question: '趣味は何ですか。',
     examples: [
+      { ja: '趣味はプログラミングです。', kana: 'しゅみはプログラミングです。', romaji: 'Shumi wa puroguramingu desu.', vi: 'Sở thích là lập trình.' },
+      { ja: '日本語の勉強が好きです。', kana: 'にほんごのべんきょうがすきです。', romaji: 'Nihongo no benkyō ga suki desu.', vi: 'Tôi thích học tiếng Nhật.' },
       { ja: '趣味は読書です。', kana: 'しゅみはどくしょです。', romaji: 'Shumi wa dokusho desu.', vi: 'Sở thích là đọc sách.' },
       { ja: '映画を見るのが好きです。', kana: 'えいがをみるのがすきです。', romaji: 'Eiga o miru no ga suki desu.', vi: 'Tôi thích xem phim.' },
-      { ja: '料理が好きです。', kana: 'りょうりがすきです。', romaji: 'Ryōri ga suki desu.', vi: 'Tôi thích nấu ăn.' },
     ],
   },
 ];

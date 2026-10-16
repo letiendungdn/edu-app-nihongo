@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  useGrammarCountByJlptQuery,
   useJlptDaNangScheduleQuery,
   useJlptDaNangStaticQuery,
   useJlptRoadmapQuery,
+  useKanjiByJlptQuery,
   useLessonsQuery,
 } from '../hooks/queries';
 import type { JlptAnnouncement, JlptDaNangSchedule } from '../types/api';
@@ -141,13 +143,18 @@ export default function JlptRoadmapView() {
   const level = jlptLevels.find((l) => l.id === activeId) ?? jlptLevels[0];
 
   const { data: lessons = [] } = useLessonsQuery();
+  const jlptLevelCode = level?.id?.toUpperCase() ?? '';
+  const { data: kanjiByLevel } = useKanjiByJlptQuery(jlptLevelCode);
+  const { data: appGrammarCount } = useGrammarCountByJlptQuery(jlptLevelCode);
+
   const appVocabCount = useMemo(() => {
-    const target = level?.id?.toUpperCase();
-    if (!target) return null;
+    if (!jlptLevelCode) return null;
     return lessons
-      .filter((l) => l.jlptLevel === target)
+      .filter((l) => l.jlptLevel === jlptLevelCode)
       .reduce((sum, l) => sum + (l._count?.vocabularies ?? 0), 0);
-  }, [lessons, level?.id]);
+  }, [lessons, jlptLevelCode]);
+
+  const appKanjiCount = kanjiByLevel?.length ?? null;
 
   const allTaskIds = useMemo(
     () => level?.phases.flatMap((p) => p.tasks.map((t) => t.id)) ?? [],
@@ -377,11 +384,17 @@ export default function JlptRoadmapView() {
             <strong>Kanji</strong>
             <span>{level.kanjiTarget}</span>
             {level.kanjiIncrement ? <small className="jlpt-stat-increment">{level.kanjiIncrement}</small> : null}
+            {appKanjiCount !== null ? (
+              <small className="jlpt-stat-appcount">App hiện có: {appKanjiCount} chữ</small>
+            ) : null}
           </div>
           <div>
             <strong>Ngữ pháp</strong>
             <span>{level.grammarTarget}</span>
             {level.grammarIncrement ? <small className="jlpt-stat-increment">{level.grammarIncrement}</small> : null}
+            {appGrammarCount != null ? (
+              <small className="jlpt-stat-appcount">App hiện có: {appGrammarCount} mẫu</small>
+            ) : null}
           </div>
           <div><strong>Điểm đạt</strong><span>{level.passScore}</span></div>
         </div>

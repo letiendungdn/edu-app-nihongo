@@ -36,8 +36,8 @@ export const SPEECH_RATE: Record<SpeechLangCode, number> = {
   'ja-JP': 0.9,
 };
 
-/** false = ưu tiên Google Online (ổn định hơn khi máy chưa cài language pack). */
-export const SPEECH_PREFER_LOCAL_VOICE = false;
+/** true = ưu tiên giọng local (Kyoko/… trên macOS) — không phụ thuộc Edge TTS server. */
+export const SPEECH_PREFER_LOCAL_VOICE = true;
 
 /** Giọng Edge TTS trên server — luôn có tiếng Việt / Nhật, không phụ thuộc máy user. */
 export const SPEECH_SERVER_VOICES: Record<SpeechLangCode, string> = {

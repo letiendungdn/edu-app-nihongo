@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { HttpException, HttpStatus, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type Redis from 'ioredis';
@@ -7,13 +8,33 @@ import { SlidingWindowRateLimitGuard } from './sliding-window.guard';
  * Redis giả: chỉ đủ cho `pipeline()`. `countBefore` là số request đã có trong cửa sổ
  * (kết quả của lệnh thứ 2, ZCARD). Ghi lại từng lệnh để kiểm tra guard gửi gì.
  */
+type FakePipe = {
+  zremrangebyscore: jest.Mock;
+  zcard: jest.Mock;
+  zadd: jest.Mock;
+  expire: jest.Mock;
+  exec: jest.Mock;
+};
+
 function fakeRedis(countBefore: number) {
   const calls: [string, ...unknown[]][] = [];
-  const pipe = {
-    zremrangebyscore: jest.fn((...a: unknown[]) => (calls.push(['zremrangebyscore', ...a]), pipe)),
-    zcard: jest.fn((...a: unknown[]) => (calls.push(['zcard', ...a]), pipe)),
-    zadd: jest.fn((...a: unknown[]) => (calls.push(['zadd', ...a]), pipe)),
-    expire: jest.fn((...a: unknown[]) => (calls.push(['expire', ...a]), pipe)),
+  const pipe: FakePipe = {
+    zremrangebyscore: jest.fn((...a: unknown[]) => {
+      calls.push(['zremrangebyscore', ...a]);
+      return pipe;
+    }),
+    zcard: jest.fn((...a: unknown[]) => {
+      calls.push(['zcard', ...a]);
+      return pipe;
+    }),
+    zadd: jest.fn((...a: unknown[]) => {
+      calls.push(['zadd', ...a]);
+      return pipe;
+    }),
+    expire: jest.fn((...a: unknown[]) => {
+      calls.push(['expire', ...a]);
+      return pipe;
+    }),
     exec: jest.fn().mockResolvedValue([
       [null, 0],
       [null, countBefore],

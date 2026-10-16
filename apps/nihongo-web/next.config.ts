@@ -36,9 +36,10 @@ const nextConfig: NextConfig = {
     devtoolSegmentExplorer: false,
   },
   async rewrites() {
+    // Luyện câu AI chạy trên Next (Ollama), không proxy sang Nest.
     return [
       {
-        source: '/api/:path*',
+        source: '/api/:path((?!sentence-practice$).*)',
         destination: `${apiUrl}/api/:path*`,
       },
     ];
