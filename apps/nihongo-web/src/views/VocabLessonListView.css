@@ -54,7 +54,7 @@
 }
 
 .vocab-lesson-list .btn-play-all {
-  background: linear-gradient(135deg, #93c5fd, #60a5fa);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color));
   color: #fff;
   padding: 0.45rem 0.9rem;
   border-radius: 0.5rem;
@@ -75,7 +75,7 @@
 }
 
 .vocab-lesson-list .btn-play-all.playing {
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  background: linear-gradient(135deg, var(--primary-color), #f97316);
 }
 
 .vocab-lesson-list__search {
@@ -127,7 +127,7 @@
 }
 
 .vocab-lesson-list__table tbody tr.is-speaking {
-  background: color-mix(in srgb, #60a5fa 18%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
 }
 
 .vocab-lesson-list__num {

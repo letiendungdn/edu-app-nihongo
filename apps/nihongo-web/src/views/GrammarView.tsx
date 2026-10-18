@@ -22,7 +22,7 @@ import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
-import { useGrammarsQuery, useLessonsQuery } from '../hooks/queries';
+import { useGrammar, useLessons } from '../hooks/queries';
 import { queryKeys } from '../api/query-keys';
 import { createGrammar, deleteGrammar, updateGrammar } from '../api';
 import {
@@ -133,8 +133,8 @@ export default function GrammarView({
   const exampleRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const { isAdmin, token } = useAuth();
   const queryClient = useQueryClient();
-  const { data: lessons = [] } = useLessonsQuery();
-  const { data: lessonGrammar = [], isLoading: loading } = useGrammarsQuery(currentLesson);
+  const { data: lessons = [] } = useLessons();
+  const { data: lessonGrammar = [], isLoading: loading } = useGrammar(currentLesson);
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const [editMode, setEditMode] = useState(Boolean(startInEditMode));
 

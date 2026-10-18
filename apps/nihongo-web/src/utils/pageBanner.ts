@@ -97,8 +97,8 @@ export function bannerBackgroundStyle(
 ): CSSProperties {
   const overlay =
     theme === 'light'
-      ? 'linear-gradient(rgba(245,243,239,0.78), rgba(245,243,239,0.9))'
-      : 'linear-gradient(rgba(15,23,42,0.72), rgba(15,23,42,0.88))';
+      ? 'linear-gradient(rgba(246,243,237,0.82), rgba(246,243,237,0.93))'
+      : 'linear-gradient(rgba(19,18,16,0.8), rgba(19,18,16,0.93))';
 
   return {
     backgroundImage: `${overlay}, url("${imageUrl}")`,

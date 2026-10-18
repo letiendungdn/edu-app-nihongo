@@ -122,18 +122,13 @@
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
-            key = "GEMINI_API_KEY"
-            value = "[&quot;value&quot;: &quot;&quot;, &quot;isEnabled&quot;: false]"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
             key = "KEYCLOAK_CLIENT_ID"
-            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;nihongo-mobile&quot;]"
+            value = "[&quot;value&quot;: &quot;nihongo-mobile&quot;, &quot;isEnabled&quot;: false]"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "KEYCLOAK_REALM"
-            value = "[&quot;value&quot;: &quot;edu-app&quot;, &quot;isEnabled&quot;: false]"
+            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;edu-app&quot;]"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable

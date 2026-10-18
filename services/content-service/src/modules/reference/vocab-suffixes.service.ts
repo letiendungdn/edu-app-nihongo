@@ -116,9 +116,9 @@ export class VocabSuffixesService {
 
   async createItem(dto: CreateVocabSuffixItemDto) {
     const group = await this.resolveGroup(dto.groupSlug);
-    const forms =
-      dto.forms?.map((f) => f.trim()).filter(Boolean) ??
-      [dto.suffix.trim()];
+    const forms = dto.forms?.map((f) => f.trim()).filter(Boolean) ?? [
+      dto.suffix.trim(),
+    ];
     const pos = dto.pos?.length ? dto.pos : ["noun"];
 
     let sortOrder = dto.sortOrder;
@@ -179,7 +179,9 @@ export class VocabSuffixesService {
         ...(dto.kana != null ? { kana: dto.kana.trim() } : {}),
         ...(dto.romaji != null ? { romaji: dto.romaji.trim() } : {}),
         ...(dto.meaningVi != null ? { meaningVi: dto.meaningVi.trim() } : {}),
-        ...(dto.attachesTo != null ? { attachesTo: dto.attachesTo.trim() } : {}),
+        ...(dto.attachesTo != null
+          ? { attachesTo: dto.attachesTo.trim() }
+          : {}),
         ...(dto.pos !== undefined
           ? { pos: dto.pos?.length ? dto.pos : ["noun"] }
           : {}),
@@ -215,7 +217,7 @@ export class VocabSuffixesService {
       orderedIds.some((id) => !existingIds.has(id))
     ) {
       throw new BadRequestException(
-        'orderedIds phải bao gồm mọi hậu tố trong nhóm này',
+        "orderedIds phải bao gồm mọi hậu tố trong nhóm này",
       );
     }
 
@@ -239,7 +241,9 @@ export class VocabSuffixesService {
   }
 
   toPayload(
-    groups: Prisma.VocabSuffixGroupGetPayload<{ include: typeof groupInclude }>[],
+    groups: Prisma.VocabSuffixGroupGetPayload<{
+      include: typeof groupInclude;
+    }>[],
   ) {
     return { groups: groups.map((g) => this.toGroup(g)) };
   }

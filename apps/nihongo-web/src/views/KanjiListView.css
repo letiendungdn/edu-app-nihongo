@@ -135,7 +135,7 @@
 .kanji-list-table-wrap {
   overflow-x: auto;
   border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  border: 1px solid var(--border-color);
   background: rgba(15, 23, 42, 0.45);
 }
 
@@ -149,7 +149,7 @@
 .kanji-list-table td {
   padding: 0.75rem 0.9rem;
   text-align: left;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid var(--border-color);
   vertical-align: top;
 }
 
@@ -205,14 +205,14 @@
 }
 
 .kanji-list-lesson {
-  color: #94a3b8;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .kanji-list-empty {
   text-align: center;
   padding: 2.5rem 1rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .kanji-list-links {
@@ -265,11 +265,11 @@
   border-radius: 12px 12px 0 0;
 }
 
-.kanji-summary-card.level-n5::before  { background: #22c55e; }
-.kanji-summary-card.level-n4::before  { background: #3b82f6; }
-.kanji-summary-card.level-n3::before  { background: #f59e0b; }
+.kanji-summary-card.level-n5::before  { background: var(--color-success); }
+.kanji-summary-card.level-n4::before  { background: var(--accent-color); }
+.kanji-summary-card.level-n3::before  { background: var(--color-warning); }
 .kanji-summary-card.level-n2::before  { background: #f97316; }
-.kanji-summary-card.level-n1::before  { background: #ef4444; }
+.kanji-summary-card.level-n1::before  { background: var(--primary-color); }
 .kanji-summary-card.level-all::before { background: #a855f7; }
 
 .kanji-summary-card:hover {
@@ -313,11 +313,11 @@
   white-space: nowrap;
 }
 
-.kanji-list-jlpt.level-n5 { color: #4ade80; }
-.kanji-list-jlpt.level-n4 { color: #60a5fa; }
+.kanji-list-jlpt.level-n5 { color: var(--color-success); }
+.kanji-list-jlpt.level-n4 { color: var(--accent-color); }
 .kanji-list-jlpt.level-n3 { color: #facc15; }
 .kanji-list-jlpt.level-n2 { color: #fb923c; }
-.kanji-list-jlpt.level-n1 { color: #f87171; }
+.kanji-list-jlpt.level-n1 { color: var(--primary-color); }
 
 .kanji-display-toggle {
   display: flex;
@@ -395,11 +395,11 @@
 }
 
 /* Colored top accent per JLPT level (shown in ALL view) */
-.kanji-cell.level-n5 { border-top: 2px solid #22c55e; }
-.kanji-cell.level-n4 { border-top: 2px solid #3b82f6; }
-.kanji-cell.level-n3 { border-top: 2px solid #f59e0b; }
+.kanji-cell.level-n5 { border-top: 2px solid var(--color-success); }
+.kanji-cell.level-n4 { border-top: 2px solid var(--accent-color); }
+.kanji-cell.level-n3 { border-top: 2px solid var(--color-warning); }
 .kanji-cell.level-n2 { border-top: 2px solid #f97316; }
-.kanji-cell.level-n1 { border-top: 2px solid #ef4444; }
+.kanji-cell.level-n1 { border-top: 2px solid var(--primary-color); }
 
 .kanji-cell-badge {
   position: absolute;
@@ -422,7 +422,7 @@
 
 .kanji-cell-hv {
   font-size: 0.6rem;
-  color: #f59e0b;
+  color: var(--color-warning);
   font-weight: 600;
   max-width: 100%;
   overflow: hidden;
@@ -466,7 +466,7 @@
 .kanji-cell-detail-reading {
   margin: 0.2rem 0 0;
   font-size: 0.88rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-family: var(--font-japanese, 'Noto Sans JP', sans-serif);
 }
 
@@ -481,14 +481,14 @@
   flex-wrap: wrap;
   gap: 0.65rem;
   align-items: center;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.88rem;
 }
 
 .kanji-cell-detail-speak {
   padding: 0.45rem 0.85rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(99, 102, 241, 0.15);
   color: #c7d2fe;
   font-weight: 600;
@@ -573,7 +573,7 @@
 .kanji-admin-toggle {
   padding: 0.4rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -612,7 +612,7 @@
 .kanji-admin-grid select {
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid var(--border-color);
   background: var(--surface-color);
   color: inherit;
   font: inherit;
@@ -630,7 +630,7 @@
 }
 
 .kanji-admin-error {
-  color: #f87171;
+  color: var(--primary-color);
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
 }
@@ -643,8 +643,8 @@
 }
 
 .kanji-admin-delete:hover:not(:disabled) {
-  border-color: #f87171;
-  color: #f87171;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .kanji-cell-detail-meta {

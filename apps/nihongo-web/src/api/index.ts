@@ -1050,16 +1050,15 @@ export interface ReviewLogItem {
   lastReviewedAt?: string | null;
 }
 
-export function syncReviewProgress(token: string, items: ReviewLogItem[]) {
+export function syncReviewProgress(items: ReviewLogItem[]) {
   return apiRequest<{ synced: number }>('/progress/review', {
     method: 'POST',
-    token,
     body: JSON.stringify({ items }),
   });
 }
 
-export function fetchReviewProgress(token: string) {
-  return apiRequest<ReviewLogItem[]>('/progress/review', { token });
+export function fetchReviewProgress() {
+  return apiRequest<ReviewLogItem[]>('/progress/review');
 }
 
 export function logListeningProgress(token: string, date: string, seconds: number) {
@@ -1405,7 +1404,7 @@ export function fetchSubscriptionStatus(token: string) {
 }
 
 export function createSubscription(
-  token: string,
+  token: string | null,
   plan: SubscriptionPlan,
   paymentMethodId?: string,
 ) {
@@ -1476,5 +1475,21 @@ export function deletePaymentMethod(token: string, paymentMethodId: string) {
   return apiRequest<{ message: string }>(`/payment-methods/${paymentMethodId}`, {
     method: 'DELETE',
     token,
+  });
+}
+
+export interface SentenceFeedback {
+  corrected: string;
+  reading: string;
+  meaning: string;
+  explanation: string;
+  examples: string[];
+}
+
+/** Sửa và giải thích một câu (AI chạy ở server; key AI không bao giờ tới trình duyệt). */
+export function fetchSentenceFeedback(sentence: string) {
+  return apiRequest<SentenceFeedback>('/ai/sentence-feedback', {
+    method: 'POST',
+    body: JSON.stringify({ sentence }),
   });
 }

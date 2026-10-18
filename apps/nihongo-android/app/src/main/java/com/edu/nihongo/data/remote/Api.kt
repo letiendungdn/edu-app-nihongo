@@ -96,9 +96,29 @@ data class AiChatResponse(
     val answer: String? = null,
 )
 
+/**
+ * `POST /api/ai/chat`. Bản cũ khai báo kiểu trả về `AiChatResponse` trong khi gateway bọc
+ * `{ success, data: { answer } }` → `answer` luôn null; gateway lại đặt route thiếu `api/` → 404.
+ */
 interface AiTutorApi {
     @POST("ai/chat")
-    suspend fun chat(@Body body: AiChatRequest): AiChatResponse
+    suspend fun chat(@Body body: AiChatRequest): ApiEnvelope<AiChatResponse>
+}
+
+data class SentenceFeedbackRequest(val sentence: String)
+
+data class SentenceFeedback(
+    val corrected: String = "",
+    val reading: String = "",
+    val meaning: String = "",
+    val explanation: String = "",
+    val examples: List<String> = emptyList(),
+)
+
+/** `POST /api/ai/sentence-feedback`: AI chạy ở server, key không nằm trong app. */
+interface SentenceFeedbackApi {
+    @POST("ai/sentence-feedback")
+    suspend fun analyze(@Body body: SentenceFeedbackRequest): ApiEnvelope<SentenceFeedback>
 }
 
 data class PushRegisterRequest(

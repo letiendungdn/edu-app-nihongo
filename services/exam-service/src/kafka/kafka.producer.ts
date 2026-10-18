@@ -67,7 +67,9 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
       .connect()
       .then(() => {
         this.connected = true;
-        this.logger.log(`Kafka producer connected to ${this.brokers.join(", ")}`);
+        this.logger.log(
+          `Kafka producer connected to ${this.brokers.join(", ")}`,
+        );
       })
       .finally(() => {
         this.connecting = null;

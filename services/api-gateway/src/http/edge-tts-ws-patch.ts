@@ -26,7 +26,7 @@ function useEdgeTtsWebSocket(): void {
   );
   if (!existsSync(path.join(ws8Path, "package.json"))) return;
 
-  const ws8 = nodeRequire(ws8Path);
+  const ws8: unknown = nodeRequire(ws8Path);
   nodeRequire.cache[isoPath] = {
     id: isoPath,
     filename: isoPath,

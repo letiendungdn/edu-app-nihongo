@@ -146,7 +146,11 @@ describe("MockExamsService", () => {
         data: expect.objectContaining({
           topic: "edu.exam.submitted",
           key: "7",
-          payload: expect.objectContaining({ eventId: "exam-result-1", userId: 7, percent: 100 }),
+          payload: expect.objectContaining({
+            eventId: "exam-result-1",
+            userId: 7,
+            percent: 100,
+          }),
         }),
       });
     });
@@ -154,9 +158,7 @@ describe("MockExamsService", () => {
 
   describe("start()", () => {
     it("throws RpcException for unsupported level", async () => {
-      await expect(
-        service.start("n0" as unknown as "n5"),
-      ).rejects.toBeInstanceOf(RpcException);
+      await expect(service.start("n0")).rejects.toBeInstanceOf(RpcException);
     });
   });
 });

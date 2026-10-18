@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import LessonSelector from '../components/LessonSelector';
 import StrokeOrder from '../components/StrokeOrder';
-import { useLessonsQuery, useVocabRangeQuery, useVocabulariesQuery } from '../hooks/queries';
+import { useLessons, useVocabRangeQuery, useVocab } from '../hooks/queries';
 import { playAudio } from '../utils/speech';
 import { getStrokeText, parseReadingVariants, shouldShowKanaStroke } from '../utils/japanese';
 import { resolveVocabImage } from '@edu/vocab-images';
@@ -157,7 +157,7 @@ function mapPictureVocab(list: Vocabulary[], lessonNumber?: number): PictureVoca
 
 export default function PictureDictionaryView() {
   const searchParams = useSearchParams();
-  const { data: lessons = [] } = useLessonsQuery();
+  const { data: lessons = [] } = useLessons();
   const maxLesson = lessons[lessons.length - 1]?.lessonNumber ?? 50;
 
   const initialLesson = useMemo(() => {
@@ -178,7 +178,7 @@ export default function PictureDictionaryView() {
     if (initialLesson > 0) setLesson(initialLesson);
   }, [initialLesson]);
 
-  const { data: singleLessonVocab = [], isLoading: loadingSingle } = useVocabulariesQuery(lesson);
+  const { data: singleLessonVocab = [], isLoading: loadingSingle } = useVocab(lesson);
   const { data: rangeVocab = [], isLoading: loadingRange } = useVocabRangeQuery(
     lessonFrom,
     lessonTo,

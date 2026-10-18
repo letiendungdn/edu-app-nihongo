@@ -36,7 +36,10 @@ describe("WebhookService", () => {
         update: jest.fn(),
         updateMany: jest.fn(),
       },
-      subscription: { updateMany: jest.fn(), findFirst: jest.fn().mockResolvedValue(null) },
+      subscription: {
+        updateMany: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
       payment: { updateMany: jest.fn(), findMany: jest.fn() },
     };
     stripe = { constructWebhookEvent: jest.fn() };
@@ -47,8 +50,14 @@ describe("WebhookService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: StripeService, useValue: stripe },
         { provide: RefundService, useValue: { refundByChargeId: jest.fn() } },
-        { provide: KafkaProducerService, useValue: { emit: jest.fn(), send: jest.fn() } },
-        { provide: NotificationService, useValue: { notifyUser: jest.fn(), create: jest.fn() } },
+        {
+          provide: KafkaProducerService,
+          useValue: { emit: jest.fn(), send: jest.fn() },
+        },
+        {
+          provide: NotificationService,
+          useValue: { notifyUser: jest.fn(), create: jest.fn() },
+        },
       ],
     }).compile();
 

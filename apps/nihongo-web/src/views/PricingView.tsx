@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createSubscription, fetchMyPayments, fetchSubscriptionPlans, fetchSubscriptionStatus } from '@/api';
 import SubscriptionCheckoutPanel from '@/components/SubscriptionCheckoutPanel';
 import CurrentSubscriptionCard from '@/components/CurrentSubscriptionCard';
 import { useAuth } from '@/hooks/useAuth';
+import { loginUrlFor } from '@/hooks/useRequireAuth';
 import type { PaymentRecord, Subscription, SubscriptionPlan, SubscriptionPlanConfig } from '@/types/api';
 import {
   isDisplayPlanCurrent,
@@ -151,7 +152,7 @@ export default function PricingView() {
   function handleSelect(plan: SubscriptionPlan) {
     if (plan === 'FREE') return;
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/pricing?plan=${plan}`);
+      router.push(loginUrlFor(`/pricing?plan=${plan}`));
       return;
     }
     void startCheckout(plan);
@@ -167,6 +168,12 @@ export default function PricingView() {
       setCheckoutLoading(true);
       try {
         const res = await createSubscription(token, plan);
+        if (!res.clientSecret) {
+          // Đổi gói trên subscription đang chạy: không cần nhập thẻ
+          setSelectedPlan(null);
+          await syncAfterPurchase(plan);
+          return;
+        }
         setClientSecret(res.clientSecret);
       } catch (err) {
         setCheckoutError(
@@ -176,21 +183,26 @@ export default function PricingView() {
         setCheckoutLoading(false);
       }
     },
-    [token],
+    [token, syncAfterPurchase],
   );
 
+  // ?plan= trên URL (quay lại sau khi đăng nhập): mở thanh toán MỘT lần cho mỗi gói. Bản cũ phụ
+  // thuộc `token` qua startCheckout → token đổi là tạo thêm một subscription Stripe.
+  const autoStartedFor = useRef<string | null>(null);
   useEffect(() => {
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     if (
-      planParam &&
-      planParam !== 'FREE' &&
-      isAuthenticated &&
-      token &&
-      !searchParams?.get('success')
+      !planParam ||
+      planParam === 'FREE' ||
+      !isAuthenticated ||
+      searchParams?.get('success') ||
+      autoStartedFor.current === planParam
     ) {
-      void startCheckout(planParam);
+      return;
     }
-  }, [searchParams, isAuthenticated, token, startCheckout]);
+    autoStartedFor.current = planParam;
+    void startCheckout(planParam);
+  }, [searchParams, isAuthenticated, startCheckout]);
 
   const handleCheckoutSuccess = useCallback(
     async (purchasedPlan: SubscriptionPlan) => {

@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import 'envelope.dart';
+
 class AiMessage {
   const AiMessage({required this.role, required this.text});
   final String role; // 'user' | 'assistant'
@@ -20,7 +22,7 @@ class AiTutorApi {
         .map((m) => {'role': m.role, 'content': m.text})
         .toList();
 
-    final res = await _dio.post<Map<String, dynamic>>(
+    final res = await _dio.post<dynamic>(
       '/ai/chat',
       data: {
         'question': question,
@@ -33,6 +35,8 @@ class AiTutorApi {
       ),
     );
 
-    return res.data?['answer'] as String? ?? '';
+    // Bản cũ đọc `answer` ở cấp ngoài: gateway bọc { success, data: { answer } } → luôn rỗng
+    final data = unwrapEnvelope(res.data);
+    return (data is Map ? data['answer'] as String? : null)?.trim() ?? '';
   }
 }

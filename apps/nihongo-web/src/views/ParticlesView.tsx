@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import LessonSelector from '../components/LessonSelector';
 import FuriganaText from '../components/FuriganaText';
-import { useGrammarsQuery } from '../hooks/queries';
+import { useGrammar } from '../hooks/queries';
 import { buildParticleQuestions } from '../utils/particles';
 import './DrillView.css';
 
@@ -14,7 +14,7 @@ export default function ParticlesView() {
   const [picked, setPicked] = useState<string | null>(null);
   const [score, setScore] = useState({ ok: 0, n: 0 });
   const [showFuri, setShowFuri] = useState(true);
-  const { data: grammars = [], isLoading } = useGrammarsQuery(lesson);
+  const { data: grammars = [], isLoading } = useGrammar(lesson);
 
   const questions = useMemo(() => {
     const examples = grammars.flatMap((g) =>

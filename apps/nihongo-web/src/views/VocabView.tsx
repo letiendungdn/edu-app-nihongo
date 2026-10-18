@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
 import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import VocabWordList from '../components/VocabWordList';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
-import { useFeatureFlag, useLessonsQuery, useVocabulariesQuery, useVocabSearchQuery } from '../hooks/queries';
+import { useFeatureFlag, useLessons, useVocab, useVocabSearchQuery } from '../hooks/queries';
 import StrokeOrder from '../components/StrokeOrder';
 import VocabPicture from '../components/VocabPicture';
 import {
@@ -85,6 +86,7 @@ export default function VocabView({
   initialLessonNumber?: number;
   initialVocabId?: number;
 } = {}) {
+  const router = useRouter();
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -94,12 +96,20 @@ export default function VocabView({
   const vocabLoggedRef = useRef(false);
   const { copied: flashcardCopied, copy: copyFlashcard } = useCopyText();
   const { isAdmin } = useAuth();
-  const { data: lessons = [] } = useLessonsQuery();
-  const { data: lessonVocab = [], isLoading: loading } = useVocabulariesQuery(currentLesson);
+  const { data: lessons = [] } = useLessons();
+  const { data: lessonVocab = [], isLoading: loading } = useVocab(currentLesson);
   // Ô tra từ trên mọi bài bật/tắt bằng feature flag (admin: PATCH /api/admin/feature-flags/vocab-search-all-lessons)
   const searchAllLessonsOn = useFeatureFlag('vocab-search-all-lessons');
   const { data: search, isFetching: searching } = useVocabSearchQuery(searchAllLessonsOn ? searchQuery : '');
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
+
+  // Mọi lần đổi bài đi qua đây để state và ?lesson= trên URL không lệch nhau (bản cũ: chọn kết quả
+  // tra từ ở bài khác chỉ đổi state, tải lại trang / chia sẻ link thì về bài cũ). Việc reset thẻ,
+  // dừng phát do effect theo `currentLesson` bên dưới lo.
+  const goToLesson = (next: number) => {
+    setCurrentLesson(next);
+    router.replace(`/vocab?lesson=${next}`, { scroll: false });
+  };
 
   useEffect(() => {
     if (initialLessonNumber != null && initialLessonNumber > 0) {
@@ -307,7 +317,7 @@ export default function VocabView({
     if (!lessonNumber) return;
     stopPlayAll();
     setPendingVocabId(hit.id);
-    setCurrentLesson(lessonNumber);
+    goToLesson(lessonNumber);
     handleClearSearch();
   };
 
@@ -323,10 +333,13 @@ export default function VocabView({
       <div className="vocab-topbar">
         <h2 className="view-title vocab-topbar__title">{vocabTitle}</h2>
         <nav className="vocab-topbar__links" aria-label="Công cụ từ vựng">
-          <Link href={`/vocab/list?lesson=${currentLesson}`} className="btn btn-outline btn-sm">
-            Danh sách bài
+          <Link href="/vocab" className="btn btn-outline btn-sm">
+            ← Chọn bài
           </Link>
-          <Link href="/vocab/quiz" className="btn btn-primary btn-sm">
+          <Link href={`/vocab/list?lesson=${currentLesson}`} className="btn btn-outline btn-sm">
+            Danh sách từ
+          </Link>
+          <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
             Trắc nghiệm JP ↔ VI
           </Link>
           <Link href="/kanji/quiz?source=minna" className="btn btn-outline btn-sm">
@@ -419,7 +432,7 @@ export default function VocabView({
         <LessonSelector
           id="lesson-select"
           value={currentLesson}
-          onChange={setCurrentLesson}
+          onChange={goToLesson}
         />
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useLessons } from '../hooks/queries';
+import { groupLessons } from '../utils/lessonGroups';
 
 export type LessonCountKind = 'vocab' | 'grammar' | 'none';
 interface LessonSelectorProps {
@@ -64,56 +65,7 @@ export default function LessonSelector({
     );
   }, [data, filterWithContent, contentFilter]);
 
-  const groups = useMemo(() => {
-    // Minna = lessonNumber 1–50 (jlptLevel trên các bài này chỉ là mức tương đương JLPT,
-    // không phải khóa JLPT riêng — trước đây bị tách sang nhóm N5/N4/N3/N2).
-    const isMinna = (n: number) => n >= 1 && n <= 50;
-    const byNumber = <T extends { lessonNumber: number }>(a: T, b: T) =>
-      a.lessonNumber - b.lessonNumber;
-
-    // Bài soạn riêng theo sách (Lesson.textbook) → nhóm riêng, không lẫn vào "JLPT N5…"
-    const BOOKS: Array<{ code: string; name: string }> = [
-      { code: 'SOUMATOME', name: 'Sou Matome' },
-      { code: 'SHINKANZEN', name: 'Shinkanzen' },
-      { code: 'TRY', name: 'TRY!' },
-    ];
-    const isBook = (l: { textbook?: string | null }) => BOOKS.some((b) => b.code === l.textbook);
-    const minna = lessons.filter((l) => isMinna(l.lessonNumber)).sort(byNumber);
-    const rest = lessons.filter((l) => !isMinna(l.lessonNumber) && !isBook(l));
-    const bookGroups = BOOKS.flatMap((b) =>
-      ['N5', 'N4', 'N3', 'N2', 'N1'].map((lv) => ({
-        key: `${b.code}-${lv}`,
-        label: `${b.name} ${lv}`,
-        levels: [lv],
-        items: lessons.filter((l) => l.textbook === b.code && l.jlptLevel === lv).sort(byNumber),
-      })),
-    ).filter((g) => g.items.length > 0);
-
-    const order: Array<{ key: string; label: string; levels: string[] }> = [
-      { key: 'n5', label: 'JLPT N5', levels: ['N5', ''] },
-      { key: 'n4', label: 'JLPT N4', levels: ['N4'] },
-      { key: 'n3', label: 'JLPT N3', levels: ['N3'] },
-      { key: 'n2', label: 'JLPT N2', levels: ['N2'] },
-      { key: 'n1', label: 'JLPT N1', levels: ['N1'] },
-    ];
-
-    const levelGroups = order
-      .map((g) => ({
-        ...g,
-        items: rest
-          .filter((l) => g.levels.includes(l.jlptLevel ?? ''))
-          .sort(byNumber),
-      }))
-      .filter((g) => g.items.length > 0);
-
-    return [
-      ...(minna.length
-        ? [{ key: 'minna', label: 'Minna no Nihongo (bài 1–50)', items: minna }]
-        : []),
-      ...levelGroups,
-      ...bookGroups,
-    ];
-  }, [lessons]);
+  const groups = useMemo(() => groupLessons(lessons), [lessons]);
 
   if (isLoading) {
     return (

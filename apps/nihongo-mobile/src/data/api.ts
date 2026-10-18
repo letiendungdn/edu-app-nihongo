@@ -1,20 +1,10 @@
 import axios, { type AxiosInstance } from 'axios';
-import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
 import { API_BASE_URL } from '../config/api';
+import { parseVocabList, unwrapEnvelope } from './envelope';
 
-// ─── Gemini direct REST ────────────────────────────────────────────────────
-
-const extra = Constants.expoConfig?.extra as { geminiApiKey?: string } | undefined;
-const GEMINI_KEY = extra?.geminiApiKey ?? '';
-const GEMINI_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
-
-const SENTENCE_SYSTEM_PROMPT =
-  'Bạn là gia sư tiếng Nhật. Phản hồi JSON (không markdown): ' +
-  '{"corrected":"","reading":"","meaning":"","explanation":"","examples":[]}. ' +
-  'Nếu câu đúng để corrected rỗng.';
+export { parseVocabList, unwrapEnvelope };
 
 export interface SentenceFeedback {
   corrected: string;
@@ -24,35 +14,19 @@ export interface SentenceFeedback {
   examples: string[];
 }
 
+/**
+ * Sửa và giải thích một câu qua gateway (`POST /api/ai/sentence-feedback`).
+ * Bản cũ gọi thẳng Gemini bằng `extra.geminiApiKey` nằm trong bundle app: ai cũng lấy được key.
+ */
 export async function analyzeSentence(sentence: string): Promise<SentenceFeedback> {
-  const body = {
-    system_instruction: { parts: [{ text: SENTENCE_SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: sentence }] }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 512 },
-  };
-
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) throw new Error(`Gemini error: ${res.status}`);
-
-  const json = await res.json();
-  const raw: string =
-    json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
-  const fenceMatch = /```(?:json)?\s*([\s\S]*?)\s*```/.exec(raw);
-  const cleaned = (fenceMatch ? fenceMatch[1] : raw).trim();
-
-  const parsed = JSON.parse(cleaned) as Partial<SentenceFeedback>;
+  const res = await api.post<Partial<SentenceFeedback>>('/ai/sentence-feedback', { sentence: sentence.trim() });
+  const fb = res.data ?? {};
   return {
-    corrected: parsed.corrected ?? '',
-    reading: parsed.reading ?? '',
-    meaning: parsed.meaning ?? '',
-    explanation: parsed.explanation ?? '',
-    examples: parsed.examples ?? [],
+    corrected: fb.corrected ?? '',
+    reading: fb.reading ?? '',
+    meaning: fb.meaning ?? '',
+    explanation: fb.explanation ?? '',
+    examples: fb.examples ?? [],
   };
 }
 
@@ -90,6 +64,11 @@ function createClient(): AxiosInstance {
     return config;
   });
 
+  client.interceptors.response.use((res) => {
+    res.data = unwrapEnvelope(res.data);
+    return res;
+  });
+
   return client;
 }
 
@@ -103,14 +82,6 @@ export interface VocabDto {
   romaji?: string;
 }
 
-function parseVocabList(raw: unknown): VocabDto[] {
-  if (Array.isArray(raw)) return raw as VocabDto[];
-  if (raw && typeof raw === 'object' && 'data' in raw) {
-    const data = (raw as { data?: unknown }).data;
-    if (Array.isArray(data)) return data as VocabDto[];
-  }
-  return [];
-}
 
 export async function fetchAllVocabForLesson(lessonNumber: number): Promise<VocabDto[]> {
   const all: VocabDto[] = [];
@@ -121,7 +92,7 @@ export async function fetchAllVocabForLesson(lessonNumber: number): Promise<Voca
     const res = await api.get('/vocabularies', {
       params: { lessonNumber, page, limit },
     });
-    const batch = parseVocabList(res.data);
+    const batch = parseVocabList<VocabDto>(res.data);
     if (batch.length === 0) break;
     all.push(...batch);
     if (batch.length < limit) break;

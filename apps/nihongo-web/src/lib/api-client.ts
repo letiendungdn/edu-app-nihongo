@@ -13,7 +13,13 @@ const STARTUP_DEFAULT_WAIT_MS = 3000;
 const TOKEN_EVENT = 'nihongo-auth-token';
 
 export type RequestOptions = RequestInit & {
+  /**
+   * Token cũ còn để tương thích. Không truyền hoặc truyền null đều dùng token đang lưu: bản cũ
+   * coi null là "cố ý không gửi token", nên lời gọi chạy lúc context chưa đọc xong token
+   * (render đầu) bị 401 dù người dùng đã đăng nhập.
+   */
   token?: string | null;
+  /** Số lần thử lại khi lỗi mạng / 5xx. Mặc định chỉ GET, HEAD, OPTIONS được thử lại. */
   retries?: number;
   credentials?: RequestCredentials;
   /** Internal: already attempted refresh after 401 */
@@ -69,7 +75,16 @@ function shouldSkipRefresh(path: string): boolean {
 
 let refreshInFlight: Promise<string | null> | null = null;
 
-/** Rotate local access JWT via HttpOnly refresh cookie. */
+/** Server thật sự từ chối refresh token (hết hạn, bị thu hồi) → phải đăng xuất. */
+function isRefreshRejected(status: number): boolean {
+  return status === 400 || status === 401 || status === 403;
+}
+
+/**
+ * Xoay access JWT bằng refresh cookie HttpOnly. Chỉ đăng xuất khi server TỪ CHỐI refresh token.
+ * Lỗi mạng, 502/503 lúc gateway khởi động, 429 → giữ phiên (bản cũ đăng xuất người dùng mỗi lần
+ * mạng chập chờn).
+ */
 export async function refreshAccessToken(): Promise<string | null> {
   if (refreshInFlight) return refreshInFlight;
 
@@ -80,7 +95,7 @@ export async function refreshAccessToken(): Promise<string | null> {
         credentials: 'include',
       });
       if (!res.ok) {
-        setStoredToken(null);
+        if (isRefreshRejected(res.status)) setStoredToken(null);
         return null;
       }
       const json = (await res.json()) as
@@ -92,11 +107,9 @@ export async function refreshAccessToken(): Promise<string | null> {
           : (json as { access_token?: string });
       const token = data?.access_token ?? null;
       if (token) setStoredToken(token);
-      else setStoredToken(null);
       return token;
     } catch {
-      setStoredToken(null);
-      return null;
+      return null; // lỗi mạng: giữ phiên, lần sau thử lại
     } finally {
       refreshInFlight = null;
     }
@@ -105,10 +118,15 @@ export async function refreshAccessToken(): Promise<string | null> {
   return refreshInFlight;
 }
 
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const method = (options.method ?? 'GET').toUpperCase();
   const {
     token,
-    retries = MAX_RETRIES,
+    // POST/PATCH/DELETE không tự gửi lại: lỗi mạng có thể xảy ra SAU khi server đã xử lý xong,
+    // gửi lại sẽ tạo trùng (tin nhắn, subscription…). Nơi nào an toàn thì tự truyền `retries`.
+    retries = IDEMPOTENT_METHODS.has(method) ? MAX_RETRIES : 0,
     credentials,
     _authRetried,
     ...init
@@ -118,7 +136,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (init.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const bearer = token === undefined ? getStoredToken() : token;
+  const bearer = token || getStoredToken(); // null, undefined hay '' đều dùng token đã lưu
   if (bearer) {
     headers.set('Authorization', `Bearer ${bearer}`);
   }
@@ -155,7 +173,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         }
 
         // Gateway chưa sẵn sàng: chờ theo Retry-After, không tính vào số lần thử thường.
-        if ((res.status === 502 || res.status === 503) && retries > 0 && startupWaits < STARTUP_MAX_WAITS) {
+        // 503 (nginx: upstream chưa lên) = request chưa tới service → an toàn cho cả POST.
+        // 502 có thể là service sập giữa chừng → chỉ chờ với request GET.
+        // Lỗi do chính API trả về (JSON `{ success: false }`, ví dụ dịch vụ thanh toán lỗi → 502)
+        // không phải "gateway đang khởi động": báo lỗi ngay, đừng chờ ~90 giây.
+        const fromOurApi = typeof body === 'object' && body !== null && 'success' in body;
+        const gatewayStarting =
+          !fromOurApi && (res.status === 503 || (res.status === 502 && IDEMPOTENT_METHODS.has(method)));
+        if (gatewayStarting && startupWaits < STARTUP_MAX_WAITS) {
           startupWaits += 1;
           await sleep(startupWaitMs(res));
           attempt -= 1;
@@ -195,6 +220,23 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   throw lastError instanceof Error ? lastError : new Error('Network request failed');
+}
+
+/**
+ * Id người dùng trong access token (claim `sub`). Chỉ dùng để chọn kho dữ liệu cục bộ theo người,
+ * KHÔNG dùng để phân quyền (không kiểm chữ ký; server mới là nơi kiểm).
+ */
+export function userIdFromToken(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+    const sub = Number((JSON.parse(json) as { sub?: unknown }).sub);
+    return Number.isInteger(sub) && sub > 0 ? sub : null;
+  } catch {
+    return null;
+  }
 }
 
 export function getStoredToken(): string | null {

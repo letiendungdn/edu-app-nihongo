@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import VocabView from '@/views/VocabView';
+import VocabLessonPickerView from '@/views/VocabLessonPickerView';
 
 function positiveInt(raw: string | null): number | undefined {
   const value = raw ? Number(raw) : NaN;
@@ -11,12 +12,15 @@ function positiveInt(raw: string | null): number | undefined {
 
 function VocabPageInner() {
   const searchParams = useSearchParams();
-  return (
-    <VocabView
-      initialLessonNumber={positiveInt(searchParams.get('lesson'))}
-      initialVocabId={positiveInt(searchParams.get('word'))}
-    />
-  );
+  const lesson = positiveInt(searchParams.get('lesson'));
+  const word = positiveInt(searchParams.get('word'));
+
+  // Chưa chọn bài → trang lưới bài học. Có ?lesson= hoặc ?word= → flashcard.
+  if (lesson == null && word == null) {
+    return <VocabLessonPickerView />;
+  }
+
+  return <VocabView initialLessonNumber={lesson} initialVocabId={word} />;
 }
 
 export default function VocabPage() {

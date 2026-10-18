@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/api-client';
+import { errorMessage } from '@/lib/error-message';
 
 type TemplateItem = {
   name: string;
@@ -45,7 +46,7 @@ export default function EmailTemplatesView() {
       const data = await apiRequest<TemplateItem[]>('/admin/email-templates', { token });
       setTemplates(data);
     } catch (e) {
-      setError(String(e));
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ export default function EmailTemplatesView() {
       setEditing(false);
       void load();
       setTimeout(() => setStatus(''), 2500);
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
   }
 
   async function handleReset() {
@@ -85,7 +86,7 @@ export default function EmailTemplatesView() {
       setEditing(false);
       void load();
       setTimeout(() => setStatus(''), 2500);
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
   }
 
   async function handlePreview() {
@@ -98,7 +99,7 @@ export default function EmailTemplatesView() {
         body: JSON.stringify({ vars: {} }),
       });
       setPreview(res);
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
     finally { setPreviewLoading(false); }
   }
 
@@ -112,7 +113,7 @@ export default function EmailTemplatesView() {
       });
       setStatus(`Đã gửi test tới ${testEmail || 'email admin'}`);
       setTimeout(() => setStatus(''), 3000);
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
   }
 
   async function handleSeed() {
@@ -122,7 +123,7 @@ export default function EmailTemplatesView() {
       setStatus('Đã seed templates');
       void load();
       setTimeout(() => setStatus(''), 2500);
-    } catch (e) { setError(String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
   }
 
   return (

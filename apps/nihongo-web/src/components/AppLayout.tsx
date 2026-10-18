@@ -2,106 +2,38 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AuthHeader from '@/components/AuthHeader';
 import TextbookNavItems from '@/components/TextbookNavItems';
 import PageBannerControl from '@/components/PageBannerControl';
 import { useTheme } from '@/lib/theme';
 import { bannerBackgroundStyle } from '@/utils/pageBanner';
 import { usePageBanner } from '@/hooks/usePageBanner';
+import { NAV_GROUPS } from '@/config/nav';
 
-// ── Nav structure ──────────────────────────────────────────────────────────
+/** Bỏ dấu để gõ "tu vung" vẫn ra "Từ vựng". */
+function fold(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
+}
 
-const NAV_GROUPS = [
-  {
-    label: 'Học',
-    items: [
-      { href: '/kana',      icon: 'あ',  label: 'Kana' },
-      { href: '/vocab',     icon: '単',  label: 'Từ vựng' },
-      { href: '/vocab/list', icon: '表', label: 'Danh sách từ' },
-      { href: '/vocab/mindmap', icon: '🗺', label: 'Sơ đồ từ vựng' },
-      { href: '/vocab/picture', icon: '🖼️', label: 'Từ điển tranh' },
-      { href: '/grammar',   icon: '文',  label: 'Ngữ pháp' },
-      { href: '/grammar/mindmap', icon: '🗺', label: 'Sơ đồ ngữ pháp' },
-      { href: '/kanji',     icon: '漢',  label: 'Kanji' },
-      { href: '/kanji/mindmap', icon: '🗺', label: 'Sơ đồ kanji' },
-      { href: '/kanji/list', icon: '表', label: 'Bảng Kanji JLPT' },
-      { href: '/kanji/structure', icon: '構', label: 'Cấu tạo Kanji' },
-      { href: '/strokes',   icon: '筆',  label: 'Tra nét viết' },
-      { href: '/counters',  icon: '①',  label: 'Đếm số' },
-      { href: '/suffixes',     icon: '語',  label: 'Hậu tố' },
-      { href: '/word-classes', icon: '品',  label: 'Loại từ' },
-      { href: '/countries',    icon: '🌐', label: 'Quốc gia' },
-    ],
-  },
-  {
-    // Mục sách render riêng (TextbookNavItems) — ở đây chỉ còn link chung của nhóm.
-    label: 'Giáo trình',
-    items: [
-      { href: '/book-audio', icon: '🎧', label: 'File nghe sách' },
-    ],
-  },
-  {
-    label: 'Phát âm',
-    items: [
-      { href: '/pronunciation',       icon: '🎤', label: 'Luyện phát âm' },
-      { href: '/pronunciation-rules', icon: '📖', label: 'Quy tắc phát âm' },
-      { href: '/tts',                 icon: '🔊', label: 'Đọc văn bản' },
-      { href: '/stt',                 icon: '🎙️', label: 'Ghi âm → chữ' },
-      { href: '/english-katakana',    icon: 'EN', label: 'EN ↔ カナ' },
-    ],
-  },
-  {
-    label: 'Nội dung',
-    items: [
-      { href: '/daily-listening', icon: '🎧', label: 'Nghe mỗi ngày' },
-      { href: '/conversation',    icon: '話', label: 'Giao tiếp · 自己紹介' },
-      { href: '/listening-types', icon: '耳', label: 'Dạng nghe JLPT' },
-      { href: '/roleplay',        icon: '🗣', label: 'Đóng vai' },
-      { href: '/reading',         icon: '📰', label: 'Đọc hiểu' },
-      { href: '/dictation',       icon: '✍️', label: 'Nghe chép' },
-      { href: '/notes',           icon: '📝', label: 'Ghi chú ngày' },
-    ],
-  },
-  {
-    label: 'Luyện tập',
-    items: [
-      { href: '/practice',          icon: '⚔',  label: 'Hub luyện tập' },
-      { href: '/conjugation',       icon: '変',  label: 'Chia động từ' },
-      { href: '/particles',         icon: '助',  label: 'Điền trợ từ' },
-      { href: '/kanji-readings',    icon: '読',  label: 'Kanji trong từ' },
-      { href: '/grammar-srs',       icon: '文',  label: 'SRS ngữ pháp' },
-      { href: '/srs',               icon: '🧠', label: 'SRS — Thẻ ghi nhớ' },
-      { href: '/sentence-practice', icon: '✍️', label: 'Luyện câu AI' },
-      { href: '/vocab/quiz',        icon: '㊒', label: 'TN từ vựng' },
-      { href: '/kana/quiz',         icon: 'あ', label: 'TN Kana' },
-      { href: '/kanji/quiz',        icon: '漢', label: 'TN Kanji' },
-      { href: '/vocab-review',      icon: '🔄', label: 'Từ sai' },
-      { href: '/quiz',              icon: '✏️', label: 'Quiz' },
-      { href: '/mock-exam',         icon: '📋', label: 'Thi thử JLPT' },
-      { href: '/jlpt',              icon: '🎯', label: 'Lộ trình JLPT' },
-      { href: '/analytics',         icon: '📊', label: 'Tiến độ' },
-    ],
-  },
-  {
-    label: 'Công cụ',
-    items: [
-      { href: '/tools',          icon: '🎨', label: 'Canvas Tools' },
-      { href: '/kanji-practice', icon: '✏️', label: 'Luyện viết Kanji' },
-      { href: '/whiteboard',     icon: '🖊',  label: 'Bảng trắng' },
-      { href: '/worksheet',      icon: '📄', label: 'Tạo bài tập' },
-      { href: '/japan-map',      icon: '🗾', label: 'Bản đồ Nhật Bản' },
-    ],
-  },
-  {
-    label: 'Khác',
-    items: [
-      { href: '/community', icon: '👥', label: 'Cộng đồng' },
-      { href: '/support',   icon: '💬', label: 'Hỗ trợ' },
-      { href: '/pricing',   icon: '⚡', label: 'Nâng cấp' },
-    ],
-  },
-] as const;
+function isActivePath(pathname: string, href: string, exact?: boolean): boolean {
+  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function SearchIcon() {
+  return (
+    <svg className="nav-search__icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+      <circle cx="11" cy="11" r="7" />
+      <line x1="16.5" y1="16.5" x2="21" y2="21" />
+    </svg>
+  );
+}
 
 // ── Nav item ───────────────────────────────────────────────────────────────
 
@@ -124,9 +56,7 @@ function NavItem({
   onClick?: () => void;
 }) {
   const pathname = usePathname() ?? '';
-  const isActive = exact
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = isActivePath(pathname, href, exact);
 
   return (
     <Link
@@ -218,6 +148,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
   const sidebarRef = useRef<HTMLElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
   const { theme } = useTheme();
   const { bannerUrl } = usePageBanner();
 
@@ -256,7 +188,31 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   }, []);
 
   // Close on route change
-  useEffect(() => { close(); }, [pathname, close]);
+  useEffect(() => { close(); setQuery(''); }, [pathname, close]);
+
+  // Phím "/" để tìm mục (trừ khi đang gõ trong ô nhập khác)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      e.preventDefault();
+      setOpen(true);
+      searchRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const q = fold(query.trim());
+  const visibleGroups = useMemo(
+    () =>
+      NAV_GROUPS.map((group) => ({
+        ...group,
+        items: q ? group.items.filter((item) => fold(item.label).includes(q)) : group.items,
+      })).filter((group) => !q || group.items.length > 0),
+    [q],
+  );
 
   // Close on Escape
   useEffect(() => {
@@ -299,7 +255,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       >
         <div className="app-sidebar__header">
           <Link href="/" className="app-sidebar__logo" title={collapsed ? 'Nihongo' : undefined}>
-            <div className="app-sidebar__logo-icon">🇯🇵</div>
+            <div className="app-sidebar__logo-icon" aria-hidden>日</div>
             <div className="app-sidebar__brand">
               <div className="app-sidebar__logo-text">Nihongo</div>
               <div className="app-sidebar__logo-sub">Learn Japanese</div>
@@ -317,13 +273,37 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
+        <div className="nav-search">
+          <SearchIcon />
+          <input
+            ref={searchRef}
+            type="search"
+            className="nav-search__input"
+            placeholder="Tìm mục…"
+            aria-label="Tìm mục trong menu"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setQuery('');
+                e.currentTarget.blur();
+              }
+            }}
+          />
+          {!query && <kbd className="nav-search__kbd">/</kbd>}
+        </div>
+
         {/* Nav */}
         <nav className="app-sidebar__nav" aria-label="Main navigation">
           {/* Home */}
-          <NavItem href="/" icon="🏠" label="Trang chủ" exact compact={collapsed} onClick={close} />
+          {!q && <NavItem href="/" icon="家" label="Trang chủ" exact compact={collapsed} onClick={close} />}
 
-          {NAV_GROUPS.map((group) => {
-            const groupClosed = !collapsed && collapsedGroups.has(group.label);
+          {q && visibleGroups.length === 0 && <p className="nav-empty">Không có mục nào khớp “{query}”.</p>}
+
+          {visibleGroups.map((group) => {
+            // Đang tìm hoặc nhóm chứa trang hiện tại thì luôn mở
+            const hasActive = group.items.some((item) => isActivePath(pathname, item.href, item.href === '/vocab'));
+            const groupClosed = !collapsed && !q && !hasActive && collapsedGroups.has(group.label);
             return (
               <div key={group.label} className={`nav-group${groupClosed ? ' is-collapsed' : ''}`}>
                 <button
@@ -333,9 +313,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                   aria-expanded={!groupClosed}
                 >
                   {group.label}
+                  {groupClosed && <span className="nav-group__count">{group.items.length}</span>}
                   <span className="nav-group__chevron" aria-hidden>▾</span>
                 </button>
-                {!groupClosed && group.label === 'Giáo trình' && (
+                {!groupClosed && !q && group.label === 'Giáo trình' && (
                   <TextbookNavItems compact={collapsed} onClick={close} />
                 )}
                 {!groupClosed && group.items.map((item) => (

@@ -336,8 +336,7 @@ export class EmailTemplateService implements MailTemplateStore {
       throw new BadRequestException("Cần ít nhất 1 ��ịa chỉ email");
 
     const attachments = dto.attachments as unknown as
-      | MailAttachment[]
-      | undefined;
+      MailAttachment[] | undefined;
 
     // Small lists: send inline synchronously
     if (dto.to.length <= COMPOSE_INLINE_LIMIT) {

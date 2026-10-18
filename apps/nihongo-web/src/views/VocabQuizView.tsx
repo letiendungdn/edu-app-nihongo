@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import LessonSelector from '../components/LessonSelector';
-import { useLessonsQuery, useVocabRangeQuery, useVocabulariesQuery } from '../hooks/queries';
+import { useLessons, useVocabRangeQuery, useVocab } from '../hooks/queries';
 import { addMistakeWord } from '../utils/mistakeVocab';
 import { playAudio } from '../utils/speech';
 import { buildVocabQuiz, type VocabQuizMode, type VocabQuizQuestion } from '../utils/vocabQuiz';
@@ -23,7 +23,7 @@ const RANGE_PRESETS = [
 ];
 
 export default function VocabQuizView() {
-  const { data: lessons = [] } = useLessonsQuery();
+  const { data: lessons = [] } = useLessons();
   const maxLesson = lessons[lessons.length - 1]?.lessonNumber ?? 50;
 
   const [phase, setPhase] = useState<'setup' | 'quiz'>('setup');
@@ -39,7 +39,7 @@ export default function VocabQuizView() {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [finished, setFinished] = useState(false);
 
-  const { data: singleVocab = [], isLoading: loadingSingle } = useVocabulariesQuery(lesson);
+  const { data: singleVocab = [], isLoading: loadingSingle } = useVocab(lesson);
   const { data: rangeVocab = [], isLoading: loadingRange } = useVocabRangeQuery(
     lessonFrom,
     lessonTo,

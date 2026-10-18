@@ -61,7 +61,7 @@ class AiTutorViewModel @Inject constructor(
                 history = history.map { AiChatMessage(it.role, it.text) },
             ),
         )
-        return res.answer.orEmpty().ifBlank { "Không có câu trả lời." }
+        return res.data?.answer.orEmpty().trim().ifBlank { "Không có câu trả lời." }
     }
 }
 

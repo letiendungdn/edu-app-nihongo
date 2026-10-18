@@ -1,25 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import SupportChatPanel from '@/components/SupportChatPanel';
-import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useSupportThreadQuery } from '@/hooks/queries';
 
 export default function SupportPage() {
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
-  const { data, isLoading, refetch } = useSupportThreadQuery(isAuthenticated);
+  const { ready } = useRequireAuth();
+  const { data, isLoading, refetch } = useSupportThreadQuery(ready);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login?redirect=/support');
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
-    return <div className="page-loading">Đang chuyển hướng...</div>;
+  if (!ready) {
+    return <div className="page-loading">Đang tải...</div>;
   }
 
   return (

@@ -28,7 +28,9 @@ describe("IDOR — buổi coaching", () => {
       chatMessage: { findMany: jest.fn() },
     };
     const chat = new SessionChatService(prisma as never);
-    await expect(chat.getMessages(10, USER_B)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(chat.getMessages(10, USER_B)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(prisma.chatMessage.findMany).not.toHaveBeenCalled();
   });
 
@@ -44,21 +46,45 @@ describe("IDOR — buổi coaching", () => {
 
   it("B không huỷ được buổi học của A", async () => {
     const prisma = {
-      coachingSession: { findUniqueOrThrow: jest.fn().mockResolvedValue(session), update: jest.fn() },
+      coachingSession: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue(session),
+        update: jest.fn(),
+      },
     };
-    const booking = new BookingService(prisma as never, {} as never, {} as never);
-    await expect(booking.cancelSession(10, USER_B)).rejects.toBeInstanceOf(ForbiddenException);
+    const booking = new BookingService(
+      prisma as never,
+      {} as never,
+      {} as never,
+    );
+    await expect(booking.cancelSession(10, USER_B)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(prisma.coachingSession.update).not.toHaveBeenCalled();
   });
 });
 
 describe("IDOR — hoàn tiền", () => {
-  const payment = { id: 50, userId: USER_A, status: "SUCCEEDED", session: null, subscription: null };
+  const payment = {
+    id: 50,
+    userId: USER_A,
+    status: "SUCCEEDED",
+    session: null,
+    subscription: null,
+  };
 
   function refundService() {
-    const prisma = { payment: { findUnique: jest.fn().mockResolvedValue(payment), update: jest.fn() } };
+    const prisma = {
+      payment: {
+        findUnique: jest.fn().mockResolvedValue(payment),
+        update: jest.fn(),
+      },
+    };
     const stripe = { client: { refunds: { create: jest.fn() } } };
-    return { svc: new RefundService(prisma as never, stripe as never), prisma, stripe };
+    return {
+      svc: new RefundService(prisma as never, stripe as never),
+      prisma,
+      stripe,
+    };
   }
 
   it("B không yêu cầu hoàn tiền giao dịch của A", async () => {

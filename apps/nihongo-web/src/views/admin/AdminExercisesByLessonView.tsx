@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createExercise, deleteExercise, updateExercise } from '../../api';
-import { useLessonsQuery, useExercisesQuery, queryKeys } from '../../hooks/queries';
+import { useLessons, useExercisesQuery, queryKeys } from '../../hooks/queries';
 import { useAuth } from '../../hooks/useAuth';
 import type { Exercise } from '../../types/api';
 import { AdminLessonPicker } from '../../components/admin/AdminLessonPicker';
@@ -37,7 +37,7 @@ export default function AdminExercisesByLessonView({
   const { token } = useAuth();
   const toast = useAdminToast();
   const queryClient = useQueryClient();
-  const { data: lessons = [], isLoading: lessonsLoading } = useLessonsQuery();
+  const { data: lessons = [], isLoading: lessonsLoading } = useLessons();
   const [selectedLessonNumber, setSelectedLessonNumber] = useState<number | null>(
     initialLessonNumber ?? null,
   );

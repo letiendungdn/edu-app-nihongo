@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   cancelSubscription,
   fetchMyPayments,
@@ -11,6 +10,7 @@ import {
   requestSubscriptionRefund,
 } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { PaymentRecord, Subscription } from '@/types/api';
 import { ApiError } from '@/types/api';
 import './PaymentsView.css';
@@ -72,8 +72,7 @@ function canRefundPayment(p: PaymentRecord): boolean {
 }
 
 export default function PaymentsView() {
-  const { token, isAuthenticated } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
 
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -101,13 +100,10 @@ export default function PaymentsView() {
     }
   }, [token]);
 
+  const { ready } = useRequireAuth();
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login?redirect=/payments');
-      return;
-    }
-    void load();
-  }, [isAuthenticated, router, load]);
+    if (ready) void load();
+  }, [ready, load]);
 
   async function handleRefund(payment: PaymentRecord) {
     if (!token) return;

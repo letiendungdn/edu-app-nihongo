@@ -14,7 +14,11 @@ function payload(value: string): EachMessagePayload {
 
 function setup(handle: jest.Mock) {
   const producer = { send: jest.fn().mockResolvedValue(undefined) };
-  const consumer = new ExamEventsConsumer({ get: () => undefined } as never, { handle } as never, producer as never);
+  const consumer = new ExamEventsConsumer(
+    { get: () => undefined } as never,
+    { handle } as never,
+    producer as never,
+  );
   return { consumer, producer };
 }
 
@@ -30,15 +34,22 @@ describe("ExamEventsConsumer.onMessage", () => {
   it("xử lý thành công → không đụng DLQ", async () => {
     const handle = jest.fn().mockResolvedValue(true);
     const { consumer, producer } = setup(handle);
-    await consumer.onMessage(payload(JSON.stringify({ eventId: "e1", userId: 7 })));
+    await consumer.onMessage(
+      payload(JSON.stringify({ eventId: "e1", userId: 7 })),
+    );
     expect(handle).toHaveBeenCalledTimes(1);
     expect(producer.send).not.toHaveBeenCalled();
   });
 
   it("lỗi tạm thời rồi thành công ở lần 2 → không DLQ", async () => {
-    const handle = jest.fn().mockRejectedValueOnce(new Error("db blip")).mockResolvedValue(true);
+    const handle = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("db blip"))
+      .mockResolvedValue(true);
     const { consumer, producer } = setup(handle);
-    await consumer.onMessage(payload(JSON.stringify({ eventId: "e2", userId: 7 })));
+    await consumer.onMessage(
+      payload(JSON.stringify({ eventId: "e2", userId: 7 })),
+    );
     expect(handle).toHaveBeenCalledTimes(2);
     expect(producer.send).not.toHaveBeenCalled();
   });
@@ -49,7 +60,9 @@ describe("ExamEventsConsumer.onMessage", () => {
     const raw = JSON.stringify({ eventId: "e3", userId: 7 });
     await consumer.onMessage(payload(raw));
     expect(handle).toHaveBeenCalledTimes(3);
-    expect(producer.send).toHaveBeenCalledWith(EXAM_SUBMITTED_DLQ, [{ key: "7", value: raw }]);
+    expect(producer.send).toHaveBeenCalledWith(EXAM_SUBMITTED_DLQ, [
+      { key: "7", value: raw },
+    ]);
   });
 
   it("JSON hỏng → DLQ ngay, không thử lại vô ích", async () => {
@@ -64,6 +77,8 @@ describe("ExamEventsConsumer.onMessage", () => {
     const handle = jest.fn().mockRejectedValue(new Error("always"));
     const { consumer, producer } = setup(handle);
     producer.send.mockRejectedValue(new Error("kafka down"));
-    await expect(consumer.onMessage(payload(JSON.stringify({ eventId: "e4" })))).rejects.toThrow("kafka down");
+    await expect(
+      consumer.onMessage(payload(JSON.stringify({ eventId: "e4" }))),
+    ).rejects.toThrow("kafka down");
   });
 });

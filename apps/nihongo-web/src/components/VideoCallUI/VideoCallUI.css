@@ -82,8 +82,8 @@
 }
 
 .vc-error-box {
-  background: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
   border-radius: 10px;
   padding: 1rem 1.5rem;
   text-align: center;
@@ -91,7 +91,7 @@
 }
 
 .vc-error-box p {
-  color: #f87171;
+  color: var(--primary-color);
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
 }
@@ -162,13 +162,13 @@
 .vc-btn--end {
   width: 60px;
   height: 60px;
-  background: #dc2626;
+  background: var(--primary-color-hover);
   color: #fff;
   font-size: 1.4rem;
 }
 
 .vc-btn--end:hover {
-  background: #b91c1c;
+  background: var(--primary-color-hover);
   transform: scale(1.08);
 }
 
@@ -224,11 +224,11 @@
 }
 
 .vc-status-dot--connected::before {
-  background: #22c55e;
+  background: var(--color-success);
 }
 
 .vc-status-dot--waiting::before {
-  background: #f59e0b;
+  background: var(--color-warning);
 }
 
 .vc-status-dot--calling::before {
@@ -237,7 +237,7 @@
 }
 
 .vc-status-dot--error::before {
-  background: #ef4444;
+  background: var(--primary-color);
 }
 
 @keyframes vc-pulse {

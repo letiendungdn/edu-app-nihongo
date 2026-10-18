@@ -253,8 +253,8 @@ export class ProgressService {
 
     return {
       srs: srsStats.total > 0 && srsStats.dueToday === 0,
-      vocab: (activityMap['vocab'] ?? 0) > 0,
-      kanji: (activityMap['kanji'] ?? 0) > 0,
+      vocab: (activityMap["vocab"] ?? 0) > 0,
+      kanji: (activityMap["kanji"] ?? 0) > 0,
       exam: !!examToday,
     };
   }

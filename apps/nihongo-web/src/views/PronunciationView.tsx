@@ -6,7 +6,7 @@ import { playAudio, stopAudio } from '../utils/speech';
 import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
-import { useVocabulariesQuery, useKanaChartsQuery } from '../hooks/queries';
+import { useVocab, useKanaChartsQuery } from '../hooks/queries';
 import { flattenKanaSections, kanaChartToItems } from '../utils/kana';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import './PronunciationView.css';
@@ -26,7 +26,7 @@ export default function PronunciationView() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
 
-  const { data: lessonVocab = [], isLoading: vocabLoading } = useVocabulariesQuery(
+  const { data: lessonVocab = [], isLoading: vocabLoading } = useVocab(
     source === 'vocab' ? currentLesson : 0,
   );
 

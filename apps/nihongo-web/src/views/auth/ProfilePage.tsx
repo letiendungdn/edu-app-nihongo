@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import PaymentMethodsSection from '@/components/PaymentMethodsSection';
 import { ApiError } from '@/types/api';
 import './AuthPages.css';
@@ -11,7 +12,7 @@ import './AuthPages.css';
 const JLPT_LEVELS = ['', 'N5', 'N4', 'N3', 'N2', 'N1'] as const;
 
 export default function ProfilePage() {
-  const { user, token, isAuthenticated, updateProfile, logout } = useAuth();
+  const { user, token, updateProfile, logout } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -23,11 +24,7 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login?redirect=/profile');
-    }
-  }, [isAuthenticated, router]);
+  useRequireAuth();
 
   useEffect(() => {
     if (!user) return;

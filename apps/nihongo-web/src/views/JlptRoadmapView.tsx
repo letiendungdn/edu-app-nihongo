@@ -8,7 +8,7 @@ import {
   useJlptDaNangStaticQuery,
   useJlptRoadmapQuery,
   useKanjiByJlptQuery,
-  useLessonsQuery,
+  useLessons,
 } from '../hooks/queries';
 import type { JlptAnnouncement, JlptDaNangSchedule } from '../types/api';
 import type { JlptDaNangSchedulePayload } from '../types/reference';
@@ -142,7 +142,7 @@ export default function JlptRoadmapView() {
 
   const level = jlptLevels.find((l) => l.id === activeId) ?? jlptLevels[0];
 
-  const { data: lessons = [] } = useLessonsQuery();
+  const { data: lessons = [] } = useLessons();
   const jlptLevelCode = level?.id?.toUpperCase() ?? '';
   const { data: kanjiByLevel } = useKanjiByJlptQuery(jlptLevelCode);
   const { data: appGrammarCount } = useGrammarCountByJlptQuery(jlptLevelCode);

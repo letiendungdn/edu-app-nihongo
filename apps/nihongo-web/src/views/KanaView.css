@@ -125,7 +125,7 @@
 
 .kana-pair-char:hover,
 .kana-pair-char.is-selected {
-  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
 .kana-card--pair .kana-romaji {
@@ -154,13 +154,13 @@
 }
 
 .kana-view .btn-play-all.playing {
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  background: linear-gradient(135deg, var(--primary-color), #f97316);
 }
 
 .kana-card.playing {
   border-color: var(--primary-color);
-  background-color: rgba(239, 68, 68, 0.15);
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+  background-color: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 35%, transparent);
 }
 
 .kana-card.playing .kana-char,
@@ -244,7 +244,7 @@
   background-color: var(--bg-color);
   border-color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-color) 15%, transparent);
 }
 
 .kana-char {
@@ -324,5 +324,5 @@
 
 [data-theme="light"] .active-card:hover {
   border-color: var(--primary-color);
-  box-shadow: 0 4px 14px rgba(239 68 68 / 0.12);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }

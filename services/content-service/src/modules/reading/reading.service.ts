@@ -91,7 +91,9 @@ export class ReadingService {
   ) {
     if (dto.questions !== undefined) {
       // Thay toàn bộ câu hỏi cũ (cascade xoá option theo schema).
-      await this.prisma.readingQuestion.deleteMany({ where: { passageId: id } });
+      await this.prisma.readingQuestion.deleteMany({
+        where: { passageId: id },
+      });
     }
 
     return this.prisma.readingPassage.update({

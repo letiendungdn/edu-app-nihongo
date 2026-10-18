@@ -392,7 +392,7 @@
 
 .jlpt-task-list li.done {
   opacity: 0.65;
-  border-color: color-mix(in srgb, #22c55e 40%, var(--border-color));
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--border-color));
 }
 
 .jlpt-task-list li.done .jlpt-task-label span {
@@ -428,7 +428,7 @@
 }
 
 .jlpt-task-link.external {
-  color: #93c5fd;
+  color: var(--accent-color);
 }
 
 .jlpt-tips ul {
@@ -470,12 +470,12 @@
 }
 
 .jlpt-sync-badge.live {
-  background: color-mix(in srgb, #22c55e 22%, transparent);
+  background: color-mix(in srgb, var(--color-success) 22%, transparent);
   color: #86efac;
 }
 
 .jlpt-sync-badge.fallback {
-  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 22%, transparent);
   color: #fcd34d;
 }
 
@@ -657,18 +657,18 @@
 }
 
 .jlpt-session-registration_open .jlpt-session-badge {
-  background: color-mix(in srgb, #22c55e 25%, transparent);
+  background: color-mix(in srgb, var(--color-success) 25%, transparent);
   color: #86efac;
 }
 
 .jlpt-session-registration_closed .jlpt-session-badge {
-  background: color-mix(in srgb, #f59e0b 25%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 25%, transparent);
   color: #fcd34d;
 }
 
 .jlpt-session-upcoming .jlpt-session-badge {
-  background: color-mix(in srgb, #3b82f6 25%, transparent);
-  color: #93c5fd;
+  background: color-mix(in srgb, var(--accent-color) 25%, transparent);
+  color: var(--accent-color);
 }
 
 .jlpt-session-details {

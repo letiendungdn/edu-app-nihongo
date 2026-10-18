@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLessonsQuery, useVocabulariesQuery } from '../../hooks/queries';
+import { useLessons, useVocab } from '../../hooks/queries';
 import type { Lesson } from '../../types/api';
 import VocabWordList from '../../components/VocabWordList';
 import { AdminLessonPicker, type AdminLessonListItem } from '../../components/admin/AdminLessonPicker';
@@ -20,7 +20,7 @@ export default function AdminVocabByLessonView({
 }: {
   initialLessonNumber?: number;
 } = {}) {
-  const { data: lessons = [], isLoading: lessonsLoading } = useLessonsQuery();
+  const { data: lessons = [], isLoading: lessonsLoading } = useLessons();
   const [selectedLessonNumber, setSelectedLessonNumber] = useState<number | null>(
     initialLessonNumber ?? null,
   );
@@ -35,7 +35,7 @@ export default function AdminVocabByLessonView({
   const activeLessonNumber = selectedLessonNumber ?? lessons[0]?.lessonNumber ?? null;
   const activeLesson = lessons.find((l) => l.lessonNumber === activeLessonNumber) ?? null;
 
-  const { data: vocabularies = [], isLoading: vocabLoading } = useVocabulariesQuery(
+  const { data: vocabularies = [], isLoading: vocabLoading } = useVocab(
     activeLessonNumber ?? 0,
     activeLessonNumber != null,
   );

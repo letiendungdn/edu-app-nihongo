@@ -1,8 +1,31 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, Matches, MaxLength } from "class-validator";
-import { JwtAuthGuard, OptionalJwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from "class-validator";
+import {
+  JwtAuthGuard,
+  OptionalJwtAuthGuard,
+  Public,
+  Roles,
+  RolesGuard,
+} from "@app/common";
 import type { AuthRequest } from "@app/common/auth/current-user.decorator";
 import { FeatureFlagsService } from "./feature-flags.service";
 
@@ -24,7 +47,9 @@ export class UpdateFeatureFlagDto {
 
 export class CreateFeatureFlagDto extends UpdateFeatureFlagDto {
   @IsString()
-  @Matches(/^[a-z0-9][a-z0-9-]{1,63}$/, { message: "key chỉ gồm chữ thường, số, dấu gạch ngang" })
+  @Matches(/^[a-z0-9][a-z0-9-]{1,63}$/, {
+    message: "key chỉ gồm chữ thường, số, dấu gạch ngang",
+  })
   key!: string;
 }
 
@@ -36,7 +61,10 @@ export class FeatureFlagsController {
   @Get("feature-flags")
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
-  @ApiOperation({ summary: "Các feature flag đang bật cho người xem (khách hoặc đã đăng nhập)" })
+  @ApiOperation({
+    summary:
+      "Các feature flag đang bật cho người xem (khách hoặc đã đăng nhập)",
+  })
   async enabled(@Req() req: AuthRequest) {
     return { enabled: await this.flags.enabledKeys(req.user?.role ?? null) };
   }
@@ -63,7 +91,10 @@ export class FeatureFlagsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Bật/tắt, đổi vai trò được thấy (admin) — có hiệu lực trong ≤ 30s, không cần deploy" })
+  @ApiOperation({
+    summary:
+      "Bật/tắt, đổi vai trò được thấy (admin) — có hiệu lực trong ≤ 30s, không cần deploy",
+  })
   update(@Param("key") key: string, @Body() dto: UpdateFeatureFlagDto) {
     return this.flags.update(key, dto);
   }

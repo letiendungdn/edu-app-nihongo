@@ -173,7 +173,7 @@
 
 .picture-card-lesson {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
@@ -265,7 +265,7 @@
   gap: 0.4rem;
   padding: 0.65rem 0.85rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(239, 68, 68, 0.22);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 22%, transparent);
   background: rgba(15, 23, 42, 0.35);
 }
 

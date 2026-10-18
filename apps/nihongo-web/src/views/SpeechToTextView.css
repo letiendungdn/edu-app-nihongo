@@ -25,7 +25,7 @@
 }
 
 .stt-link {
-  color: var(--accent, #ef4444);
+  color: var(--accent, var(--primary-color));
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -88,7 +88,7 @@
   min-height: 10rem;
   padding: 0.85rem 1rem;
   border-radius: 0.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.72);
   color: var(--text-primary);
   font-size: 1.05rem;
@@ -105,7 +105,7 @@
 
 .stt-error {
   margin: 0;
-  color: #dc2626;
+  color: var(--primary-color-hover);
   font-size: 0.92rem;
 }
 
@@ -116,8 +116,8 @@
 }
 
 .stt-stop-btn {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
 }
 
 .stt-note {

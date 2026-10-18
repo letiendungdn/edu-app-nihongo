@@ -29,8 +29,7 @@ export function getSubscriptionPeriod(
 ): SubscriptionPeriod {
   const legacy = sub as LegacyStripeSubscription;
   const item = sub.items?.data?.[0] as
-    | { current_period_start?: number; current_period_end?: number }
-    | undefined;
+    { current_period_start?: number; current_period_end?: number } | undefined;
 
   return {
     currentPeriodStart: unixToDate(

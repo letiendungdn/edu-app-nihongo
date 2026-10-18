@@ -21,16 +21,25 @@ type SearchableVocab = {
  * Xếp kết quả tra từ: khớp đúng cả từ → bắt đầu bằng từ khóa → chứa từ khóa;
  * cùng mức thì từ ngắn hơn (từ đơn trước cụm/câu) rồi theo id.
  */
-export function rankVocabSearch<T extends SearchableVocab>(items: T[], query: string): T[] {
+export function rankVocabSearch<T extends SearchableVocab>(
+  items: T[],
+  query: string,
+): T[] {
   const q = query.trim().toLowerCase();
   const tier = (v: T) => {
-    const words = [v.kanji, v.kana, v.romaji].filter(Boolean).map((w) => w!.toLowerCase());
+    const words = [v.kanji, v.kana, v.romaji]
+      .filter(Boolean)
+      .map((w) => w!.toLowerCase());
     const meanings = v.meaning
       .toLowerCase()
       .split(/[,;、，/]/)
       .map((m) => m.trim());
     if (words.includes(q) || meanings.includes(q)) return 0;
-    if (words.some((w) => w.startsWith(q)) || meanings.some((m) => m.startsWith(q))) return 1;
+    if (
+      words.some((w) => w.startsWith(q)) ||
+      meanings.some((m) => m.startsWith(q))
+    )
+      return 1;
     return 2;
   };
   const len = (v: T) => (v.kanji || v.kana).length;
@@ -92,10 +101,21 @@ export class VocabulariesService {
     });
     const include = {
       // Kết quả tra từ cần biết từ nằm ở bài nào để mở đúng bài
-      lesson: { select: { lessonNumber: true, title: true, jlptLevel: true, textbook: true } },
+      lesson: {
+        select: {
+          lessonNumber: true,
+          title: true,
+          jlptLevel: true,
+          textbook: true,
+        },
+      },
     };
     const [exact, candidates, total] = await this.prisma.$transaction([
-      this.prisma.vocabulary.findMany({ where: match("equals"), include, take: SEARCH_POOL }),
+      this.prisma.vocabulary.findMany({
+        where: match("equals"),
+        include,
+        take: SEARCH_POOL,
+      }),
       this.prisma.vocabulary.findMany({
         where: match("contains"),
         include,

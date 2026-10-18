@@ -1,9 +1,12 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchSessionMessages, sendSessionMessage, getPresignedUploadUrl } from '@/api';
 import { getStoredToken } from '@/lib/api-client';
 import type { SessionChatMessage } from '@/types/chat';
+import { queryKeys } from '@/api/query-keys';
+import { appendMessage } from '@/hooks/useChatSSE';
 import './SupportChat.css';
 
 function formatTime(iso: string) {
@@ -40,26 +43,44 @@ export default function SessionChatPanel({
   sessionId: number;
   currentUserId: number;
 }) {
-  const [messages, setMessages] = useState<SessionChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [unread, setUnread] = useState(0);
+  const [lastSeenId, setLastSeenId] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const token = getStoredToken();
+  const queryClient = useQueryClient();
+  const key = queryKeys.sessionMessages(sessionId);
+
+  // Bản cũ tải tin MỘT lần khi mở trang: tin của người kia không bao giờ hiện cho tới khi tải lại,
+  // và đổi buổi nhanh thì tin buổi cũ có thể ghi đè. Backend chưa có stream cho chat buổi học nên
+  // hỏi lại định kỳ: dày khi khung chat đang mở, thưa khi đóng (vẫn cần để đếm tin chưa đọc).
+  const { data } = useQuery({
+    queryKey: key,
+    queryFn: () => fetchSessionMessages('', sessionId),
+    enabled: !!token,
+    refetchInterval: open ? 4000 : 15000,
+  });
+  const messages = useMemo(() => data ?? [], [data]);
+
+  // Lịch sử có sẵn lúc vào trang không tính là "chưa đọc"
+  const baselineSet = useRef(false);
+  useEffect(() => {
+    if (baselineSet.current || !data) return;
+    baselineSet.current = true;
+    setLastSeenId(data.reduce((max, m) => Math.max(max, m.id), 0));
+  }, [data]);
+
+  // Tin chưa đọc = tin của người kia mới hơn lần cuối mở khung chat (bản cũ luôn là 0)
+  const unread = open ? 0 : messages.filter((m) => m.id > lastSeenId && m.sender.id !== currentUserId).length;
 
   useEffect(() => {
-    if (!token) return;
-    void fetchSessionMessages(token, sessionId).then((msgs) => setMessages(msgs));
-  }, [sessionId, token]);
-
-  useEffect(() => {
-    if (open) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setUnread(0);
-    }
+    if (!open) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const newest = messages.reduce((max, m) => Math.max(max, m.id), 0);
+    setLastSeenId((prev) => Math.max(prev, newest));
   }, [messages, open]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -81,7 +102,9 @@ export default function SessionChatPanel({
     setSending(true);
     try {
       const msg = await sendSessionMessage(token, sessionId, text, fileUrl, fileType);
-      setMessages((prev) => [...prev, msg]);
+      queryClient.setQueryData<SessionChatMessage[]>(key, (prev) =>
+        appendMessage({ messages: prev ?? [] }, msg)?.messages ?? prev,
+      );
     } finally {
       setSending(false);
     }

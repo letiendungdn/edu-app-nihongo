@@ -1,4 +1,9 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import {
+  BadGatewayException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { GoogleGenAI } from "@google/genai";
 
 export interface ChatMessage {
@@ -10,6 +15,68 @@ export interface AskDto {
   question: string;
   history?: ChatMessage[];
   context?: string;
+}
+
+export interface SentenceFeedback {
+  corrected: string;
+  reading: string;
+  meaning: string;
+  explanation: string;
+  examples: string[];
+}
+
+interface GenOptions {
+  temperature: number;
+  maxTokens: number;
+}
+
+const CHAT_OPTIONS: GenOptions = { temperature: 0.7, maxTokens: 600 };
+const SENTENCE_OPTIONS: GenOptions = { temperature: 0.3, maxTokens: 512 };
+
+const SENTENCE_PROMPT = [
+  "Bạn là gia sư tiếng Nhật. Người học gửi một câu tiếng Nhật (hoặc tiếng Việt để nhờ dịch).",
+  'Chỉ trả về JSON thuần, không markdown: {"corrected":"","reading":"","meaning":"","explanation":"","examples":[]}.',
+  "corrected: câu đã sửa (rỗng nếu câu đúng). reading: furigana hoặc romaji. meaning, explanation: tiếng Việt, ngắn gọn.",
+  "examples: tối đa 2 câu ví dụ tương tự bằng tiếng Nhật.",
+].join("\n");
+
+/**
+ * Chuẩn hóa phản hồi của model (hay bọc ```json, thiếu field, sai kiểu). Hàm thuần để test.
+ * Không parse được → null.
+ */
+export function parseSentenceFeedback(raw: string): SentenceFeedback | null {
+  const cleaned = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+  let json: unknown;
+  try {
+    json = JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start < 0 || end <= start) return null;
+    try {
+      json = JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+  if (!json || typeof json !== "object") return null;
+  const o = json as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  return {
+    corrected: str(o.corrected),
+    reading: str(o.reading),
+    meaning: str(o.meaning),
+    explanation: str(o.explanation),
+    examples: Array.isArray(o.examples)
+      ? o.examples
+          .filter((e): e is string => typeof e === "string" && e.trim() !== "")
+          .slice(0, 5)
+      : [],
+  };
 }
 
 type AiProvider = "ollama" | "gemini";
@@ -47,16 +114,34 @@ export class AiService {
       .join("\n");
 
     if (this.provider === "ollama") {
-      return this.askOllama(systemInstruction, question, history);
+      return this.askOllama(systemInstruction, question, history, CHAT_OPTIONS);
     }
 
-    return this.askGemini(systemInstruction, question, history);
+    return this.askGemini(systemInstruction, question, history, CHAT_OPTIONS);
+  }
+
+  /**
+   * Sửa và giải thích một câu. Trước đây web, iOS, Android, Expo, Flutter mỗi nơi tự gọi Gemini
+   * bằng API key NẰM TRONG APP (ai bắt request cũng lấy được key). Giờ chỉ server giữ key.
+   */
+  async sentenceFeedback(sentence: string): Promise<SentenceFeedback> {
+    const raw =
+      this.provider === "ollama"
+        ? await this.askOllama(SENTENCE_PROMPT, sentence, [], SENTENCE_OPTIONS)
+        : await this.askGemini(SENTENCE_PROMPT, sentence, [], SENTENCE_OPTIONS);
+    const parsed = parseSentenceFeedback(raw);
+    if (!parsed) {
+      this.logger.warn(`AI trả về không phải JSON: ${raw.slice(0, 300)}`);
+      throw new BadGatewayException("AI trả về sai định dạng, thử lại nhé");
+    }
+    return parsed;
   }
 
   private async askOllama(
     systemInstruction: string,
     question: string,
     history: ChatMessage[],
+    options: GenOptions,
   ): Promise<string> {
     const messages = [
       { role: "system", content: systemInstruction },
@@ -74,8 +159,8 @@ export class AiService {
         body: JSON.stringify({
           model: this.model,
           messages,
-          temperature: 0.7,
-          max_tokens: 600,
+          temperature: options.temperature,
+          max_tokens: options.maxTokens,
         }),
       });
 
@@ -104,6 +189,7 @@ export class AiService {
     systemInstruction: string,
     question: string,
     history: ChatMessage[],
+    options: GenOptions,
   ): Promise<string> {
     if (!this.gemini) {
       throw new ServiceUnavailableException(
@@ -121,8 +207,8 @@ export class AiService {
         model: "gemini-2.0-flash",
         config: {
           systemInstruction,
-          maxOutputTokens: 600,
-          temperature: 0.7,
+          maxOutputTokens: options.maxTokens,
+          temperature: options.temperature,
         },
         history: geminiHistory,
       });
@@ -130,8 +216,9 @@ export class AiService {
       const response = await chat.sendMessage({ message: question });
       return response.text ?? "";
     } catch (error) {
+      // Chi tiết lỗi của Google chỉ ghi log; bản cũ ném nguyên ra → client thấy thông điệp nội bộ
       this.logger.error("Gemini API error", error);
-      throw error;
+      throw new ServiceUnavailableException("AI đang gặp sự cố, thử lại sau");
     }
   }
 }

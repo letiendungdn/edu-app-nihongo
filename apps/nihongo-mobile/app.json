@@ -46,7 +46,6 @@
     "extra": {
       "apiBaseUrl": "http://10.0.2.2:3000/api",
       "livekitWsUrl": "ws://10.0.2.2:7880",
-      "geminiApiKey": "",
       "keycloakUrl": "http://10.0.2.2:8080",
       "keycloakRealm": "edu-app",
       "keycloakClientId": "nihongo-mobile"

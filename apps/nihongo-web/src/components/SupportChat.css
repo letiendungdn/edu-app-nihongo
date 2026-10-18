@@ -36,8 +36,8 @@
 }
 
 .support-chat-status--on {
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.35);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
 }
 
 .support-chat-messages {
@@ -66,8 +66,8 @@
 
 .support-chat-bubble--mine {
   align-self: flex-end;
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.25);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary-color) 25%, transparent);
 }
 
 .support-chat-bubble-meta {

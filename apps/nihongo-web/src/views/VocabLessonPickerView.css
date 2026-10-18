@@ -1,0 +1,115 @@
+.vocab-lesson-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 960px;
+}
+
+.vocab-lesson-picker__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.vocab-lesson-picker__subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.vocab-lesson-picker__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.vocab-lesson-picker__filter {
+  max-width: 28rem;
+}
+
+.vocab-lesson-picker__filter .select-input {
+  width: 100%;
+}
+
+.vocab-lesson-picker__status {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.vocab-lesson-picker__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vocab-lesson-picker__group-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+}
+
+.vocab-lesson-picker__group-stats {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.vocab-lesson-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.vocab-lesson-picker__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.vocab-lesson-picker__card:hover {
+  border-color: var(--primary-color, var(--accent-color));
+  transform: translateY(-1px);
+}
+
+.vocab-lesson-picker__num {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.vocab-lesson-picker__name {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.vocab-lesson-picker__meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 560px) {
+  .vocab-lesson-picker__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

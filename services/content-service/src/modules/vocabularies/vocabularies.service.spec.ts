@@ -110,7 +110,13 @@ describe("VocabulariesService", () => {
 });
 
 describe("rankVocabSearch", () => {
-  const v = (id: number, kanji: string | null, kana: string, romaji: string, meaning: string) => ({
+  const v = (
+    id: number,
+    kanji: string | null,
+    kana: string,
+    romaji: string,
+    meaning: string,
+  ) => ({
     id,
     kanji,
     kana,
@@ -122,7 +128,13 @@ describe("rankVocabSearch", () => {
     const ranked = rankVocabSearch(
       [
         v(1, "お願いします。", "おねがいします。", "onegaishimasu", "xin nhờ"),
-        v(2, "また 今度 お願いします。", "また こんど おねがいします。", "mata kondo", "hẹn lần sau"),
+        v(
+          2,
+          "また 今度 お願いします。",
+          "また こんど おねがいします。",
+          "mata kondo",
+          "hẹn lần sau",
+        ),
         v(3, "願い", "ねがい", "negai", "ước nguyện, lời thỉnh cầu"),
       ],
       "願い",
@@ -133,7 +145,13 @@ describe("rankVocabSearch", () => {
   it("matches a Vietnamese meaning exactly within a comma-separated list", () => {
     const ranked = rankVocabSearch(
       [
-        v(1, "一生懸命", "いっしょうけんめい", "isshoukenmei", "cố gắng hết sức"),
+        v(
+          1,
+          "一生懸命",
+          "いっしょうけんめい",
+          "isshoukenmei",
+          "cố gắng hết sức",
+        ),
         v(2, "頑張る", "がんばる", "ganbaru", "nỗ lực, cố gắng"),
       ],
       "cố gắng",

@@ -53,7 +53,11 @@ export class ContentMsController implements OnModuleInit {
     this.routes = {
       [CONTENT_PATTERNS.GET_LESSONS]: (data) =>
         this.getLessons(
-          data as { has?: "grammar" | "vocab"; jlptLevel?: string; query?: string },
+          data as {
+            has?: "grammar" | "vocab";
+            jlptLevel?: string;
+            query?: string;
+          },
         ),
       [CONTENT_PATTERNS.GET_LESSON]: (data) =>
         this.getLesson(data as { lessonNumber: number }),
@@ -486,7 +490,10 @@ export class ContentMsController implements OnModuleInit {
     return this.vocabSuffixesService.createGroup(dto);
   }
 
-  updateVocabSuffixGroup(data: { slug: string; dto: UpdateVocabSuffixGroupDto }) {
+  updateVocabSuffixGroup(data: {
+    slug: string;
+    dto: UpdateVocabSuffixGroupDto;
+  }) {
     return this.vocabSuffixesService.updateGroup(data.slug, data.dto);
   }
 
@@ -507,7 +514,10 @@ export class ContentMsController implements OnModuleInit {
   }
 
   reorderVocabSuffixItems(dto: ReorderVocabSuffixItemsDto) {
-    return this.vocabSuffixesService.reorderItems(dto.groupSlug, dto.orderedIds);
+    return this.vocabSuffixesService.reorderItems(
+      dto.groupSlug,
+      dto.orderedIds,
+    );
   }
 
   getReadingPassages(data: { jlptLevel?: string }) {

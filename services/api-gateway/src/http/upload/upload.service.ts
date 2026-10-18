@@ -29,7 +29,10 @@ export function buildS3ClientConfig(config: ConfigService): S3ClientConfig {
 }
 
 /** Gốc URL công khai của file: ASSET_BASE_URL (vd CloudFront) > endpoint LocalStack > S3 mặc định. */
-export function resolvePublicBase(config: ConfigService, bucket: string): string {
+export function resolvePublicBase(
+  config: ConfigService,
+  bucket: string,
+): string {
   const assetBase = config.get<string>("ASSET_BASE_URL");
   if (assetBase) return assetBase.replace(/\/+$/, "");
   const endpoint = config.get<string>("AWS_ENDPOINT_URL");

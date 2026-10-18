@@ -6,7 +6,12 @@ import { ProgressUpdater } from "./progress-updater";
 
 @Global()
 @Module({
-  providers: [KafkaProducerService, OutboxRelayService, ProgressUpdater, ExamEventsConsumer],
+  providers: [
+    KafkaProducerService,
+    OutboxRelayService,
+    ProgressUpdater,
+    ExamEventsConsumer,
+  ],
   exports: [KafkaProducerService],
 })
 export class KafkaModule {}

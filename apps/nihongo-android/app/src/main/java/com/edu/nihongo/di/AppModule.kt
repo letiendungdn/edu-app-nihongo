@@ -17,6 +17,7 @@ import com.edu.nihongo.data.local.dao.SrsCardDao
 import com.edu.nihongo.data.local.dao.SyncQueueDao
 import com.edu.nihongo.data.local.dao.VocabularyDao
 import com.edu.nihongo.data.remote.AiTutorApi
+import com.edu.nihongo.data.remote.SentenceFeedbackApi
 import com.edu.nihongo.data.remote.AuthApi
 import com.edu.nihongo.data.remote.AuthInterceptor
 import com.edu.nihongo.data.remote.ChatStream
@@ -161,6 +162,9 @@ object AppModule {
 
     @Provides fun provideAiTutorApi(retrofit: Retrofit): AiTutorApi =
         retrofit.create(AiTutorApi::class.java)
+
+    @Provides fun provideSentenceFeedbackApi(retrofit: Retrofit): SentenceFeedbackApi =
+        retrofit.create(SentenceFeedbackApi::class.java)
 
     @Provides fun providePushApi(retrofit: Retrofit): PushApi =
         retrofit.create(PushApi::class.java)

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { navIconFor } from '@/config/nav';
 import type { HomeFeatureSection as HomeFeatureSectionData } from './types';
 
 type HomeFeatureSectionProps = {
@@ -17,7 +18,7 @@ export default function HomeFeatureSection({ section }: HomeFeatureSectionProps)
       <div className="feature-grid">
         {section.items.map((item) => (
           <Link key={item.href} href={item.href} className="feature-card">
-            <div className="feature-card__icon">{item.icon}</div>
+            <div className="feature-card__icon japanese-text">{navIconFor(item.href) ?? item.icon}</div>
             <div className="feature-card__body">
               <div className="feature-card__title">{item.title}</div>
               <div className="feature-card__desc">{item.desc}</div>

@@ -2,11 +2,11 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import GroupChatPanel from '@/components/GroupChatPanel';
 import VideoCallButton from '@/components/VideoCallButton';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import {
   queryKeys,
   useCommunityOnlineQuery,
@@ -33,7 +33,7 @@ function formatPreview(iso: string) {
 
 export default function CommunityPage() {
   const { isAuthenticated, user } = useAuth();
-  const router = useRouter();
+  useRequireAuth();
   const queryClient = useQueryClient();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -48,12 +48,6 @@ export default function CommunityPage() {
   const { data: rooms, refetch: refetchRooms } = useCommunityRoomsQuery(isAuthenticated);
   const { data: roomDetail, refetch: refetchRoom } = useCommunityRoomQuery(selectedId);
   const { data: onlineUsers } = useCommunityOnlineQuery(isAuthenticated);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login?redirect=/community');
-    }
-  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (!selectedId && rooms?.length) {

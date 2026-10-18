@@ -41,13 +41,19 @@ export default function TextToSpeechView() {
       return;
     }
 
+    // Hủy cả request đã gửi, không chỉ hẹn giờ: gõ nhanh thì response của chữ CŨ có thể về sau
+    // và hiện sai cách đọc cho chữ mới.
+    let cancelled = false;
     const timer = window.setTimeout(() => {
       void fetchKanaRomajiLookup(trimmed)
-        .then((result) => setReading(result))
-        .catch(() => setReading(null));
+        .then((result) => !cancelled && setReading(result))
+        .catch(() => !cancelled && setReading(null));
     }, 350);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [lang, trimmed]);
 
   useEffect(() => {

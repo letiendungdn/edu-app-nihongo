@@ -1,26 +1,24 @@
 import Foundation
 
+/// `POST /api/ai/chat`. Bản cũ: gọi `/ai/chat` (gateway đặt route thiếu `api/` → luôn 404) và đọc
+/// `json["answer"]` ở cấp ngoài, trong khi gateway bọc `{ success, data: { answer } }` → luôn rỗng.
 struct AiTutorAPI {
-    private let session: URLSession
+    var client: APIClient = .shared
 
-    init(session: URLSession = .shared) {
-        self.session = session
-    }
+    struct Message: Encodable { let role: String; let content: String }
+    private struct Body: Encodable { let question: String; let history: [Message]; let context: String? }
+    private struct Answer: Decodable { let answer: String }
 
     func ask(question: String, history: [[String: String]], context: String? = nil) async throws -> String {
-        guard let url = URL(string: "\(APIConfig.baseURL)/ai/chat") else {
-            throw APIError.invalidURL
+        let messages = history.compactMap { m -> Message? in
+            guard let role = m["role"], let content = m["content"] else { return nil }
+            return Message(role: role, content: content)
         }
-        var body: [String: Any] = [
-            "question": question,
-            "history": history,
-        ]
-        if let context, !context.isEmpty {
-            body["context"] = context
+        let body = Body(question: question, history: messages, context: (context?.isEmpty ?? true) ? nil : context)
+        let (data, _) = try await client.send(try client.request("ai/chat", method: "POST", body: body))
+        guard let answer = try JSONDecoder().decode(Envelope<Answer>.self, from: data).data?.answer else {
+            throw APIError.decodingFailed
         }
-        let req = try HTTPClient.authorizedRequest(url: url, method: "POST", jsonBody: body)
-        let (data, _) = try await APIClient.shared.send(req) // gặp 401 tự refresh token
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        return (json?["answer"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return answer.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

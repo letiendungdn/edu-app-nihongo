@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from "@nestjs/common";
+import type Stripe from "stripe";
 import {
   PaymentStatus,
   Role,
@@ -26,11 +31,22 @@ export class SubscriptionService {
     private readonly paymentMethodService: PaymentMethodService,
   ) {}
 
+  /**
+   * Bắt đầu thanh toán hoặc đổi gói. Bản cũ LUÔN tạo subscription Stripe mới:
+   * - web gọi 2 lần mỗi lần vào trang thanh toán → các subscription "incomplete" rác;
+   * - nâng gói tạo subscription THỨ HAI, DB ghi đè id cũ, gói cũ vẫn tiếp tục trừ tiền.
+   * Giờ: chưa thanh toán xong cùng giá → dùng lại; đang có hiệu lực cùng giá → báo trùng;
+   * đang có hiệu lực giá khác → đổi giá trên CHÍNH subscription đó (Stripe tự tính chênh lệch).
+   */
   async createOrUpgrade(
     userId: number,
     plan: SubscriptionPlan,
     paymentMethodId?: string,
-  ): Promise<{ clientSecret: string; subscriptionId: string }> {
+  ): Promise<{
+    clientSecret: string | null;
+    subscriptionId: string;
+    changedPlan?: boolean;
+  }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
@@ -40,19 +56,11 @@ export class SubscriptionService {
     });
     if (!planConfig?.stripePriceId)
       throw new BadRequestException("Plan not available");
+    const priceId = planConfig.stripePriceId;
 
     const sub = await this.prisma.subscription.findUnique({
       where: { userId },
     });
-    let stripeCustomerId = sub?.stripeCustomerId;
-
-    if (!stripeCustomerId) {
-      const customer = await this.stripe.createCustomer(
-        user.email,
-        user.name ?? undefined,
-      );
-      stripeCustomerId = customer.id;
-    }
 
     if (paymentMethodId) {
       await this.paymentMethodService.assertUserOwnsCard(
@@ -61,14 +69,79 @@ export class SubscriptionService {
       );
     }
 
+    if (sub?.stripeSubscriptionId) {
+      const existing = await this.stripe.retrieveSubscription(
+        sub.stripeSubscriptionId,
+      );
+      const samePrice = existing.items.data[0]?.price?.id === priceId;
+
+      if (existing.status === "incomplete") {
+        if (samePrice) {
+          return {
+            clientSecret: getSubscriptionClientSecret(existing),
+            subscriptionId: existing.id,
+          };
+        }
+        // Đổi ý sang gói khác khi chưa trả tiền: bỏ cái đang dở rồi tạo mới bên dưới
+        await this.stripe.cancelSubscription(existing.id, false);
+      } else if (["active", "trialing", "past_due"].includes(existing.status)) {
+        if (samePrice) {
+          throw new ConflictException("Bạn đang dùng gói này rồi");
+        }
+        const updated = await this.stripe.updateSubscription(
+          existing.id,
+          priceId,
+        );
+        const customerId =
+          typeof updated.customer === "string"
+            ? updated.customer
+            : updated.customer.id;
+        await this.persist(userId, sub, plan, updated, customerId, priceId);
+        return {
+          clientSecret: null,
+          subscriptionId: updated.id,
+          changedPlan: true,
+        };
+      }
+      // canceled / incomplete_expired / unpaid / paused: tạo subscription mới
+    }
+
+    let stripeCustomerId = sub?.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await this.stripe.createCustomer(
+        user.email,
+        user.name ?? undefined,
+        `customer:user-${userId}`,
+      );
+      stripeCustomerId = customer.id;
+    }
+
     const stripeSub = await this.stripe.createSubscription({
       customerId: stripeCustomerId,
-      priceId: planConfig.stripePriceId,
+      priceId,
       trialDays: planConfig.trialDays || undefined,
       metadata: { userId: userId.toString(), plan },
       defaultPaymentMethodId: paymentMethodId,
+      // Hai request trùng nhau (bấm 2 lần, mạng gửi lại) trong cùng 10 phút → cùng một subscription
+      idempotencyKey: `subscription:user-${userId}:${priceId}:${paymentMethodId ?? "new-card"}:${Math.floor(Date.now() / 600_000)}`,
     });
 
+    await this.persist(userId, sub, plan, stripeSub, stripeCustomerId, priceId);
+
+    return {
+      clientSecret: getSubscriptionClientSecret(stripeSub),
+      subscriptionId: stripeSub.id,
+    };
+  }
+
+  private async persist(
+    userId: number,
+    sub: { plan: SubscriptionPlan } | null,
+    plan: SubscriptionPlan,
+    stripeSub: Stripe.Subscription,
+    stripeCustomerId: string,
+    priceId: string,
+  ) {
     const period = getSubscriptionPeriod(stripeSub);
     const planToPersist = resolveSubscriptionPlan({
       stripeStatus: stripeSub.status,
@@ -84,22 +157,17 @@ export class SubscriptionService {
         status: mapStripeSubscriptionStatus(stripeSub.status),
         stripeCustomerId,
         stripeSubscriptionId: stripeSub.id,
-        stripePriceId: planConfig.stripePriceId,
+        stripePriceId: priceId,
         ...subscriptionPeriodPrismaData(period),
       },
       update: {
         plan: planToPersist,
         status: mapStripeSubscriptionStatus(stripeSub.status),
         stripeSubscriptionId: stripeSub.id,
-        stripePriceId: planConfig.stripePriceId,
+        stripePriceId: priceId,
         ...subscriptionPeriodPrismaData(period),
       },
     });
-
-    return {
-      clientSecret: getSubscriptionClientSecret(stripeSub),
-      subscriptionId: stripeSub.id,
-    };
   }
 
   async cancel(userId: number): Promise<void> {

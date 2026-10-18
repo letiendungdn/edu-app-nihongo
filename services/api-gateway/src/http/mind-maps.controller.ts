@@ -32,7 +32,9 @@ export class MindMapsController {
 
   @Get()
   @Public()
-  @ApiOperation({ summary: "List mind maps (optional ?kind=GRAMMAR|VOCAB|KANJI)" })
+  @ApiOperation({
+    summary: "List mind maps (optional ?kind=GRAMMAR|VOCAB|KANJI)",
+  })
   list(@Query("kind") kind?: string) {
     return this.mindMaps.list(kind);
   }
@@ -50,7 +52,8 @@ export class MindMapsController {
   @Get("data")
   @Public()
   @ApiOperation({
-    summary: "Sơ đồ sinh từ toàn bộ dữ liệu (?kind=GRAMMAR|VOCAB|KANJI), mỗi cấp tối đa 8 nhánh",
+    summary:
+      "Sơ đồ sinh từ toàn bộ dữ liệu (?kind=GRAMMAR|VOCAB|KANJI), mỗi cấp tối đa 8 nhánh",
   })
   data(@Query("kind") kind?: string) {
     const upper = kind?.toUpperCase();
@@ -81,7 +84,10 @@ export class MindMapsController {
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update mind map level (admin)" })
-  update(@Param("id", ParseIntPipe) id: number, @Body() dto: UpdateMindMapLevelDto) {
+  update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() dto: UpdateMindMapLevelDto,
+  ) {
     return this.mindMaps.update(id, dto);
   }
 

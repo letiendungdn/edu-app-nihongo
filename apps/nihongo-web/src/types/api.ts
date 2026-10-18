@@ -384,8 +384,10 @@ export interface Subscription {
 }
 
 export interface CreateSubscriptionResponse {
-  clientSecret: string;
+  /** null khi đổi gói trên subscription đang có hiệu lực: Stripe tự tính chênh lệch, không cần nhập thẻ */
+  clientSecret: string | null;
   subscriptionId: string;
+  changedPlan?: boolean;
 }
 
 export type PaymentStatus =

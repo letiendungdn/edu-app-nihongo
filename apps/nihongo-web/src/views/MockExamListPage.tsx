@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMockExamTemplatesQuery } from '../hooks/queries';
+import { useExamTemplates } from '../hooks/queries';
 import './MockExam.css';
 
 export default function MockExamListPage() {
-  const { data, isLoading, isError } = useMockExamTemplatesQuery();
+  const { data, isLoading, isError } = useExamTemplates();
   const templates = data ?? [];
 
   return (

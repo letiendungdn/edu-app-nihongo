@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ConflictException } from "@nestjs/common";
 import { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 import { PrismaService } from "@app/prisma";
 import { StripeService } from "../stripe/stripe.service";
@@ -23,6 +23,8 @@ describe("SubscriptionService", () => {
     createCustomer: jest.Mock;
     createSubscription: jest.Mock;
     cancelSubscription: jest.Mock;
+    retrieveSubscription: jest.Mock;
+    updateSubscription: jest.Mock;
   };
 
   const userId = 1;
@@ -43,6 +45,8 @@ describe("SubscriptionService", () => {
       createCustomer: jest.fn(),
       createSubscription: jest.fn(),
       cancelSubscription: jest.fn(),
+      retrieveSubscription: jest.fn(),
+      updateSubscription: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -51,12 +55,135 @@ describe("SubscriptionService", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: StripeService, useValue: stripe },
         { provide: RefundService, useValue: { refundPayment: jest.fn() } },
-        { provide: PaymentMethodService, useValue: { assertUserOwnsCard: jest.fn() } },
+        {
+          provide: PaymentMethodService,
+          useValue: { assertUserOwnsCard: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get(SubscriptionService);
     jest.clearAllMocks();
+  });
+
+  describe("createOrUpgrade — đã có subscription trên Stripe", () => {
+    const stripeSub = (status: string, price: string) => ({
+      id: "sub_old",
+      status,
+      customer: "cus_existing",
+      items: { data: [{ id: "si_1", price: { id: price } }] },
+      current_period_start: 1_700_000_000,
+      current_period_end: 1_700_086_400,
+      latest_invoice: { payment_intent: { client_secret: "pi_secret_old" } },
+    });
+
+    beforeEach(() => {
+      prisma.user.findUniqueOrThrow.mockResolvedValue(mockUser);
+      prisma.subscriptionPlanConfig.findUnique.mockResolvedValue({
+        plan: SubscriptionPlan.PRO,
+        stripePriceId: "price_pro",
+        trialDays: 0,
+      });
+      prisma.subscription.findUnique.mockResolvedValue({
+        userId,
+        plan: SubscriptionPlan.BASIC,
+        stripeCustomerId: "cus_existing",
+        stripeSubscriptionId: "sub_old",
+      });
+      prisma.subscription.upsert.mockResolvedValue({});
+    });
+
+    it("chưa thanh toán xong cùng gói → DÙNG LẠI, không tạo subscription mới", async () => {
+      stripe.retrieveSubscription.mockResolvedValue(
+        stripeSub("incomplete", "price_pro"),
+      );
+
+      const res = await service.createOrUpgrade(userId, SubscriptionPlan.PRO);
+
+      expect(res).toEqual({
+        clientSecret: "pi_secret_old",
+        subscriptionId: "sub_old",
+      });
+      expect(stripe.createSubscription).not.toHaveBeenCalled();
+      expect(stripe.createCustomer).not.toHaveBeenCalled();
+    });
+
+    it("đang dùng đúng gói này → báo trùng, không tạo subscription thứ hai", async () => {
+      stripe.retrieveSubscription.mockResolvedValue(
+        stripeSub("active", "price_pro"),
+      );
+
+      await expect(
+        service.createOrUpgrade(userId, SubscriptionPlan.PRO),
+      ).rejects.toThrow(ConflictException);
+      expect(stripe.createSubscription).not.toHaveBeenCalled();
+    });
+
+    it("nâng gói → đổi giá trên CHÍNH subscription cũ (bản cũ tạo cái thứ hai, gói cũ vẫn trừ tiền)", async () => {
+      stripe.retrieveSubscription.mockResolvedValue(
+        stripeSub("active", "price_basic"),
+      );
+      stripe.updateSubscription.mockResolvedValue(
+        stripeSub("active", "price_pro"),
+      );
+
+      const res = await service.createOrUpgrade(userId, SubscriptionPlan.PRO);
+
+      expect(stripe.updateSubscription).toHaveBeenCalledWith(
+        "sub_old",
+        "price_pro",
+      );
+      expect(stripe.createSubscription).not.toHaveBeenCalled();
+      expect(res).toEqual({
+        clientSecret: null,
+        subscriptionId: "sub_old",
+        changedPlan: true,
+      });
+      expect(prisma.subscription.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            stripeSubscriptionId: "sub_old",
+            stripePriceId: "price_pro",
+          }),
+        }),
+      );
+    });
+
+    it("đổi sang gói khác khi cái cũ còn dở → hủy cái dở rồi mới tạo", async () => {
+      stripe.retrieveSubscription.mockResolvedValue(
+        stripeSub("incomplete", "price_basic"),
+      );
+      stripe.createSubscription.mockResolvedValue({
+        ...stripeSub("incomplete", "price_pro"),
+        id: "sub_new",
+        latest_invoice: { payment_intent: { client_secret: "pi_new" } },
+      });
+
+      const res = await service.createOrUpgrade(userId, SubscriptionPlan.PRO);
+
+      expect(stripe.cancelSubscription).toHaveBeenCalledWith("sub_old", false);
+      expect(res.subscriptionId).toBe("sub_new");
+    });
+
+    it("subscription cũ đã hủy → tạo mới với khóa idempotency theo người dùng + giá", async () => {
+      stripe.retrieveSubscription.mockResolvedValue(
+        stripeSub("canceled", "price_pro"),
+      );
+      stripe.createSubscription.mockResolvedValue({
+        ...stripeSub("incomplete", "price_pro"),
+        id: "sub_new",
+      });
+
+      await service.createOrUpgrade(userId, SubscriptionPlan.PRO);
+
+      expect(stripe.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          idempotencyKey: expect.stringMatching(
+            /^subscription:user-1:price_pro:new-card:\d+$/,
+          ),
+        }),
+      );
+    });
   });
 
   describe("createOrUpgrade", () => {
@@ -96,6 +223,7 @@ describe("SubscriptionService", () => {
       expect(stripe.createCustomer).toHaveBeenCalledWith(
         mockUser.email,
         mockUser.name,
+        "customer:user-1", // gọi trùng → Stripe trả đúng customer cũ
       );
       expect(stripe.createSubscription).toHaveBeenCalledWith(
         expect.objectContaining({

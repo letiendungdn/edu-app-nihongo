@@ -7,9 +7,11 @@ import { useRouter } from 'next/navigation';
 import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import StrokeOrder from '../components/StrokeOrder';
+import { kanjiCharsOf, useKanjiStructure } from '../contexts/KanjiStructureContext';
 import { usePlayAll } from '../hooks/usePlayAll';
-import { useLessonsQuery, useVocabulariesQuery } from '../hooks/queries';
+import { useLessons, useVocab } from '../hooks/queries';
 import { getStrokeText } from '../utils/japanese';
+import { isKanji } from '../utils/kanji-structure';
 import { meaningForSpeech, speakJapaneseThenMeaning } from '../utils/speech';
 import { lessonHeading, lessonShortLabel } from '../utils/lessonHeading';
 import type { Vocabulary } from '../types/api';
@@ -69,12 +71,22 @@ function StrokeModal({
   onClose: () => void;
   onStep: (direction: -1 | 1) => void;
 }) {
+  const { openKanjiStructure } = useKanjiStructure();
   const kanji = vocab.kanji?.trim() ?? '';
   const hasKanji = Boolean(getStrokeText(kanji));
   const headline = hasKanji ? kanji : vocab.kana;
   const reading = hasKanji && vocab.kana.trim() && vocab.kana.trim() !== kanji ? vocab.kana : '';
+  const analyzable = kanjiCharsOf(headline).length > 0;
   const size = strokeBoxSize(headline);
   const speak = () => speakWord(vocab);
+
+  const openStructure = (char?: string) => {
+    if (!analyzable) {
+      speak();
+      return;
+    }
+    openKanjiStructure(headline, char);
+  };
 
   useEffect(() => {
     speakWord(vocab);
@@ -122,7 +134,13 @@ function StrokeModal({
           </button>
           <div className="vocab-stroke-modal__heading">
             <span className="vocab-stroke-modal__order">{order}</span>
-            <button type="button" className="vocab-stroke-modal__char japanese-text" onClick={speak}>
+            <button
+              type="button"
+              className="vocab-stroke-modal__char japanese-text"
+              onClick={() => openStructure()}
+              title={analyzable ? 'Phân tích từng chữ kanji' : `Nghe ${vocab.kana}`}
+              aria-label={analyzable ? `Phân tích cấu tạo kanji của ${headline}` : `Nghe ${vocab.kana}`}
+            >
               {headline}
             </button>
             {reading ? <p className="vocab-stroke-modal__reading japanese-text">{reading}</p> : null}
@@ -141,10 +159,21 @@ function StrokeModal({
           </button>
         </div>
         <p className="vocab-stroke-modal__label">
-          Tự đọc tiếng Nhật rồi nghĩa tiếng Việt · phím cách nghe lại · ← → sang từ kế
+          {analyzable
+            ? 'Nhấn chữ để phân tích từng kanji · 🔊 / phím cách nghe · ← → sang từ kế'
+            : 'Tự đọc tiếng Nhật rồi nghĩa tiếng Việt · phím cách nghe lại · ← → sang từ kế'}
         </p>
         <div className="vocab-stroke-modal__canvas">
-          <StrokeOrder key={`${vocab.id}-${headline}`} text={headline} width={size} height={size} onCharClick={speak} />
+          <StrokeOrder
+            key={`${vocab.id}-${headline}`}
+            text={headline}
+            width={size}
+            height={size}
+            onCharClick={(char) => {
+              if (isKanji(char)) openStructure(char);
+              else speak();
+            }}
+          />
         </div>
         <p className="vocab-stroke-modal__meta">
           {vocab.romaji} · {vocab.meaning}
@@ -174,8 +203,8 @@ export default function VocabLessonListView({
   const [stroke, setStroke] = useState<StrokeFocus | null>(null);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
-  const { data: lessons = [] } = useLessonsQuery();
-  const { data: words = [], isLoading, isError } = useVocabulariesQuery(lessonNumber);
+  const { data: lessons = [] } = useLessons();
+  const { data: words = [], isLoading, isError } = useVocab(lessonNumber);
 
   useEffect(() => {
     if (initialLessonNumber != null && initialLessonNumber > 0) {

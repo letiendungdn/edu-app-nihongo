@@ -25,7 +25,7 @@ export default function HomeSrsWidget() {
   if (!isAuthenticated) {
     return (
       <div className="home-srs-widget home-srs-widget--guest">
-        <div className="home-srs-widget__icon">🧠</div>
+        <div className="home-srs-widget__icon japanese-text">憶</div>
         <div className="home-srs-widget__body">
           <p className="home-srs-widget__title">Ôn tập SRS thông minh</p>
           <p className="home-srs-widget__sub">Đăng nhập để lưu tiến độ và nhận thẻ ôn tập hàng ngày.</p>
@@ -43,7 +43,7 @@ export default function HomeSrsWidget() {
 
   return (
     <Link href="/srs" className="home-srs-widget home-srs-widget--auth">
-      <div className="home-srs-widget__icon">{due > 0 ? '🔔' : '✅'}</div>
+      <div className="home-srs-widget__icon japanese-text">{due > 0 ? '憶' : '✓'}</div>
       <div className="home-srs-widget__body">
         <p className="home-srs-widget__title">
           {due > 0 ? (

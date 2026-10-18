@@ -76,14 +76,14 @@
 
 .auth-error {
   margin: 0;
-  color: #f87171;
+  color: var(--primary-color);
   font-size: 0.9rem;
   text-align: center;
 }
 
 .auth-success {
   margin: 0;
-  color: #4ade80;
+  color: var(--color-success);
   font-size: 0.9rem;
   text-align: center;
 }
@@ -300,8 +300,8 @@
 }
 
 .payment-method-default {
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.35);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
 }
 
 .payment-method-actions {

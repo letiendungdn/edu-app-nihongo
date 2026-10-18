@@ -72,7 +72,7 @@
 
 .pronunciation-rules-audio:hover,
 .btn-audio-small.pronunciation-rules-audio:hover {
-  background: rgba(239, 68, 68, 0.5);
+  background: color-mix(in srgb, var(--primary-color) 50%, transparent);
   transform: scale(1.1);
 }
 

@@ -2,6 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 
+const SUBSCRIPTION_EXPAND = [
+  "latest_invoice.confirmation_secret",
+  "latest_invoice.payment_intent",
+  "pending_setup_intent",
+];
+
 @Injectable()
 export class StripeService {
   private readonly stripe: Stripe;
@@ -13,8 +19,16 @@ export class StripeService {
     } as unknown as ConstructorParameters<typeof Stripe>[1]);
   }
 
-  async createCustomer(email: string, name?: string): Promise<Stripe.Customer> {
-    return this.stripe.customers.create({ email, name });
+  /** `idempotencyKey`: gọi lại cùng khóa trong 24h thì Stripe trả đúng customer cũ, không tạo thêm. */
+  async createCustomer(
+    email: string,
+    name?: string,
+    idempotencyKey?: string,
+  ): Promise<Stripe.Customer> {
+    return this.stripe.customers.create(
+      { email, name },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
   }
 
   async createSubscription(params: {
@@ -23,25 +37,36 @@ export class StripeService {
     trialDays?: number;
     metadata?: Record<string, string>;
     defaultPaymentMethodId?: string;
+    idempotencyKey?: string;
   }): Promise<Stripe.Subscription> {
-    return this.stripe.subscriptions.create({
-      customer: params.customerId,
-      items: [{ price: params.priceId }],
-      trial_period_days: params.trialDays,
-      metadata: params.metadata ?? {},
-      payment_behavior: "default_incomplete",
-      ...(params.defaultPaymentMethodId
-        ? { default_payment_method: params.defaultPaymentMethodId }
-        : {}),
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-        payment_method_types: ["card"],
+    return this.stripe.subscriptions.create(
+      {
+        customer: params.customerId,
+        items: [{ price: params.priceId }],
+        trial_period_days: params.trialDays,
+        metadata: params.metadata ?? {},
+        payment_behavior: "default_incomplete",
+        ...(params.defaultPaymentMethodId
+          ? { default_payment_method: params.defaultPaymentMethodId }
+          : {}),
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+          payment_method_types: ["card"],
+        },
+        expand: SUBSCRIPTION_EXPAND,
       },
-      expand: [
-        "latest_invoice.confirmation_secret",
-        "latest_invoice.payment_intent",
-        "pending_setup_intent",
-      ],
+      params.idempotencyKey
+        ? { idempotencyKey: params.idempotencyKey }
+        : undefined,
+    );
+  }
+
+  /** Lấy subscription kèm các trường cần để lấy lại client secret (dùng lại khi chưa thanh toán xong). */
+  async retrieveSubscription(
+    stripeSubId: string,
+  ): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.retrieve(stripeSubId, {
+      expand: SUBSCRIPTION_EXPAND,
     });
   }
 

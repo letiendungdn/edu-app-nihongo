@@ -48,7 +48,7 @@
   font-weight: 600;
   font-size: 0.875rem;
   transition: all var(--transition-fast);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.72);
   cursor: pointer;
   font-family: inherit;
@@ -60,7 +60,7 @@
 }
 
 .countries-tabs .tab-btn.active {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-success), var(--color-success));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 2px 10px rgba(5, 150, 105, 0.28);
@@ -75,7 +75,7 @@
   box-sizing: border-box;
   padding: 0.65rem 1rem;
   border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.85);
   color: var(--text-primary);
   font: inherit;
@@ -143,7 +143,7 @@
   gap: 0.2rem;
   padding: 1rem 0.75rem;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   font-family: inherit;
@@ -180,7 +180,7 @@
 
 .country-romaji {
   font-size: 0.78rem;
-  color: var(--text-muted, #94a3b8);
+  color: var(--text-muted, var(--text-secondary));
   font-style: italic;
 }
 
@@ -188,7 +188,7 @@
   margin-top: 0.25rem;
   font-size: 0.88rem;
   font-weight: 600;
-  color: #059669;
+  color: var(--color-success);
 }
 
 /* ── Audio button on card ── */
@@ -205,7 +205,7 @@
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.07);
   background: rgba(0, 0, 0, 0.04);
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -261,7 +261,7 @@
   background: none;
   border: none;
   font-size: 1rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 6px;
@@ -305,7 +305,7 @@
 
 .country-popup-romaji {
   font-size: 0.82rem;
-  color: #6b7280;
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -323,14 +323,14 @@
 
 .country-popup-stroke-hint {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .country-popup-vi {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #059669;
+  color: var(--color-success);
   text-align: center;
   margin: 0;
 }
@@ -387,7 +387,7 @@
 .cpl-table-wrap {
   overflow-x: auto;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.85);
 }
 
@@ -404,7 +404,7 @@
   text-align: left;
   font-size: 1rem;
   color: #fff;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-success), var(--color-success));
   white-space: nowrap;
 }
 
@@ -421,7 +421,7 @@
 .cpl-table th[scope='row'],
 .cpl-table td {
   padding: 0.35rem 0.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid var(--border-color);
   vertical-align: middle;
 }
 

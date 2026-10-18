@@ -100,9 +100,10 @@ const SRS_MODES: { id: SrsMode; label: string; hint: string }[] = [
 ];
 
 export default function SrsView() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authReady } = useAuth();
   const [phase, setPhase] = useState<Phase>('loading');
   const [stats, setStats] = useState<SrsStats | null>(null);
+  const [statsError, setStatsError] = useState(false);
   const [queue, setQueue] = useState<SrsDueCard[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -124,21 +125,23 @@ export default function SrsView() {
     if (current?.kana) playAudio(current.kana);
   }, [phase, mode, index, queue]);
 
+  // Lỗi tải thì BÁO lỗi. Bản cũ gán toàn số 0: người dùng tưởng mất hết thẻ đã học.
   const loadStats = useCallback(async () => {
     try {
       const data = await apiRequest<SrsStats>('/progress/srs/stats');
       setStats(data);
+      setStatsError(false);
     } catch {
-      setStats({ total: 0, dueToday: 0, mastered: 0, learning: 0 });
+      setStatsError(true);
     }
   }, []);
 
   useEffect(() => {
+    // Chờ đọc xong token: bản cũ chớp màn "Đăng nhập để dùng SRS" với người đã đăng nhập
+    if (!authReady) return;
     if (!isAuthenticated) { setPhase('needs-auth'); return; }
-    apiRequest<SrsStats>('/progress/srs/stats')
-      .then((data) => { setStats(data); setPhase('stats'); })
-      .catch(() => { setStats({ total: 0, dueToday: 0, mastered: 0, learning: 0 }); setPhase('stats'); });
-  }, [isAuthenticated]);
+    void loadStats().then(() => setPhase('stats'));
+  }, [authReady, isAuthenticated, loadStats]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -457,6 +460,15 @@ export default function SrsView() {
           </button>
         ))}
       </div>
+
+      {statsError && (
+        <div className="alert alert--error" role="alert" style={{ marginBottom: '1rem' }}>
+          Không tải được thống kê SRS.{' '}
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => void loadStats()}>
+            Thử lại
+          </button>
+        </div>
+      )}
 
       {stats && (
         <div className="srs-stats-grid">

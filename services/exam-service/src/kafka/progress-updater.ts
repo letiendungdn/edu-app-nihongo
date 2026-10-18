@@ -36,17 +36,34 @@ function previousDay(day: string): string {
  * Sự kiện đến trễ (ngày cũ hơn lastStudyDate) không làm streak lùi.
  */
 export function nextStreak(
-  prev: { currentStreak: number; longestStreak: number; lastStudyDate: string | null } | null,
+  prev: {
+    currentStreak: number;
+    longestStreak: number;
+    lastStudyDate: string | null;
+  } | null,
   today: string,
 ): { currentStreak: number; longestStreak: number; lastStudyDate: string } {
   if (!prev || !prev.lastStudyDate) {
-    return { currentStreak: 1, longestStreak: Math.max(1, prev?.longestStreak ?? 0), lastStudyDate: today };
+    return {
+      currentStreak: 1,
+      longestStreak: Math.max(1, prev?.longestStreak ?? 0),
+      lastStudyDate: today,
+    };
   }
   if (today <= prev.lastStudyDate) {
-    return { currentStreak: prev.currentStreak, longestStreak: prev.longestStreak, lastStudyDate: prev.lastStudyDate };
+    return {
+      currentStreak: prev.currentStreak,
+      longestStreak: prev.longestStreak,
+      lastStudyDate: prev.lastStudyDate,
+    };
   }
-  const current = previousDay(today) === prev.lastStudyDate ? prev.currentStreak + 1 : 1;
-  return { currentStreak: current, longestStreak: Math.max(prev.longestStreak, current), lastStudyDate: today };
+  const current =
+    previousDay(today) === prev.lastStudyDate ? prev.currentStreak + 1 : 1;
+  return {
+    currentStreak: current,
+    longestStreak: Math.max(prev.longestStreak, current),
+    lastStudyDate: today,
+  };
 }
 
 /**
@@ -63,7 +80,9 @@ export class ProgressUpdater {
   async handle(msg: ExamSubmittedMessage): Promise<boolean> {
     if (!msg.userId) return false; // khách làm bài: không có tiến độ để cập nhật
     if (!msg.eventId || !msg.submittedAt) {
-      throw new Error(`Event thiếu eventId/submittedAt: ${JSON.stringify(msg)}`);
+      throw new Error(
+        `Event thiếu eventId/submittedAt: ${JSON.stringify(msg)}`,
+      );
     }
     const userId = msg.userId;
     const today = studyDate(msg.submittedAt);

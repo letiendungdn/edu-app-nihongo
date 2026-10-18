@@ -182,21 +182,19 @@ function toAdminItem(
   };
 }
 
-function toQuestionAdmin(
-  q: {
-    id: number;
-    templateId: number;
-    sectionId: string;
-    type: string;
-    question: string;
-    correctAnswer: string;
-    imageUrl: string | null;
-    audioText: string | null;
-    audioUrl: string | null;
-    sortOrder: number;
-    options: { text: string; imageUrl: string | null; sortOrder: number }[];
-  },
-) {
+function toQuestionAdmin(q: {
+  id: number;
+  templateId: number;
+  sectionId: string;
+  type: string;
+  question: string;
+  correctAnswer: string;
+  imageUrl: string | null;
+  audioText: string | null;
+  audioUrl: string | null;
+  sortOrder: number;
+  options: { text: string; imageUrl: string | null; sortOrder: number }[];
+}) {
   return {
     id: q.id,
     templateId: q.templateId,
@@ -225,7 +223,11 @@ function normalizeOptionInputs(
   return options
     .map((item, index) => {
       if (typeof item === "string") {
-        return { text: item.trim(), imageUrl: null as string | null, sortOrder: index };
+        return {
+          text: item.trim(),
+          imageUrl: null as string | null,
+          sortOrder: index,
+        };
       }
       return {
         text: item.text.trim(),
@@ -360,7 +362,9 @@ export class MockExamsService {
         ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
         ...(dto.level !== undefined ? { level: dto.level } : {}),
         ...(dto.title !== undefined ? { title: dto.title } : {}),
-        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description }
+          : {}),
         ...(dto.sourceMode !== undefined ? { sourceMode: dto.sourceMode } : {}),
         ...(dto.durationMinutes !== undefined
           ? { durationMinutes: dto.durationMinutes }
@@ -625,7 +629,11 @@ export class MockExamsService {
         });
       }
     }
-    if (dto.type === "listening" && !dto.audioUrl?.trim() && !dto.audioText?.trim()) {
+    if (
+      dto.type === "listening" &&
+      !dto.audioUrl?.trim() &&
+      !dto.audioText?.trim()
+    ) {
       throw new RpcException({
         statusCode: 400,
         message: "Câu nghe cần file âm thanh hoặc audioText (TTS)",
@@ -1015,28 +1023,28 @@ export class MockExamsService {
     // OutboxRelayService đẩy event lên Kafka sau.
     const examResult = await this.prisma.$transaction(async (tx) => {
       const created = await tx.examResult.create({
-      data: {
-        userId: userId ?? null,
-        examId,
-        level: session.level,
-        title: session.title,
-        correctCount,
-        total,
-        percent,
-        passed,
-        submittedAt,
-        sections: {
-          create: sectionScores.map((section) => ({
-            section: section.sectionId,
-            correct: section.correct,
-            total: section.total,
-            percent: section.total
-              ? Math.round((section.correct / section.total) * 100)
-              : 0,
-          })),
+        data: {
+          userId: userId ?? null,
+          examId,
+          level: session.level,
+          title: session.title,
+          correctCount,
+          total,
+          percent,
+          passed,
+          submittedAt,
+          sections: {
+            create: sectionScores.map((section) => ({
+              section: section.sectionId,
+              correct: section.correct,
+              total: section.total,
+              percent: section.total
+                ? Math.round((section.correct / section.total) * 100)
+                : 0,
+            })),
+          },
         },
-      },
-    });
+      });
       await tx.outboxEvent.create({
         data: {
           topic: KafkaTopics.EXAM_SUBMITTED,

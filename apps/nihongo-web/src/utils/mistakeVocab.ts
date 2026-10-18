@@ -1,7 +1,45 @@
 import type { Exercise } from '../types/api';
+import type { ReviewLogItem } from '../api/index';
+import { getStoredToken, userIdFromToken } from '../lib/api-client';
 import type { MockExamReviewItem } from './mockExam';
 
-const STORAGE_KEY = 'nihongo-mistake-vocab';
+/** Kho của khách (chưa đăng nhập). Người đã đăng nhập có kho riêng: `${GUEST_KEY}:u<id>`. */
+const GUEST_KEY = 'nihongo-mistake-vocab';
+
+/**
+ * Người đang dùng, đọc thẳng từ token đã lưu mỗi lần truy cập kho. Không giữ trong biến module:
+ * component con đọc kho TRƯỚC khi AuthProvider kịp báo người dùng là ai (effect con chạy trước).
+ */
+function currentUserId(): number | null {
+  if (typeof localStorage === 'undefined') return null;
+  return userIdFromToken(getStoredToken());
+}
+
+function storageKey(): string {
+  const id = currentUserId();
+  return id == null ? GUEST_KEY : `${GUEST_KEY}:u${id}`;
+}
+
+/**
+ * Trước đây mọi tài khoản dùng chung một kho, nên người đăng nhập sau đẩy cả từ sai của người
+ * trước lên tài khoản mình. Giờ mỗi tài khoản một kho; AuthProvider gọi hàm này ngay sau khi
+ * đăng nhập để gộp từ sai làm lúc còn là khách vào kho tài khoản, rồi xóa kho khách.
+ */
+export function adoptGuestMistakes(): void {
+  if (currentUserId() == null) return;
+  const guest = readStore(GUEST_KEY);
+  if (!guest.words.length) return;
+  const store = loadStore();
+  for (const w of guest.words) {
+    if (!store.words.some((x) => x.key === w.key)) {
+      store.words.push(w);
+      markDirty(store, w.key);
+    }
+  }
+  saveStore(store);
+  localStorage.removeItem(GUEST_KEY);
+}
+
 export const DAILY_REVIEW_LIMIT = 20;
 const MASTER_STREAK = 3;
 
@@ -24,6 +62,8 @@ interface MistakeStore {
   words: MistakeWord[];
   lastReviewDate: string | null;
   reviewedToday: number;
+  /** Khóa các từ đổi từ lần sync trước (gồm cả từ vừa thuộc). */
+  dirty?: string[];
 }
 
 export interface MistakeStats {
@@ -46,9 +86,9 @@ function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function loadStore(): MistakeStore {
+function readStore(key: string): MistakeStore {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return { words: [], lastReviewDate: null, reviewedToday: 0 };
     return JSON.parse(raw) as MistakeStore;
   } catch {
@@ -56,8 +96,18 @@ function loadStore(): MistakeStore {
   }
 }
 
+function loadStore(): MistakeStore {
+  return readStore(storageKey());
+}
+
 function saveStore(store: MistakeStore): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  localStorage.setItem(storageKey(), JSON.stringify(store));
+}
+
+function markDirty(store: MistakeStore, key: string): void {
+  const dirty = new Set(store.dirty ?? []);
+  dirty.add(key);
+  store.dirty = [...dirty];
 }
 
 export function makeWordKey(kana: string, lessonNumber?: number): string {
@@ -127,6 +177,7 @@ export function addMistakeWord(word: MistakeWordInput): string | null {
     });
   }
 
+  markDirty(store, key);
   saveStore(store);
   return key;
 }
@@ -206,6 +257,7 @@ export function recordReviewResult(key: string, remembered: boolean): void {
   }
 
   word.updatedAt = new Date().toISOString();
+  markDirty(store, key);
   saveStore(store);
 }
 
@@ -244,31 +296,94 @@ export function importWrongItemsFromReview(reviewItems: MockExamReviewItem[]): n
   return added;
 }
 
-export async function syncToServer(): Promise<void> {
-  const { getStoredToken } = await import('../lib/api-client');
-  const { syncReviewProgress } = await import('../api/index');
-  const token = getStoredToken();
-  if (!token) return;
+function toReviewItem(w: MistakeWord): ReviewLogItem {
+  return {
+    kana: w.kana,
+    kanji: w.kanji,
+    meaning: w.meaning,
+    lessonNumber: w.lessonNumber,
+    wrongCount: w.wrongCount ?? 0,
+    reviewStreak: w.reviewStreak ?? 0,
+    mastered: w.mastered ?? false,
+    lastReviewedAt: w.lastReviewedAt ?? undefined,
+  };
+}
 
+/**
+ * Gửi các từ đã đổi (kể cả từ vừa THUỘC). Bản cũ lọc bỏ từ đã thuộc nên server không bao giờ
+ * biết một từ đã thuộc, và mỗi lần ôn lại gửi cả danh sách.
+ */
+export async function syncToServer(): Promise<void> {
+  if (currentUserId() == null) return;
+  const { syncReviewProgress } = await import('../api/index');
+  const key = storageKey();
   const store = loadStore();
-  const active = store.words.filter((w) => !w.mastered);
-  if (!active.length) return;
+  const dirty = new Set(store.dirty ?? []);
+  const words = store.words.filter((w) => dirty.has(w.key));
+  if (!words.length) {
+    if (store.dirty?.length) {
+      store.dirty = []; // khóa của từ đã bị xóa khỏi kho
+      saveStore(store);
+    }
+    return;
+  }
+  const sentAt = new Map(words.map((w) => [w.key, w.updatedAt]));
 
   try {
-    await syncReviewProgress(
-      token,
-      active.map((w) => ({
-        kana: w.kana,
-        kanji: w.kanji,
-        meaning: w.meaning,
-        lessonNumber: w.lessonNumber,
-        wrongCount: w.wrongCount ?? 0,
-        reviewStreak: w.reviewStreak ?? 0,
-        mastered: w.mastered ?? false,
-        lastReviewedAt: w.lastReviewedAt ?? undefined,
-      })),
-    );
+    await syncReviewProgress(words.map(toReviewItem));
   } catch {
-    // localStorage vẫn là source of truth khi offline
+    return; // giữ dirty, lần sau gửi lại
   }
+  if (storageKey() !== key) return; // đã đổi tài khoản trong lúc chờ
+  // Bỏ cờ chỉ với từ KHÔNG đổi thêm trong lúc chờ mạng; từ vừa ôn lại vẫn chờ lượt sau
+  const latest = loadStore();
+  const changed = new Set(
+    latest.words.filter((w) => sentAt.has(w.key) && sentAt.get(w.key) !== w.updatedAt).map((w) => w.key),
+  );
+  latest.dirty = (latest.dirty ?? []).filter((k) => !sentAt.has(k) || changed.has(k));
+  saveStore(latest);
+}
+
+/** Gộp bản trên server vào máy: giữ bản có lần ôn mới hơn. Hàm thuần để test. */
+export function mergeServerWords(local: MistakeWord[], server: ReviewLogItem[], now = new Date()): MistakeWord[] {
+  const byKey = new Map(local.map((w) => [w.key, w]));
+  const time = (iso?: string | null) => (iso ? new Date(iso).getTime() : 0);
+  for (const item of server) {
+    const key = makeWordKey(item.kana, item.lessonNumber);
+    const mine = byKey.get(key);
+    if (mine && time(mine.lastReviewedAt) >= time(item.lastReviewedAt)) continue;
+    byKey.set(key, {
+      key,
+      kana: item.kana,
+      kanji: item.kanji ?? null,
+      romaji: mine?.romaji ?? '',
+      meaning: item.meaning,
+      lessonNumber: item.lessonNumber,
+      wrongCount: item.wrongCount,
+      reviewStreak: item.reviewStreak,
+      mastered: item.mastered,
+      addedAt: mine?.addedAt ?? now.toISOString(),
+      updatedAt: now.toISOString(),
+      lastReviewedAt: item.lastReviewedAt ?? null,
+    });
+  }
+  return [...byKey.values()];
+}
+
+/** Sau khi đăng nhập: kéo kho ôn tập từ server (máy khác đã ôn) rồi gửi phần máy này còn nợ. */
+export async function pullFromServer(): Promise<void> {
+  const userAtStart = currentUserId();
+  if (userAtStart == null) return;
+  const { fetchReviewProgress } = await import('../api/index');
+  let server: ReviewLogItem[];
+  try {
+    server = await fetchReviewProgress();
+  } catch {
+    return;
+  }
+  if (currentUserId() !== userAtStart) return; // đã đổi tài khoản trong lúc chờ
+  const store = loadStore();
+  store.words = mergeServerWords(store.words, server ?? []);
+  saveStore(store);
+  await syncToServer();
 }

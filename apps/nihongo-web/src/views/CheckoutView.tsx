@@ -1,16 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createSubscription, fetchSubscriptionStatus } from '@/api';
 import SubscriptionCheckoutPanel from '@/components/SubscriptionCheckoutPanel';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { isSubscriptionEntitled } from '@/lib/subscription-utils';
 import type { SubscriptionPlan } from '@/types/api';
 import './CheckoutView.css';
 
 export default function CheckoutView() {
-  const { token, isAuthenticated } = useAuth();
+  const { token } = useAuth();
+  const { ready } = useRequireAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = (searchParams?.get('plan') ?? 'PRO') as SubscriptionPlan;
@@ -19,15 +21,23 @@ export default function CheckoutView() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // Gói đã khởi tạo thanh toán. Bản cũ chạy lại effect mỗi khi `token` đổi (render đầu, sau khi
+  // bị đẩy qua /login, token tự làm mới 15 phút một lần…) → mỗi lần một subscription Stripe mới,
+  // và clientSecret bị thay ngay lúc người dùng đang nhập thẻ.
+  const startedFor = useRef<SubscriptionPlan | null>(null);
+
   useEffect(() => {
-    if (!isAuthenticated || !token) {
-      router.replace(`/login?redirect=/subscribe?plan=${plan}`);
-      return;
-    }
+    if (!ready || startedFor.current === plan) return;
+    startedFor.current = plan;
 
     async function initCheckout() {
       try {
-        const res = await createSubscription(token!, plan);
+        const res = await createSubscription(null, plan);
+        if (!res.clientSecret) {
+          // Đổi gói trên subscription đang chạy: xong luôn, không cần nhập thẻ
+          router.replace('/pricing?success=1');
+          return;
+        }
         setClientSecret(res.clientSecret);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Không thể khởi tạo thanh toán');
@@ -37,7 +47,7 @@ export default function CheckoutView() {
     }
 
     void initCheckout();
-  }, [isAuthenticated, token, plan, router]);
+  }, [ready, plan, router]);
 
   const handleSuccess = useCallback(async () => {
     if (!token) {

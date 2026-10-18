@@ -35,7 +35,7 @@
 .vocab-quiz-mode-tabs .tab-btn.active,
 .vocab-quiz-scope-tabs .tab-btn.active {
   border-color: var(--primary-color);
-  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   color: var(--primary-color);
 }
 
@@ -78,7 +78,7 @@
 
 .vocab-quiz-preset-btn.active {
   border-color: var(--primary-color);
-  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   color: var(--primary-color);
 }
 
@@ -132,7 +132,7 @@
 .vocab-quiz-audio:hover {
   opacity: 1;
   border-color: var(--primary-color);
-  background: rgba(239, 68, 68, 0.1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
   transform: scale(1.05);
 }
 
@@ -159,7 +159,7 @@
 
 .vocab-quiz-option-audio:hover {
   border-color: var(--primary-color);
-  background: rgba(239, 68, 68, 0.1);
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
 }
 
 .quiz-option {
@@ -188,7 +188,7 @@
 }
 
 .quiz-option.wrong-answer .quiz-option-reveal {
-  color: #b91c1c;
+  color: var(--primary-color-hover);
 }
 
 .vocab-quiz-pattern-example {
@@ -197,8 +197,8 @@
   width: 100%;
   max-width: 28rem;
   border-radius: 0.75rem;
-  border: 1px dashed rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.06);
+  border: 1px dashed color-mix(in srgb, var(--primary-color) 35%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 6%, transparent);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -235,7 +235,7 @@
 }
 
 .vocab-quiz-pattern-example .btn-audio-small:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--primary-color) 20%, transparent);
 }
 
 .vocab-quiz-pattern-example .vocab-pattern-example-ja {

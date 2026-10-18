@@ -149,7 +149,7 @@
 .srs-add-tab {
   padding: 0.3rem 0.75rem;
   border-radius: 99px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
@@ -160,13 +160,13 @@
 }
 
 .srs-add-tab:hover {
-  border-color: rgba(59, 130, 246, 0.4);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 
 .srs-add-tab--active {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: #fff;
 }
 
@@ -188,7 +188,7 @@
   min-width: 2.4rem;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid var(--border-strong);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
@@ -200,13 +200,13 @@
 }
 
 .srs-lesson-pill:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .srs-lesson-pill--selected {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: #fff;
 }
 
@@ -222,7 +222,7 @@
   align-items: center;
   flex-wrap: wrap;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  border-top: 1px solid var(--border-color);
 }
 
 .srs-add-selected-count {
@@ -479,15 +479,15 @@
   color: #fff;
 }
 
-.srs-btn--again   { background: #ef4444; }
+.srs-btn--again   { background: var(--primary-color); }
 .srs-btn--hard    { background: #f97316; }
-.srs-btn--good    { background: #22c55e; }
-.srs-btn--easy    { background: #3b82f6; }
+.srs-btn--good    { background: var(--color-success); }
+.srs-btn--easy    { background: var(--accent-color); color: var(--surface-color); }
 
-.srs-btn--again:hover { background: #dc2626; }
+.srs-btn--again:hover { background: var(--primary-color-hover); }
 .srs-btn--hard:hover  { background: #ea580c; }
-.srs-btn--good:hover  { background: #16a34a; }
-.srs-btn--easy:hover  { background: #2563eb; }
+.srs-btn--good:hover  { background: var(--color-success); }
+.srs-btn--easy:hover  { background: var(--accent-color); filter: brightness(1.08); }
 
 /* ── Keyboard hint ───────────────────────────────────────────── */
 

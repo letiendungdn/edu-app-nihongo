@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { JlptLevel, type Prisma } from "@prisma/client";
 import { PrismaService } from "@app/prisma";
 import type { CreateKanjiVocabDto, UpdateKanjiVocabDto } from "@app/contracts";
-import type {
-  CreateKanjiEntryDto,
-  UpdateKanjiEntryDto,
-} from "@app/contracts";
+import type { CreateKanjiEntryDto, UpdateKanjiEntryDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
 
 function parseJlptLevel(value?: string): JlptLevel | undefined {
@@ -200,7 +201,10 @@ export class KanjiService {
     if (!existing) throw new NotFoundException(`Kanji entry ${id} not found`);
 
     let lessonId = existing.lessonId;
-    if (dto.lessonNumber != null && dto.lessonNumber !== existing.lesson.lessonNumber) {
+    if (
+      dto.lessonNumber != null &&
+      dto.lessonNumber !== existing.lesson.lessonNumber
+    ) {
       const lesson = await this.resolveLesson(dto.lessonNumber);
       lessonId = lesson.id;
     }
@@ -222,7 +226,9 @@ export class KanjiService {
         ...(dto.imageUrl !== undefined
           ? { imageUrl: dto.imageUrl?.trim() || null }
           : {}),
-        ...(dto.jlptLevel !== undefined ? { jlptLevel: dto.jlptLevel ?? null } : {}),
+        ...(dto.jlptLevel !== undefined
+          ? { jlptLevel: dto.jlptLevel ?? null }
+          : {}),
         ...(dto.sortOrder != null ? { sortOrder: dto.sortOrder } : {}),
         ...(dto.lessonNumber != null ? { lessonId } : {}),
       },

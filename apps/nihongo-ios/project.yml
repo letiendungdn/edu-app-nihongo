@@ -120,9 +120,6 @@ schemes:
         API_BASE_URL:
           value: ""
           isEnabled: false
-        GEMINI_API_KEY:
-          value: ""
-          isEnabled: false
         KEYCLOAK_URL:
           value: "http://localhost:8080"
           isEnabled: false

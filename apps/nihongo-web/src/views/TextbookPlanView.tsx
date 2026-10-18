@@ -8,7 +8,7 @@ import { fetchReadingPassages } from "../api";
 import {
   useBookAudioFilesQuery,
   useKanjiLessonsQuery,
-  useLessonsQuery,
+  useLessons,
 } from "../hooks/queries";
 import {
   JLPT_MIND_LEVELS,
@@ -98,7 +98,7 @@ export default function TextbookPlanView({
     data: lessons = [],
     isLoading: lessonsLoading,
     isError: lessonsError,
-  } = useLessonsQuery();
+  } = useLessons();
   const { data: kanjiLessons = [], isLoading: kanjiLoading } =
     useKanjiLessonsQuery();
   const { data: readings = [] } = useQuery({

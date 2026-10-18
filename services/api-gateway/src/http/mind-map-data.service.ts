@@ -53,7 +53,11 @@ export type SourceItem = {
   partOfSpeech?: string | null;
 };
 
-const UNIT: Record<MindMapKind, string> = { VOCAB: "từ", GRAMMAR: "mẫu", KANJI: "chữ" };
+const UNIT: Record<MindMapKind, string> = {
+  VOCAB: "từ",
+  GRAMMAR: "mẫu",
+  KANJI: "chữ",
+};
 
 // ── Nhóm theo từ loại ──────────────────────────────────────────────
 
@@ -79,7 +83,8 @@ export function posBucket(pos: string | null | undefined): PosBucketId | null {
   if (first === "verb") return "verb";
   if (first === "i-adj") return "i-adj";
   if (first === "na-adj") return "na-adj";
-  if (first.startsWith("danh từ") && all.includes("động từ する")) return "suru-noun";
+  if (first.startsWith("danh từ") && all.includes("động từ する"))
+    return "suru-noun";
   if (first.startsWith("danh từ") || first.startsWith("đại từ")) return "noun";
   if (first.includes("động từ")) return "verb";
   if (first.startsWith("tính từ i")) return "i-adj";
@@ -91,11 +96,16 @@ export function posBucket(pos: string | null | undefined): PosBucketId | null {
 /** Chỉ nhóm theo từ loại khi gần như cả cấp đã có từ loại (N5/N4 phần lớn Minna chưa gắn). */
 export function shouldGroupByPos(items: SourceItem[]): boolean {
   if (items.length === 0) return false;
-  const withPos = items.filter((i) => posBucket(i.partOfSpeech) !== null).length;
+  const withPos = items.filter(
+    (i) => posBucket(i.partOfSpeech) !== null,
+  ).length;
   return withPos / items.length >= 0.9;
 }
 
-export function groupByPos(kind: MindMapKind, items: SourceItem[]): DataMindBranch[] {
+export function groupByPos(
+  kind: MindMapKind,
+  items: SourceItem[],
+): DataMindBranch[] {
   const buckets = new Map<PosBucketId, DataMindItem[]>();
   for (const it of items) {
     const id = posBucket(it.partOfSpeech) ?? "other";
@@ -113,10 +123,17 @@ export function groupByPos(kind: MindMapKind, items: SourceItem[]): DataMindBran
 
 // ── Nhóm theo dải bài liên tiếp ────────────────────────────────────
 
-type LessonBlock = { lessonNumber: number; title: string | null; items: DataMindItem[] };
+type LessonBlock = {
+  lessonNumber: number;
+  title: string | null;
+  items: DataMindItem[];
+};
 
 /** Chia các bài (đã sắp xếp) thành tối đa `n` nhóm liên tiếp, cân theo số mục. */
-export function partitionLessons(lessons: LessonBlock[], n: number): LessonBlock[][] {
+export function partitionLessons(
+  lessons: LessonBlock[],
+  n: number,
+): LessonBlock[][] {
   if (lessons.length === 0 || n <= 0) return [];
   if (lessons.length <= n) return lessons.map((l) => [l]);
   const total = lessons.reduce((s, l) => s + l.items.length, 0);
@@ -151,7 +168,10 @@ function seriesPrefix(kind: MindMapKind, lessonNumber: number): string {
   return "";
 }
 
-export function groupByLesson(kind: MindMapKind, items: SourceItem[]): DataMindBranch[] {
+export function groupByLesson(
+  kind: MindMapKind,
+  items: SourceItem[],
+): DataMindBranch[] {
   const byLesson = new Map<number, LessonBlock>();
   for (const it of items) {
     const block = byLesson.get(it.lessonNumber) ?? {
@@ -162,18 +182,26 @@ export function groupByLesson(kind: MindMapKind, items: SourceItem[]): DataMindB
     block.items.push(it.item);
     byLesson.set(it.lessonNumber, block);
   }
-  const lessons = [...byLesson.values()].sort((a, b) => a.lessonNumber - b.lessonNumber);
+  const lessons = [...byLesson.values()].sort(
+    (a, b) => a.lessonNumber - b.lessonNumber,
+  );
 
   // Không trộn giáo trình gốc (Minna / KLL) với bài bổ sung trong cùng một nhánh.
   const core = lessons.filter((l) => seriesPrefix(kind, l.lessonNumber));
   const extra = lessons.filter((l) => !seriesPrefix(kind, l.lessonNumber));
   const total = core.length + extra.length ? items.length : 0;
-  const count = (ls: LessonBlock[]) => ls.reduce((s, l) => s + l.items.length, 0);
-  let coreSlots = core.length ? Math.max(1, Math.round((MAX_BRANCHES * count(core)) / total)) : 0;
+  const count = (ls: LessonBlock[]) =>
+    ls.reduce((s, l) => s + l.items.length, 0);
+  let coreSlots = core.length
+    ? Math.max(1, Math.round((MAX_BRANCHES * count(core)) / total))
+    : 0;
   if (extra.length && coreSlots >= MAX_BRANCHES) coreSlots = MAX_BRANCHES - 1;
   const extraSlots = extra.length ? MAX_BRANCHES - coreSlots : 0;
 
-  const groups = [...partitionLessons(core, coreSlots), ...partitionLessons(extra, extraSlots)];
+  const groups = [
+    ...partitionLessons(core, coreSlots),
+    ...partitionLessons(extra, extraSlots),
+  ];
   return groups.map((g) => {
     const first = g[0];
     const last = g[g.length - 1];
@@ -187,19 +215,28 @@ export function groupByLesson(kind: MindMapKind, items: SourceItem[]): DataMindB
     const label = prefix
       ? `${prefix} bài ${range}`
       : (single ?? (core.length ? `Bổ sung (bài ${range})` : `Bài ${range}`));
-    const titles = [...new Set(g.map((l) => shortTitle(l.title)).filter(Boolean))];
+    const titles = [
+      ...new Set(g.map((l) => shortTitle(l.title)).filter(Boolean)),
+    ];
     const itemsInGroup = g.flatMap((l) => l.items);
     return {
       id: `lessons-${first.lessonNumber}-${last.lessonNumber}`,
       label,
       labelJa: `${itemsInGroup.length} ${UNIT[kind]}`,
-      hint: !prefix && !single && titles.length ? titles.slice(0, 4).join(" · ") : undefined,
+      hint:
+        !prefix && !single && titles.length
+          ? titles.slice(0, 4).join(" · ")
+          : undefined,
       patterns: itemsInGroup,
     };
   });
 }
 
-export function buildDataLevel(kind: MindMapKind, level: JlptLevel, items: SourceItem[]): DataMindLevel {
+export function buildDataLevel(
+  kind: MindMapKind,
+  level: JlptLevel,
+  items: SourceItem[],
+): DataMindLevel {
   const byPos = kind === "VOCAB" && shouldGroupByPos(items);
   return {
     kind,
@@ -213,7 +250,10 @@ export function buildDataLevel(kind: MindMapKind, level: JlptLevel, items: Sourc
 // ── Truy vấn DB ────────────────────────────────────────────────────
 
 /** "ひと-つ" / "ひと.つ" → "ひとつ" để máy đọc đúng âm kun. */
-export function kanjiSpeakList(onyomi: string | null, kunyomi: string | null): string[] {
+export function kanjiSpeakList(
+  onyomi: string | null,
+  kunyomi: string | null,
+): string[] {
   const out: string[] = [];
   for (const field of [onyomi, kunyomi]) {
     for (const part of (field ?? "").split(/[,、;／/]+/)) {
@@ -241,7 +281,10 @@ type VocabRow = {
 @Injectable()
 export class MindMapDataService {
   /** Cache theo "phiên bản" dữ liệu (số dòng + updatedAt mới nhất) — admin sửa xong là thấy ngay. */
-  private cache = new Map<MindMapKind, { version: string; data: DataMindLevel[] }>();
+  private cache = new Map<
+    MindMapKind,
+    { version: string; data: DataMindLevel[] }
+  >();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -273,7 +316,9 @@ export class MindMapDataService {
     return data;
   }
 
-  private async loadItems(kind: MindMapKind): Promise<Array<{ level: JlptLevel; source: SourceItem }>> {
+  private async loadItems(
+    kind: MindMapKind,
+  ): Promise<Array<{ level: JlptLevel; source: SourceItem }>> {
     if (kind === "VOCAB") {
       // SQL thô: nhiều imageUrl là data URL base64 → chỉ lấy cờ "có ảnh", không kéo cả ảnh ra.
       const rows = await this.prisma.$queryRaw<VocabRow[]>`
@@ -292,7 +337,10 @@ export class MindMapDataService {
           lessonTitle: r.title,
           partOfSpeech: r.partOfSpeech,
           item: {
-            pattern: r.kanji && r.kanji !== r.kana ? `${r.kanji}（${r.kana}）` : r.kana,
+            pattern:
+              r.kanji && r.kanji !== r.kana
+                ? `${r.kanji}（${r.kana}）`
+                : r.kana,
             meaning: r.meaning,
             href: `/vocab?lesson=${r.lessonNumber}`,
             linkLabel: `Bài ${r.lessonNumber}`,
@@ -318,7 +366,11 @@ export class MindMapDataService {
           jlptLevel: true,
           lesson: { select: { lessonNumber: true, title: true } },
         },
-        orderBy: [{ lesson: { lessonNumber: "asc" } }, { sortOrder: "asc" }, { id: "asc" }],
+        orderBy: [
+          { lesson: { lessonNumber: "asc" } },
+          { sortOrder: "asc" },
+          { id: "asc" },
+        ],
       });
       return rows.map((r) => ({
         level: r.jlptLevel!,
@@ -352,7 +404,11 @@ export class MindMapDataService {
         jlptLevel: true,
         lesson: { select: { lessonNumber: true, title: true } },
       },
-      orderBy: [{ lesson: { lessonNumber: "asc" } }, { sortOrder: "asc" }, { id: "asc" }],
+      orderBy: [
+        { lesson: { lessonNumber: "asc" } },
+        { sortOrder: "asc" },
+        { id: "asc" },
+      ],
     });
     return rows.map((r) => ({
       level: r.jlptLevel!,
@@ -361,7 +417,10 @@ export class MindMapDataService {
         lessonTitle: r.lesson.title,
         item: {
           pattern: r.hanViet ? `${r.character}  ${r.hanViet}` : r.character,
-          meaning: [r.meaningVi, [r.onyomi, r.kunyomi].filter(Boolean).join(" · ")]
+          meaning: [
+            r.meaningVi,
+            [r.onyomi, r.kunyomi].filter(Boolean).join(" · "),
+          ]
             .filter(Boolean)
             .join(" — "),
           href: `/kanji?lesson=${r.lesson.lessonNumber}`,
@@ -371,7 +430,9 @@ export class MindMapDataService {
           lessonNumber: r.lesson.lessonNumber,
           speak: kanjiSpeakList(r.onyomi, r.kunyomi),
           hasImage: Boolean(r.imageUrl),
-          ...(r.imageUrl && !r.imageUrl.startsWith("data:") ? { imageUrl: r.imageUrl } : {}),
+          ...(r.imageUrl && !r.imageUrl.startsWith("data:")
+            ? { imageUrl: r.imageUrl }
+            : {}),
         },
       },
     }));

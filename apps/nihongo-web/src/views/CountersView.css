@@ -54,22 +54,22 @@
   font-weight: 600;
   font-size: 0.875rem;
   transition: all var(--transition-fast);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.72);
   cursor: pointer;
   font-family: inherit;
 }
 
 .counters-tabs .tab-btn:hover {
-  border-color: rgba(59, 130, 246, 0.35);
+  border-color: var(--border-strong);
   background: rgba(255, 255, 255, 0.95);
 }
 
 .counters-tabs .tab-btn.active {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: var(--primary-color);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+  
 }
 
 .counters-panel {
@@ -80,9 +80,8 @@
   width: 100%;
   padding: 1.25rem 1.25rem 1.5rem;
   border-radius: 16px;
-  background: rgba(191, 219, 254, 0.28);
-  border: 1px solid rgba(147, 197, 253, 0.35);
-  backdrop-filter: blur(8px);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-color);
 }
 
 .counters-hint-box {
@@ -115,25 +114,25 @@
 }
 
 .counters-view .btn-play-all {
-  background: linear-gradient(135deg, #93c5fd, #60a5fa);
-  color: #fff;
+  background: var(--surface-color-light);
+  color: var(--text-primary);
   padding: 0.7rem 1.35rem;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   font-family: inherit;
   font-weight: 600;
-  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.28);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent-color) 28%, transparent);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .counters-view .btn-play-all:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 14px var(--border-strong);
 }
 
 .counters-view .btn-play-all.playing {
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  background: linear-gradient(135deg, var(--primary-color), #f97316);
 }
 
 .counters-play-bottom .btn-play-all {
@@ -185,7 +184,7 @@
   left: 0.65rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
 .counter-audio-btn {
@@ -197,7 +196,7 @@
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.07);
   background: rgba(0, 0, 0, 0.04);
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -226,7 +225,7 @@
 
 .counter-romaji {
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
 .counter-vi {
@@ -248,7 +247,7 @@
 }
 
 [data-theme="light"] .counters-subtitle {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 [data-theme="light"] .counters-tabs .tab-btn {
@@ -258,13 +257,8 @@
 }
 
 [data-theme="light"] .counters-tabs .tab-btn.active {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: var(--primary-color);
   color: #fff;
-}
-
-[data-theme="light"] .counters-panel {
-  background: rgba(191 219 254 / 0.32);
-  border-color: rgba(147 197 253 / 0.4);
 }
 
 [data-theme="light"] .counters-hint-box {
@@ -314,7 +308,7 @@
 
 .counter-kanji--btn:hover,
 .counter-kana--btn:hover {
-  color: #3b82f6;
+  color: var(--primary-color);
 }
 
 [data-theme="light"] .counter-kanji--btn { color: #1c1917; }
@@ -332,7 +326,7 @@
   border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   display: flex;
   align-items: center;
@@ -354,8 +348,8 @@
 }
 
 .counter-copy-btn--copied {
-  color: #22c55e !important;
-  border-color: #22c55e !important;
+  color: var(--color-success) !important;
+  border-color: var(--color-success) !important;
 }
 
 /* ── Counter Popup Modal ── */
@@ -395,7 +389,7 @@
   background: none;
   border: none;
   font-size: 1rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 6px;
@@ -429,7 +423,7 @@
 .counter-popup-num {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -442,7 +436,7 @@
 
 .counter-popup-romaji {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .counter-popup-stroke {
@@ -459,7 +453,7 @@
 
 .counter-popup-stroke-hint {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   margin: 0;
 }
 

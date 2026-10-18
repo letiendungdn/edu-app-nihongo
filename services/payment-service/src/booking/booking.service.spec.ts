@@ -260,9 +260,14 @@ describe("BookingService", () => {
 
       expect(refundService.refundPayment).toHaveBeenCalledWith(
         50,
-        expect.objectContaining({ requestedByUserId: learnerId, reason: "changed plans" }),
+        expect.objectContaining({
+          requestedByUserId: learnerId,
+          reason: "changed plans",
+        }),
       );
-      expect(result).toEqual(expect.objectContaining({ refunded: true, refundAmountCents: 5000 }));
+      expect(result).toEqual(
+        expect.objectContaining({ refunded: true, refundAmountCents: 5000 }),
+      );
     });
 
     it("does not refund when canceling within 24h of session", async () => {

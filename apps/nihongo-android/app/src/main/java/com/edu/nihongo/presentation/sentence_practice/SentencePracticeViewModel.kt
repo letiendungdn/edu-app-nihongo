@@ -3,6 +3,8 @@ package com.edu.nihongo.presentation.sentence_practice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edu.nihongo.data.remote.SentencePracticeApi
+import com.edu.nihongo.utils.userMessage
+import kotlinx.coroutines.CancellationException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,8 +51,10 @@ class SentencePracticeViewModel @Inject constructor(
                 _uiState.update { state ->
                     state.copy(loading = false, history = listOf(entry) + state.history)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _uiState.update { it.copy(loading = false, error = e.message ?: "Lỗi không xác định") }
+                _uiState.update { it.copy(loading = false, error = e.userMessage()) }
             }
         }
     }

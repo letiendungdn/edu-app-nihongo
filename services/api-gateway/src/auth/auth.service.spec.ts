@@ -10,7 +10,10 @@ import { AuthService } from "./auth.service";
 
 jest.mock("bcryptjs");
 // jose chỉ có bản ESM — Jest (CommonJS) không parse được; test này không dùng OIDC.
-jest.mock("jose", () => ({ createRemoteJWKSet: jest.fn(), jwtVerify: jest.fn() }));
+jest.mock("jose", () => ({
+  createRemoteJWKSet: jest.fn(),
+  jwtVerify: jest.fn(),
+}));
 
 describe("AuthService", () => {
   let service: AuthService;

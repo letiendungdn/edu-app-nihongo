@@ -101,7 +101,10 @@ export class MockExamsController {
     @Param("id", ParseIntPipe) id: number,
     @Body() dto: UpdateMockExamTemplateDto,
   ) {
-    return sendExam(this.examClient, EXAM_PATTERNS.UPDATE_TEMPLATE, { id, dto });
+    return sendExam(this.examClient, EXAM_PATTERNS.UPDATE_TEMPLATE, {
+      id,
+      dto,
+    });
   }
 
   @Delete("admin/:id")

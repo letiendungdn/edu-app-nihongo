@@ -46,7 +46,7 @@
 
 .admin-error {
   margin: 0;
-  color: #f87171;
+  color: var(--primary-color);
   font-size: 0.9rem;
 }
 
@@ -276,15 +276,15 @@
 }
 
 .admin-alert--error {
-  color: #f87171;
+  color: var(--primary-color);
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.3);
 }
 
 .admin-alert--success {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
 }
 
 .admin-table-wrap {
@@ -325,18 +325,18 @@
 }
 
 .admin-status--succeeded {
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.35);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
 }
 
 .admin-status--refunded,
 .admin-status--partially_refunded {
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.35);
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
 }
 
 .admin-status--failed {
-  color: #f87171;
+  color: var(--primary-color);
   border-color: rgba(248, 113, 113, 0.35);
 }
 
@@ -408,7 +408,7 @@
 }
 
 .admin-content-error {
-  color: #f87171;
+  color: var(--primary-color);
   font-size: 13px;
   margin: 8px 0 12px;
 }

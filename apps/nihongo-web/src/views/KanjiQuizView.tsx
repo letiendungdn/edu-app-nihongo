@@ -7,9 +7,9 @@ import {
   useKanjiEntriesQuery,
   useKanjiLessonsQuery,
   useKanjiRangeQuery,
-  useLessonsQuery,
+  useLessons,
   useVocabRangeQuery,
-  useVocabulariesQuery,
+  useVocab,
 } from '../hooks/queries';
 import { playAudio } from '../utils/speech';
 import KanjiStructureButton from '../components/KanjiStructureButton';
@@ -47,7 +47,7 @@ export default function KanjiQuizView() {
     searchParams?.get('source') === 'minna' ? 'minna' : 'kanji';
 
   const { data: kanjiLessons = [] } = useKanjiLessonsQuery();
-  const { data: minnaLessons = [] } = useLessonsQuery();
+  const { data: minnaLessons = [] } = useLessons();
 
   const [phase, setPhase] = useState<'setup' | 'quiz'>('setup');
   const [poolSource, setPoolSource] = useState<PoolSource>(initialSource);
@@ -76,7 +76,7 @@ export default function KanjiQuizView() {
     lessonTo,
     poolSource === 'kanji' && scopeMode === 'range',
   );
-  const { data: singleVocab = [], isLoading: loadingVocabSingle } = useVocabulariesQuery(
+  const { data: singleVocab = [], isLoading: loadingVocabSingle } = useVocab(
     lesson,
     poolSource === 'minna' && scopeMode === 'single',
   );

@@ -85,4 +85,6 @@ final pushServiceProvider = Provider(
   (ref) => PushService(ref.watch(dioProvider)),
 );
 
-final sentencePracticeApiProvider = Provider((_) => SentencePracticeApi());
+final sentencePracticeApiProvider = Provider(
+  (ref) => SentencePracticeApi(ref.watch(dioProvider)),
+);

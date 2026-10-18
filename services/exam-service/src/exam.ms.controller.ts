@@ -18,9 +18,7 @@ import {
   ReorderMockExamQuestionsDto,
 } from "@app/contracts";
 import { handleGrpcDispatch, type PatternHandler } from "@app/common";
-import {
-  MockExamsService,
-} from "./modules/mock-exams/mock-exams.service";
+import { MockExamsService } from "./modules/mock-exams/mock-exams.service";
 import { ProgressService } from "./modules/progress/progress.service";
 import { SubmitExamCommand } from "./modules/mock-exams/commands/submit-exam.command";
 import { GetResultsQuery } from "./modules/mock-exams/queries/get-results.query";
@@ -66,9 +64,7 @@ export class ExamMsController implements OnModuleInit {
           },
         ),
       [EXAM_PATTERNS.DELETE_QUESTION]: (data) =>
-        this.deleteQuestion(
-          data as { templateId: number; questionId: number },
-        ),
+        this.deleteQuestion(data as { templateId: number; questionId: number }),
       [EXAM_PATTERNS.REORDER_QUESTIONS]: (data) =>
         this.reorderQuestions(
           data as { templateId: number; dto: ReorderMockExamQuestionsDto },
@@ -155,10 +151,7 @@ export class ExamMsController implements OnModuleInit {
     return this.mockExamsService.listQuestions(data.templateId);
   }
 
-  createQuestion(data: {
-    templateId: number;
-    dto: CreateMockExamQuestionDto;
-  }) {
+  createQuestion(data: { templateId: number; dto: CreateMockExamQuestionDto }) {
     return this.mockExamsService.createQuestion(data.templateId, data.dto);
   }
 

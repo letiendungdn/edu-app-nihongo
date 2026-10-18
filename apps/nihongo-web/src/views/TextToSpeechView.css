@@ -99,7 +99,7 @@
   min-height: 10rem;
   padding: 0.85rem 1rem;
   border-radius: 0.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.72);
   color: var(--text-primary);
   font-size: 1.05rem;
@@ -110,8 +110,8 @@
 
 .tts-input:focus {
   outline: none;
-  border-color: rgba(239, 68, 68, 0.45);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
 .tts-meta {
@@ -126,7 +126,7 @@
 }
 
 .tts-count--over {
-  color: #dc2626;
+  color: var(--primary-color-hover);
   font-weight: 600;
 }
 
@@ -167,7 +167,7 @@
 .tts-example-btn {
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.55);
   color: var(--text-primary);
   font-size: 0.85rem;
@@ -176,7 +176,7 @@
 }
 
 .tts-example-btn:hover {
-  border-color: rgba(239, 68, 68, 0.35);
+  border-color: color-mix(in srgb, var(--primary-color) 35%, transparent);
   background: rgba(255, 255, 255, 0.85);
 }
 

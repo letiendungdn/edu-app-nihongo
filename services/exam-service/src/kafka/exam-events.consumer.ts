@@ -8,12 +8,18 @@ import { ConfigService } from "@nestjs/config";
 import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { KafkaTopics } from "@app/contracts";
 import { KafkaProducerService } from "./kafka.producer";
-import { ExamSubmittedMessage, PROGRESS_UPDATER, ProgressUpdater } from "./progress-updater";
+import {
+  ExamSubmittedMessage,
+  PROGRESS_UPDATER,
+  ProgressUpdater,
+} from "./progress-updater";
 
 export const EXAM_SUBMITTED_DLQ = `${KafkaTopics.EXAM_SUBMITTED}.dlq`;
 const MAX_HANDLE_ATTEMPTS = 3;
 const RECONNECT_DELAY_MS = 10_000;
-const RETRY_BASE_DELAY_MS = Number(process.env.EXAM_CONSUMER_RETRY_DELAY_MS ?? 500);
+const RETRY_BASE_DELAY_MS = Number(
+  process.env.EXAM_CONSUMER_RETRY_DELAY_MS ?? 500,
+);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -23,7 +29,9 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * - Message lỗi sau 3 lần thử → đẩy sang topic DLQ rồi đi tiếp (không để một message hỏng chặn cả partition).
  */
 @Injectable()
-export class ExamEventsConsumer implements OnApplicationBootstrap, OnModuleDestroy {
+export class ExamEventsConsumer
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private readonly logger = new Logger(ExamEventsConsumer.name);
   private consumer: Consumer | null = null;
   private stopped = false;
@@ -48,21 +56,32 @@ export class ExamEventsConsumer implements OnApplicationBootstrap, OnModuleDestr
 
   private async start(): Promise<void> {
     const brokers = (
-      this.config.get<string>("kafka.brokers") ?? process.env.KAFKA_BROKERS ?? "localhost:9092"
+      this.config.get<string>("kafka.brokers") ??
+      process.env.KAFKA_BROKERS ??
+      "localhost:9092"
     ).split(",");
-    const consumer = new Kafka({ clientId: `exam-service-${PROGRESS_UPDATER}`, brokers }).consumer({
+    const consumer = new Kafka({
+      clientId: `exam-service-${PROGRESS_UPDATER}`,
+      brokers,
+    }).consumer({
       groupId: PROGRESS_UPDATER,
     });
     this.consumer = consumer;
     consumer.on(consumer.events.CRASH, ({ payload }) => {
-      if (!payload.restart) this.scheduleRestart(`consumer crash: ${String(payload.error)}`);
+      if (!payload.restart)
+        this.scheduleRestart(`consumer crash: ${String(payload.error)}`);
     });
     try {
       await consumer.connect();
       // fromBeginning chỉ có tác dụng khi group chưa commit offset nào → không bỏ sót event cũ; event trùng đã idempotent
-      await consumer.subscribe({ topic: KafkaTopics.EXAM_SUBMITTED, fromBeginning: true });
+      await consumer.subscribe({
+        topic: KafkaTopics.EXAM_SUBMITTED,
+        fromBeginning: true,
+      });
       await consumer.run({ eachMessage: (p) => this.onMessage(p) });
-      this.logger.log(`Consumer "${PROGRESS_UPDATER}" đang đọc ${KafkaTopics.EXAM_SUBMITTED}`);
+      this.logger.log(
+        `Consumer "${PROGRESS_UPDATER}" đang đọc ${KafkaTopics.EXAM_SUBMITTED}`,
+      );
     } catch (error) {
       await consumer.disconnect().catch(() => undefined);
       this.scheduleRestart(String(error));
@@ -71,11 +90,17 @@ export class ExamEventsConsumer implements OnApplicationBootstrap, OnModuleDestr
 
   private scheduleRestart(reason: string) {
     if (this.stopped) return;
-    this.logger.warn(`Consumer chưa chạy (${reason}) — thử lại sau ${RECONNECT_DELAY_MS / 1000}s`);
+    this.logger.warn(
+      `Consumer chưa chạy (${reason}) — thử lại sau ${RECONNECT_DELAY_MS / 1000}s`,
+    );
     this.retryTimer = setTimeout(() => void this.start(), RECONNECT_DELAY_MS);
   }
 
-  async onMessage({ topic, partition, message }: EachMessagePayload): Promise<void> {
+  async onMessage({
+    topic,
+    partition,
+    message,
+  }: EachMessagePayload): Promise<void> {
     const raw = message.value?.toString() ?? "";
     let lastError: unknown;
     for (let attempt = 1; attempt <= MAX_HANDLE_ATTEMPTS; attempt += 1) {
@@ -86,7 +111,8 @@ export class ExamEventsConsumer implements OnApplicationBootstrap, OnModuleDestr
         lastError = error;
         if (error instanceof SyntaxError) break; // JSON hỏng: thử lại vô ích
         // Lỗi tạm thời (DB chập chờn) → chờ tăng dần trước lần thử sau
-        if (attempt < MAX_HANDLE_ATTEMPTS) await sleep(RETRY_BASE_DELAY_MS * attempt);
+        if (attempt < MAX_HANDLE_ATTEMPTS)
+          await sleep(RETRY_BASE_DELAY_MS * attempt);
       }
     }
     this.logger.error(

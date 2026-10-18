@@ -97,7 +97,8 @@ export class ReferenceService {
       "home-page": "Trang chủ — thống kê & mục học",
       "japanese-conversation": "会話 — 自己紹介 & câu giao tiếp",
       "japanese-roleplay": "会話 — Đóng vai hội thoại",
-      textbooks: "Giáo trình tham khảo (Minna, Sou Matome, Shinkanzen, TRY!, KLL)",
+      textbooks:
+        "Giáo trình tham khảo (Minna, Sou Matome, Shinkanzen, TRY!, KLL)",
     };
     return titles[slug];
   }
@@ -362,11 +363,7 @@ export class ReferenceService {
         // range (các range JLPT "boost/expand" chồng lấn giữa các cấp).
         jlptLevel: p.externalKey.match(/^n([1-5])-/)?.[1]
           ? (`N${p.externalKey.match(/^n([1-5])-/)![1]}` as
-              | "N5"
-              | "N4"
-              | "N3"
-              | "N2"
-              | "N1")
+              "N5" | "N4" | "N3" | "N2" | "N1")
           : undefined,
       })),
     };

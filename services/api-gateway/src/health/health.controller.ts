@@ -47,7 +47,9 @@ export class HealthController {
   }
 
   @Get("ready")
-  @ApiOperation({ summary: "Readiness — 503 khi DB hoặc microservice không sẵn sàng" })
+  @ApiOperation({
+    summary: "Readiness — 503 khi DB hoặc microservice không sẵn sàng",
+  })
   async ready(): Promise<HealthReport> {
     const report = await this.report();
     if (report.status !== "ok") throw new ServiceUnavailableException(report);
@@ -59,16 +61,23 @@ export class HealthController {
       this.probe(() => this.prisma.$queryRaw`SELECT 1`),
       this.probe(() =>
         firstValueFrom(
-          this.contentClient.send(CONTENT_PATTERNS.GET_LESSONS, {}).pipe(timeout(3000)),
+          this.contentClient
+            .send(CONTENT_PATTERNS.GET_LESSONS, {})
+            .pipe(timeout(3000)),
         ),
       ),
       this.probe(() =>
         firstValueFrom(
-          this.examClient.send(EXAM_PATTERNS.LIST_TEMPLATES, {}).pipe(timeout(3000)),
+          this.examClient
+            .send(EXAM_PATTERNS.LIST_TEMPLATES, {})
+            .pipe(timeout(3000)),
         ),
       ),
     ]);
-    const status = database === "up" && content === "up" && exam === "up" ? "ok" : "degraded";
+    const status =
+      database === "up" && content === "up" && exam === "up"
+        ? "ok"
+        : "degraded";
     return { status, services: { database, content, exam } };
   }
 

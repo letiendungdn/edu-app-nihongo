@@ -173,7 +173,7 @@
   padding: 0;
 }
 .tc-speak:hover          { color: var(--text-primary); background: rgba(255 255 255 / 0.08); }
-.tc-speak--active        { color: var(--primary-color) !important; background: rgba(239 68 68 / 0.12) !important; }
+.tc-speak--active        { color: var(--primary-color) !important; background: color-mix(in srgb, var(--primary-color) 12%, transparent) !important; }
 .tc-speak--sm            { width: 22px; height: 22px; border-radius: 5px; }
 
 /* ── Examples toggle ── */
@@ -327,7 +327,7 @@
   margin: 0.2rem 0 0.35rem;
   font-size: 2.4rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: var(--color-warning);
   line-height: 1.1;
 }
 

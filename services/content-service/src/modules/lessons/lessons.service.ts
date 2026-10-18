@@ -41,7 +41,9 @@ export class LessonsService {
         where,
         orderBy: { lessonNumber: "asc" },
         include: {
-          _count: { select: { vocabularies: true, grammars: true, exercises: true } },
+          _count: {
+            select: { vocabularies: true, grammars: true, exercises: true },
+          },
         },
       });
 
@@ -61,7 +63,9 @@ export class LessonsService {
       where,
       orderBy: { lessonNumber: "asc" },
       include: {
-        _count: { select: { vocabularies: true, grammars: true, exercises: true } },
+        _count: {
+          select: { vocabularies: true, grammars: true, exercises: true },
+        },
       },
     });
   }

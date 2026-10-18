@@ -36,13 +36,33 @@ function KanjiStructureModal({ state, onClose }: { state: OpenState; onClose: ()
     const onKeyDown = (e: KeyboardEvent) => {
       // Chặn phím tắt của trang phía sau (← → lật thẻ…) khi cửa sổ đang mở
       e.stopPropagation();
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('ks-modal-open');
+    // Modal nét vẽ phía dưới dùng aria-modal → trình duyệt có thể khóa click
+    // lên portal phân tích. Tạm inert để nhận tương tác bình thường.
+    const underlays = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '.vocab-stroke-modal__backdrop, .tc-stroke-modal-backdrop',
+      ),
+    );
+    for (const el of underlays) {
+      el.setAttribute('inert', '');
+      el.setAttribute('aria-hidden', 'true');
+    }
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('ks-modal-open');
+      for (const el of underlays) {
+        el.removeAttribute('inert');
+        el.removeAttribute('aria-hidden');
+      }
       window.removeEventListener('keydown', onKeyDown, true);
     };
   }, [onClose]);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLessonsQuery } from '../../hooks/queries';
+import { useLessons } from '../../hooks/queries';
 import GrammarView from '../GrammarView';
 import { AdminLessonPicker } from '../../components/admin/AdminLessonPicker';
 
@@ -10,7 +10,7 @@ export default function AdminGrammarByLessonView({
 }: {
   initialLessonNumber?: number;
 } = {}) {
-  const { data: lessons = [], isLoading } = useLessonsQuery();
+  const { data: lessons = [], isLoading } = useLessons();
   const [selectedLessonNumber, setSelectedLessonNumber] = useState<number | null>(
     initialLessonNumber ?? null,
   );

@@ -17,6 +17,7 @@ import {
 } from '../lib/api-client';
 import { signoutKeycloak } from '../lib/keycloak';
 import { queryKeys, useAuthMeQuery } from '../hooks/queries';
+import { adoptGuestMistakes, pullFromServer } from '../utils/mistakeVocab';
 import type { AuthUser, LoginResponse, UpdateProfileInput } from '../types/api';
 import { AuthContext } from './auth-context';
 
@@ -26,6 +27,8 @@ function applySession(
   setUser: (u: AuthUser) => void,
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
+  // Cache chứa dữ liệu riêng của người trước (phòng chat, hỗ trợ, admin…): bỏ hết
+  queryClient.clear();
   setStoredToken(res.access_token);
   setToken(res.access_token);
   setUser(res.user);
@@ -47,9 +50,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return subscribeAuthToken((next) => {
       setToken(next);
-      if (!next) setUser(null);
+      if (!next) {
+        // Đăng xuất hoặc phiên hết hạn (refresh bị từ chối): không để dữ liệu riêng lại trong cache
+        setUser(null);
+        queryClient.clear();
+      }
     });
-  }, []);
+  }, [queryClient]);
+
+  // Có người dùng mới: gộp từ sai lúc còn là khách, rồi kéo kho ôn tập từ server (máy khác đã ôn)
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (userId == null) return;
+    adoptGuestMistakes();
+    void pullFromServer().then(() =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.vocab.review() }),
+    );
+  }, [userId, queryClient]);
 
   useEffect(() => {
     if (me) setUser(me);
@@ -128,8 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredToken(null);
     setToken(null);
     setUser(null);
-    queryClient.removeQueries({ queryKey: queryKeys.authMe });
-    queryClient.removeQueries({ queryKey: queryKeys.adminStats });
+    // Bản cũ chỉ xóa authMe + adminStats: người đăng nhập sau thấy phòng chat, hỗ trợ… của người trước
+    queryClient.clear();
 
     // End Keycloak SSO session (front-channel) if OIDC user still in sessionStorage
     const redirected = await signoutKeycloak();

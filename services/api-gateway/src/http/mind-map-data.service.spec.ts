@@ -8,11 +8,20 @@ import {
   type SourceItem,
 } from "./mind-map-data.service";
 
-const item = (lessonNumber: number, pos?: string, title: string | null = null): SourceItem => ({
+const item = (
+  lessonNumber: number,
+  pos?: string,
+  title: string | null = null,
+): SourceItem => ({
   lessonNumber,
   lessonTitle: title,
   partOfSpeech: pos,
-  item: { pattern: `w${lessonNumber}`, meaning: "m", href: "/x", linkLabel: `Bài ${lessonNumber}` },
+  item: {
+    pattern: `w${lessonNumber}`,
+    meaning: "m",
+    href: "/x",
+    linkLabel: `Bài ${lessonNumber}`,
+  },
 });
 
 describe("mind map data grouping", () => {
@@ -39,13 +48,21 @@ describe("mind map data grouping", () => {
     }));
     const groups = partitionLessons(lessons, 8);
     expect(groups.length).toBeLessThanOrEqual(8);
-    expect(groups.flat().map((l) => l.lessonNumber)).toEqual(lessons.map((l) => l.lessonNumber));
+    expect(groups.flat().map((l) => l.lessonNumber)).toEqual(
+      lessons.map((l) => l.lessonNumber),
+    );
   });
 
   it("vocab with part of speech groups by POS; without it groups by lesson ranges", () => {
-    const withPos = buildDataLevel("VOCAB", "N3", [item(301, "danh từ"), item(301, "động từ nhóm 2")]);
+    const withPos = buildDataLevel("VOCAB", "N3", [
+      item(301, "danh từ"),
+      item(301, "động từ nhóm 2"),
+    ]);
     expect(withPos.groupedBy).toBe("partOfSpeech");
-    expect(withPos.branches.map((b) => b.label)).toEqual(["Danh từ", "Động từ"]);
+    expect(withPos.branches.map((b) => b.label)).toEqual([
+      "Danh từ",
+      "Động từ",
+    ]);
 
     const minna = Array.from({ length: 25 }, (_, i) => item(i + 1));
     const n5 = buildDataLevel("VOCAB", "N5", [...minna, item(220), item(221)]);
@@ -58,24 +75,41 @@ describe("mind map data grouping", () => {
   });
 
   it("levels without a core textbook are not labelled 'Bổ sung'", () => {
-    const n2 = buildDataLevel("GRAMMAR", "N2", Array.from({ length: 20 }, (_, i) => item(401 + i)));
+    const n2 = buildDataLevel(
+      "GRAMMAR",
+      "N2",
+      Array.from({ length: 20 }, (_, i) => item(401 + i)),
+    );
     expect(n2.branches.every((b) => !b.label.includes("Bổ sung"))).toBe(true);
     expect(n2.branches[0].label).toMatch(/^Bài 401/);
   });
 
   it("kanji lessons 1–32 are labelled as Kanji Look and Learn", () => {
-    const lvl = buildDataLevel("KANJI", "N5", Array.from({ length: 10 }, (_, i) => item(i + 1)));
+    const lvl = buildDataLevel(
+      "KANJI",
+      "N5",
+      Array.from({ length: 10 }, (_, i) => item(i + 1)),
+    );
     expect(lvl.branches[0].label).toBe("KLL bài 1–2");
   });
 
   it("single-lesson branches use the lesson topic as label", () => {
-    expect(shortTitle("N3 · Bài 1 — Nguyên nhân, điều kiện, mục đích")).toBe("Nguyên nhân, điều kiện, mục đích");
-    const lvl = buildDataLevel("GRAMMAR", "N3", [item(301, undefined, "N3 · Bài 1 — Nguyên nhân")]);
+    expect(shortTitle("N3 · Bài 1 — Nguyên nhân, điều kiện, mục đích")).toBe(
+      "Nguyên nhân, điều kiện, mục đích",
+    );
+    const lvl = buildDataLevel("GRAMMAR", "N3", [
+      item(301, undefined, "N3 · Bài 1 — Nguyên nhân"),
+    ]);
     expect(lvl.branches[0].label).toBe("Nguyên nhân");
   });
 
   it("kanjiSpeakList strips okurigana markers and de-duplicates", () => {
-    expect(kanjiSpeakList("いち, いつ", "ひと-つ、ひと")).toEqual(["いち", "いつ", "ひとつ", "ひと"]);
+    expect(kanjiSpeakList("いち, いつ", "ひと-つ、ひと")).toEqual([
+      "いち",
+      "いつ",
+      "ひとつ",
+      "ひと",
+    ]);
     expect(kanjiSpeakList(null, null)).toEqual([]);
   });
 });

@@ -80,10 +80,19 @@ export default function AdminMindMapsView() {
     [rows, level],
   );
 
+  // Đổi tab nhanh: response của loại CŨ về sau không được ghi đè dữ liệu loại mới
+  const latestKind = useRef(kind);
+  latestKind.current = kind;
+
+  /** Đang sửa dở mà chuyển tab/cấp: hỏi trước. Bản cũ bỏ bản nháp không báo. */
+  const confirmDiscard = () => !dirty || window.confirm('Bạn có thay đổi chưa lưu. Bỏ các thay đổi này?');
+
   const load = useCallback(async () => {
+    const requestedKind = kind;
     setLoading(true);
     try {
       const data = await fetchMindMaps(kind);
+      if (latestKind.current !== requestedKind) return;
       setRows(data);
       const preferred =
         data.find((r) => r.level === level) ??
@@ -99,9 +108,10 @@ export default function AdminMindMapsView() {
       }
       setDirty(false);
     } catch (e) {
+      if (latestKind.current !== requestedKind) return;
       toast.show(e instanceof Error ? e.message : 'Không tải được sơ đồ', 'error');
     } finally {
-      setLoading(false);
+      if (latestKind.current === requestedKind) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
@@ -314,14 +324,16 @@ export default function AdminMindMapsView() {
               key={k.kind}
               type="button"
               className={`amm-kind-tab${kind === k.kind ? ' is-active' : ''}`}
-              onClick={() => setKind(k.kind as MindMapKindApi)}
+              onClick={() => {
+                if (k.kind !== kind && confirmDiscard()) setKind(k.kind as MindMapKindApi);
+              }}
             >
               {k.label}
             </button>
           ))}
         </div>
         <div className="amm-actions">
-          <button type="button" className="btn btn-outline btn-sm" disabled={busy || !dirty} onClick={() => void load()}>
+          <button type="button" className="btn btn-outline btn-sm" disabled={busy || !dirty} onClick={() => confirmDiscard() && void load()}>
             Huỷ thay đổi
           </button>
           <button type="button" className="btn btn-primary btn-sm" disabled={busy || !draft || !dirty} onClick={() => void handleSave()}>
@@ -345,7 +357,11 @@ export default function AdminMindMapsView() {
               type="button"
               className={`amm-level-chip${active ? ' is-active' : ''}${exists ? '' : ' is-empty'}`}
               style={{ '--amm-accent': ACCENTS[lv] } as React.CSSProperties}
-              onClick={() => (exists ? setLevel(lv as MindMapLevelCode) : handleCreateLevel(lv as MindMapLevelCode))}
+              onClick={() => {
+                if (lv === level || !confirmDiscard()) return;
+                if (exists) setLevel(lv as MindMapLevelCode);
+                else handleCreateLevel(lv as MindMapLevelCode);
+              }}
             >
               {lv}
               {!exists ? ' +' : ''}

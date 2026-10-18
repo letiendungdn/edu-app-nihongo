@@ -82,7 +82,7 @@
 .dl-celebration {
   text-align: center;
   padding: 1rem;
-  color: #4ade80;
+  color: var(--color-success);
   font-weight: 600;
 }
 
@@ -106,7 +106,7 @@
 .dl-tab.active {
   border-color: var(--primary-color);
   color: var(--text-primary);
-  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
 .dl-controls {
@@ -200,8 +200,8 @@
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
+  background: color-mix(in srgb, var(--accent-color) 20%, transparent);
+  color: var(--accent-color);
   flex-shrink: 0;
 }
 

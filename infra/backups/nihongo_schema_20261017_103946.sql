@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dzbIzMw1Y0is5Us4m0ur9eCGgbyl09rbM0tpmhkkwWYjAJmN4uN6oxZYNrJNMlZ
+\restrict m2kFfHcSJMBZfu1EBE7FVJgUJuCn1dMyqDVq3SWPXA84Qd0uhRuMSd86oz4ZmGa
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -17,6 +17,15 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: flyway; Type: SCHEMA; Schema: -; Owner: nihongo
+--
+
+CREATE SCHEMA flyway;
+
+
+ALTER SCHEMA flyway OWNER TO nihongo;
 
 --
 -- Name: ContentType; Type: TYPE; Schema: public; Owner: nihongo
@@ -260,6 +269,26 @@ ALTER TYPE public."WebhookEventStatus" OWNER TO nihongo;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: flyway_schema_history; Type: TABLE; Schema: flyway; Owner: nihongo
+--
+
+CREATE TABLE flyway.flyway_schema_history (
+    installed_rank integer NOT NULL,
+    version character varying(50),
+    description character varying(200) NOT NULL,
+    type character varying(20) NOT NULL,
+    script character varying(1000) NOT NULL,
+    checksum integer,
+    installed_by character varying(100) NOT NULL,
+    installed_on timestamp without time zone DEFAULT now() NOT NULL,
+    execution_time integer NOT NULL,
+    success boolean NOT NULL
+);
+
+
+ALTER TABLE flyway.flyway_schema_history OWNER TO nihongo;
 
 --
 -- Name: BookAudioDriveFolder; Type: TABLE; Schema: public; Owner: nihongo
@@ -4386,6 +4415,64 @@ CREATE TABLE public._prisma_migrations (
 ALTER TABLE public._prisma_migrations OWNER TO nihongo;
 
 --
+-- Name: learner_daily_study; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public.learner_daily_study AS
+ WITH days AS (
+         SELECT "StudySession"."userId",
+            "StudySession".date AS "studyDate"
+           FROM public."StudySession"
+        UNION
+         SELECT "DailyActivity"."userId",
+            ("DailyActivity".date)::date AS date
+           FROM public."DailyActivity"
+        )
+ SELECT d."userId",
+    d."studyDate",
+    COALESCE(s.seconds, 0) AS seconds,
+    COALESCE(s."cardsReviewed", 0) AS "cardsReviewed",
+    COALESCE(v.count, 0) AS "vocabCount",
+    COALESCE(k.count, 0) AS "kanjiCount"
+   FROM (((days d
+     LEFT JOIN public."StudySession" s ON (((s."userId" = d."userId") AND (s.date = d."studyDate"))))
+     LEFT JOIN public."DailyActivity" v ON (((v."userId" = d."userId") AND (v.date = to_char((d."studyDate")::timestamp with time zone, 'YYYY-MM-DD'::text)) AND (v.kind = 'vocab'::text))))
+     LEFT JOIN public."DailyActivity" k ON (((k."userId" = d."userId") AND (k.date = to_char((d."studyDate")::timestamp with time zone, 'YYYY-MM-DD'::text)) AND (k.kind = 'kanji'::text))));
+
+
+ALTER VIEW public.learner_daily_study OWNER TO nihongo;
+
+--
+-- Name: learner_progress_summary; Type: MATERIALIZED VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE MATERIALIZED VIEW public.learner_progress_summary AS
+ SELECT u.id AS "userId",
+    COALESCE(st."currentStreak", 0) AS "currentStreak",
+    COALESCE(st."longestStreak", 0) AS "longestStreak",
+    (COALESCE(sess.total_seconds, (0)::bigint))::integer AS "totalSeconds",
+    (COALESCE(sess.total_cards, (0)::bigint))::integer AS "totalCards",
+    (COALESCE(act.vocab_total, (0)::bigint))::integer AS "vocabTotal",
+    (COALESCE(act.kanji_total, (0)::bigint))::integer AS "kanjiTotal"
+   FROM (((public."User" u
+     LEFT JOIN public."StudyStreak" st ON ((st."userId" = u.id)))
+     LEFT JOIN ( SELECT "StudySession"."userId",
+            sum("StudySession".seconds) AS total_seconds,
+            sum("StudySession"."cardsReviewed") AS total_cards
+           FROM public."StudySession"
+          GROUP BY "StudySession"."userId") sess ON ((sess."userId" = u.id)))
+     LEFT JOIN ( SELECT "DailyActivity"."userId",
+            sum("DailyActivity".count) FILTER (WHERE ("DailyActivity".kind = 'vocab'::text)) AS vocab_total,
+            sum("DailyActivity".count) FILTER (WHERE ("DailyActivity".kind = 'kanji'::text)) AS kanji_total
+           FROM public."DailyActivity"
+          GROUP BY "DailyActivity"."userId") act ON ((act."userId" = u.id)))
+  WHERE ((st."userId" IS NOT NULL) OR (sess."userId" IS NOT NULL) OR (act."userId" IS NOT NULL))
+  WITH NO DATA;
+
+
+ALTER MATERIALIZED VIEW public.learner_progress_summary OWNER TO nihongo;
+
+--
 -- Name: BookAudioDriveFolder id; Type: DEFAULT; Schema: public; Owner: nihongo
 --
 
@@ -5048,6 +5135,14 @@ ALTER TABLE ONLY public."VocabularyKanjiLink" ALTER COLUMN id SET DEFAULT nextva
 --
 
 ALTER TABLE ONLY public."WebhookEvent" ALTER COLUMN id SET DEFAULT nextval('public."WebhookEvent_id_seq"'::regclass);
+
+
+--
+-- Name: flyway_schema_history flyway_schema_history_pk; Type: CONSTRAINT; Schema: flyway; Owner: nihongo
+--
+
+ALTER TABLE ONLY flyway.flyway_schema_history
+    ADD CONSTRAINT flyway_schema_history_pk PRIMARY KEY (installed_rank);
 
 
 --
@@ -5944,6 +6039,13 @@ ALTER TABLE ONLY public."WebhookEvent"
 
 ALTER TABLE ONLY public._prisma_migrations
     ADD CONSTRAINT _prisma_migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: flyway_schema_history_s_idx; Type: INDEX; Schema: flyway; Owner: nihongo
+--
+
+CREATE INDEX flyway_schema_history_s_idx ON flyway.flyway_schema_history USING btree (success);
 
 
 --
@@ -7095,6 +7197,13 @@ CREATE INDEX "WebhookEvent_provider_status_createdAt_idx" ON public."WebhookEven
 
 
 --
+-- Name: learner_progress_summary_user_idx; Type: INDEX; Schema: public; Owner: nihongo
+--
+
+CREATE UNIQUE INDEX learner_progress_summary_user_idx ON public.learner_progress_summary USING btree ("userId");
+
+
+--
 -- Name: BookAudioFile BookAudioFile_folderId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: nihongo
 --
 
@@ -7706,5 +7815,5 @@ ALTER TABLE ONLY public."Vocabulary"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dzbIzMw1Y0is5Us4m0ur9eCGgbyl09rbM0tpmhkkwWYjAJmN4uN6oxZYNrJNMlZ
+\unrestrict m2kFfHcSJMBZfu1EBE7FVJgUJuCn1dMyqDVq3SWPXA84Qd0uhRuMSd86oz4ZmGa
 

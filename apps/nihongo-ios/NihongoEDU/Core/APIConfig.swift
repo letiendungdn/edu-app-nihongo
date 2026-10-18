@@ -13,8 +13,4 @@ enum APIConfig {
         return "http://192.168.1.100:3000/api"
         #endif
     }()
-
-    static let geminiAPIKey: String = {
-        ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? ""
-    }()
 }

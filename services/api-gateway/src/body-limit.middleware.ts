@@ -33,7 +33,11 @@ export function allowsLargeBody(path: string): boolean {
  * Chặn sớm theo Content-Length (trước khi đọc body) → trả 413 thay vì đọc 8 MB vào RAM
  * cho route không cần. Body không có Content-Length (chunked) vẫn bị body-parser giới hạn 8 MB.
  */
-export function bodyLimitMiddleware(req: Request, res: Response, next: NextFunction) {
+export function bodyLimitMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const length = Number(req.headers["content-length"] ?? 0);
   if (length > DEFAULT_BODY_LIMIT_BYTES && !allowsLargeBody(req.path)) {
     res.status(413).json({

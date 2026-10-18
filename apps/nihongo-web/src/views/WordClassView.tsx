@@ -7,7 +7,7 @@ import PlayAllButton from '../components/PlayAllButton';
 import StrokeOrder from '../components/StrokeOrder';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
-import { useLessonsQuery, useVocabRangeQuery } from '../hooks/queries';
+import { useLessons, useVocabRangeQuery } from '../hooks/queries';
 import { queryKeys } from '../api/query-keys';
 import {
   createVocabulary,
@@ -212,7 +212,7 @@ export default function WordClassView() {
   const { isAdmin, token } = useAuth();
   const queryClient = useQueryClient();
   const { data = [], isLoading } = useVocabRangeQuery(1, 50);
-  const { data: lessons = [] } = useLessonsQuery();
+  const { data: lessons = [] } = useLessons();
   const [activeId, setActiveId] = useState<WordClassTabId>('noun');
   const [searchQuery, setSearchQuery] = useState('');
   const [editMode, setEditMode] = useState(false);

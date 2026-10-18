@@ -119,8 +119,12 @@ export class AuthService implements OnModuleInit {
     const tokens = await this.generateTokens(user);
     void this.mail.sendWelcomeSafe({ toEmail: user.email, toName: user.name });
     // Không chờ, nhưng phải bắt lỗi: promise bị reject không xử lý sẽ làm Node tắt cả gateway.
-    this.sendVerificationOnRegister(user.id, user.email, user.name).catch((err) =>
-      this.logger.error(`Không tạo được token xác minh email cho user ${user.id}`, err),
+    this.sendVerificationOnRegister(user.id, user.email, user.name).catch(
+      (err) =>
+        this.logger.error(
+          `Không tạo được token xác minh email cho user ${user.id}`,
+          err,
+        ),
     );
     return { ...tokens, user: this.toPublicUser(user) };
   }

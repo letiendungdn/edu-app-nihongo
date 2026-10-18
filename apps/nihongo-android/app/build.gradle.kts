@@ -37,7 +37,6 @@ android {
             "KEYCLOAK_REDIRECT_URI",
             "\"com.edu.nihongo:/oauth2redirect\"",
         )
-        buildConfigField("String", "GEMINI_API_KEY", "\"\"") // set via local.properties or CI
 
         // Required by net.openid:appauth (RedirectUriReceiverActivity scheme)
         manifestPlaceholders["appAuthRedirectScheme"] = "com.edu.nihongo"

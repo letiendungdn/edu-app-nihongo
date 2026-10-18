@@ -39,10 +39,10 @@ function saveGoal(g: GoalConfig) {
 }
 
 const TASKS = [
-  { id: 'srs',      label: 'Ôn SRS hàng ngày', icon: '🧠', href: '/srs' },
-  { id: 'vocab',    label: 'Học bài mới',        icon: '📖', href: '/vocab' },
+  { id: 'srs',      label: 'Ôn SRS hàng ngày', icon: '憶', href: '/srs' },
+  { id: 'vocab',    label: 'Học bài mới',        icon: '単', href: '/vocab' },
   { id: 'kanji',    label: 'Luyện kanji',         icon: '漢', href: '/kanji/list' },
-  { id: 'exam',     label: 'Làm đề thi thử',     icon: '📝', href: '/mock-exam' },
+  { id: 'exam',     label: 'Làm đề thi thử',     icon: '試', href: '/mock-exam' },
 ] as const;
 
 type TaskId = (typeof TASKS)[number]['id'];

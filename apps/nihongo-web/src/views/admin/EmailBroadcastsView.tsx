@@ -38,12 +38,14 @@ export default function EmailBroadcastsView() {
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
+    setError(''); // bản cũ không xóa: tải lại thành công vẫn hiện lỗi cũ
     try {
       const data = await apiRequest<{ items: Broadcast[]; total: number }>('/admin/email/broadcasts', { token });
       setBroadcasts(data.items ?? []);
       setTotal(data.total ?? 0);
     } catch (e) {
-      setError(String(e));
+      // String(e) ra "ApiError: …" — chỉ hiện thông điệp
+      setError(e instanceof Error ? e.message : 'Không tải được danh sách');
     } finally {
       setLoading(false);
     }

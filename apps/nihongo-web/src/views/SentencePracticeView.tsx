@@ -2,16 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './SentencePracticeView.css';
+import { errorMessage } from '@/lib/error-message';
+import { fetchSentenceFeedback, type SentenceFeedback } from '@/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface AIFeedback {
-  corrected: string;
-  reading: string;
-  meaning: string;
-  explanation: string;
-  examples: string[];
-}
+type AIFeedback = SentenceFeedback;
 
 interface HistoryEntry {
   id: number;
@@ -56,37 +52,19 @@ export default function SentencePracticeView() {
     setError('');
 
     try {
-      const res = await fetch('/api/sentence-practice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sentence: trimmed }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        const err = data.error;
-        const message =
-          typeof err === 'string'
-            ? err
-            : err && typeof err === 'object' && 'message' in err
-              ? String((err as { message: unknown }).message)
-              : 'Lỗi không xác định.';
-        setError(message);
-        setLoading(false);
-        return;
-      }
+      const feedback = await fetchSentenceFeedback(trimmed);
 
       const entry: HistoryEntry = {
         id: idCounter,
         sentence: trimmed,
-        feedback: data as AIFeedback,
+        feedback,
         timestamp: new Date(),
       };
       setHistory((prev) => [entry, ...prev]);
       setIdCounter((n) => n + 1);
       setSentence('');
     } catch (e) {
-      setError(String(e));
+      setError(errorMessage(e));
     }
     setLoading(false);
   }, [sentence, loading, idCounter]);
@@ -125,6 +103,7 @@ export default function SentencePracticeView() {
           Nhập câu tiếng Nhật hoặc "Dịch: câu tiếng Việt"
         </label>
         <textarea
+          maxLength={500}
           ref={textareaRef}
           className="sp-textarea japanese-text"
           value={sentence}

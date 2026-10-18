@@ -62,7 +62,7 @@
 
 .vr-tab.active {
   border-color: var(--primary-color);
-  background: rgba(239, 68, 68, 0.12);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   color: var(--text-primary);
 }
 
@@ -192,7 +192,7 @@
 }
 
 .vr-remove-btn:hover {
-  color: #f87171;
+  color: var(--primary-color);
 }
 
 @media (max-width: 520px) {
