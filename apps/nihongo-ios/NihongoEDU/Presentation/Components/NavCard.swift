@@ -47,5 +47,7 @@ struct NavCard: View {
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(.separator, lineWidth: 0.5))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("nav-\(title)")
+        .accessibilityLabel(title)
     }
 }
