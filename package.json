@@ -53,15 +53,18 @@
       "js-yaml": "^4.3.2"
     },
     "rxjs": "7.8.2",
-    "postcss": "^8.5.28",
+    "postcss": "8.5.30",
     "serialize-javascript": "^7.0.5",
     "mysql2": "^3.22.0",
-    "deepmerge-ts": "^8.0.2"
+    "deepmerge-ts": "^8.0.2",
+    "source-map-js": "1.2.2",
+    "next": "15.5.28"
   },
   "devDependencies": {
     "prisma": "^6.19.3"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "source-map-js": "1.2.2"
   }
 }

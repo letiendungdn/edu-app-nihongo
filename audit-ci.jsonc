@@ -1,11 +1,19 @@
 {
   // CI chặn khi có lỗ hổng HIGH hoặc CRITICAL trong dependency production (npm audit --omit=dev).
-  // Đã về 0 high / 0 critical sau khi nâng Prisma 6.19, fabric 7, OpenTelemetry 0.222
-  // — xem docs/learn-security-backend.md mục 10. Mức moderate chỉ theo dõi, không chặn.
+  // next ≥15.5.28, postcss 8.5.30, source-map-js 1.2.2 (override) — xem docs/learn-security-backend.md.
+  // Mức moderate chỉ theo dõi, không chặn.
   // Cần ngoại lệ thì thêm GHSA id vào allowlist KÈM lý do và điều kiện gỡ.
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "high": true,
   "skip-dev": true,
   "report-type": "summary",
-  "allowlist": []
+  "allowlist": [
+    // node-forge ≤1.4.0 — chưa có bản vá (GHSA-86w9-cpqp-85rv / CVE-2026-85393).
+    // Kéo vào qua Expo / @parse/node-apn / google-signin (mobile). Gỡ khi forge >1.4.0.
+    "GHSA-86w9-cpqp-85rv",
+    // braces ≤3.0.3 — upstream không dự kiến phát hành (GHSA-vfj7-8cjw-p6xm / CVE-2026-93687).
+    // Transitive qua micromatch (metro / expo / jest). Gỡ khi braces phát hành bản vá hoặc
+    // dependency tree bỏ micromatch→braces.
+    "GHSA-vfj7-8cjw-p6xm"
+  ]
 }

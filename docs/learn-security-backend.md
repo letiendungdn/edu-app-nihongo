@@ -15,8 +15,9 @@
 >   **1 lỗi thật**: `DELETE /api/push/unregister` gỡ token thiết bị của bất kỳ ai → đã giới hạn theo user. Test IDOR:
 >   [`ownership.idor.spec.ts`](../services/payment-service/src/ownership.idor.spec.ts), [`push.service.spec.ts`](../services/api-gateway/src/push/push.service.spec.ts).
 > - **CI job `security`**: gitleaks trên commit mới ([`.gitleaks.toml`](../.gitleaks.toml)) + `audit-ci` chặn **HIGH và CRITICAL**
->   ([`audit-ci.jsonc`](../audit-ci.jsonc), allowlist rỗng). Đã nâng `next` (nihongo-web 15.5.26, english-web 16.3.7), Angular 22.2,
->   Prisma 6.19.3, fabric 7.4, OpenTelemetry 0.222 → `npm audit --omit=dev`: **0 critical, 0 high** (còn 18 moderate).
+>   ([`audit-ci.jsonc`](../audit-ci.jsonc)). Đã nâng `next` (nihongo-web ≥15.5.28), `source-map-js` ≥1.2.2 (override),
+>   Prisma 6.19.3, fabric 7.4, OpenTelemetry 0.222. Allowlist tạm: `GHSA-86w9-cpqp-85rv` (node-forge chưa vá),
+>   `GHSA-vfj7-8cjw-p6xm` (braces upstream không phát hành).
 > - ⚠️ **Repo đang PUBLIC**: `.env` (GOOGLE_CLIENT_SECRET, BREVO_API_KEY…) và backup DB trong `infra/backups/` đã công khai —
 >   cần đổi các key và chuyển repo private / bỏ theo dõi các file này.
 
