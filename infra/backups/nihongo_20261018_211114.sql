@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 03Pzt8ytN3LGMt0RHPfjalQPm5ae4MLuGkaQg4LOUOAW6p9YLb1bwRIcYxIlUTs
+\restrict PWhWxT15hRhgRqY2bSlGHgGK8Acxjv9MSS6votDIyoriJk0tOLQplaVnFYAhfgm
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -81731,7 +81731,10 @@ COPY public."LearnerChatMessage" (id, "roomId", "senderId", content, "readAt", "
 3	2	3	chao ban tu curl	2026-10-11 14:47:46.783	2026-10-11 14:46:08.623	\N	\N
 4	2	3	tin gui luc ban mat mang	2026-10-11 14:47:46.783	2026-10-11 14:46:27.216	\N	\N
 5	2	3	tin realtime cho ban release	2026-10-11 15:27:42.432	2026-10-11 14:56:23.909	\N	\N
-6	3	12	e2e AA764C26	\N	2026-10-12 03:56:16.349	\N	\N
+6	3	12	e2e AA764C26	2026-10-18 13:19:27.91	2026-10-12 03:56:16.349	\N	\N
+7	3	12	[test web SSE] định dạng	2026-10-18 13:19:27.91	2026-10-18 13:09:22.778	\N	\N
+8	3	12	[kiểm tra realtime 1792329574277]	2026-10-18 13:19:34.324	2026-10-18 13:19:34.298	\N	\N
+9	3	12	[kiểm tra realtime 1792330541554]	2026-10-18 13:35:41.627	2026-10-18 13:35:41.585	\N	\N
 \.
 
 
@@ -81741,7 +81744,7 @@ COPY public."LearnerChatMessage" (id, "roomId", "senderId", content, "readAt", "
 
 COPY public."LearnerChatRoom" (id, name, type, "createdById", "lastMessageAt", "createdAt", "updatedAt") FROM stdin;
 2	\N	DIRECT	1	2026-10-11 14:56:23.91	2026-10-11 14:44:07.333	2026-10-11 14:56:23.911
-3	\N	DIRECT	12	2026-10-12 03:56:16.352	2026-10-12 03:56:16.32	2026-10-12 03:56:16.352
+3	\N	DIRECT	12	2026-10-18 13:35:41.59	2026-10-12 03:56:16.32	2026-10-18 13:35:41.59
 \.
 
 
@@ -82920,6 +82923,9 @@ COPY public."Notification" (id, "userId", type, title, body, metadata, "readAt",
 4	1	GROUP_MESSAGE	Tin nhắn mới	tin gui luc ban mat mang	{"roomId": 2, "messageId": 4}	\N	2026-10-11 14:46:27.219
 5	1	GROUP_MESSAGE	Tin nhắn mới	tin realtime cho ban release	{"roomId": 2, "messageId": 5}	\N	2026-10-11 14:56:23.912
 6	13	GROUP_MESSAGE	Tin nhắn mới	e2e AA764C26	{"roomId": 3, "messageId": 6}	\N	2026-10-12 03:56:16.355
+7	13	GROUP_MESSAGE	Tin nhắn mới	[test web SSE] định dạng	{"roomId": 3, "messageId": 7}	\N	2026-10-18 13:09:22.788
+8	13	GROUP_MESSAGE	Tin nhắn mới	[kiểm tra realtime 1792329574277]	{"roomId": 3, "messageId": 8}	\N	2026-10-18 13:19:34.303
+9	13	GROUP_MESSAGE	Tin nhắn mới	[kiểm tra realtime 1792330541554]	{"roomId": 3, "messageId": 9}	\N	2026-10-18 13:35:41.593
 \.
 
 
@@ -84311,6 +84317,16 @@ cmv4pzjtx000rqs01myhgdpw7	$2b$12$dhEazzmYt0pKYyYdo8i5C.8jcEyfrIsPZqiNZ5kTLlW9tdd
 cmv4pzked000tqs01cakjpj1a	$2b$12$dnFoVYaAT1nFXjOF/w1r5.L2mI3.6ipWvIdvhAck8ryKYCUJQ.xf6	1	2026-10-19 03:56:17.028	t	2026-10-12 03:56:17.03
 cmv4pzkuz000vqs01pncnxzwj	$2b$12$ogxVLN3dIdB7KjKI.p9hJuq8wH5N05Ips8jLWG.rWacArto31sqve	1	2026-10-19 03:56:17.627	f	2026-10-12 03:56:17.628
 cmv6s95mv0001qs01ozfu55qy	$2b$12$jt3LVedJpAVCl.v3I4bPueFfyi1Nv.5Y0Qt9Lx9/XdMr5M8OdOXgi	1	2026-10-20 14:35:16.039	f	2026-10-13 14:35:16.04
+cmvdu0e8j0001pb01nrhdxx1t	$2b$12$G6pQXdx9mrj6AgHMorom/OBCCPbtiO0IRRVxVAaZDFPZzkrzfw8EO	1	2026-10-25 12:58:49.746	f	2026-10-18 12:58:49.747
+cmvdudx4m0003pb016ojtflbc	$2b$12$O2GcjXTEdTUhqGucSunh8.AwvUbRbYTI/nExgrgqQt0TQ3c7XRtUO	12	2026-10-25 13:09:20.758	f	2026-10-18 13:09:20.758
+cmvdudxgo0005pb014q25bmg8	$2b$12$rTNPP7QPeMSDJyTwACimDeK9jwzvjHGlYe8LZg0Gm8SCMehoDOZqO	13	2026-10-25 13:09:21.192	f	2026-10-18 13:09:21.193
+cmvdumtto0007pb015weiyyk1	$2b$12$GZv50feC/NBfoMievcS0fe.99RBvz2uIJj2vNvREgvo5jHdQjgcpO	13	2026-10-25 13:16:16.38	f	2026-10-18 13:16:16.381
+cmvduqr9s0001pa01y47e8ls9	$2b$12$fRkdYcVwcOzvPDPS9CEBO.6QztcS4KrZ.4Q4l91BOPKwzkSl91PmS	13	2026-10-25 13:19:19.696	f	2026-10-18 13:19:19.697
+cmvduqrlw0003pa010am68ysr	$2b$12$pWU6NE0jublwDNHQruFvU.owxn0RXbaK7UEFc4/5SEb7SW9l5YLE.	12	2026-10-25 13:19:20.132	f	2026-10-18 13:19:20.132
+cmvdvbmp00005pa01p0kihbcp	$2b$12$36LEjcBY1fz2UIFyuS/XmuacE39i0tavwlTc5cfdGu1sVfIvPXO.m	13	2026-10-25 13:35:33.539	f	2026-10-18 13:35:33.54
+cmvdvbn1s0007pa01tpashklf	$2b$12$mmFBsaYYSiEn0pUr3vJ05ekjwUzy4Rn0tnXtqV4mwW6Ia6hIzvI86	12	2026-10-25 13:35:33.999	f	2026-10-18 13:35:34
+cmvdw0tli0001qu018qogk794	$2b$12$.Zy5DJpn71YtA5RXjpP0vukxv32yfa3wn3GSHGllJCkvPdUifTRD.	13	2026-10-25 13:55:08.885	f	2026-10-18 13:55:08.886
+cmvdw6z780003qu017l18bnob	$2b$12$7lLlsnE.ahJCFWmdhX/ixe5dCtAL.I7LnICu.XNyBytskHdICLVkC	13	2026-10-25 13:59:56.083	f	2026-10-18 13:59:56.084
 \.
 
 
@@ -85628,6 +85644,7 @@ COPY public."SupportMessage" (id, "threadId", "senderId", content, "readAt", "cr
 
 COPY public."SupportThread" (id, "userId", "lastMessageAt", "createdAt", "updatedAt") FROM stdin;
 1	1	2026-06-27 15:06:58.473	2026-06-27 15:06:58.473	2026-06-27 15:06:58.473
+2	13	2026-10-18 13:16:17.456	2026-10-18 13:16:17.456	2026-10-18 13:16:17.456
 \.
 
 
@@ -103049,7 +103066,7 @@ SELECT pg_catalog.setval('public."LearnerChatMember_id_seq"', 6, true);
 -- Name: LearnerChatMessage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."LearnerChatMessage_id_seq"', 6, true);
+SELECT pg_catalog.setval('public."LearnerChatMessage_id_seq"', 9, true);
 
 
 --
@@ -103119,7 +103136,7 @@ SELECT pg_catalog.setval('public."MockExamTemplate_id_seq"', 13, true);
 -- Name: Notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."Notification_id_seq"', 6, true);
+SELECT pg_catalog.setval('public."Notification_id_seq"', 9, true);
 
 
 --
@@ -103280,7 +103297,7 @@ SELECT pg_catalog.setval('public."SupportMessage_id_seq"', 1, false);
 -- Name: SupportThread_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."SupportThread_id_seq"', 1, true);
+SELECT pg_catalog.setval('public."SupportThread_id_seq"', 2, true);
 
 
 --
@@ -106024,5 +106041,5 @@ REFRESH MATERIALIZED VIEW public.learner_progress_summary;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 03Pzt8ytN3LGMt0RHPfjalQPm5ae4MLuGkaQg4LOUOAW6p9YLb1bwRIcYxIlUTs
+\unrestrict PWhWxT15hRhgRqY2bSlGHgGK8Acxjv9MSS6votDIyoriJk0tOLQplaVnFYAhfgm
 
