@@ -14,6 +14,7 @@ struct SRSView: View {
         }
             .navigationTitle("Ôn tập SRS")
             .navigationBarTitleDisplayMode(.inline)
+            .accessibilityIdentifier("srs-screen")
     }
 }
 

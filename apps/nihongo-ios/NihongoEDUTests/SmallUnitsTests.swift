@@ -58,6 +58,10 @@ final class AppRouterTests: XCTestCase {
         XCTAssertTrue(router.handle(url: URL(string: "nihongo://srs")!))
         XCTAssertEqual(router.pending, .srs)
         XCTAssertFalse(router.handle(url: URL(string: "https://example.com")!))
+
+        let pathRouter = AppRouter()
+        XCTAssertTrue(pathRouter.handle(url: URL(string: "nihongo:///srs")!))
+        XCTAssertEqual(pathRouter.consume(), .srs)
     }
 }
 

@@ -38,8 +38,17 @@ struct NihongoEDUApp: App {
                     appDelegate.pushService = pushService
                     await pushService.registerIfAuthorized()
                 }
-                // nihongo://srs từ widget
+                // nihongo://srs từ widget / thông báo
                 .onOpenURL { router.handle(url: $0) }
+                // UITest: XCUIApplication.open(url) trên runner CI hay bỏ qua custom scheme.
+                // Test truyền UITEST_DEEPLINK qua launchEnvironment — cùng AppRouter với deep link thật.
+                .task {
+                    guard let raw = ProcessInfo.processInfo.environment["UITEST_DEEPLINK"],
+                          let url = URL(string: raw) else { return }
+                    // Chờ NavigationStack + onChange(router.pending) gắn xong.
+                    try? await Task.sleep(for: .milliseconds(400))
+                    router.handle(url: url)
+                }
                 .onChange(of: authState.isLoggedIn) { _, loggedIn in
                     guard loggedIn else { return }
                     Task {

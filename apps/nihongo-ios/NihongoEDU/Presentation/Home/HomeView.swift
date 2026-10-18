@@ -142,9 +142,11 @@ struct HomeView: View {
             .task(id: network.isOnline) {
                 await engine.flush(in: modelContext, isOnline: network.isOnline, isLoggedIn: authState.isLoggedIn)
             }
-            // Route từ thông báo / widget. .task chạy cả khi route đã có TRƯỚC khi Home hiện (khởi động lạnh).
-            .task(id: router.pending) {
-                if let route = router.consume() { path.append(route) }
+            // Route từ thông báo / widget / UITEST_DEEPLINK.
+            // `initial: true` bắt cả trường hợp pending đã set trước khi Home gắn listener.
+            .onChange(of: router.pending, initial: true) { _, pending in
+                guard pending != nil, let route = router.consume() else { return }
+                path.append(route)
             }
         }
     }

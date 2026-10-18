@@ -20,15 +20,26 @@ final class AppRouter {
         return pending
     }
 
-    /// `nihongo://srs` → .srs. Trả false nếu URL không phải của app.
+    /// `nihongo://srs` / `nihongo://srs/` / `nihongo:///srs` → `.srs`.
+    /// Trả false nếu URL không phải của app.
     @discardableResult
     func handle(url: URL) -> Bool {
         guard url.scheme == "nihongo" else { return false }
-        switch url.host {
+        let target = (url.host ?? "").lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .nilIfEmpty
+            ?? url.path
+                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                .lowercased()
+                .nilIfEmpty
+        switch target {
         case "srs": open(.srs)
         case "progress": open(.progress)
         default: return false
         }
         return true
     }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

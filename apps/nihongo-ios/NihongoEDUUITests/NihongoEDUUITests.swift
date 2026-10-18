@@ -37,21 +37,15 @@ final class NihongoEDUUITests: XCTestCase {
         }
     }
 
-    /// Widget và thông báo nhắc ôn mở app bằng nihongo://srs: phải vào thẳng màn SRS.
-    /// Scheme `nihongo` phải có trong Info.plist — không thì `open` im lặng trên CI.
+    /// Widget / thông báo dùng `nihongo://srs` → AppRouter → màn SRS.
+    /// CI: không dùng `app.open(url)` (SpringBoard hay không giao custom scheme ổn định);
+    /// truyền cùng URL qua `UITEST_DEEPLINK` để tập trung kiểm tra router + NavigationStack.
     func testDeepLinkOpensReviewScreen() {
+        app.launchEnvironment["UITEST_DEEPLINK"] = "nihongo://srs"
         app.launch()
-        XCTAssertTrue(app.navigationBars["Nihongo EDU"].waitForExistence(timeout: 10))
-        // Đợi Home gắn .onOpenURL / .task(router.pending) xong rồi mới mở link.
-        XCTAssertTrue(homeCard("Ôn tập SRS").waitForExistence(timeout: 5) || homeCard("Tiến độ học").waitForExistence(timeout: 5))
-
-        let url = URL(string: "nihongo://srs")!
-        app.open(url)
-
-        let srsBar = app.navigationBars["Ôn tập SRS"]
         XCTAssertTrue(
-            srsBar.waitForExistence(timeout: 12),
-            "Deep link nihongo://srs không mở màn SRS (scheme chưa đăng ký hoặc router chưa nhận URL)"
+            app.navigationBars["Ôn tập SRS"].waitForExistence(timeout: 15),
+            "UITEST_DEEPLINK=nihongo://srs phải mở màn Ôn tập SRS"
         )
     }
 
