@@ -35,6 +35,14 @@
                 <string>com.edu.nihongo.ios</string>
             </array>
         </dict>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.edu.nihongo.ios.deeplink</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>nihongo</string>
+            </array>
+        </dict>
     </array>
     <key>UISupportedInterfaceOrientations</key>
     <array>
