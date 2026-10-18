@@ -3,12 +3,6 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/query-keys';
 import { STALE_5M } from '../api/hooks/constants';
 import {
-  useExamTemplates,
-  useGrammar,
-  useLessons,
-  useVocab,
-} from '../api/hooks';
-import {
   fetchAdminPayments,
   fetchAdminSupportThread,
   fetchAdminSupportThreads,

@@ -27,7 +27,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +43,7 @@ jobs:
           - name: migrator
             dockerfile: packages/prisma-nihongo/Dockerfile.migrate
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.DEPLOY_SHA }} # build đúng commit CI đã kiểm tra
 
@@ -68,10 +68,10 @@ jobs:
 
   deploy:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.DEPLOY_SHA }}
 
@@ -152,7 +152,7 @@ jobs:
 
   deploy-ssh-fallback:
     needs: deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure() && vars.ENABLE_SSH_FALLBACK == 'true'
     environment: production
     steps:

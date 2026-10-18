@@ -359,7 +359,7 @@ export function grammarExplanationSpeechText(grammar: {
 }
 
 const JAPANESE_CHAR = /[\u3040-\u30ff\u3400-\u9fff\u3005\u3006]/;
-const OPENING_PUNCT = /[(\（「『［【]/;
+const OPENING_PUNCT = /[(（「『［【]/;
 
 function letterLang(ch: string): 'ja-JP' | 'vi-VN' | null {
   if (JAPANESE_CHAR.test(ch)) return 'ja-JP';
