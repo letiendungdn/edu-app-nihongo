@@ -104,7 +104,9 @@ A: `Column` đo tổng chiều cao của tất cả children → layout toàn b�
 A: Wrap widget thay đổi thường xuyên (animation, livestream frame) để cô lập repaint. Widget ngoài RepaintBoundary không bị repaint theo. Dùng sai → overhead thêm layer.
 
 **Q: `shouldRepaint` trong CustomPainter hoạt động thế nào?**
-A: Flutter hỏi "cần repaint không?" trước mỗi frame. Return `false` nếu data không đổi → skip vẽ lại. Project KanjiDraw screen: chỉ repaint khi `strokes` hoặc `current` thay đổi.
+A: Khi widget build lại với một painter MỚI, Flutter gọi `newPainter.shouldRepaint(oldPainter)`; `false` thì giữ nguyên hình đã vẽ. Không phải "hỏi mỗi frame".
+
+Bẫy thật trong project (màn KanjiDraw, đã sửa): `shouldRepaint` so `old.strokes != strokes` là **so tham chiếu**, nhưng code lại sửa danh sách tại chỗ (`_current.add(...)`, `_strokes.removeLast()`) → cùng một object → luôn `false` → nét đang vẽ không hiện, hoàn tác/xóa không vẽ lại. Cách sửa: mỗi lần đổi thì tạo danh sách mới (`_current = [..._current, p]`). Kèm một lỗi khác cùng màn: `GestureDetector` bọc `SizedBox.expand()` rỗng với behavior mặc định `deferToChild` → không nhận được chạm nào; phải đặt `HitTestBehavior.opaque`. Test: `test/presentation/kanji_draw_screen_test.dart`.
 
 ---
 
@@ -149,11 +151,13 @@ await expectLater(find.byType(SrsScreen), matchesGoldenFile('srs_screen.png'));
 ## NATIVE & PLATFORM
 
 **Q: Platform Channel là gì?**
-A: Bridge giữa Dart và native code (Kotlin/Swift). Project dùng để đo performance native. Dùng khi cần API native mà Flutter plugin không có.
+A: Bridge giữa Dart và native code (Kotlin/Swift), truyền message bất đồng bộ qua codec. Project dùng (chỉ Android) để làm việc nặng ở native: gộp các plane YUV của khung hình camera, và gợi ý khoảng cách giữa hai lần quét OCR theo cấu hình máy.
 ```dart
-static const _channel = MethodChannel('com.nihongo/perf');
-final result = await _channel.invokeMethod('measureFrame');
+// lib/native/native_perf_channel.dart
+static const _channel = MethodChannel('com.edu.nihongo/native_perf');
+final ms = await _channel.invokeMethod<int>('getSuggestedScanIntervalMs');
 ```
+Native trả lỗi hoặc chưa cài đặt → `PlatformException` / `MissingPluginException`: phải bắt và có giá trị mặc định (code trả 900 ms).
 
 **Q: Khi nào nên viết Platform Channel thay vì dùng plugin?**
 A: Khi plugin không có, khi cần tối ưu performance tối đa, khi cần access native API mới nhất chưa có trong pub.dev.
@@ -166,7 +170,7 @@ A: FlutterEngine: chạy Dart code, render UI, handle gestures. Isolate: thread 
 ## NETWORKING & OFFLINE
 
 **Q: Dio Interceptor dùng để làm gì?**
-A: Intercept request/response để thêm auth header, retry khi 401, log, cache. Project dùng để tự động thêm Bearer token và refresh khi expire.
+A: Intercept request/response để thêm auth header, retry khi 401, log, cache. Project: `AuthInterceptor` (lib/data/remote/auth_interceptor.dart) gắn Bearer token; gặp 401 thì refresh **một lần** bằng refresh cookie đã lưu lúc đăng nhập, rồi gửi lại request **một lần**. Mười request cùng 401 chỉ refresh một lần (dùng chung một Future). Không refresh cho chính `/auth/login` (sai mật khẩu cũng là 401). Server từ chối refresh → xóa phiên; lỗi mạng → giữ phiên. Gọi refresh bằng một Dio riêng không có interceptor, để refresh lỗi không vòng lại chính nó. (Bản trước chỉ gắn token: 15 phút sau là mọi request lỗi.)
 
 **Q: Retry logic khi request thất bại — implement thế nào?**
 ```dart
@@ -208,7 +212,9 @@ Project dùng LiveKit: host publish camera+mic, viewer subscribe, DataChannel ch
 A: MCU mix stream trên server → CPU cao, latency cao. SFU forward stream nguyên bản → CPU thấp hơn, latency thấp hơn (~200ms). Nhược điểm SFU: viewer nhận nhiều stream riêng → mobile bandwidth cao hơn.
 
 **Q: Design offline-first sync — xử lý conflict thế nào?**
-A: Last-write-wins theo `updatedAt` timestamp (đơn giản). Hoặc CRDT (phức tạp hơn, không conflict). Project dùng last-write-wins: server timestamp thắng nếu newer.
+A: Last-write-wins theo `updatedAt` timestamp (đơn giản), hoặc CRDT (phức tạp hơn, không conflict).
+
+Project thực tế: bản Flutter sync **một chiều** (chỉ đẩy lên, chưa kéo về), nên chưa có xung đột nào cần giải. Hàng đợi giữ lần chấm mới nhất của mỗi thẻ; gửi API trước, thành công mới xóa đúng các dòng đã gửi. Bản web có kéo về và gộp theo `lastReviewedAt`: bản nào ôn gần hơn thì thắng (`mergeServerWords` trong apps/nihongo-web/src/utils/mistakeVocab.ts). Trả lời phỏng vấn nên nói rõ policy đang dùng và những gì CHƯA xử lý (hai máy ôn cùng thẻ lúc offline).
 
 ---
 

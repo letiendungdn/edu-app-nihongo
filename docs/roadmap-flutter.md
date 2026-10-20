@@ -313,229 +313,427 @@ Có UI?
 
 ## GIAI ĐOẠN 2 — CLEAN ARCHITECTURE (tháng 3–4)
 
+> Mọi đoạn code từ đây tới hết Giai đoạn 4 trích từ `apps/nihongo_flutter/lib/` (đã rút gọn chỗ không liên quan). Đọc doc song song với code thật. Chỗ nào ghi "bản cũ" là lỗi từng có trong repo và đã sửa; mỗi lỗi có test chứng minh.
+
 ### Cấu trúc project Nihongo
 
 ```
 apps/nihongo_flutter/lib/
-  domain/                     ← không phụ thuộc framework nào
+  main.dart                    ProviderScope + chạy app
+  providers.dart               mọi Riverpod provider (đóng vai DI container)
+  core/
+    routes.dart                tên route (Routes.home, Routes.srs, ...)
+  domain/                      ← Dart thuần, không import Flutter/Drift/Dio
     entity/
-      vocabulary.dart          Vocabulary model
-      srs_card.dart            SrsCard model (SM-2)
+      vocabulary.dart
+      srs_card.dart            SrsCard + ReviewCard (thẻ kèm chữ để hiển thị)
+      sync_status.dart
     repository/
-      vocabulary_repository.dart    interface
+      vocabulary_repository.dart   interface
+      result.dart                  sealed Result: Success / Failure
     usecase/
-      get_review_queue_usecase.dart  business logic
-  data/                       ← implement domain interfaces
-    datasource/
-      local/                   Drift DAO
-      remote/                  Dio API client
+      get_review_queue_usecase.dart
+  data/                        ← implement interface của domain
+    local/
+      app_database.dart        Drift: bảng + query (không tách DAO riêng)
+      token_store.dart         access token + refresh cookie (secure storage)
+    remote/
+      dio_factory.dart         tạo Dio + AuthInterceptor
+      auth_interceptor.dart    401 → refresh → gửi lại
+      vocabulary_api.dart, auth_api.dart, ai_tutor_api.dart, sentence_practice_api.dart, ...
     repository/
-      vocabulary_repository_impl.dart  offline-first sync
-    model/
-      vocabulary_dto.dart      JSON ↔ Entity mapping
-  presentation/               ← Flutter widgets + Riverpod
-    providers.dart             Riverpod providers
-    vocab/
-      vocab_screen.dart        ConsumerWidget
-    srs/
-      srs_screen.dart
-    kanji_draw/
-      kanji_draw_screen.dart   CustomPainter
-    pronunciation/
-      pronunciation_screen.dart
-    ai_tutor/
-      ai_tutor_screen.dart
-  presentation/
-    app.dart                   GoRouter routes
+      vocabulary_repository_impl.dart   offline-first + hàng đợi sync
+  presentation/                ← widget
+    app.dart                   GoRouter
+    home/, vocab/, srs/, kanji_draw/, pronunciation/, ai_tutor/,
+    sentence_practice/, camera/, live/, auth/
+  native/                      MethodChannel đo hiệu năng native
+  utils/
+    srs_algorithm.dart         SM-2
+    network_monitor.dart, tts_service.dart, ...
 ```
+
+Hướng phụ thuộc: `presentation → domain ← data`. Domain không biết Drift hay Dio tồn tại. Nhờ vậy test use case chỉ cần một repo giả, không cần DB hay mạng.
 
 ---
 
 ### Domain Layer
 
+**Entity.** Dart thuần, bất biến (mọi field `final`, đổi giá trị bằng `copyWith`):
+
 ```dart
-// Entity — pure Dart, không import Flutter
-// apps/nihongo_flutter/lib/domain/entity/srs_card.dart
+// lib/domain/entity/srs_card.dart
 class SrsCard {
-  final int vocabId;
-  final double easeFactor;
-  final int interval;
-  final int repetitions;
-  final DateTime nextReviewAt;
-  
   const SrsCard({
-    required this.vocabId,
+    required this.id,
+    required this.vocabularyId,
     required this.easeFactor,
     required this.interval,
     required this.repetitions,
     required this.nextReviewAt,
+    this.mastered = false,
+    this.syncStatus = SyncStatus.synced,
+    required this.updatedAt,
   });
-  
-  // SM-2 algorithm
-  SrsCard review(int quality) {  // quality 0–5
-    if (quality < 3) {
-      return copyWith(repetitions: 0, interval: 1,
-                      nextReviewAt: DateTime.now().add(const Duration(days: 1)));
-    }
-    final newEase = (easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-                    .clamp(1.3, 2.5);
-    final newInterval = repetitions == 0 ? 1 : repetitions == 1 ? 6 : (interval * newEase).round();
-    return copyWith(
-      easeFactor: newEase,
-      interval: newInterval,
-      repetitions: repetitions + 1,
-      nextReviewAt: DateTime.now().add(Duration(days: newInterval)),
-    );
+
+  final int id;
+  final int vocabularyId;
+  final double easeFactor;
+  final int interval;        // số ngày tới lần ôn sau
+  final int repetitions;
+  final DateTime nextReviewAt;
+  final bool mastered;
+  final SyncStatus syncStatus;
+  final DateTime updatedAt;
+
+  SrsCard copyWith({double? easeFactor, int? interval, /* ... */}) => /* ... */;
+  Map<String, dynamic> toJson() => { /* ... */ };       // lưu vào hàng đợi sync
+  factory SrsCard.fromJson(Map<String, dynamic> json) => /* ... */;
+}
+
+// Thẻ kèm chữ để màn SRS hiển thị (join srs_card + vocabulary)
+class ReviewCard {
+  const ReviewCard({required this.card, required this.kana, this.kanji,
+                    required this.meaning, required this.romaji});
+  final SrsCard card;
+  final String kana;
+  final String? kanji;
+  final String meaning;
+  final String romaji;
+}
+```
+
+**Thuật toán SM-2** nằm ở `utils/srs_algorithm.dart`, không nằm trong entity. Có hai điểm đáng học:
+
+```dart
+// lib/utils/srs_algorithm.dart
+static SrsCard calculateNextReview(SrsCard card, int quality, {DateTime? now}) {
+  final at = now ?? DateTime.now();   // (1) giờ truyền vào được → test không phụ thuộc đồng hồ
+  final q = quality.clamp(0, 5);
+  var ease = card.easeFactor;
+  var interval = card.interval;
+  var reps = card.repetitions;
+
+  if (q < 3) {
+    reps = 0;
+    interval = 1;
+  } else {
+    interval = reps == 0 ? 1 : reps == 1 ? 6 : (interval * ease).round().clamp(1, 3650);
+    reps += 1;
   }
+  ease += 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02);
+  if (ease < 1.3) ease = 1.3;
+
+  // (2) Cộng NGÀY LỊCH, không cộng Duration(days: n) (= đúng n×24 giờ): ngày đổi giờ mùa hè
+  //     dài 23 hoặc 25 giờ → cộng giờ lệch một tiếng so với giờ người dùng ôn.
+  final next = DateTime(at.year, at.month, at.day + interval, at.hour, at.minute, at.second);
+
+  return card.copyWith(
+    easeFactor: ease, interval: interval, repetitions: reps, nextReviewAt: next,
+    mastered: reps >= 5 && interval >= 21,
+    syncStatus: SyncStatus.pending, updatedAt: at,
+  );
+}
+```
+
+`DateTime(y, m, d + 40)` tự tràn sang tháng sau, nên không cần tự xử lý cuối tháng.
+
+**Repository interface.** Domain định nghĩa, data implement. Đọc trả `Stream` (DB đổi thì UI tự cập nhật). Ghi trả `Result` (lỗi là giá trị trả về, không phải exception bay lên UI):
+
+```dart
+// lib/domain/repository/vocabulary_repository.dart
+abstract interface class VocabularyRepository {
+  Stream<List<Vocabulary>> watchVocabByLesson(int lessonNumber);
+  Stream<List<ReviewCard>> watchReviewQueue();
+  Future<Result<void>> updateSrsCard(SrsCard card);
+  Future<Result<void>> syncLesson(int lessonNumber);
+  Future<Result<void>> syncAllPending();
 }
 
-// Repository interface — domain layer define, data layer implement
-abstract class VocabularyRepository {
-  Stream<List<Vocabulary>> watchVocabByLesson(int lesson);
-  Future<List<SrsCard>> getReviewQueue();
-  Future<void> updateSrsCard(SrsCard card);
-  Future<void> syncAllPending();
+// lib/domain/repository/result.dart — sealed (Dart 3): switch phải xét đủ mọi trường hợp
+sealed class Result<T> { const Result(); }
+final class Success<T> extends Result<T> { const Success([this.value]); final T? value; }
+final class Failure<T> extends Result<T> {
+  const Failure(this.error, {this.stackTrace});
+  final Object error;
+  final StackTrace? stackTrace;
 }
+```
 
-// UseCase — 1 class = 1 business operation
-// apps/nihongo_flutter/lib/domain/usecase/get_review_queue_usecase.dart
+**UseCase.** Một class làm một việc nghiệp vụ. Ở đây là "thẻ nào đến hạn **ngay lúc này**":
+
+```dart
+// lib/domain/usecase/get_review_queue_usecase.dart
 class GetReviewQueueUseCase {
-  final VocabularyRepository _repository;
-  const GetReviewQueueUseCase(this._repository);
-  
-  Future<List<SrsCard>> call() async {
-    final all = await _repository.getReviewQueue();
-    final now = DateTime.now();
-    // Business rule: chỉ lấy card đã đến hạn
-    return all.where((card) => !card.nextReviewAt.isAfter(now)).toList();
+  const GetReviewQueueUseCase(this._repo,
+      {DateTime Function()? now, this.tick = const Duration(minutes: 1)})
+      : _now = now ?? DateTime.now;
+
+  final VocabularyRepository _repo;
+  final DateTime Function() _now;
+  final Duration tick;
+
+  Stream<List<ReviewCard>> call() {
+    late final StreamController<List<ReviewCard>> controller;
+    StreamSubscription<List<ReviewCard>>? sub;
+    Timer? timer;
+    List<ReviewCard>? latest;
+
+    void emit() {
+      final cards = latest;
+      if (cards == null || controller.isClosed) return;
+      final now = _now();                       // giờ của LẦN PHÁT NÀY, không phải lúc gọi call()
+      controller.add(cards.where((c) => !c.card.nextReviewAt.isAfter(now)).toList());
+    }
+
+    controller = StreamController<List<ReviewCard>>(
+      onListen: () {
+        sub = _repo.watchReviewQueue().listen((cards) { latest = cards; emit(); },
+                                              onError: controller.addError);
+        timer = Timer.periodic(tick, (_) => emit());   // DB không đổi vẫn lọc lại mỗi phút
+      },
+      onCancel: () async {                      // màn hình đóng → dừng timer, hủy subscription
+        timer?.cancel();
+        await sub?.cancel();
+      },
+    );
+    return controller.stream;
   }
 }
 ```
+
+> **Bản cũ:** `final now = DateTime.now()` lấy một lần rồi dùng cho cả stream, và query DB cũng lọc `nextReviewAt <= now` theo giờ chốt sẵn. Mở màn SRS lúc 9:00, thẻ đến hạn lúc 9:05 không bao giờ hiện, phải thoát ra vào lại. Bài học: **giá trị "bây giờ" trong một stream sống lâu phải lấy lại mỗi lần phát**. Test dùng `fakeAsync` để tua đồng hồ (xem phần Testing).
 
 ---
 
 ### Data Layer — Offline-first
 
+Ghi local trước, đưa vào hàng đợi (`sync_queue`), rồi gửi lên server ở nền:
+
 ```dart
-// apps/nihongo_flutter/lib/data/repository/vocabulary_repository_impl.dart
-class VocabularyRepositoryImpl implements VocabularyRepository {
-  final VocabDao _dao;
-  final VocabApiService _api;
-  final ConnectivityPlus _connectivity;
-  final AuthRepository _auth;
-  
-  @override
-  Stream<List<Vocabulary>> watchVocabByLesson(int lesson) {
-    // Drift Stream — tự emit khi DB thay đổi
-    return _dao.watchVocabByLesson(lesson).map(
-      (rows) => rows.map(VocabularyMapper.fromDrift).toList(),
-    );
-  }
-  
-  @override
-  Future<void> updateSrsCard(SrsCard card) async {
-    // 1. Write local ngay — UI không lag
-    await _dao.upsertSrsCard(SrsCardMapper.toDrift(card));
-    
-    // 2. Queue for sync
-    await _dao.enqueueSyncItem(card.vocabId, 'srs_update');
-    
-    // 3. Flush nếu online + đã đăng nhập
-    final isOnline = await _connectivity.checkConnectivity() != ConnectivityResult.none;
-    final isAuth = await _auth.isAuthenticated();
-    if (isOnline && isAuth) {
-      await syncAllPending();
-    }
-  }
-  
-  @override
-  Future<void> syncAllPending() async {
-    final pending = await _dao.getPendingSync();
-    if (pending.isEmpty) return;
-    
-    // Gọi API thật
-    await _api.syncReviewBank(
-      pending.map((item) => ReviewSyncDto(
-        vocabId: item.vocabId,
-        easeFactor: item.easeFactor,
-        interval: item.interval,
-        nextReviewAt: item.nextReviewAt,
-      )).toList(),
-    );
-    
-    // Mark synced sau khi API thành công
-    await _dao.markSrsSynced(pending.map((item) => item.vocabId).toList());
+// lib/data/repository/vocabulary_repository_impl.dart
+@override
+Future<Result<void>> updateSrsCard(SrsCard card) async {
+  try {
+    await _db.updateSrsAfterReview(id: card.id, easeFactor: card.easeFactor, /* ... */);
+
+    // Mỗi thẻ chỉ giữ lần chấm MỚI NHẤT: chấm 3 lần lúc offline thì gửi 1 item
+    await _db.deleteSyncByEntity(_srsOp, card.id);
+    await _db.enqueueSync(operation: _srsOp, entityId: card.id, payload: jsonEncode(card.toJson()));
+
+    // Gửi ở nền: ghi local xong là UI chuyển thẻ ngay, không chờ mạng
+    unawaited(syncAllPending());
+    return const Success(null);
+  } catch (e, st) {
+    return Failure(e, stackTrace: st);
   }
 }
 ```
+
+**Chỉ chạy một lượt sync tại một thời điểm.** Chấm thẻ liên tục sẽ gọi sync nhiều lần chồng nhau. Lượt gọi sau không chạy song song (hai lượt cùng đọc một hàng đợi sẽ gửi trùng): nó chờ chung lượt đang chạy, rồi lượt đó chạy thêm một vòng để gửi nốt item mới thêm vào:
+
+```dart
+Future<Result<void>>? _syncing;
+bool _syncAgain = false;
+
+@override
+Future<Result<void>> syncAllPending() {
+  final running = _syncing;
+  if (running != null) {
+    _syncAgain = true;
+    return running;
+  }
+  final run = _syncLoop();
+  _syncing = run;
+  return run.whenComplete(() => _syncing = null);
+}
+
+Future<Result<void>> _syncLoop() async {
+  Result<void> result;
+  var rounds = 0;
+  do {
+    _syncAgain = false;
+    result = await _syncOnce();
+    rounds++;
+  } while (_syncAgain && result is Success && rounds < 5);
+  return result;
+}
+```
+
+**Thứ tự quan trọng nhất: gửi trước, thành công mới xóa.**
+
+```dart
+Future<Result<void>> _syncOnce() async {
+  if (!await _network.isOnline() || !await _isAuthenticated()) return const Success(null);
+  try {
+    final pending = await _db.getPendingSyncItems();
+    final reviewItems = <Map<String, dynamic>>[];
+    final sentRowIds = <int>[];
+    final sentCards = <int, int>{};   // card id → id dòng hàng đợi đã gửi
+
+    for (final item in pending) {
+      if (item.operation != _srsOp) continue;
+      final SrsCard card;
+      try {
+        card = SrsCard.fromJson(jsonDecode(item.payload) as Map<String, dynamic>);
+      } catch (_) {
+        await _db.deleteSyncItem(item.id);   // payload hỏng: bỏ, đừng để nó chặn cả hàng đợi
+        continue;
+      }
+      final vocab = await (_db.select(_db.vocabularyTable)
+            ..where((t) => t.id.equals(card.vocabularyId))).getSingleOrNull();
+      if (vocab == null) { await _db.deleteSyncItem(item.id); continue; }
+      reviewItems.add(reviewItemFor(card, vocab));
+      sentRowIds.add(item.id);
+      sentCards[card.id] = item.id;
+    }
+    if (reviewItems.isEmpty) return const Success(null);
+
+    await _api.syncReviewBank(reviewItems);   // lỗi → ném ra, hàng đợi CÒN NGUYÊN
+
+    for (final id in sentRowIds) {
+      await _db.deleteSyncItem(id);           // chỉ xóa đúng các dòng vừa gửi
+    }
+    // Trong lúc chờ mạng người dùng có thể chấm lại thẻ → thẻ đó chưa được coi là synced
+    final stillQueued = (await _db.getPendingSyncItems())
+        .where((i) => i.operation == _srsOp).map((i) => i.entityId).toSet();
+    final synced = sentCards.keys.where((id) => !stillQueued.contains(id)).toList();
+    if (synced.isNotEmpty) await _db.markSrsSynced(synced);
+    return const Success(null);
+  } catch (e, st) {
+    return Failure(e, stackTrace: st);
+  }
+}
+```
+
+> **Bản cũ:** vòng lặp đánh dấu "synced" và xóa từng dòng khỏi hàng đợi **trước khi** gọi API. Mất mạng giữa chừng hoặc server trả 500 thì toàn bộ lần ôn chưa gửi biến mất. Lỗi này không thấy được khi test tay lúc có mạng. Quy tắc chung của outbox: **xóa chỉ sau khi phía nhận xác nhận, và chỉ xóa đúng thứ đã gửi** (các dòng mới thêm trong lúc chờ phải giữ lại).
+
+**Auth.** `AuthInterceptor` gắn token. Gặp 401 thì refresh **một lần cho mọi request** (10 request cùng 401 chỉ refresh một lần) rồi gửi lại:
+
+```dart
+// lib/data/remote/auth_interceptor.dart
+@override
+Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  final req = err.requestOptions;
+  // Đã gửi lại rồi, hoặc chính /auth/login trả 401 (sai mật khẩu) → không refresh
+  if (err.response?.statusCode != 401 || req.extra[_retriedKey] == true || isAuthPath(req.path)) {
+    return handler.next(err);
+  }
+  final sentToken = (req.headers['Authorization'] as String?)?.replaceFirst('Bearer ', '');
+  final current = await _tokens.getAccessToken();
+  // Luồng khác vừa refresh xong (token đã khác token của request lỗi) → gửi lại luôn
+  final outcome = (current != null && current.isNotEmpty && current != sentToken)
+      ? RefreshOutcome.refreshed
+      : await _refreshOnce();
+  if (outcome != RefreshOutcome.refreshed) return handler.next(err);
+
+  final retry = req.copyWith(extra: {...req.extra, _retriedKey: true});
+  retry.headers.remove('Authorization');   // onRequest gắn token mới
+  try {
+    handler.resolve(await _dio.fetch<dynamic>(retry));
+  } on DioException catch (e) {
+    handler.next(e);
+  }
+}
+
+Future<RefreshOutcome> _refreshOnce() {
+  final running = _inFlight;
+  if (running != null) return running;          // đang refresh → chờ chung
+  final run = _refresh().then((outcome) async {
+    if (outcome == RefreshOutcome.rejected) await _tokens.clear();   // chỉ 400/401/403 mới đăng xuất
+    return outcome;
+  });
+  _inFlight = run;
+  return run.whenComplete(() => _inFlight = null);
+}
+```
+
+Refresh token nằm trong cookie HttpOnly. Trên mobile không có trình duyệt giữ cookie, nên `TokenStore` tự lưu cookie từ `Set-Cookie` lúc login/refresh rồi gửi lại qua header `Cookie`. Trên web, trình duyệt tự gửi (`withCredentials`). Lỗi mạng hoặc 502 khi refresh thì **giữ phiên**, vì đăng xuất người dùng chỉ vì mạng chập chờn là sai.
 
 ---
 
 ### Presentation Layer — Riverpod
 
 ```dart
-// apps/nihongo_flutter/lib/presentation/providers.dart
-// Providers — tương đương DI container
+// lib/providers.dart — Provider đóng vai DI container
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase();
+  ref.onDispose(db.close);
+  return db;
+});
 
-// Repository providers
+final tokenStoreProvider = Provider<TokenStore>((ref) => TokenStore());
+final dioProvider = Provider((ref) => createDio(ref.watch(tokenStoreProvider)));
+final vocabularyApiProvider = Provider((ref) => VocabularyApi(ref.watch(dioProvider)));
+final networkMonitorProvider = Provider((ref) => NetworkMonitor());
+
 final vocabRepositoryProvider = Provider<VocabularyRepository>((ref) {
-  final dao = ref.watch(vocabDaoProvider);
-  final api = ref.watch(vocabApiProvider);
-  final connectivity = ref.watch(connectivityProvider);
-  final auth = ref.watch(authRepositoryProvider);
-  return VocabularyRepositoryImpl(dao, api, connectivity, auth);
+  final tokenStore = ref.watch(tokenStoreProvider);
+  return VocabularyRepositoryImpl(
+    db: ref.watch(appDatabaseProvider),
+    api: ref.watch(vocabularyApiProvider),
+    networkMonitor: ref.watch(networkMonitorProvider),
+    isAuthenticated: tokenStore.isLoggedIn,   // truyền hàm, không truyền cả AuthRepository
+  );
 });
 
-// UseCase provider
-final getReviewQueueProvider = Provider<GetReviewQueueUseCase>((ref) {
-  return GetReviewQueueUseCase(ref.watch(vocabRepositoryProvider));
-});
+final getReviewQueueUseCaseProvider =
+    Provider((ref) => GetReviewQueueUseCase(ref.watch(vocabRepositoryProvider)));
 
-// StreamProvider — reactive data từ DB
-final vocabByLessonProvider = StreamProvider.family<List<Vocabulary>, int>((ref, lesson) {
-  return ref.watch(vocabRepositoryProvider).watchVocabByLesson(lesson);
-});
+// StreamProvider: dữ liệu reactive từ DB
+final reviewQueueProvider = StreamProvider<List<ReviewCard>>(
+    (ref) => ref.watch(getReviewQueueUseCaseProvider)());
 
-// FutureProvider — one-time load
-final reviewQueueProvider = FutureProvider<List<SrsCard>>((ref) async {
-  return ref.watch(getReviewQueueProvider).call();
-});
+final vocabByLessonProvider = StreamProvider.family<List<Vocabulary>, int>(
+    (ref, lessonNumber) => ref.watch(vocabRepositoryProvider).watchVocabByLesson(lessonNumber));
 
-// StateNotifier cho SRS session
-class SrsSessionNotifier extends StateNotifier<SrsSessionState> {
-  final VocabularyRepository _repo;
-  
-  SrsSessionNotifier(this._repo) : super(const SrsSessionState());
-  
-  Future<void> answer(SrsCard card, int quality) async {
-    final updated = card.review(quality);
-    await _repo.updateSrsCard(updated);
-    state = state.advance();  // next card
+final isOnlineProvider = StreamProvider<bool>((ref) => ref.watch(networkMonitorProvider).onlineStream);
+final isLoggedInProvider = FutureProvider<bool>((ref) => ref.watch(tokenStoreProvider).isLoggedIn());
+final selectedLessonProvider = StateProvider<int>((ref) => 1);
+```
+
+Repo **không dùng StateNotifier**. Trạng thái phiên ôn (đang lật thẻ, số câu đúng) chỉ màn SRS cần, nên nằm trong `State` của widget. Danh sách thẻ lấy từ stream: chấm xong thì DB đổi, stream phát danh sách mới, thẻ tiếp theo tự hiện.
+
+```dart
+// lib/presentation/srs/srs_screen.dart (rút gọn)
+class _SrsScreenState extends ConsumerState<SrsScreen> {
+  bool _showAnswer = false;
+  bool _submitting = false;
+  int _sessionCorrect = 0;
+  int _sessionTotal = 0;
+
+  Future<void> _rate(int quality, List<ReviewCard> cards) async {
+    if (_submitting || cards.isEmpty) return;      // chặn bấm 2 lần
+    setState(() => _submitting = true);
+
+    final updated = SrsAlgorithm.calculateNextReview(cards.first.card, quality);
+    final result = await ref.read(vocabRepositoryProvider).updateSrsCard(updated);  // read: trong callback
+    if (!mounted) return;                           // sau await, màn hình có thể đã đóng
+
+    if (result is Failure) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi lưu: ${result.error}')));
+    } else {
+      if (quality >= 3) _sessionCorrect++;
+      _sessionTotal++;
+    }
+    setState(() { _showAnswer = false; _submitting = false; });
   }
-}
 
-final srsSessionProvider = StateNotifierProvider<SrsSessionNotifier, SrsSessionState>((ref) {
-  return SrsSessionNotifier(ref.watch(vocabRepositoryProvider));
-});
-
-// ConsumerWidget — subscribe to providers
-class SrsScreen extends ConsumerWidget {
-  const SrsScreen({ super.key });
-  
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final queue = ref.watch(reviewQueueProvider);
-    
-    return queue.when(
-      loading: () => const CircularProgressIndicator(),
-      error: (e, _) => Text('Lỗi: $e'),
-      data: (cards) => cards.isEmpty
-          ? const Text('Đã ôn hết hôm nay! 🎉')
-          : SrsCardView(card: cards.first),
+  Widget build(BuildContext context) {
+    final cardsAsync = ref.watch(reviewQueueProvider);  // watch: trong build
+    return Scaffold(
+      body: cardsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Lỗi: $e')),
+        data: (cards) => /* cards.isEmpty && _sessionTotal > 0 → màn hoàn thành; còn lại → thẻ đầu */,
+      ),
     );
   }
 }
 ```
+
+Quy tắc `ref`: **`watch` trong `build`** (cần rebuild khi giá trị đổi), **`read` trong callback** (chỉ cần lấy một lần).
 
 ---
 
@@ -543,144 +741,210 @@ class SrsScreen extends ConsumerWidget {
 
 ### Drift ORM (Local Database)
 
+Có ba bảng, tất cả nằm trong `lib/data/local/app_database.dart`. Repo không tách DAO riêng: query viết thẳng trong `AppDatabase`. Giờ được lưu dạng `int` (millisecondsSinceEpoch):
+
 ```dart
-// Schema definition
 class VocabularyTable extends Table {
-  IntColumn get id => integer()();
-  TextColumn get kana => text()();
-  TextColumn get meaning => text()();
-  IntColumn get lessonNumber => integer()();
-  IntColumn get sortOrder => integer()();
-  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
-  
   @override
-  Set<Column> get primaryKey => { id };
+  String get tableName => 'vocabulary';
+
+  IntColumn get id => integer()();
+  IntColumn get lessonNumber => integer().named('lesson_number')();
+  TextColumn get kana => text()();
+  TextColumn get kanji => text().nullable()();
+  TextColumn get meaning => text()();
+  TextColumn get romaji => text().withDefault(const Constant(''))();
+  IntColumn get sortOrder => integer().named('sort_order')();
+  TextColumn get syncStatus => text().named('sync_status').withDefault(const Constant('synced'))();
+  IntColumn get updatedAt => integer().named('updated_at')();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
 }
 
 class SrsCardTable extends Table {
-  IntColumn get vocabId => integer().references(VocabularyTable, #id)();
-  RealColumn get easeFactor => real().withDefault(const Constant(2.5))();
-  IntColumn get intervalDays => integer().withDefault(const Constant(1))();
+  @override
+  String get tableName => 'srs_card';
+
+  IntColumn get id => integer()();
+  IntColumn get vocabularyId => integer().named('vocabulary_id').references(VocabularyTable, #id)();
+  RealColumn get easeFactor => real().named('ease_factor').withDefault(const Constant(2.5))();
+  IntColumn get interval => integer().withDefault(const Constant(0))();
   IntColumn get repetitions => integer().withDefault(const Constant(0))();
-  DateTimeColumn get nextReviewAt => dateTime().withDefault(currentDateAndTime)();
-  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
+  IntColumn get nextReviewAt => integer().named('next_review_at')();
+  BoolColumn get mastered => boolean().withDefault(const Constant(false))();
+  TextColumn get syncStatus => text().named('sync_status').withDefault(const Constant('synced'))();
+  IntColumn get updatedAt => integer().named('updated_at')();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
 }
 
-// DAO
-class VocabDao extends DatabaseAccessor<AppDatabase> with _$VocabDaoMixin {
-  // Stream reactive — UI tự rebuild khi DB thay đổi
-  Stream<List<VocabularyTableData>> watchVocabByLesson(int lesson) {
-    return (select(vocabularyTable)
-      ..where((t) => t.lessonNumber.equals(lesson))
-      ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])
-    ).watch();
-  }
-  
-  // Offline sync
-  Future<List<SrsCardTableData>> getPendingSync() {
-    return (select(srsCardTable)
-      ..where((t) => t.syncStatus.equals('pending'))
-    ).get();
-  }
-  
-  Future<void> markSrsSynced(List<int> vocabIds) {
-    return (update(srsCardTable)
-      ..where((t) => t.vocabId.isIn(vocabIds))
-    ).write(const SrsCardTableCompanion(syncStatus: Value('synced')));
-  }
+// Outbox: mỗi dòng là một thay đổi chờ gửi lên server
+class SyncQueueTable extends Table {
+  @override
+  String get tableName => 'sync_queue';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get operation => text()();          // 'UPDATE_SRS'
+  IntColumn get entityId => integer().named('entity_id')();
+  TextColumn get payload => text()();            // JSON của SrsCard
+  IntColumn get retryCount => integer().named('retry_count').withDefault(const Constant(0))();
+  IntColumn get createdAt => integer().named('created_at')();
+}
+
+@DriftDatabase(tables: [VocabularyTable, SrsCardTable, SyncQueueTable])
+class AppDatabase extends _$AppDatabase {
+  // Truyền executor được → test dùng AppDatabase(NativeDatabase.memory())
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  // ...
 }
 ```
+
+Query join, trả stream:
+
+```dart
+Stream<List<({SrsCardTableData card, VocabularyTableData vocab})>> watchDueReviewCards({int limit = 30}) {
+  // KHÔNG lọc theo giờ ở đây (lý do: xem GetReviewQueueUseCase). Sắp theo giờ đến hạn
+  // → thẻ đến hạn luôn ở đầu; use case lọc lại theo giờ hiện tại.
+  final query = select(srsCardTable).join([
+    innerJoin(vocabularyTable, vocabularyTable.id.equalsExp(srsCardTable.vocabularyId)),
+  ])
+    ..orderBy([OrderingTerm.asc(srsCardTable.nextReviewAt)])
+    ..limit(limit);
+
+  return query.watch().map((rows) => rows
+      .map((row) => (card: row.readTable(srsCardTable), vocab: row.readTable(vocabularyTable)))
+      .toList());
+}
+```
+
+Đổi bảng xong phải chạy `dart run build_runner build --delete-conflicting-outputs`. File `app_database.g.dart` được commit. CI chạy lại lệnh này và báo lỗi nếu file sinh ra khác với file đã commit.
 
 ---
 
 ### CustomPainter — Kanji Draw Screen
 
 ```dart
-// apps/nihongo_flutter/lib/presentation/kanji_draw/kanji_draw_screen.dart
-class _KanjiCanvas extends StatefulWidget {
-  const _KanjiCanvas();
-  
-  @override
-  State<_KanjiCanvas> createState() => _KanjiCanvasState();
+// lib/presentation/kanji_draw/kanji_draw_screen.dart (rút gọn)
+typedef Stroke = List<Offset>;
+
+class _KanjiDrawScreenState extends State<KanjiDrawScreen> {
+  // Luôn thay bằng danh sách MỚI, không sửa tại chỗ (lý do: shouldRepaint bên dưới)
+  List<Stroke> _strokes = const [];
+  Stroke _current = const [];
+
+  void _onPanStart(DragStartDetails d) => setState(() => _current = [d.localPosition]);
+  void _onPanUpdate(DragUpdateDetails d) => setState(() => _current = [..._current, d.localPosition]);
+  void _onPanEnd(DragEndDetails _) => setState(() {
+        if (_current.length > 2) _strokes = [..._strokes, _current];
+        _current = const [];
+      });
+  void _undo() => setState(() => _strokes = _strokes.sublist(0, _strokes.length - 1));
+  void _clear() => setState(() => _strokes = const []);
+
+  // trong build():
+  Stack(children: [
+    CustomPaint(painter: _GridPainter(color: scheme.outlineVariant), child: const SizedBox.expand()),
+    CustomPaint(
+      painter: _StrokePainter(strokes: _strokes, current: _current, strokeColor: scheme.primary),
+      child: const SizedBox.expand(),
+    ),
+    GestureDetector(
+      behavior: HitTestBehavior.opaque,   // con là SizedBox rỗng: phải opaque mới nhận chạm
+      onPanStart: _onPanStart,
+      onPanUpdate: _onPanUpdate,
+      onPanEnd: _onPanEnd,
+      child: const SizedBox.expand(),
+    ),
+  ]);
 }
 
-class _KanjiCanvasState extends State<_KanjiCanvas> {
-  final List<List<Offset>> _strokes = [];
-  List<Offset> _currentStroke = [];
-  
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanStart: (d) => setState(() => _currentStroke = [d.localPosition]),
-      onPanUpdate: (d) => setState(() => _currentStroke.add(d.localPosition)),
-      onPanEnd: (_) => setState(() {
-        if (_currentStroke.length > 2) _strokes.add(List.of(_currentStroke));
-        _currentStroke = [];
-      }),
-      child: CustomPaint(
-        painter: _KanjiPainter(strokes: _strokes, current: _currentStroke),
-        size: Size.infinite,
-      ),
-    );
-  }
-}
+class _StrokePainter extends CustomPainter {
+  _StrokePainter({required this.strokes, required this.current, required this.strokeColor});
+  final List<Stroke> strokes;
+  final Stroke current;
+  final Color strokeColor;
 
-class _KanjiPainter extends CustomPainter {
-  final List<List<Offset>> strokes;
-  final List<Offset> current;
-  
-  const _KanjiPainter({ required this.strokes, required this.current });
-  
   @override
   void paint(Canvas canvas, Size size) {
-    _drawGrid(canvas, size);
-    _drawStrokes(canvas, [...strokes, current]);
-  }
-  
-  void _drawGrid(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.shade300
-      ..strokeWidth = 0.5;
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), paint);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), paint);
-  }
-  
-  void _drawStrokes(Canvas canvas, List<List<Offset>> allStrokes) {
-    final paint = Paint()
-      ..color = Colors.black
+      ..color = strokeColor
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
-    
-    for (final stroke in allStrokes) {
+    for (final stroke in [...strokes, current]) {
       if (stroke.length < 2) continue;
-      final path = Path()..moveTo(stroke[0].dx, stroke[0].dy);
-      for (final p in stroke.skip(1)) path.lineTo(p.dx, p.dy);
+      final path = ui.Path()..moveTo(stroke[0].dx, stroke[0].dy);
+      for (var i = 1; i < stroke.length; i++) {
+        path.lineTo(stroke[i].dx, stroke[i].dy);
+      }
       canvas.drawPath(path, paint);
     }
   }
-  
+
+  // So sánh THAM CHIẾU (!=), không so nội dung → rẻ, nhưng chỉ đúng khi list bất biến
   @override
-  bool shouldRepaint(_KanjiPainter old) =>
-      old.strokes != strokes || old.current != current;
+  bool shouldRepaint(_StrokePainter old) => old.strokes != strokes || old.current != current;
 }
 ```
+
+> **Bản cũ có hai lỗi chồng nhau**, và màn hình không vẽ được gì:
+> 1. `_current.add(...)`, `_strokes.removeLast()`, `_strokes.clear()` sửa list **tại chỗ**. Painter mới nhận đúng object cũ, `shouldRepaint` trả `false`, nên nét đang vẽ không hiện, còn hoàn tác/xóa không vẽ lại. Sửa: luôn tạo list mới (`[..._current, p]`).
+> 2. `GestureDetector` bọc một `SizedBox` rỗng với `behavior` mặc định (`deferToChild`). Con không vẽ gì nên hit test trượt, và **không nhận được chạm nào**. Sửa: `HitTestBehavior.opaque`.
+>
+> Test `test/presentation/kanji_draw_screen_test.dart` kéo qua canvas rồi kiểm tra `shouldRepaint` trả `true` ở mỗi bước. Chỉ sửa một trong hai lỗi thì test vẫn đỏ.
+
+Lưới ô vuông vẽ bằng một painter riêng (`_GridPainter`, `shouldRepaint` chỉ so màu), để mỗi lần thêm điểm không phải vẽ lại lưới.
 
 ---
 
 ### GoRouter Navigation
 
+Tên route gom vào một chỗ, tránh gõ sai chuỗi:
+
 ```dart
-// apps/nihongo_flutter/lib/presentation/app.dart
+// lib/core/routes.dart
+abstract final class Routes {
+  static const home = '/';
+  static const vocab = '/vocab';
+  static const srs = '/srs';
+  static const sentencePractice = '/sentence-practice';
+  static const cameraTranslate = '/camera-translate';
+  static const live = '/live';
+  static const liveViewer = '/live/viewer';
+  static const liveHost = '/live/host';
+  static const login = '/login';
+  static const aiTutor = '/ai-tutor';
+  static const pronunciation = '/pronunciation';
+  static const kanjiDraw = '/kanji-draw';
+}
+```
+
+```dart
+// lib/presentation/app.dart
 final _router = GoRouter(
+  initialLocation: Routes.home,
   routes: [
-    GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
-    GoRoute(path: '/vocab', builder: (_, __) => const VocabScreen()),
-    GoRoute(path: '/srs', builder: (_, __) => const SrsScreen()),
-    GoRoute(path: '/ai-tutor', builder: (_, __) => const AiTutorScreen()),
+    GoRoute(path: Routes.home,             builder: (_, __) => const HomeScreen()),
+    GoRoute(path: Routes.vocab,            builder: (_, __) => const VocabScreen()),
+    GoRoute(path: Routes.srs,              builder: (_, __) => const SrsScreen()),
+    GoRoute(path: Routes.sentencePractice, builder: (_, __) => const SentencePracticeScreen()),
+    GoRoute(path: Routes.cameraTranslate,  builder: (_, __) => const CameraTranslateScreen()),
+    GoRoute(path: Routes.live,             builder: (_, __) => const LiveListScreen()),
     GoRoute(
-      path: '/pronunciation',
+      path: Routes.liveViewer,
+      builder: (_, state) => LiveViewerScreen(join: state.extra as LiveJoinResponse),
+    ),
+    GoRoute(
+      path: Routes.liveHost,
+      builder: (_, state) => LiveHostScreen(join: state.extra as LiveJoinResponse),
+    ),
+    GoRoute(path: Routes.login,   builder: (_, __) => const LoginScreen()),
+    GoRoute(path: Routes.aiTutor, builder: (_, __) => const AiTutorScreen()),
+    GoRoute(
+      path: Routes.pronunciation,
       builder: (_, state) {
         final extra = state.extra as Map<String, dynamic>?;
         return PronunciationScreen(
@@ -690,7 +954,7 @@ final _router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/kanji-draw',
+      path: Routes.kanjiDraw,
       builder: (_, state) {
         final extra = state.extra as Map<String, dynamic>?;
         return KanjiDrawScreen(
@@ -699,14 +963,15 @@ final _router = GoRouter(
         );
       },
     ),
-    GoRoute(path: '/live', builder: (_, __) => const LiveScreen()),
   ],
 );
 
-// Navigate
-context.push('/pronunciation', extra: {'kana': 'おはよう', 'meaning': 'Xin chào buổi sáng'});
-context.go('/srs');
+// Điều hướng
+context.push(Routes.pronunciation, extra: {'kana': 'おはよう', 'meaning': 'Chào buổi sáng'});
+context.go(Routes.srs);
 ```
+
+`push` chồng màn mới lên (có nút back). `go` thay cả stack theo URL. `extra` **không nằm trong URL**: deep link hay web reload sẽ mất nó, nên màn nhận `extra` phải có giá trị mặc định (như `?? '日'` ở trên). Route live dùng `state.extra as LiveJoinResponse` không có mặc định, nên chỉ vào được từ trong app. Đây là đánh đổi có chủ ý.
 
 ---
 
@@ -714,133 +979,134 @@ context.go('/srs');
 
 ### Animation nâng cao
 
+Màn SRS hiện dùng `AnimatedSwitcher` (implicit animation) để chuyển thẻ (`srs_screen.dart`). Màn gia sư AI dùng `AnimationController` cho hiệu ứng "đang gõ" (`ai_tutor_screen.dart`). **Bài tập** (chưa có trong repo): thẻ vuốt trái/phải để chấm, với explicit animation:
+
 ```dart
-// Swipe card animation — tương đương SwipeCard gesture trong roadmap senior
 class SwipeCard extends StatefulWidget {
-  final SrsCard card;
+  const SwipeCard({super.key, required this.child, required this.onAnswer});
+  final Widget child;
   final void Function(int quality) onAnswer;
-  const SwipeCard({ super.key, required this.card, required this.onAnswer });
-  
+
   @override
   State<SwipeCard> createState() => _SwipeCardState();
 }
 
 class _SwipeCardState extends State<SwipeCard> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 300))
+        ..addListener(_onTick);              // gắn listener MỘT lần
+  Animation<Offset>? _flight;
   Offset _dragOffset = Offset.zero;
-  
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-  }
-  
+
   @override
   void dispose() {
-    _controller.dispose();  // QUAN TRỌNG: tránh memory leak
+    _controller.dispose();                   // QUAN TRỌNG: tránh rò rỉ ticker
     super.dispose();
   }
-  
+
+  void _onTick() {
+    final flight = _flight;
+    if (flight != null) setState(() => _dragOffset = flight.value);
+  }
+
   void _onDragEnd(DragEndDetails details) {
     final velocity = details.velocity.pixelsPerSecond.dx;
-    final distance = _dragOffset.dx;
-    
-    if (distance > 120 || velocity > 500) {
-      // Swipe right — Good (4)
-      _flyOff(1.0, quality: 4);
-    } else if (distance < -120 || velocity < -500) {
-      // Swipe left — Again (1)
-      _flyOff(-1.0, quality: 1);
+    if (_dragOffset.dx > 120 || velocity > 500) {
+      _flyOff(1, quality: 4);                // phải: Good
+    } else if (_dragOffset.dx < -120 || velocity < -500) {
+      _flyOff(-1, quality: 1);               // trái: Again
     } else {
-      // Return to center
       setState(() => _dragOffset = Offset.zero);
     }
   }
-  
-  void _flyOff(double direction, { required int quality }) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final tween = Tween<Offset>(
-      begin: _dragOffset,
-      end: Offset(direction * screenWidth * 1.5, _dragOffset.dy),
-    );
-    
-    final animation = tween.animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut)
-    );
-    
-    animation.addListener(() => setState(() => _dragOffset = animation.value));
-    _controller.forward().then((_) {
-      widget.onAnswer(quality);
-      _controller.reset();
-      setState(() => _dragOffset = Offset.zero);
-    });
+
+  Future<void> _flyOff(double direction, {required int quality}) async {
+    final width = MediaQuery.sizeOf(context).width;
+    _flight = Tween(begin: _dragOffset, end: Offset(direction * width * 1.5, _dragOffset.dy))
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    await _controller.forward(from: 0);
+    if (!mounted) return;                    // widget có thể đã bị gỡ trong 300ms
+    _flight = null;
+    _controller.reset();
+    setState(() => _dragOffset = Offset.zero);
+    widget.onAnswer(quality);
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    final angle = _dragOffset.dx / 400;
-    
     return GestureDetector(
       onHorizontalDragUpdate: (d) => setState(() => _dragOffset += Offset(d.delta.dx, 0)),
       onHorizontalDragEnd: _onDragEnd,
       child: Transform.translate(
         offset: _dragOffset,
-        child: Transform.rotate(
-          angle: angle,
-          child: SrsCardWidget(card: widget.card),
-        ),
+        child: Transform.rotate(angle: _dragOffset.dx / 400, child: widget.child),
       ),
     );
   }
 }
 ```
 
+Lỗi hay gặp với kiểu code này: gọi `animation.addListener` **mỗi lần** vuốt. Listener cũ không bị gỡ, nên sau vài lần có nhiều listener cùng `setState` các giá trị khác nhau, thẻ giật. Cách đúng: gắn listener một lần vào controller và chỉ thay `Tween`.
+
 ---
 
-### Gemini AI Integration
+### AI qua backend (gia sư AI, luyện câu)
+
+App **không giữ API key nào**. Mọi lời gọi AI đi qua gateway (`/api/ai/...`) bằng Dio chung, nên token được gắn và refresh tự động. Response của gateway có dạng `{ success, data }`, nên dùng `unwrapEnvelope`:
 
 ```dart
-// apps/nihongo_flutter/lib/presentation/ai_tutor/ai_tutor_screen.dart
-// Backend xử lý Gemini, Flutter chỉ gọi API
-
-class AiTutorScreen extends ConsumerStatefulWidget {
-  const AiTutorScreen({ super.key });
-  
-  @override
-  ConsumerState<AiTutorScreen> createState() => _AiTutorScreenState();
+// lib/data/remote/ai_tutor_api.dart
+Future<String> ask({required String question, required List<AiMessage> history, String? vocabContext}) async {
+  final res = await _dio.post<dynamic>(
+    '/ai/chat',
+    data: {
+      'question': question,
+      'history': history.map((m) => {'role': m.role, 'content': m.text}).toList(),
+      if (vocabContext != null) 'context': vocabContext,
+    },
+    options: Options(sendTimeout: const Duration(seconds: 10), receiveTimeout: const Duration(seconds: 30)),
+  );
+  // Bản cũ đọc `answer` ở cấp ngoài cùng → luôn rỗng vì gateway bọc trong `data`
+  final data = unwrapEnvelope(res.data);
+  return (data is Map ? data['answer'] as String? : null)?.trim() ?? '';
 }
 
-class _AiTutorScreenState extends ConsumerState<AiTutorScreen> {
-  final _controller = TextEditingController();
-  final _messages = <ChatMessage>[];
-  bool _isLoading = false;
-  
-  @override
-  void dispose() {
-    _controller.dispose();  // tránh leak
-    super.dispose();
-  }
-  
-  Future<void> _send(String text) async {
-    setState(() {
-      _messages.add(ChatMessage(role: 'user', content: text));
-      _isLoading = true;
-    });
-    _controller.clear();
-    
-    try {
-      final api = ref.read(aiApiProvider);
-      final response = await api.chat(messages: _messages);
-      setState(() {
-        _messages.add(ChatMessage(role: 'assistant', content: response));
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    }
+// lib/data/remote/sentence_practice_api.dart — bản cũ gọi thẳng Gemini bằng
+// --dart-define=GEMINI_API_KEY: key bị biên dịch vào app, giải nén là lấy được.
+Future<SentenceFeedback> analyze(String sentence) async {
+  final res = await _dio.post<dynamic>('/ai/sentence-feedback',
+      data: {'sentence': sentence.trim()},
+      options: Options(receiveTimeout: const Duration(seconds: 40)));
+  final data = unwrapEnvelope(res.data);
+  if (data is! Map<String, dynamic>) throw Exception('Máy chủ không trả kết quả');
+  return SentenceFeedback.fromJson(data);
+}
+```
+
+Phía màn hình (`ai_tutor_screen.dart`, rút gọn). Để ý `mounted` sau mỗi `await`:
+
+```dart
+Future<void> _send(String text) async {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty || _loading) return;
+  _controller.clear();
+  setState(() {
+    _messages.add(AiMessage(role: 'user', text: trimmed));
+    _loading = true;
+  });
+  try {
+    final answer = await ref.read(aiTutorApiProvider).ask(
+      question: trimmed,
+      history: _messages.sublist(0, _messages.length - 1),
+      vocabContext: _buildVocabContext(),
+    );
+    if (!mounted) return;   // người dùng thoát màn trong lúc chờ AI (có thể tới 30 giây)
+    setState(() => _messages.add(AiMessage(role: 'assistant', text: answer)));
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _messages.add(const AiMessage(role: 'assistant', text: 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.')));
+  } finally {
+    if (mounted) setState(() => _loading = false);
   }
 }
 ```
@@ -849,97 +1115,139 @@ class _AiTutorScreenState extends ConsumerState<AiTutorScreen> {
 
 ### Testing
 
+Repo **không dùng mocktail/mockito**. Thay vào đó dùng fake viết tay (một class `implements` interface) và DB thật chạy trong RAM. Có 34 test trong `apps/nihongo_flutter/test/`:
+
+| File | Kiểm tra gì |
+|---|---|
+| `data/vocabulary_repository_sync_test.dart` | outbox: API lỗi thì hàng đợi còn nguyên; dedupe; sync chồng nhau; chấm lại trong lúc gửi |
+| `data/auth_interceptor_test.dart` | 401 → refresh → gửi lại; 10 request chỉ refresh 1 lần; lỗi mạng thì giữ phiên |
+| `domain/get_review_queue_usecase_test.dart` | thẻ đến hạn sau khi mở màn tự hiện (`fakeAsync`) |
+| `presentation/kanji_draw_screen_test.dart` | canvas vẽ lại khi vẽ, nhấc tay, hoàn tác, xóa |
+| `srs_algorithm_test.dart`, `ai_api_test.dart`, `data/api_config_test.dart`, `widget_test.dart` | SM-2, parse response AI, URL theo nền tảng, smoke test |
+| `integration/auth_refresh_integration_test.dart` | chạy với backend thật, chỉ khi `INTEGRATION=1` |
+
+**Fake + Drift in-memory.** Test chạy code SQL thật, không giả lập DB:
+
 ```dart
-// Widget test
-void main() {
-  testWidgets('SrsScreen shows card when queue not empty', (tester) async {
-    final mockRepo = MockVocabularyRepository();
-    when(() => mockRepo.getReviewQueue()).thenAnswer((_) async => [fakeSrsCard]);
-    
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          vocabRepositoryProvider.overrideWithValue(mockRepo),
-        ],
-        child: const MaterialApp(home: SrsScreen()),
-      ),
-    );
-    
-    await tester.pumpAndSettle();
-    
-    expect(find.byType(SrsCardWidget), findsOneWidget);
-    expect(find.text('おはよう'), findsOneWidget);
-  });
-  
-  testWidgets('shows completion when queue empty', (tester) async {
-    final mockRepo = MockVocabularyRepository();
-    when(() => mockRepo.getReviewQueue()).thenAnswer((_) async => []);
-    
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [vocabRepositoryProvider.overrideWithValue(mockRepo)],
-        child: const MaterialApp(home: SrsScreen()),
-      ),
-    );
-    
-    await tester.pumpAndSettle();
-    expect(find.text('Đã ôn hết hôm nay! 🎉'), findsOneWidget);
-  });
+// test/data/vocabulary_repository_sync_test.dart (rút gọn)
+class FakeApi implements VocabularyApi {
+  final sent = <List<Map<String, dynamic>>>[];
+  Object? failWith;
+
+  @override
+  Future<void> syncReviewBank(List<Map<String, dynamic>> items) async {
+    sent.add(items);
+    if (failWith != null) throw failWith!;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);  // method khác: không dùng
 }
 
-// Unit test UseCase
-test('GetReviewQueueUseCase only returns due cards', () async {
-  final now = DateTime.now();
-  final mockRepo = MockVocabularyRepository();
-  
-  when(() => mockRepo.getReviewQueue()).thenAnswer((_) async => [
-    fakeSrsCard(nextReviewAt: now.subtract(const Duration(hours: 1))),  // due
-    fakeSrsCard(nextReviewAt: now.add(const Duration(days: 1))),         // not due
-  ]);
-  
-  final result = await GetReviewQueueUseCase(mockRepo).call();
-  
-  expect(result.length, 1);
+setUp(() async {
+  db = AppDatabase(NativeDatabase.memory());
+  api = FakeApi();
+  network = FakeNetwork();
+  repo = VocabularyRepositoryImpl(db: db, api: api, networkMonitor: network, isAuthenticated: () async => true);
+  await seed(1);
+  await seed(2);
 });
+tearDown(() => db.close());
+
+test('API lỗi → hàng đợi CÒN NGUYÊN (bản cũ xóa trước khi gửi → mất dữ liệu)', () async {
+  network.online = false;
+  await repo.updateSrsCard(card(1));
+  await repo.updateSrsCard(card(2));
+  network.online = true;
+  api.failWith = Exception('500');
+
+  final result = await repo.syncAllPending();
+
+  expect(result, isA<Failure<void>>());
+  expect((await db.getPendingSyncItems()).length, 2);
+});
+```
+
+**Tua đồng hồ với `fakeAsync`.** Không phải chờ 1 phút thật:
+
+```dart
+// test/domain/get_review_queue_usecase_test.dart
+test('thẻ đến hạn SAU khi mở màn hình tự hiện ở lần tick kế tiếp', () {
+  fakeAsync((async) {
+    var clock = DateTime(2026, 10, 20, 9, 0);
+    final repo = FakeRepo();
+    final emitted = <List<int>>[];
+    final sub = GetReviewQueueUseCase(repo, now: () => clock)()
+        .listen((cards) => emitted.add(cards.map((c) => c.card.id).toList()));
+
+    repo.queue.add([due(1, DateTime(2026, 10, 20, 8)), due(2, DateTime(2026, 10, 20, 9, 1, 30))]);
+    async.flushMicrotasks();
+    expect(emitted.last, [1]);                 // thẻ 2 chưa tới hạn
+
+    clock = DateTime(2026, 10, 20, 9, 2);      // 2 phút sau, DB không đổi gì
+    async.elapse(const Duration(minutes: 1));
+    expect(emitted.last, [1, 2]);
+    sub.cancel();
+  });
+});
+```
+
+**Fake HTTP cho Dio.** `ScriptedAdapter` (một `HttpClientAdapter` giả) trả response theo kịch bản và ghi lại mọi request. Nhờ vậy test kiểm tra được cả thứ tự gọi:
+
+```dart
+// test/data/auth_interceptor_test.dart
+final res = await dio.get<dynamic>('/progress');
+expect(server.requests.map((r) => r.path).toList(), ['/progress', '/auth/refresh', '/progress']);
+expect(server.requests[1].headers['Cookie'], 'refresh_token=R1');   // gửi cookie đã lưu
+expect(tokens.cookie, 'refresh_token=R2');                          // lưu cookie mới xoay vòng
+```
+
+**Test phải đỏ trên code lỗi.** Với mỗi lỗi đã sửa, chạy test mới trên code cũ (`git stash`, hoặc lấy file cũ từ `git show HEAD:...`) và xác nhận test fail. Test chỉ xanh trên code mới thì chưa chứng minh được gì.
+
+Widget test có Riverpod thì override provider bằng fake:
+
+```dart
+await tester.pumpWidget(ProviderScope(
+  overrides: [vocabRepositoryProvider.overrideWithValue(FakeRepo())],
+  child: const MaterialApp(home: SrsScreen()),
+));
 ```
 
 ---
 
 ### CI/CD
 
+Flutter có một job trong file CI chung `.github/workflows/ci.yml` (không có file `flutter-ci.yml` riêng):
+
 ```yaml
-# .github/workflows/flutter-ci.yml
-name: Flutter CI
-
-on: [push, pull_request]
-
-jobs:
-  test:
+  flutter:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/nihongo_flutter
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.24.x', cache: true }
-      - working-directory: apps/nihongo_flutter
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Code Drift tự sinh (*.g.dart) được commit: phải khớp với schema hiện tại
+      - name: Generated code up to date
         run: |
-          flutter pub get
-          flutter analyze --no-fatal-infos
-          flutter test --coverage
-
-  build-android:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-      - working-directory: apps/nihongo_flutter
-        run: |
-          flutter pub get
-          flutter build apk --release
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- lib
+      - run: flutter analyze
+      # Test integration (cần backend thật) tự bỏ qua khi không đặt INTEGRATION=1
+      - run: flutter test
 ```
 
-> EAS Build là tool của Expo/React Native, không phải pipeline mặc định cho Flutter. Flutter dùng `flutter build apk|appbundle|ipa`; ký release cần keystore / Apple signing riêng.
+Ghim `flutter-version` cụ thể để CI và máy dev cùng một bản. Bước `git diff --exit-code` bắt lỗi "sửa bảng Drift nhưng quên chạy build_runner".
+
+Job build bản phát hành (chưa có trong repo) chạy `flutter build apk --release` / `appbundle` / `ipa`. Ký bản release cần keystore Android hoặc chứng chỉ Apple, lưu trong GitHub Secrets.
+
+> EAS Build là tool của Expo/React Native, không dùng cho Flutter.
 
 ---
 
@@ -961,23 +1269,25 @@ Giai đoạn 1 — Dart + Flutter cơ bản:
 
 Giai đoạn 2 — Clean Architecture:
   □ Domain layer: Entity, Repository interface, UseCase
-  □ Data layer: RepositoryImpl, DAO, Mapper
+  □ Data layer: RepositoryImpl, Drift, outbox (gửi trước, thành công mới xóa)
   □ Presentation layer: ConsumerWidget, Provider
   □ Dependency direction: Presentation → Domain ← Data
 
 Giai đoạn 3 — Features:
-  □ Riverpod: Provider, StreamProvider, FutureProvider, StateNotifier
+  □ Riverpod: Provider, StreamProvider(.family), FutureProvider, StateProvider
+    (Notifier/AsyncNotifier: tự học thêm, repo chưa dùng)
   □ ref.watch vs ref.read
   □ Drift: Table, DAO, Stream query, upsert
   □ GoRouter: routes, push, extra params
-  □ Dio + interceptors (auth header, retry 401)
+  □ Dio + interceptor: gắn token, 401 → refresh một lần → gửi lại
 
 Giai đoạn 4 — Senior:
-  □ CustomPainter + shouldRepaint
+  □ CustomPainter + shouldRepaint (list bất biến) + HitTestBehavior
   □ AnimationController + physics animation
   □ Platform Channel (MethodChannel)
   □ flutter_tts + speech_to_text
-  □ Widget test + Riverpod override
+  □ Test bằng fake + Drift in-memory + fakeAsync; widget test + Riverpod override
+  □ Test mới phải đỏ trên code lỗi
   □ flutter build apk/appbundle + GitHub Actions CI
   □ flutter_lints, analyze clean
 ```

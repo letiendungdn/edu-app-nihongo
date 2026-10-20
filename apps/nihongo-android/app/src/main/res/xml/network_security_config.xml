@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mặc định CHẶN HTTP thường (cleartext) với mọi domain: token chỉ đi qua HTTPS.
+  Bản cũ đặt base-config cleartextTrafficPermitted="true" → mọi URL http:// đều được phép, kể cả
+  trên bản release.
+
+  Ngoại lệ duy nhất: các địa chỉ local khi dev (Docker gateway trên máy host). Chúng không đi ra
+  Internet. Giữ cả ở release vì bản release hiện vẫn được cài lên emulator để kiểm tra R8 với
+  gateway local; khi có URL production (https), đưa domain-config này sang src/debug/res/xml/.
+-->
 <network-security-config>
-    <!-- Local Docker / emulator: cho phép cleartext tới host gateway -->
-    <base-config cleartextTrafficPermitted="true" />
+    <base-config cleartextTrafficPermitted="false" />
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
     </domain-config>
 </network-security-config>

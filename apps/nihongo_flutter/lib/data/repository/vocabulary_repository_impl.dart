@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -10,6 +11,8 @@ import '../../domain/repository/vocabulary_repository.dart';
 import '../local/app_database.dart';
 import '../remote/vocabulary_api.dart';
 import '../../utils/network_monitor.dart';
+
+const _srsOp = 'UPDATE_SRS';
 
 class VocabularyRepositoryImpl implements VocabularyRepository {
   VocabularyRepositoryImpl({
@@ -63,15 +66,16 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
         mastered: card.mastered,
       );
 
+      // Mỗi thẻ chỉ giữ lần chấm MỚI NHẤT: chấm 3 lần lúc offline thì gửi 1 item
+      await _db.deleteSyncByEntity(_srsOp, card.id);
       await _db.enqueueSync(
-        operation: 'UPDATE_SRS',
+        operation: _srsOp,
         entityId: card.id,
         payload: jsonEncode(card.toJson()),
       );
 
-      if (await _network.isOnline() && await _isAuthenticated()) {
-        await syncAllPending();
-      }
+      // Gửi ở nền: ghi local xong là UI chuyển thẻ ngay, không chờ mạng (bản cũ await ở đây)
+      unawaited(syncAllPending());
 
       return const Success(null);
     } catch (e, st) {
@@ -127,8 +131,38 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     }
   }
 
+  /// Lượt sync đang chạy. Chấm thẻ liên tục gọi sync nhiều lần cùng lúc: chỉ một lượt chạy,
+  /// lượt gọi sau chờ chung rồi chạy thêm một vòng (gửi nốt item thêm vào trong lúc chờ mạng).
+  Future<Result<void>>? _syncing;
+  bool _syncAgain = false;
+
   @override
-  Future<Result<void>> syncAllPending() async {
+  Future<Result<void>> syncAllPending() {
+    final running = _syncing;
+    if (running != null) {
+      _syncAgain = true;
+      return running;
+    }
+    final run = _syncLoop();
+    _syncing = run;
+    return run.whenComplete(() => _syncing = null);
+  }
+
+  Future<Result<void>> _syncLoop() async {
+    Result<void> result;
+    var rounds = 0;
+    do {
+      _syncAgain = false;
+      result = await _syncOnce();
+      rounds++;
+    } while (_syncAgain && result is Success && rounds < 5);
+    return result;
+  }
+
+  /// Bản cũ đánh dấu "đã sync" và XÓA từng dòng khỏi hàng đợi TRƯỚC khi gọi API: API lỗi (mất mạng
+  /// giữa chừng, server 500) là mất sạch các lần ôn chưa gửi. Giờ: gửi trước, thành công mới xóa,
+  /// và chỉ xóa đúng các dòng đã gửi.
+  Future<Result<void>> _syncOnce() async {
     if (!await _network.isOnline() || !await _isAuthenticated()) {
       return const Success(null);
     }
@@ -136,49 +170,63 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     try {
       final pending = await _db.getPendingSyncItems();
       final reviewItems = <Map<String, dynamic>>[];
+      final sentRowIds = <int>[];
+      final sentCards = <int, int>{}; // card id → id dòng hàng đợi đã gửi
 
       for (final item in pending) {
-        if (item.operation != 'UPDATE_SRS') continue;
+        if (item.operation != _srsOp) continue;
+        final SrsCard card;
         try {
-          final card = SrsCard.fromJson(
-            jsonDecode(item.payload) as Map<String, dynamic>,
-          );
-          final vocabRow = await _db.getSrsByVocabId(card.vocabularyId);
-          if (vocabRow == null) continue;
-
-          final join = await (_db.select(_db.vocabularyTable)
-                ..where((t) => t.id.equals(card.vocabularyId)))
-              .getSingleOrNull();
-
-          if (join == null) continue;
-
-          reviewItems.add({
-            'kana': join.kana,
-            'kanji': join.kanji,
-            'meaning': join.meaning,
-            'lessonNumber': join.lessonNumber,
-            'wrongCount': card.repetitions == 0 ? 1 : 0,
-            'reviewStreak': card.repetitions,
-            'mastered': card.mastered,
-            'lastReviewedAt': card.updatedAt.toIso8601String(),
-          });
-
-          await _db.markSrsSynced([card.id]);
-          await _db.deleteSyncItem(item.id);
+          card = SrsCard.fromJson(jsonDecode(item.payload) as Map<String, dynamic>);
         } catch (_) {
-          await _db.incrementSyncRetry(item.id, item.retryCount);
+          // Payload hỏng: bỏ, đừng để nó chặn cả hàng đợi mãi mãi
+          await _db.deleteSyncItem(item.id);
+          continue;
         }
+        final vocab = await (_db.select(_db.vocabularyTable)
+              ..where((t) => t.id.equals(card.vocabularyId)))
+            .getSingleOrNull();
+        if (vocab == null) {
+          await _db.deleteSyncItem(item.id); // từ đã bị xóa: không còn gì để gửi
+          continue;
+        }
+        reviewItems.add(reviewItemFor(card, vocab));
+        sentRowIds.add(item.id);
+        sentCards[card.id] = item.id;
       }
 
-      if (reviewItems.isNotEmpty) {
-        await _api.syncReviewBank(reviewItems);
+      if (reviewItems.isEmpty) return const Success(null);
+
+      await _api.syncReviewBank(reviewItems); // lỗi → ném ra, hàng đợi còn nguyên
+
+      for (final id in sentRowIds) {
+        await _db.deleteSyncItem(id);
       }
+      // Chỉ đánh dấu synced thẻ không còn lần chấm mới hơn chờ trong hàng đợi
+      final stillQueued = (await _db.getPendingSyncItems())
+          .where((i) => i.operation == _srsOp)
+          .map((i) => i.entityId)
+          .toSet();
+      final synced = sentCards.keys.where((id) => !stillQueued.contains(id)).toList();
+      if (synced.isNotEmpty) await _db.markSrsSynced(synced);
 
       return const Success(null);
     } catch (e, st) {
       return Failure(e, stackTrace: st);
     }
   }
+
+  /// Một item cho `POST /api/progress/review` (khớp ReviewItemDto của backend). Hàm thuần để test.
+  static Map<String, dynamic> reviewItemFor(SrsCard card, VocabularyTableData vocab) => {
+        'kana': vocab.kana,
+        'kanji': vocab.kanji,
+        'meaning': vocab.meaning,
+        'lessonNumber': vocab.lessonNumber,
+        'wrongCount': card.repetitions == 0 ? 1 : 0,
+        'reviewStreak': card.repetitions,
+        'mastered': card.mastered,
+        'lastReviewedAt': card.updatedAt.toIso8601String(),
+      };
 
   Future<void> _ensureSrsCard(int vocabularyId) async {
     final existing = await _db.getSrsByVocabId(vocabularyId);

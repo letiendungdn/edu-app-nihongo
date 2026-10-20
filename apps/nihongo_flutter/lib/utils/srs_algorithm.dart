@@ -3,7 +3,9 @@ import '../../domain/entity/sync_status.dart';
 
 /// SM-2 simplified — quality 0..5 (0 = again, 5 = easy).
 class SrsAlgorithm {
-  static SrsCard calculateNextReview(SrsCard card, int quality) {
+  /// [now] truyền vào được để test (bản cũ tự gọi DateTime.now() bên trong).
+  static SrsCard calculateNextReview(SrsCard card, int quality, {DateTime? now}) {
+    final at = now ?? DateTime.now();
     final q = quality.clamp(0, 5);
     var ease = card.easeFactor;
     var interval = card.interval;
@@ -26,7 +28,9 @@ class SrsAlgorithm {
     ease += 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02);
     if (ease < 1.3) ease = 1.3;
 
-    final next = DateTime.now().add(Duration(days: interval));
+    // Cộng NGÀY LỊCH, không cộng Duration(days:) (= đúng 24 giờ): ngày đổi giờ mùa hè dài 23 hoặc
+    // 25 giờ, cộng giờ sẽ lệch một tiếng so với giờ người dùng ôn.
+    final next = DateTime(at.year, at.month, at.day + interval, at.hour, at.minute, at.second);
     final mastered = reps >= 5 && interval >= 21;
 
     return card.copyWith(
@@ -36,7 +40,7 @@ class SrsAlgorithm {
       nextReviewAt: next,
       mastered: mastered,
       syncStatus: SyncStatus.pending,
-      updatedAt: DateTime.now(),
+      updatedAt: at,
     );
   }
 }

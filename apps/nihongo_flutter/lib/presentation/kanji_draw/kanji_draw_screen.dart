@@ -18,8 +18,11 @@ class KanjiDrawScreen extends StatefulWidget {
 }
 
 class _KanjiDrawScreenState extends State<KanjiDrawScreen> {
-  final List<Stroke> _strokes = [];
-  Stroke _current = [];
+  // Luôn thay bằng danh sách MỚI, không sửa tại chỗ: _StrokePainter.shouldRepaint so sánh theo
+  // tham chiếu. Bản cũ dùng `_current.add(...)`, `_strokes.removeLast()`… → cùng một object →
+  // shouldRepaint trả false → nét đang vẽ không hiện, hoàn tác / xóa không vẽ lại màn hình.
+  List<Stroke> _strokes = const [];
+  Stroke _current = const [];
   bool _submitted = false;
   bool _correct = false;
 
@@ -31,25 +34,25 @@ class _KanjiDrawScreenState extends State<KanjiDrawScreen> {
   }
 
   void _onPanUpdate(DragUpdateDetails d) {
-    setState(() => _current.add(d.localPosition));
+    setState(() => _current = [..._current, d.localPosition]);
   }
 
   void _onPanEnd(DragEndDetails _) {
-    if (_current.length > 2) {
-      setState(() => _strokes.add(List.from(_current)));
-    }
-    _current = [];
+    setState(() {
+      if (_current.length > 2) _strokes = [..._strokes, _current];
+      _current = const [];
+    });
   }
 
   void _clear() => setState(() {
-        _strokes.clear();
+        _strokes = const [];
         _submitted = false;
       });
 
   void _undo() {
     if (_strokes.isNotEmpty) {
       setState(() {
-        _strokes.removeLast();
+        _strokes = _strokes.sublist(0, _strokes.length - 1);
         _submitted = false;
       });
     }
@@ -165,6 +168,10 @@ class _KanjiDrawScreenState extends State<KanjiDrawScreen> {
                       ),
                       // Gesture detector
                       GestureDetector(
+                        // BẮT BUỘC: con là SizedBox rỗng, không tự nhận hit test. Mặc định
+                        // (deferToChild) thì GestureDetector không bao giờ nhận được chạm →
+                        // bản cũ không vẽ được nét nào.
+                        behavior: HitTestBehavior.opaque,
                         onPanStart: _onPanStart,
                         onPanUpdate: _onPanUpdate,
                         onPanEnd: _onPanEnd,

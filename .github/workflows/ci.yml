@@ -195,6 +195,29 @@ jobs:
           name: android-instrumented-report
           path: apps/nihongo-android/app/build/reports/androidTests/
 
+  # ── Flutter: analyze + test (CI cũ không có job này: test smoke đỏ từ lâu mà không ai biết) ──
+  flutter:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: apps/nihongo_flutter
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Code Drift tự sinh (*.g.dart) được commit: phải khớp với schema hiện tại
+      - name: Generated code up to date
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- lib
+      - run: flutter analyze
+      # Test integration (cần backend thật) tự bỏ qua khi không đặt INTEGRATION=1
+      - run: flutter test
+
   # ── iOS: unit test + UI test trên simulator (cần runner macOS) ──────────────
   ios:
     runs-on: macos-15

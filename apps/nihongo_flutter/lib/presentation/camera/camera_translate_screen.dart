@@ -92,14 +92,9 @@ class _CameraTranslateScreenState extends ConsumerState<CameraTranslateScreen>
     }
   }
 
-  Future<void> _startStream() async {
-    final c = _controller;
-    if (c == null || !c.value.isInitialized || c.value.isStreamingImages) {
-      return;
-    }
-
-    await c.startImageStream(_onCameraFrame);
-  }
+  /// Không mở luồng ảnh khi chưa có bộ nhận chữ: bản cũ nhận ~30 khung hình/giây rồi bỏ đi,
+  /// chỉ tốn pin và CPU. Bật lại cùng lúc với OCR.
+  Future<void> _startStream() async {}
 
   Future<void> _stopStream() async {
     final c = _controller;
@@ -107,11 +102,6 @@ class _CameraTranslateScreenState extends ConsumerState<CameraTranslateScreen>
     try {
       await c.stopImageStream();
     } catch (_) {}
-  }
-
-  Future<void> _onCameraFrame(CameraImage _) async {
-    // Google ML Kit excludes the arm64 iOS simulator, so on-device OCR
-    // cannot be linked into this iOS 27 simulator build.
   }
 
   void _togglePause() {
@@ -175,7 +165,8 @@ class _CameraTranslateScreenState extends ConsumerState<CameraTranslateScreen>
             child: Text(
               _paused
                   ? 'Đã tạm dừng'
-                  : 'Camera xem trước. Nhận chữ trên máy không chạy trên simulator iOS 27.',
+                  : 'Nhận chữ đang TẠM TẮT trên mọi nền tảng: bản Flutter đã gỡ ML Kit để build '
+                      'được trên simulator iOS. Dịch camera vẫn có ở app Android và iOS bản native.',
               style: const TextStyle(color: Colors.white70, fontSize: 13),
               textAlign: TextAlign.center,
             ),

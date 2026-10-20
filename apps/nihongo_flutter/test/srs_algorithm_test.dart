@@ -100,4 +100,25 @@ void main() {
       );
     });
   });
+
+  test('ôn lại đúng N ngày LỊCH sau, cùng giờ; thời điểm do người gọi truyền vào', () {
+    final at = DateTime(2026, 10, 20, 21, 30);
+    final card = SrsCard(
+      id: 1, vocabularyId: 1, easeFactor: 2.5, interval: 1, repetitions: 1,
+      nextReviewAt: at, mastered: false, syncStatus: SyncStatus.synced, updatedAt: at,
+    );
+    final next = SrsAlgorithm.calculateNextReview(card, 4, now: at);
+    expect(next.interval, 6);
+    expect(next.nextReviewAt, DateTime(2026, 10, 26, 21, 30));
+    expect(next.updatedAt, at);
+  });
+
+  test('qua cuối tháng vẫn đúng ngày lịch', () {
+    final at = DateTime(2026, 1, 30, 8);
+    final card = SrsCard(
+      id: 1, vocabularyId: 1, easeFactor: 2.5, interval: 1, repetitions: 1,
+      nextReviewAt: at, mastered: false, syncStatus: SyncStatus.synced, updatedAt: at,
+    );
+    expect(SrsAlgorithm.calculateNextReview(card, 4, now: at).nextReviewAt, DateTime(2026, 2, 5, 8));
+  });
 }

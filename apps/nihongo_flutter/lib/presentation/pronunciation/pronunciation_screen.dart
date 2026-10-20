@@ -52,9 +52,11 @@ class _PronunciationScreenState extends State<PronunciationScreen> {
     });
 
     await _speech.listen(
-      localeId: 'ja-JP',
-      listenFor: const Duration(seconds: 5),
-      pauseFor: const Duration(seconds: 2),
+      listenOptions: SpeechListenOptions(
+        localeId: 'ja-JP',
+        listenFor: const Duration(seconds: 5),
+        pauseFor: const Duration(seconds: 2),
+      ),
       onResult: (result) {
         setState(() {
           _recognized = result.recognizedWords;

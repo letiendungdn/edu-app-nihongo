@@ -7,6 +7,10 @@ import com.edu.nihongo.data.NetworkStatus
 import com.edu.nihongo.data.local.AppDatabase
 import com.edu.nihongo.data.local.TokenStorage
 import com.edu.nihongo.data.local.TokenStore
+import com.edu.nihongo.data.local.KeystoreTokenCipher
+import com.edu.nihongo.data.local.TokenCipher
+import com.edu.nihongo.data.live.LiveCallKeeper
+import com.edu.nihongo.data.live.ServiceLiveCallKeeper
 import com.edu.nihongo.data.local.dao.ExamAttemptDao
 import com.edu.nihongo.data.local.dao.GrammarDao
 import com.edu.nihongo.data.local.dao.KanjiDao
@@ -233,6 +237,13 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindTokenStorage(impl: TokenStore): TokenStorage
+
+    @Binds
+    @Singleton
+    abstract fun bindTokenCipher(impl: KeystoreTokenCipher): TokenCipher
+
+    @Binds
+    abstract fun bindLiveCallKeeper(impl: ServiceLiveCallKeeper): LiveCallKeeper
 
     @Binds
     abstract fun bindNetworkStatus(impl: NetworkMonitor): NetworkStatus

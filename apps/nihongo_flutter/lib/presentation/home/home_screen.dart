@@ -97,7 +97,8 @@ class HomeScreen extends ConsumerWidget {
           _NavCard(
             icon: Icons.translate_rounded,
             title: 'Dịch camera',
-            subtitle: 'Nhận chữ & dịch trực tiếp, cache offline',
+            subtitle: 'Nhận chữ đang tạm tắt — chỉ xem trước camera',
+            badge: 'TẠM TẮT',
             onTap: () => context.push(Routes.cameraTranslate),
           ),
           _NavCard(

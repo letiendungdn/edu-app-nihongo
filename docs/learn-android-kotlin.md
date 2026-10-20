@@ -1,5 +1,7 @@
 # Học Android Kotlin — Từ Code Thật Của `nihongo-android`
 
+> Phần nền tảng hệ điều hành (vòng đời tiến trình, Intent, Service, chạy nền, quyền, ANR, bảo mật, thay đổi theo phiên bản): [learn-android-fundamentals.md](./learn-android-fundamentals.md).
+
 File này dạy Kotlin và Android bằng chính code trong `apps/nihongo-android` (49 file Kotlin, khoảng 4.900 dòng). Mỗi mục gồm:
 
 - **Code thật** trích từ repo, có đường dẫn file và số dòng.

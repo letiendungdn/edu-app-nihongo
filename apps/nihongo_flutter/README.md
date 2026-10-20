@@ -7,40 +7,55 @@ App mobile học tiếng Nhật (EDU APP), kiến trúc Clean Architecture + Dri
 ```bash
 cd apps/nihongo_flutter
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter run                 # Android / iOS device
+dart run build_runner build --delete-conflicting-outputs   # chỉ cần khi đổi bảng Drift
+flutter run                 # Android emulator / iOS simulator / máy thật
 flutter run -d chrome       # Web (Drift WASM trong web/)
 ```
 
-Chrome cần file `web/sqlite3.wasm` + `web/drift_worker.js` (đã có sẵn).  
-Màn **Dịch camera** trên web chỉ hiện stub (ML Kit không chạy browser).
+Chrome cần file `web/sqlite3.wasm` + `web/drift_worker.js` (đã có sẵn).
 
 ## API base URL
 
-- Android emulator: `http://10.0.2.2:8080/api`
-- Chrome / web: `http://localhost:8080/api` (Docker nginx)
+Mặc định gọi thẳng API gateway ở cổng **3000** ([lib/data/remote/api_config.dart](lib/data/remote/api_config.dart)):
 
-Máy thật / iOS simulator:
+| Chạy trên | URL mặc định |
+|---|---|
+| Emulator Android | `http://10.0.2.2:3000/api` (10.0.2.2 = máy host, chỉ có trên emulator Android) |
+| Simulator iOS, Chrome | `http://localhost:3000/api` |
+| Máy thật | tự truyền: `flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000/api` |
+
+## Tính năng
+
+- **Từ vựng:** tải theo bài từ `GET /api/vocabularies`, lưu SQLite (Drift), đọc offline.
+- **SRS:** ôn flashcard local (SM-2). Mỗi lần chấm ghi vào hàng đợi (mỗi thẻ giữ lần chấm mới nhất), gửi `POST /api/progress/review` khi đăng nhập và có mạng. Gửi lỗi thì hàng đợi còn nguyên, lần sau gửi lại.
+- **Đăng nhập:** access token và refresh cookie lưu trong secure storage. Token hết hạn (401) thì tự refresh một lần rồi gửi lại request ([auth_interceptor.dart](lib/data/remote/auth_interceptor.dart)).
+- **Luyện viết Kanji, phát âm, gia sư AI, luyện câu AI, livestream.** AI chạy ở server (`/api/ai/...`), app không giữ API key nào.
+- **Dịch camera: đang tạm tắt.** Đã gỡ ML Kit để build được trên simulator iOS (ML Kit không hỗ trợ simulator arm64). Màn hình chỉ còn xem trước camera; app Android và iOS bản native vẫn dịch camera được.
+
+## Test
 
 ```bash
-flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
+flutter analyze
+flutter test                                   # unit + widget test
+INTEGRATION=1 flutter test test/integration    # với backend thật đang chạy ở localhost:3000
 ```
 
-## Tính năng MVP
-
-- **Từ vựng**: tải theo bài từ `GET /api/vocabularies`, lưu SQLite, đọc offline
-- **SRS**: ôn flashcard local (SM-2), sync queue khi đăng nhập + có mạng (`POST /api/progress/review`)
-- **Đăng nhập**: JWT lưu secure storage
+CI chạy `flutter analyze`, `flutter test`, và kiểm tra code Drift tự sinh còn khớp schema (job `flutter` trong `.github/workflows/ci.yml`).
 
 ## Cấu trúc
 
 ```
 lib/
-├── domain/     # entity, repository interface, use case
-├── data/       # Drift, Dio, repository impl
-├── presentation/
-├── providers.dart
+├── domain/        entity, repository interface, use case (không phụ thuộc Flutter)
+├── data/
+│   ├── local/     Drift (app_database.dart), token store
+│   ├── remote/    Dio, AuthInterceptor, các API
+│   └── repository/ VocabularyRepositoryImpl (offline-first + hàng đợi sync)
+├── core/          tên route (routes.dart)
+├── presentation/  màn hình, GoRouter (app.dart)
+├── native/        MethodChannel đo hiệu năng native
+├── providers.dart Riverpod providers
 └── utils/
 ```
 
-Chi tiết kiến trúc: [docs/cursor-flutter-offline.md](../../docs/cursor-flutter-offline.md)
+Học kiến trúc và code của app: [docs/roadmap-flutter.md](../../docs/roadmap-flutter.md) (Giai đoạn 2–4 bám đúng code trong thư mục này).

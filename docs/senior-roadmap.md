@@ -1,7 +1,7 @@
 # Lộ trình lên Senior — dựa trên edu_app
 
 > **Phạm vi:** backend / system design / Everfit Tech Lead (NestJS, Prisma, Stripe, Kafka…).  
-> **Không nhầm với:** [learn-mobile-senior.md](./learn-mobile-senior.md) (tier skill mobile) · [learn-senior-roadmap.md](./learn-senior-roadmap.md) (11 tuần thực hành mobile).  
+> **Không nhầm với:** [learn-mobile-senior.md](./learn-mobile-senior.md) (tier skill mobile) · [notes-senior-study.md](./notes-senior-study.md) Phần 2 (11 tuần thực hành mobile).  
 > Status feature mobile/web: [mobile-tech-stacks.md](./mobile-tech-stacks.md), [system-design.md](./system-design.md).
 
 > Dựa trên codebase thực tế + yêu cầu Everfit Tech Lead JD.

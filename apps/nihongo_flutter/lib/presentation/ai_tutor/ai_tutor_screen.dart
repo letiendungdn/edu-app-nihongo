@@ -49,10 +49,13 @@ class _AiTutorScreenState extends ConsumerState<AiTutorScreen> {
         history: _messages.sublist(0, _messages.length - 1),
         vocabContext: _buildVocabContext(),
       );
+      // Người dùng có thể đã thoát màn hình trong lúc chờ AI trả lời
+      if (!mounted) return;
       setState(() {
         _messages.add(AiMessage(role: 'assistant', text: answer));
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _messages.add(AiMessage(
           role: 'assistant',
@@ -60,8 +63,10 @@ class _AiTutorScreenState extends ConsumerState<AiTutorScreen> {
         ));
       });
     } finally {
-      setState(() => _loading = false);
-      _scrollToBottom();
+      if (mounted) {
+        setState(() => _loading = false);
+        _scrollToBottom();
+      }
     }
   }
 

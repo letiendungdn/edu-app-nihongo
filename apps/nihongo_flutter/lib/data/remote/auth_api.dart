@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../local/token_store.dart';
+import 'auth_interceptor.dart';
 
 String? _extractAccessToken(dynamic data) {
   if (data is! Map) return null;
@@ -30,7 +31,7 @@ class AuthApi {
         message: 'Không nhận được access token',
       );
     }
-    await _tokenStore.saveAccessToken(token);
+    await _saveSession(token, res.headers);
   }
 
   Future<void> loginWithOidc({
@@ -51,12 +52,21 @@ class AuthApi {
         message: 'Không nhận được access token từ OIDC',
       );
     }
-    await _tokenStore.saveAccessToken(token);
+    await _saveSession(token, res.headers);
+  }
+
+  /// Lưu cả refresh cookie: thiếu nó thì 15 phút sau (access token hết hạn) không refresh được.
+  Future<void> _saveSession(String accessToken, Headers headers) async {
+    await _tokenStore.saveAccessToken(accessToken);
+    final cookie = refreshCookieFrom(headers);
+    if (cookie != null) await _tokenStore.saveRefreshCookie(cookie);
   }
 
   Future<void> logout() async {
     try {
-      await _dio.post('/auth/logout');
+      // Gửi kèm refresh cookie để server thu hồi đúng refresh token của máy này
+      final cookie = await _tokenStore.getRefreshCookie();
+      await _dio.post('/auth/logout', options: Options(headers: {if (cookie != null) 'Cookie': cookie}));
     } finally {
       await _tokenStore.clear();
     }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.edu.nihongo.data.LiveNavigationStore
+import com.edu.nihongo.data.live.LiveCallKeeper
 import com.edu.nihongo.data.remote.LiveApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +38,7 @@ class LiveHostViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val navStore: LiveNavigationStore,
     private val liveApi: LiveApi,
+    private val callKeeper: LiveCallKeeper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LiveHostUiState())
@@ -47,6 +49,35 @@ class LiveHostViewModel @Inject constructor(
 
     var room: Room? = null
         private set
+
+    // Chỉ bật camera/micro khi ĐÃ kết nối VÀ đã có quyền. Bản cũ bật ngay sau connect: người dùng
+    // chưa kịp cấp quyền thì lỗi bị bắt chung thành "Không phát live được", cấp quyền xong cũng không bật lại.
+    private var connected = false
+    private var permissionsGranted = false
+    private var published = false
+
+    /** Màn hình gọi mỗi khi trạng thái quyền camera + micro đổi. */
+    fun onPermissionsChanged(granted: Boolean) {
+        permissionsGranted = granted
+        publishIfReady()
+    }
+
+    private fun publishIfReady() {
+        val r = room ?: return
+        if (!connected || !permissionsGranted || published) return
+        published = true
+        viewModelScope.launch {
+            try {
+                r.localParticipant.setCameraEnabled(true)
+                r.localParticipant.setMicrophoneEnabled(true)
+                // Giữ buổi live khi app xuống nền (foreground service camera|microphone)
+                callKeeper.start()
+            } catch (e: Exception) {
+                published = false
+                _uiState.update { it.copy(error = e.message ?: "Không bật được camera hoặc micro") }
+            }
+        }
+    }
 
     init {
         startStream()
@@ -92,10 +123,9 @@ class LiveHostViewModel @Inject constructor(
                 }
 
                 r.connect(join.wsUrl, join.token)
-                r.localParticipant.setCameraEnabled(true)
-                r.localParticipant.setMicrophoneEnabled(true)
-
+                connected = true
                 _uiState.update { it.copy(connecting = false) }
+                publishIfReady()
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(connecting = false, error = e.message ?: "Không phát live được")
@@ -129,6 +159,7 @@ class LiveHostViewModel @Inject constructor(
                 } catch (_: Exception) {
                 }
             }
+            callKeeper.stop()
             room?.disconnect()
             room = null
             _finished.send(Unit)
@@ -136,6 +167,7 @@ class LiveHostViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        callKeeper.stop()
         room?.disconnect()
         room = null
         super.onCleared()

@@ -238,6 +238,8 @@ findFirst(conflict)     // A và B cùng thấy trống
 
 # PHẦN 2 — MOBILE SENIOR — Flutter (11 tuần)
 
+> **Lưu ý:** ví dụ Tuần 1–2 bên dưới viết bằng TypeScript cho app **Expo** (`apps/nihongo-mobile`); bản Expo hiện đã gọi API trước rồi mới xóa hàng đợi. Lỗi cùng loại ở bản **Flutter** (xóa hàng đợi trước khi gọi API → mất lần ôn khi API lỗi) đã sửa trong `apps/nihongo_flutter/lib/data/repository/vocabulary_repository_impl.dart`, test ở `test/data/vocabulary_repository_sync_test.dart`; giải thích ở [roadmap-flutter.md](./roadmap-flutter.md) phần Data Layer.
+
 ## Tuần 1–2: Fix flushSyncQueue + Sentry
 
 ### Bug root cause
@@ -256,7 +258,7 @@ async flushSyncQueue() {
 
 ```typescript
 // ✅ ĐÚNG — gọi API trước, update local sau
-// apps/nihongo-mobile/src/database/sync.ts
+// apps/nihongo-mobile/src/data/repository.ts (app Expo)
 async flushSyncQueue() {
   if (!(await isOnline())) return;
 

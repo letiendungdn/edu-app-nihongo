@@ -1,23 +1,25 @@
 # Lộ trình Senior Mobile — Từ Project Này
 
 > **Phạm vi:** checklist skill tier mobile (push, sync, OCR…).  
-> Khác [learn-senior-roadmap.md](./learn-senior-roadmap.md) (11 tuần) và [senior-roadmap.md](./senior-roadmap.md) (backend).  
+> Khác [notes-senior-study.md](./notes-senior-study.md) Phần 2 (11 tuần) và [senior-roadmap.md](./senior-roadmap.md) (backend).  
 > Status: [mobile-tech-stacks.md](./mobile-tech-stacks.md).
 
 ## Hiện trạng đã có
 
 ```
 ✅ Clean Architecture (Domain/Data/Presentation)
-✅ SQLite offline-first + Sync queue
-✅ SRS algorithm
-✅ Camera + ML Kit OCR
+✅ SQLite offline-first + Sync queue (gửi API trước, thành công mới xóa hàng đợi; mỗi thẻ giữ lần chấm mới nhất)
+✅ SRS algorithm (nhận `now` từ ngoài, cộng ngày lịch)
+⚠️ Camera OCR: có ở app Android (ML Kit) và iOS (Vision); bản Flutter đang TẠM TẮT
+   (gỡ ML Kit để build được simulator iOS)
 ✅ Riverpod state management (Flutter)
 ✅ Drift ORM với Stream reactive
-✅ Dio interceptor + token refresh
+✅ Dio AuthInterceptor: 401 → refresh một lần → gửi lại (Flutter); Android: OkHttp Authenticator
 ✅ go_router navigation
-✅ Dark mode
-✅ Native platform channel
-✅ Livestream (docs + plan)
+✅ Dark mode (ThemeMode.system)
+✅ Native platform channel (MethodChannel com.edu.nihongo/native_perf)
+✅ Livestream LiveKit (host publish camera + mic, viewer xem, chat qua data channel)
+✅ CI: Flutter analyze + test, Android unit + emulator test, iOS unit + UI test
 ```
 
 ---

@@ -82,14 +82,15 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<({SrsCardTableData card, VocabularyTableData vocab})>>
       watchDueReviewCards({int limit = 30}) {
-    final now = DateTime.now().millisecondsSinceEpoch;
+    // KHÔNG lọc theo giờ ở đây: `now` chốt một lần lúc tạo stream, thẻ đến hạn sau đó không bao
+    // giờ hiện. Sắp xếp theo giờ đến hạn (thẻ đến hạn luôn ở đầu); GetReviewQueueUseCase lọc lại
+    // theo giờ hiện tại mỗi phút.
     final query = select(srsCardTable).join([
       innerJoin(
         vocabularyTable,
         vocabularyTable.id.equalsExp(srsCardTable.vocabularyId),
       ),
     ])
-      ..where(srsCardTable.nextReviewAt.isSmallerOrEqualValue(now))
       ..orderBy([OrderingTerm.asc(srsCardTable.nextReviewAt)])
       ..limit(limit);
 

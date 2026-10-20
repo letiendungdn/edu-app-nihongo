@@ -62,6 +62,10 @@ fun LiveHostScreen(
         viewModel.finished.collect { onBack() }
     }
 
+    LaunchedEffect(permissions.allPermissionsGranted) {
+        viewModel.onPermissionsChanged(permissions.allPermissionsGranted)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

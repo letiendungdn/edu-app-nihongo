@@ -417,7 +417,7 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 | 5    | CameraX + ML Kit Japanese   | `presentation/camera/`            |
 
 
-**Đọc thêm:** [learn-android-kotlin.md](./learn-android-kotlin.md) (lộ trình học tuần + bài tập), [roadmap-android.md](./roadmap-android.md), [cursor-android-offline.md](./cursor-android-offline.md)
+**Đọc thêm:** [learn-android-kotlin.md](./learn-android-kotlin.md) (lộ trình học tuần + bài tập), [roadmap-android.md](./roadmap-android.md), [learn-android-fundamentals.md](./learn-android-fundamentals.md)
 
 **Sản phẩm tuần:** thêm field UI + chạy `SrsAlgorithmTest` xanh.
 
@@ -436,7 +436,7 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 | 5    | camera + google_mlkit         | màn translate                                 |
 
 
-**Đọc thêm:** [roadmap-flutter.md](./roadmap-flutter.md), [cursor-flutter-offline.md](./cursor-flutter-offline.md)
+**Đọc thêm:** [roadmap-flutter.md](./roadmap-flutter.md) (Giai đoạn 2–4 bám code thật của `apps/nihongo_flutter`)
 
 **Sản phẩm tuần:** `flutter test` xanh; sửa một widget vocab.
 
@@ -629,7 +629,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 | 5    | Viết unit/integration test cho sync helper hoặc repository (mock API)  |
 
 
-**Đọc:** [cursor-android-offline.md](./cursor-android-offline.md) hoặc [cursor-flutter-offline.md](./cursor-flutter-offline.md) (tùy stack).
+**Đọc:** [learn-android-kotlin.md](./learn-android-kotlin.md) mục 30 (Android) hoặc [roadmap-flutter.md](./roadmap-flutter.md) phần Data Layer (Flutter), tùy stack.
 
 **Đầu ra:** note “offline queue hoạt động thế nào” + 1 test.
 
@@ -698,7 +698,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 | Stack         | File                                                                                              |
 | ------------- | ------------------------------------------------------------------------------------------------- |
 | React Native  | [roadmap-react-native.md](./roadmap-react-native.md)                                              |
-| Android       | [learn-android-kotlin.md](./learn-android-kotlin.md) · [roadmap-android.md](./roadmap-android.md) |
+| Android       | [learn-android-kotlin.md](./learn-android-kotlin.md) · [learn-android-fundamentals.md](./learn-android-fundamentals.md) · [roadmap-android.md](./roadmap-android.md) |
 | Flutter       | [roadmap-flutter.md](./roadmap-flutter.md)                                                        |
 | Swift         | [learn-swift-ios.md](./learn-swift-ios.md) · [roadmap-swift.md](./roadmap-swift.md)               |
 | ReactJS (web) | [roadmap-reactjs.md](./roadmap-reactjs.md)                                                        |
