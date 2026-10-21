@@ -19,4 +19,8 @@ paths = [
   '''^docker-compose\.yml$''',
   # Build output không commit
   '''(^|/)\.next/''',
+  # Checksum CocoaPods (git SHA cạnh tên pod). Tên có "Auth" hoặc "api"
+  # (AppAuth, GTMAppAuth, react-native-app-auth, React-cxxstableapi) bị rule
+  # generic-api-key nhận nhầm thành khóa.
+  '''(^|/)Podfile\.lock$''',
 ]
