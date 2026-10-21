@@ -1,9 +1,10 @@
 {
   // CI chặn khi có lỗ hổng HIGH hoặc CRITICAL trong dependency production (npm audit --omit=dev).
-  // next ≥15.5.28, postcss 8.5.30, source-map-js 1.2.2 (override) — xem docs/learn-security-backend.md.
+  // next ≥15.5.28, postcss 8.5.30, source-map-js 1.2.2, follow-redirects 1.16.1,
+  // launch-editor 2.14.2 (override) — xem docs/learn-security-backend.md.
   // Mức moderate chỉ theo dõi, không chặn.
   // Cần ngoại lệ thì thêm GHSA id vào allowlist KÈM lý do và điều kiện gỡ.
-  "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
+  "$schema": "./audit-ci.schema.json",
   "high": true,
   "skip-dev": true,
   "report-type": "summary",
