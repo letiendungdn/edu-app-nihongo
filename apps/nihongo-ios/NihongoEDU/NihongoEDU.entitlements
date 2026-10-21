@@ -9,5 +9,10 @@
     <array>
         <string>group.com.edu.nihongo.ios</string>
     </array>
+    <!-- Apple Pay: merchant ID phải được tạo trên Apple Developer và gắn chứng chỉ của Stripe -->
+    <key>com.apple.developer.in-app-payments</key>
+    <array>
+        <string>merchant.com.edu.nihongo</string>
+    </array>
 </dict>
 </plist>

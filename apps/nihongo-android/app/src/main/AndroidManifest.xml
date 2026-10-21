@@ -79,5 +79,9 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+        <!-- Bật Google Pay API cho GooglePayLauncher của Stripe -->
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
     </application>
 </manifest>

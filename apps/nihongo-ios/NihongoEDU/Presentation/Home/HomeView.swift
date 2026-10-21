@@ -6,6 +6,7 @@ enum AppRoute: Hashable {
     case vocab, srs, sentencePractice, login, cameraTranslate, live, progress
     case reading, readingDetail(id: Int), exams, exam(id: String), kana, community, chat(roomId: Int)
     case aiTutor, pronunciation(kana: String, meaning: String), kanjiDraw(kanji: String, kana: String)
+    case premium
 }
 
 struct HomeView: View {
@@ -58,6 +59,10 @@ struct HomeView: View {
                         NavCard(title: "Đăng nhập", subtitle: "Keycloak OIDC hoặc email", icon: "🔑") {
                             path.append(AppRoute.login)
                         }
+                    }
+
+                    NavCard(title: "Nâng cấp Premium", subtitle: "Mua gói bằng Apple Pay", icon: "⭐️") {
+                        path.append(AppRoute.premium)
                     }
 
                     ReminderPermissionCard()
@@ -136,6 +141,7 @@ struct HomeView: View {
                 case .kana:              KanaView()
                 case .community:         RoomsView()
                 case .chat(let roomId):  ChatView(roomId: roomId)
+                case .premium:           PremiumView()
                 }
             }
             // Mạng vừa có lại: gửi hàng đợi ôn tập

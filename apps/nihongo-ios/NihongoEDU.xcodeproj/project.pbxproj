@@ -12,6 +12,7 @@
 		0A3AFB2D0359C6ED0B607CB1 /* NavCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4060F08A4D7B198C78F43E19 /* NavCard.swift */; };
 		0D6DDC450A256616E43D7A82 /* ExamAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5830F505C81898BADCC8AEAC /* ExamAPI.swift */; };
 		0F3215405F84C96EDB4C97CA /* OverlayMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AC89D7B3651BA60661A54A /* OverlayMapperTests.swift */; };
+		123A93819AD12B4F0FA4FAB0 /* PremiumCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B4EE186CE7B2CBF3878859 /* PremiumCheckout.swift */; };
 		12A4A4ED9FA6AE1E0EA6BB6E /* MigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A2B3DE752B16A637341C4B9 /* MigrationTests.swift */; };
 		14AD9CCBBCCBEE118ECC07CB /* VocabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE222A2A9652E698D3F33B9E /* VocabView.swift */; };
 		1628F547B030C77F0C502F18 /* TranslateAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F77D3B13A9586DAD83072A1 /* TranslateAPI.swift */; };
@@ -38,11 +39,13 @@
 		6C7E3F656551C374AA19A9C0 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CF622DEE9E4D605DA79363 /* NetworkMonitor.swift */; };
 		6DD4A3CC95E6E53B1AA229A9 /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60AEEC016C1B077C2A219471 /* PushService.swift */; };
 		810936052082D904B49B1F76 /* HTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C4174C6B0D47A6B688D99C3 /* HTTPClient.swift */; };
+		8116CB8B75C8706978176665 /* StripeApplePay in Frameworks */ = {isa = PBXBuildFile; productRef = FDEA25C9A1220DEED114ED8A /* StripeApplePay */; };
 		817A7A76BD9347585A20CBEF /* Vocabulary.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2735DDCF805ACBD49DA653 /* Vocabulary.swift */; };
 		86D5B00A7A3A20EA0FA57F32 /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2780A1ABF6D0B3B1F5EAE53 /* AuthState.swift */; };
 		87F7E272B48CC4BE6A9D2B90 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74A810CC3173C264E9503BC /* APIClient.swift */; };
 		8819129E815875FCA00558E1 /* AiAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0F5542C4C39092C1DA05F31 /* AiAPITests.swift */; };
 		8953B03F6F31EF3540AE4F70 /* ProgressScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E597BA74D939FF015962CE5F /* ProgressScreen.swift */; };
+		90EE3BE80ECD339D8670EE66 /* ApplePayWallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46E0942F7CD3A3561C15AC9E /* ApplePayWallet.swift */; };
 		9848F62C47C5C3CAE7F97D40 /* DueCardsReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1BEBD3018B261EF89BAE890 /* DueCardsReporter.swift */; };
 		9A8A168C01A51B1F25C8E203 /* SentencePracticeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72E734258B699EB913673635 /* SentencePracticeViewModel.swift */; };
 		9F2400A0D92075C400872A38 /* UserMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA385B6C550BBF38BB387A7C /* UserMessage.swift */; };
@@ -66,6 +69,7 @@
 		D12B6CD575B33C2864182005 /* NihongoWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AFE2FD58E99D1ADF46D23465 /* NihongoWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D159E53CA4D9BC34A0D0897D /* KeycloakConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD577292E2ABA2BAF2BE9C6 /* KeycloakConfig.swift */; };
 		D2C867A53917826A1059E037 /* LiveAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826AF2E165F1489DC1315E88 /* LiveAPI.swift */; };
+		D532EB5A710B22C41D0754B4 /* PremiumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4161524B5ED325488522F363 /* PremiumView.swift */; };
 		D5F5F4DBF6AE33F8D9EA8003 /* DueCardsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AA3FF6C25B1DE3F5F72A6C /* DueCardsWidget.swift */; };
 		D8115DBF108C347A70A545B7 /* LessonContentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8E41F240CE5764B9F416CC /* LessonContentViews.swift */; };
 		D90419AD6DF96A43E2EF1054 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A0382DE0337EC2876EEAF4 /* AppRouter.swift */; };
@@ -73,6 +77,8 @@
 		E340C711C3E785F0A855DCAE /* ContentAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771B2B6ED9604B12F592DEBE /* ContentAPI.swift */; };
 		E355CF0D35FAA533BE378231 /* SRSAlgorithm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9786D0EF578A343663F2AFB1 /* SRSAlgorithm.swift */; };
 		E461BED01A44F34BC37E4786 /* SRSView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6741AB83B4EBAECEADAAE804 /* SRSView.swift */; };
+		E573C03F25015891E70273D0 /* PremiumCheckoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBC2F3D8E89AF049DB0A5A9 /* PremiumCheckoutTests.swift */; };
+		EA468C75C9580902E5D14B81 /* SubscriptionAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5693A8577EC5E4B569A5D80B /* SubscriptionAPI.swift */; };
 		EFFCDF5D59D70641A0AE7C7D /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = ADEC0C0F005EEF9F2C393156 /* LiveKit */; };
 		F41112FADB3A1A888CF0B25D /* ReadingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A79F07071D906314ADAC5AD /* ReadingViews.swift */; };
 		F7D9A06D89B86BB8B57E0CE8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D8DCEACE14341154AFA293 /* AppDelegate.swift */; };
@@ -126,6 +132,7 @@
 		0F77D3B13A9586DAD83072A1 /* TranslateAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslateAPI.swift; sourceTree = "<group>"; };
 		135A8A1B178FE8BE328948E7 /* KeycloakAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeycloakAuth.swift; sourceTree = "<group>"; };
 		1E676634E927DCC6407AFDAF /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
+		1EBC2F3D8E89AF049DB0A5A9 /* PremiumCheckoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumCheckoutTests.swift; sourceTree = "<group>"; };
 		24AC89D7B3651BA60661A54A /* OverlayMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayMapperTests.swift; sourceTree = "<group>"; };
 		2A97E4D3505BC2A46D8081E5 /* AuthAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthAPI.swift; sourceTree = "<group>"; };
 		2BA90E2CAD94513331AA8B09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -139,10 +146,13 @@
 		403EB4BB1DD29F8C64A16E5E /* LiveViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveViews.swift; sourceTree = "<group>"; };
 		4060F08A4D7B198C78F43E19 /* NavCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavCard.swift; sourceTree = "<group>"; };
 		4078DBFF19D1D5EDD7143F84 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		4161524B5ED325488522F363 /* PremiumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumView.swift; sourceTree = "<group>"; };
 		43E923967F039068C7E944CE /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		46E0942F7CD3A3561C15AC9E /* ApplePayWallet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplePayWallet.swift; sourceTree = "<group>"; };
 		4A79F07071D906314ADAC5AD /* ReadingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingViews.swift; sourceTree = "<group>"; };
 		4C867171517FB614EF66A74B /* NihongoEDUApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NihongoEDUApp.swift; sourceTree = "<group>"; };
 		565C28376CB370DC6C8E164B /* CommunityViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityViews.swift; sourceTree = "<group>"; };
+		5693A8577EC5E4B569A5D80B /* SubscriptionAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionAPI.swift; sourceTree = "<group>"; };
 		56CF622DEE9E4D605DA79363 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		5830F505C81898BADCC8AEAC /* ExamAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamAPI.swift; sourceTree = "<group>"; };
 		589BB496A7516307CD7FB855 /* NihongoEDUUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NihongoEDUUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -178,6 +188,7 @@
 		AC44694AE7EAEA153DF021C3 /* NihongoWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NihongoWidget.entitlements; sourceTree = "<group>"; };
 		AEFAA503510C6EB53D397941 /* SRSViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRSViewModel.swift; sourceTree = "<group>"; };
 		AFE2FD58E99D1ADF46D23465 /* NihongoWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = NihongoWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2B4EE186CE7B2CBF3878859 /* PremiumCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumCheckout.swift; sourceTree = "<group>"; };
 		C1E95F85B084BA89FC0976C0 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		C8A0382DE0337EC2876EEAF4 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		D0F5542C4C39092C1DA05F31 /* AiAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiAPITests.swift; sourceTree = "<group>"; };
@@ -203,6 +214,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EFFCDF5D59D70641A0AE7C7D /* LiveKit in Frameworks */,
+				8116CB8B75C8706978176665 /* StripeApplePay in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +251,7 @@
 				E27DEF9F1EB8C30A453DD4E9 /* Kanji */,
 				0B61BEA98E384A8BFFFFA318 /* Lessons */,
 				8C349245FD578758518FE59A /* Live */,
+				77BD704A52200AB15DAD947D /* Premium */,
 				C9F5DF6BF237A519D25040F3 /* Progress */,
 				79C5BFFEE0550F444C7112EC /* Pronunciation */,
 				A5AAD791C758C15AD0404279 /* Reading */,
@@ -319,6 +332,7 @@
 				826AF2E165F1489DC1315E88 /* LiveAPI.swift */,
 				2DD85775AE4C654C24275346 /* ProgressAPI.swift */,
 				05BE69392886F55D4FC348E7 /* SentenceFeedbackAPI.swift */,
+				5693A8577EC5E4B569A5D80B /* SubscriptionAPI.swift */,
 				0F77D3B13A9586DAD83072A1 /* TranslateAPI.swift */,
 				0C79BABFBDE7742AB5861D9C /* VocabAPI.swift */,
 			);
@@ -348,6 +362,16 @@
 				4B22D3AE73EC2F03F55C9AB0 /* Remote */,
 			);
 			path = Data;
+			sourceTree = "<group>";
+		};
+		77BD704A52200AB15DAD947D /* Premium */ = {
+			isa = PBXGroup;
+			children = (
+				46E0942F7CD3A3561C15AC9E /* ApplePayWallet.swift */,
+				B2B4EE186CE7B2CBF3878859 /* PremiumCheckout.swift */,
+				4161524B5ED325488522F363 /* PremiumView.swift */,
+			);
+			path = Premium;
 			sourceTree = "<group>";
 		};
 		79C5BFFEE0550F444C7112EC /* Pronunciation */ = {
@@ -456,6 +480,7 @@
 				96D0FAC7B1704777AA724552 /* IntegrationTests.swift */,
 				7A2B3DE752B16A637341C4B9 /* MigrationTests.swift */,
 				24AC89D7B3651BA60661A54A /* OverlayMapperTests.swift */,
+				1EBC2F3D8E89AF049DB0A5A9 /* PremiumCheckoutTests.swift */,
 				688B447C05DACC75A40875F8 /* SmallUnitsTests.swift */,
 				74EF9459842E5CFF6799E631 /* SRSAlgorithmTests.swift */,
 				9AA88854FD24B37F25E247B8 /* SyncEngineTests.swift */,
@@ -568,6 +593,7 @@
 			name = NihongoEDU;
 			packageProductDependencies = (
 				ADEC0C0F005EEF9F2C393156 /* LiveKit */,
+				FDEA25C9A1220DEED114ED8A /* StripeApplePay */,
 			);
 			productName = NihongoEDU;
 			productReference = A96D087E64FE715F2FE8E798 /* NihongoEDU.app */;
@@ -641,6 +667,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				B9F4E590DDF6CA1212B8D25C /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
+				559339C3F35EE0696F0EDCEA /* XCRemoteSwiftPackageReference "stripe-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2C2D6AA056590E26772BC4A2 /* Products */;
@@ -667,6 +694,7 @@
 				F7D9A06D89B86BB8B57E0CE8 /* AppDelegate.swift in Sources */,
 				D90419AD6DF96A43E2EF1054 /* AppRouter.swift in Sources */,
 				37F325172351088756355F56 /* AppSchema.swift in Sources */,
+				90EE3BE80ECD339D8670EE66 /* ApplePayWallet.swift in Sources */,
 				9F364A855FEAFA6F8ABC92F5 /* AuthAPI.swift in Sources */,
 				86D5B00A7A3A20EA0FA57F32 /* AuthState.swift in Sources */,
 				386DFA442BDBD3A1163C8DF4 /* CameraTranslateView.swift in Sources */,
@@ -695,6 +723,8 @@
 				6C7E3F656551C374AA19A9C0 /* NetworkMonitor.swift in Sources */,
 				B597E9DAD5588C46B36F32F8 /* NihongoEDUApp.swift in Sources */,
 				4205D111882C64B960C7923C /* OverlayMapper.swift in Sources */,
+				123A93819AD12B4F0FA4FAB0 /* PremiumCheckout.swift in Sources */,
+				D532EB5A710B22C41D0754B4 /* PremiumView.swift in Sources */,
 				034AB5611387F2A69B6F93A0 /* ProgressAPI.swift in Sources */,
 				8953B03F6F31EF3540AE4F70 /* ProgressScreen.swift in Sources */,
 				C5A135921F4B4AD76C8F3F7F /* PronunciationView.swift in Sources */,
@@ -707,6 +737,7 @@
 				D0EECFDAF3C5A4BB469D3E1A /* SentenceFeedbackAPI.swift in Sources */,
 				39051F24DB5FBF2B714FA322 /* SentencePracticeView.swift in Sources */,
 				9A8A168C01A51B1F25C8E203 /* SentencePracticeViewModel.swift in Sources */,
+				EA468C75C9580902E5D14B81 /* SubscriptionAPI.swift in Sources */,
 				5090F5C1D012F04C85CC5562 /* SyncQueueItem.swift in Sources */,
 				027D4F84B35CE453E688164E /* SyncService.swift in Sources */,
 				BDF1D5C574A63C635795074D /* TokenStore.swift in Sources */,
@@ -746,6 +777,7 @@
 				3BBB4D5732A315AA260EF69B /* IntegrationTests.swift in Sources */,
 				12A4A4ED9FA6AE1E0EA6BB6E /* MigrationTests.swift in Sources */,
 				0F3215405F84C96EDB4C97CA /* OverlayMapperTests.swift in Sources */,
+				E573C03F25015891E70273D0 /* PremiumCheckoutTests.swift in Sources */,
 				C69AFB3BE5F3DCE43C3482FC /* SRSAlgorithmTests.swift in Sources */,
 				AB3918130A229BE1E3D83030 /* SmallUnitsTests.swift in Sources */,
 				540AF42CE5F21509B9DEB1DC /* SyncEngineTests.swift in Sources */,
@@ -961,6 +993,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		559339C3F35EE0696F0EDCEA /* XCRemoteSwiftPackageReference "stripe-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stripe/stripe-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 26.15.0;
+			};
+		};
 		B9F4E590DDF6CA1212B8D25C /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/livekit/client-sdk-swift";
@@ -976,6 +1016,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B9F4E590DDF6CA1212B8D25C /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
 			productName = LiveKit;
+		};
+		FDEA25C9A1220DEED114ED8A /* StripeApplePay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 559339C3F35EE0696F0EDCEA /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
+			productName = StripeApplePay;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

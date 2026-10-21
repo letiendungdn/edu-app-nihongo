@@ -30,6 +30,7 @@ Mặc định gọi thẳng API gateway ở cổng **3000** ([lib/data/remote/ap
 - **SRS:** ôn flashcard local (SM-2). Mỗi lần chấm ghi vào hàng đợi (mỗi thẻ giữ lần chấm mới nhất), gửi `POST /api/progress/review` khi đăng nhập và có mạng. Gửi lỗi thì hàng đợi còn nguyên, lần sau gửi lại.
 - **Đăng nhập:** access token và refresh cookie lưu trong secure storage. Token hết hạn (401) thì tự refresh một lần rồi gửi lại request ([auth_interceptor.dart](lib/data/remote/auth_interceptor.dart)).
 - **Luyện viết Kanji, phát âm, gia sư AI, luyện câu AI, livestream.** AI chạy ở server (`/api/ai/...`), app không giữ API key nào.
+- **Premium:** mua gói bằng Apple Pay (iOS) / Google Pay (Android) qua Stripe. Cấu hình merchant ID, chứng chỉ, webhook: [docs/payment-wallets.md](../../docs/payment-wallets.md).
 - **Dịch camera: đang tạm tắt.** Đã gỡ ML Kit để build được trên simulator iOS (ML Kit không hỗ trợ simulator arm64). Màn hình chỉ còn xem trước camera; app Android và iOS bản native vẫn dịch camera được.
 
 ## Test

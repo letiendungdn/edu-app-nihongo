@@ -13,6 +13,7 @@ import 'live/live_host_screen.dart';
 import 'live/live_list_screen.dart';
 import 'live/live_viewer_screen.dart';
 import '../../data/remote/live_api.dart';
+import 'premium/premium_screen.dart';
 import 'pronunciation/pronunciation_screen.dart';
 import 'sentence_practice/sentence_practice_screen.dart';
 import 'srs/srs_screen.dart';
@@ -218,6 +219,7 @@ final _router = GoRouter(
     ),
     GoRoute(path: Routes.login,   builder: (_, __) => const LoginScreen()),
     GoRoute(path: Routes.aiTutor, builder: (_, __) => const AiTutorScreen()),
+    GoRoute(path: Routes.premium, builder: (_, __) => const PremiumScreen()),
     GoRoute(
       path: Routes.pronunciation,
       builder: (_, state) {

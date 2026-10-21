@@ -1,8 +1,13 @@
 import axios from 'axios';
+import {Platform} from 'react-native';
 import {useAuthStore} from '../store/authStore';
 
+// Gateway chạy ở cổng 3000 (bản cũ ghi 3001: không có gì lắng nghe). 10.0.2.2 là máy host, chỉ có
+// trên emulator Android; simulator iOS dùng localhost.
 export const API_BASE_URL = __DEV__
-  ? 'http://10.0.2.2:3001/api'   // Android emulator → localhost
+  ? Platform.OS === 'android'
+    ? 'http://10.0.2.2:3000/api'
+    : 'http://localhost:3000/api'
   : 'https://api.nihongo.app/api';
 
 export const api = axios.create({

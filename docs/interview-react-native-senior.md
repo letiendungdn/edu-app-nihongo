@@ -768,10 +768,10 @@ npm install \
   @tanstack/react-query \
   axios \
   zustand \
-  @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs \
+  @react-navigation/native @react-navigation/native-stack @react-navigation/bottom-tabs \
   react-native-screens react-native-safe-area-context \
   react-native-mmkv \
-  react-native-sqlite-storage \
+  @op-engineering/op-sqlite \
   @shopify/flash-list \
   react-native-reanimated \
   react-native-gesture-handler \
@@ -780,6 +780,8 @@ npm install \
 # iOS
 cd ios && pod install
 ```
+
+> `react-native-sqlite-storage` đã ngừng bảo trì: còn gọi `jcenter()` (bị gỡ khỏi Gradle 9) nên app Android không build được, và `executeSql` chỉ chạy câu lệnh ĐẦU TIÊN của chuỗi nhiều câu. `@react-navigation/native-stack` dùng màn hình native (UINavigationController / Fragment); `createNativeStackNavigator` nằm ở gói này, không phải `@react-navigation/stack`. App mẫu: `apps/nihongo-cli/src/db/`.
 
 **Folder structure chuẩn:**
 

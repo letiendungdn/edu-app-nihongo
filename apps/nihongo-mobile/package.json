@@ -5,6 +5,7 @@
   "dependencies": {
     "@react-native-community/netinfo": "11.4.1",
     "@react-native-ml-kit/text-recognition": "^2.0.0",
+    "@stripe/stripe-react-native": "0.64.0",
     "axios": "^1.13.6",
     "expo": "~57.0.2",
     "expo-auth-session": "^57.0.4",

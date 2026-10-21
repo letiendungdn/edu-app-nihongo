@@ -118,23 +118,28 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "API_BASE_URL"
-            value = "[&quot;value&quot;: &quot;&quot;, &quot;isEnabled&quot;: false]"
-            isEnabled = "YES">
+            value = ""
+            isEnabled = "NO">
          </EnvironmentVariable>
          <EnvironmentVariable
-            key = "KEYCLOAK_CLIENT_ID"
-            value = "[&quot;value&quot;: &quot;nihongo-mobile&quot;, &quot;isEnabled&quot;: false]"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "KEYCLOAK_REALM"
-            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;edu-app&quot;]"
-            isEnabled = "YES">
+            key = "WEB_BASE_URL"
+            value = "http://nihongo.localhost:8080"
+            isEnabled = "NO">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "KEYCLOAK_URL"
-            value = "[&quot;isEnabled&quot;: false, &quot;value&quot;: &quot;http://localhost:8080&quot;]"
-            isEnabled = "YES">
+            value = "http://localhost:8080"
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "KEYCLOAK_REALM"
+            value = "edu-app"
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "KEYCLOAK_CLIENT_ID"
+            value = "nihongo-mobile"
+            isEnabled = "NO">
          </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>

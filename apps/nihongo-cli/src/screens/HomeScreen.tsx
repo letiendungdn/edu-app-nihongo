@@ -70,6 +70,12 @@ export default function HomeScreen() {
 
       <Text style={styles.section}>TÀI KHOẢN</Text>
       <NavCard
+        icon="⭐️"
+        title="Nâng cấp Premium"
+        subtitle="Mua gói bằng Apple Pay / Google Pay"
+        onPress={() => nav.navigate('Premium')}
+      />
+      <NavCard
         icon="👤"
         title={isLoggedIn ? 'Tài khoản' : 'Đăng nhập'}
         subtitle={isLoggedIn ? user?.email ?? '' : 'Sync tiến độ lên server'}

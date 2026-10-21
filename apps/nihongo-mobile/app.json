@@ -23,6 +23,13 @@
           "microphonePermission": "Cần micro để luyện phát âm tiếng Nhật.",
           "speechRecognitionPermission": "Cần nhận dạng giọng nói để chấm điểm phát âm."
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.edu.nihongo",
+          "enableGooglePay": true
+        }
       ]
     ],
     "ios": {
@@ -48,7 +55,8 @@
       "livekitWsUrl": "ws://10.0.2.2:7880",
       "keycloakUrl": "http://10.0.2.2:8080",
       "keycloakRealm": "edu-app",
-      "keycloakClientId": "nihongo-mobile"
+      "keycloakClientId": "nihongo-mobile",
+      "webBaseUrl": "http://nihongo.localhost:8080"
     }
   }
 }

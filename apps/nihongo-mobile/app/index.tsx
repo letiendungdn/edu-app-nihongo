@@ -92,6 +92,12 @@ export default function HomeScreen() {
         onPress={() => router.push('/live')}
       />
       <NavCard
+        icon="⭐️"
+        title="Nâng cấp Premium"
+        subtitle="Mua gói bằng Apple Pay / Google Pay"
+        onPress={() => router.push('/premium')}
+      />
+      <NavCard
         icon="👤"
         title="Đăng nhập"
         subtitle="Sync tiến độ lên server + đăng ký push"

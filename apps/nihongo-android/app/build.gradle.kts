@@ -147,6 +147,12 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-permissions:0.36.0")
 
+    // Google Pay qua Stripe (GooglePayLauncher). Giữ 22.x: 23.x biên dịch bằng Kotlin 2.2/2.3,
+    // compiler Kotlin 2.0.21 của project không đọc được metadata đó
+    implementation("com.stripe:payments-core:22.8.1")
+    // Nút Google Pay chính thức (bản 1.1.0 dùng Kotlin 2.0.21)
+    implementation("com.google.pay.button:compose-pay-button:1.1.0")
+
     val liveKitVersion = "2.26.0"
     val liveKitComponentsVersion = "2.4.0"
     implementation("io.livekit:livekit-android:$liveKitVersion")

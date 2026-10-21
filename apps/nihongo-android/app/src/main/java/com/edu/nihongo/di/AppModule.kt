@@ -35,6 +35,7 @@ import com.edu.nihongo.data.remote.PushApi
 import com.edu.nihongo.data.remote.PushRegistrar
 import com.edu.nihongo.data.remote.PushService
 import com.edu.nihongo.data.remote.RefreshCookieJar
+import com.edu.nihongo.data.remote.SubscriptionApi
 import com.edu.nihongo.data.remote.TokenAuthenticator
 import com.edu.nihongo.data.remote.TranslateApi
 import com.edu.nihongo.data.remote.VocabularyApi
@@ -154,6 +155,9 @@ object AppModule {
 
     @Provides fun provideLessonsApi(retrofit: Retrofit): LessonsApi =
         retrofit.create(LessonsApi::class.java)
+
+    @Provides fun provideSubscriptionApi(retrofit: Retrofit): SubscriptionApi =
+        retrofit.create(SubscriptionApi::class.java)
 
     @Provides fun provideAuthApi(retrofit: Retrofit): AuthApi =
         retrofit.create(AuthApi::class.java)

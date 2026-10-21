@@ -1,8 +1,8 @@
-import {useEffect, useState, useCallback} from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import NetInfo from '@react-native-community/netinfo';
-import {getDueCards, updateSrs, enqueueSrsSync} from '../db/vocabRepo';
-import {syncVocabFromServer, syncPendingSrs} from '../db/syncService';
-import type {Vocab} from '../types';
+import { getDueCards, updateSrs, enqueueSrsSync } from '../db/vocabRepo';
+import { syncVocabFromServer, syncPendingSrs } from '../db/syncService';
+import type { Vocab } from '../types';
 
 // SRS queue từ SQLite local — hoạt động offline
 export function useLocalSrsQueue() {
@@ -20,7 +20,7 @@ export function useLocalSrsQueue() {
     load();
   }, [load]);
 
-  return {cards, loading, reload: load};
+  return { cards, loading, reload: load };
 }
 
 // Khi app start: sync vocab từ server + flush pending queue
@@ -28,8 +28,8 @@ export function useStartupSync() {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(async state => {
       if (state.isConnected) {
-        await syncPendingSrs();       // flush pending reviews
-        await syncVocabFromServer();  // pull vocab mới nhất
+        await syncPendingSrs(); // flush pending reviews
+        await syncVocabFromServer(); // pull vocab mới nhất
       }
     });
     return () => unsubscribe();
@@ -48,14 +48,17 @@ export async function submitSrsLocal(
     .slice(0, 10);
 
   // Cập nhật SQLite ngay (instant, không cần mạng)
-  await updateSrs(vocabId, nextInterval, nextDue);
+  await updateSrs(vocabId, quality, nextInterval, nextDue);
 
   // Gửi lên server hoặc queue nếu offline
   const net = await NetInfo.fetch();
   if (net.isConnected) {
     try {
-      const {gqlClient, SUBMIT_SRS} = require('../api/graphqlClient');
-      await gqlClient.mutate({mutation: SUBMIT_SRS, variables: {vocabId, quality}});
+      const { gqlClient, SUBMIT_SRS } = require('../api/graphqlClient');
+      await gqlClient.mutate({
+        mutation: SUBMIT_SRS,
+        variables: { vocabId, quality },
+      });
     } catch {
       await enqueueSrsSync(vocabId, quality);
     }

@@ -102,6 +102,7 @@ describe("SubscriptionService", () => {
 
       expect(res).toEqual({
         clientSecret: "pi_secret_old",
+        intentType: "payment",
         subscriptionId: "sub_old",
       });
       expect(stripe.createSubscription).not.toHaveBeenCalled();
@@ -136,6 +137,7 @@ describe("SubscriptionService", () => {
       expect(stripe.createSubscription).not.toHaveBeenCalled();
       expect(res).toEqual({
         clientSecret: null,
+        intentType: null,
         subscriptionId: "sub_old",
         changedPlan: true,
       });
@@ -325,7 +327,37 @@ describe("SubscriptionService", () => {
 
       expect(result).toEqual({
         clientSecret: "cs_test_secret",
+        intentType: "payment",
         subscriptionId: "sub_return",
+      });
+    });
+
+    it("gói có dùng thử → secret của SetupIntent, intentType 'setup' (app phải xác nhận SetupIntent)", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValue(mockUser);
+      prisma.subscriptionPlanConfig.findUnique.mockResolvedValue({
+        plan: SubscriptionPlan.PRO,
+        stripePriceId: "price_pro",
+        trialDays: 7,
+      });
+      prisma.subscription.findUnique.mockResolvedValue(null);
+      stripe.createCustomer.mockResolvedValue({ id: "cus_1" });
+      stripe.createSubscription.mockResolvedValue({
+        id: "sub_trial",
+        status: "trialing",
+        pending_setup_intent: { client_secret: "seti_123_secret_abc" },
+        latest_invoice: { payment_intent: null },
+      });
+      prisma.subscription.upsert.mockResolvedValue({});
+
+      const result = await service.createOrUpgrade(
+        userId,
+        SubscriptionPlan.PRO,
+      );
+
+      expect(result).toEqual({
+        clientSecret: "seti_123_secret_abc",
+        intentType: "setup",
+        subscriptionId: "sub_trial",
       });
     });
   });

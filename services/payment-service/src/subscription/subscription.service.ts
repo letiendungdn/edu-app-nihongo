@@ -12,6 +12,7 @@ import {
 } from "@prisma/client";
 import { PrismaService } from "@app/prisma";
 import {
+  clientSecretIntentType,
   getSubscriptionClientSecret,
   getSubscriptionPeriod,
   mapStripeSubscriptionStatus,
@@ -44,6 +45,8 @@ export class SubscriptionService {
     paymentMethodId?: string,
   ): Promise<{
     clientSecret: string | null;
+    /** null khi không cần thanh toán thêm (đổi gói trên subscription đang chạy) */
+    intentType: "payment" | "setup" | null;
     subscriptionId: string;
     changedPlan?: boolean;
   }> {
@@ -77,10 +80,10 @@ export class SubscriptionService {
 
       if (existing.status === "incomplete") {
         if (samePrice) {
-          return {
-            clientSecret: getSubscriptionClientSecret(existing),
-            subscriptionId: existing.id,
-          };
+          return withIntentType(
+            getSubscriptionClientSecret(existing),
+            existing.id,
+          );
         }
         // Đổi ý sang gói khác khi chưa trả tiền: bỏ cái đang dở rồi tạo mới bên dưới
         await this.stripe.cancelSubscription(existing.id, false);
@@ -99,6 +102,7 @@ export class SubscriptionService {
         await this.persist(userId, sub, plan, updated, customerId, priceId);
         return {
           clientSecret: null,
+          intentType: null,
           subscriptionId: updated.id,
           changedPlan: true,
         };
@@ -128,10 +132,11 @@ export class SubscriptionService {
 
     await this.persist(userId, sub, plan, stripeSub, stripeCustomerId, priceId);
 
-    return {
-      clientSecret: getSubscriptionClientSecret(stripeSub),
-      subscriptionId: stripeSub.id,
-    };
+    return withIntentType(getSubscriptionClientSecret(stripeSub), stripeSub.id);
+  }
+
+  walletConfig() {
+    return this.stripe.walletConfig();
   }
 
   private async persist(
@@ -235,4 +240,12 @@ export class SubscriptionService {
       orderBy: { priceUsdCents: "asc" },
     });
   }
+}
+
+function withIntentType(clientSecret: string, subscriptionId: string) {
+  return {
+    clientSecret,
+    intentType: clientSecretIntentType(clientSecret),
+    subscriptionId,
+  };
 }

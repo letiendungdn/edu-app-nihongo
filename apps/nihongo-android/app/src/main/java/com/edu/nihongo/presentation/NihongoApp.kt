@@ -26,6 +26,7 @@ import com.edu.nihongo.presentation.live.LiveHostScreen
 import com.edu.nihongo.presentation.live.LiveListScreen
 import com.edu.nihongo.presentation.live.LiveViewerScreen
 import com.edu.nihongo.presentation.login.LoginScreen
+import com.edu.nihongo.presentation.premium.PremiumScreen
 import com.edu.nihongo.presentation.pronunciation.PronunciationScreen
 import com.edu.nihongo.presentation.sentence_practice.SentencePracticeScreen
 import com.edu.nihongo.presentation.srs.SrsScreen
@@ -52,6 +53,7 @@ object Routes {
     const val EXAMS = "exams"
     const val EXAM = "exams/{examId}"
     const val KANA = "kana"
+    const val PREMIUM = "premium"
 
     fun chat(roomId: Long) = "community/$roomId"
     fun reading(id: Long) = "reading/$id"
@@ -89,6 +91,7 @@ fun NihongoApp() {
                 onReading = { navController.navigate(Routes.READING) },
                 onExams = { navController.navigate(Routes.EXAMS) },
                 onKana = { navController.navigate(Routes.KANA) },
+                onPremium = { navController.navigate(Routes.PREMIUM) },
             )
         }
         composable(Routes.LESSONS) {
@@ -144,6 +147,12 @@ fun NihongoApp() {
         }
         composable(Routes.EXAM, arguments = listOf(navArgument("examId") { type = NavType.StringType })) {
             ExamScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.PREMIUM) {
+            PremiumScreen(
+                onBack = { navController.popBackStack() },
+                onLogin = { navController.navigate(Routes.LOGIN) },
+            )
         }
         composable(Routes.KANA) {
             KanaScreen(

@@ -27,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="ai-tutor" options={{ title: 'AI Tutor' }} />
         <Stack.Screen name="pronunciation" options={{ title: 'Luyện phát âm' }} />
         <Stack.Screen name="kanji-draw" options={{ title: 'Vẽ Kanji' }} />
+        <Stack.Screen name="premium" options={{ title: 'Nâng cấp Premium' }} />
         <Stack.Screen
           name="camera-translate"
           options={{

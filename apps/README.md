@@ -27,6 +27,7 @@ Hướng dẫn đầy đủ: [docs/run-local.md](../docs/run-local.md) · Lộ t
 | App | Folder | Stack |
 |-----|--------|-------|
 | **nihongo-mobile** | `nihongo-mobile/` | Expo / React Native |
+| **nihongo-cli** | `nihongo-cli/` | React Native CLI (bare) |
 | **nihongo-android** | `nihongo-android/` | Kotlin + Compose |
 | **nihongo_flutter** | `nihongo_flutter/` | Flutter + Drift |
 | **nihongo-ios** | `nihongo-ios/` | SwiftUI *(macOS)* |

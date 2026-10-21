@@ -128,6 +128,17 @@ export function getSubscriptionClientSecret(
   throw new Error("Subscription is missing payment client secret");
 }
 
+/**
+ * Client secret là của SetupIntent (gói có dùng thử: chưa trừ tiền, chỉ lưu thẻ/ví) hay PaymentIntent
+ * (trừ tiền kỳ đầu). App mobile cần biết để gọi đúng hàm xác nhận của Stripe SDK; trả rõ ở đây thay
+ * vì để 4 app tự đoán theo tiền tố chuỗi.
+ */
+export function clientSecretIntentType(
+  clientSecret: string,
+): "setup" | "payment" {
+  return clientSecret.startsWith("seti_") ? "setup" : "payment";
+}
+
 export function getInvoiceSubscriptionId(
   invoice: Stripe.Invoice,
 ): string | null {

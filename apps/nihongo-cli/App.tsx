@@ -1,6 +1,7 @@
 import React from 'react';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {ApolloProvider} from '@apollo/client';
+// Apollo Client v4 chuyển ApolloProvider (và mọi hook React) sang '@apollo/client/react'
+import {ApolloProvider} from '@apollo/client/react';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {gqlClient} from './src/api/graphqlClient';

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Apple Pay: merchant ID phải được tạo trên Apple Developer và gắn chứng chỉ của Stripe -->
+	<key>com.apple.developer.in-app-payments</key>
+	<array>
+		<string>merchant.com.edu.nihongo</string>
+	</array>
+</dict>
+</plist>

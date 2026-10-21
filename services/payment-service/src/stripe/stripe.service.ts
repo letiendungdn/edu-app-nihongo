@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 
@@ -17,6 +17,29 @@ export class StripeService {
       apiVersion: "2024-12-18.acacia",
       typescript: true,
     } as unknown as ConstructorParameters<typeof Stripe>[1]);
+  }
+
+  /**
+   * Cấu hình công khai cho Apple Pay / Google Pay trên app. Publishable key được Stripe thiết kế để
+   * nằm ở client; trả từ server để app không phải nhúng khóa lúc build (đổi khóa không cần ra bản mới).
+   */
+  walletConfig(): {
+    publishableKey: string;
+    merchantCountryCode: string;
+    currency: string;
+  } {
+    const publishableKey = this.config.get<string>("STRIPE_PUBLISHABLE_KEY");
+    if (!publishableKey?.startsWith("pk_")) {
+      throw new ServiceUnavailableException(
+        "Thanh toán bằng ví chưa được cấu hình (thiếu STRIPE_PUBLISHABLE_KEY)",
+      );
+    }
+    return {
+      publishableKey,
+      merchantCountryCode:
+        this.config.get<string>("STRIPE_MERCHANT_COUNTRY") ?? "US",
+      currency: "usd", // giá gói lưu theo USD (priceUsdCents)
+    };
   }
 
   /** `idempotencyKey`: gọi lại cùng khóa trong 24h thì Stripe trả đúng customer cũ, không tạo thêm. */

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.SmartToy
 import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,6 +73,7 @@ fun HomeScreen(
     onReading: () -> Unit,
     onExams: () -> Unit,
     onKana: () -> Unit,
+    onPremium: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle(initialValue = true)
@@ -241,6 +243,14 @@ fun HomeScreen(
                     subtitle = "Xem / phát live Nihongo (LiveKit)",
                     icon = Icons.Rounded.Videocam,
                     onClick = onLive,
+                )
+            }
+            item {
+                NavCard(
+                    title = "Nâng cấp Premium",
+                    subtitle = "Mua gói bằng Google Pay",
+                    icon = Icons.Rounded.WorkspacePremium,
+                    onClick = onPremium,
                 )
             }
             item {

@@ -1,3 +1,9 @@
+# Stripe React Native >= 0.80 mặc định lấy Stripe iOS SDK qua SPM, bắt buộc cả app dùng
+# `use_frameworks! :linkage => :dynamic`. Chuyển cả app RN sang dynamic framework dễ làm hỏng các
+# module native khác (mmkv, sqlite), nên tạm lấy Stripe qua CocoaPods. Stripe đánh dấu cờ này là
+# deprecated: khi nâng Stripe lên bản bỏ cờ thì phải chuyển sang dynamic framework.
+$StripeDisableSPM = true
+
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -30,5 +36,13 @@ target 'NihongoCLI' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Các pod cũ (GoogleSignIn, AppAuth, GTM*) khai báo iOS 9/10; Xcode mới chỉ build từ iOS 15
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |c|
+        if c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.1
+          c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        end
+      end
+    end
   end
 end

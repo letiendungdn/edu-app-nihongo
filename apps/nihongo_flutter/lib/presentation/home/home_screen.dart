@@ -136,6 +136,12 @@ class HomeScreen extends ConsumerWidget {
 
           const Divider(height: 32),
           _NavCard(
+            icon: Icons.workspace_premium_rounded,
+            title: 'Nâng cấp Premium',
+            subtitle: 'Mua gói bằng Apple Pay / Google Pay',
+            onTap: () => context.push(Routes.premium),
+          ),
+          _NavCard(
             icon: Icons.login_rounded,
             title: 'Đăng nhập',
             subtitle: 'Sync tiến độ SRS lên server',

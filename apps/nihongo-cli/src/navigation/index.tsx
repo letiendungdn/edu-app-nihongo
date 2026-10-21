@@ -1,6 +1,6 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Text} from 'react-native';
 
@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import VocabScreen from '../screens/VocabScreen';
 import ReviewScreen from '../screens/ReviewScreen';
 import LoginScreen from '../screens/LoginScreen';
+import PremiumScreen from '../screens/PremiumScreen';
 import type {RootStackParamList, MainTabParamList} from '../types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -72,6 +73,15 @@ export default function RootNavigator() {
             headerStyle: {backgroundColor: '#dc2626'},
             headerTintColor: '#fff',
             presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="Premium"
+          component={PremiumScreen}
+          options={{
+            title: 'Nâng cấp Premium',
+            headerStyle: {backgroundColor: '#dc2626'},
+            headerTintColor: '#fff',
           }}
         />
       </Stack.Navigator>

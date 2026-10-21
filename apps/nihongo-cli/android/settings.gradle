@@ -1,6 +1,24 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+// Monorepo (npm workspaces): gói RN bị hoist lên node_modules của gốc repo, và bản đúng với
+// react-native của app có thể nằm lồng trong node_modules/react-native/node_modules (app Expo dùng
+// RN khác phiên bản). Hỏi node như Podfile thay vì ghi cứng ../node_modules.
+pluginManagement {
+  def rnGradlePlugin = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+    }.standardOutput.asText.get().trim()
+  ).getParentFile().absolutePath
+  includeBuild(rnGradlePlugin)
+}
 plugins { id("com.facebook.react.settings") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'NihongoCLI'
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+// Cũng include ở đây (không chỉ trong pluginManagement): buildscript của build.gradle gốc lấy
+// version của AGP và react-native-gradle-plugin từ build này
+includeBuild(new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+  }.standardOutput.asText.get().trim()
+).getParentFile().absolutePath)

@@ -31,6 +31,7 @@ export type RootStackParamList = {
   Main: undefined;
   VocabDetail: { id: number; word: string };
   Login: undefined;
+  Premium: undefined;
 };
 
 export type MainTabParamList = {

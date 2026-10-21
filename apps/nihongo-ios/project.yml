@@ -24,6 +24,10 @@ packages:
   LiveKitClient:
     url: https://github.com/livekit/client-sdk-swift
     from: 2.0.19
+  # Apple Pay qua Stripe: chỉ lấy StripeApplePay (STPApplePayContext), không kéo cả PaymentSheet
+  Stripe:
+    url: https://github.com/stripe/stripe-ios-spm
+    from: 26.15.0
 
 targets:
   NihongoEDU:
@@ -36,6 +40,8 @@ targets:
     dependencies:
       - package: LiveKitClient
         product: LiveKit
+      - package: Stripe
+        product: StripeApplePay
       # Widget màn hình chính: XcodeGen tự nhúng extension vào app
       - target: NihongoWidget
     settings:
@@ -116,17 +122,22 @@ schemes:
         NihongoEDUUITests: [test]
     run:
       config: Debug
+      # Dạng danh sách. Dạng dict lồng (KEY: {value, isEnabled}) bị XcodeGen ghi thành chuỗi
+      # '["isEnabled": false, "value": ""]' và BẬT sẵn → APIConfig dùng chuỗi đó làm URL, mọi request hỏng
       environmentVariables:
-        API_BASE_URL:
+        - variable: API_BASE_URL
           value: ""
           isEnabled: false
-        KEYCLOAK_URL:
+        - variable: WEB_BASE_URL
+          value: "http://nihongo.localhost:8080"
+          isEnabled: false
+        - variable: KEYCLOAK_URL
           value: "http://localhost:8080"
           isEnabled: false
-        KEYCLOAK_REALM:
+        - variable: KEYCLOAK_REALM
           value: "edu-app"
           isEnabled: false
-        KEYCLOAK_CLIENT_ID:
+        - variable: KEYCLOAK_CLIENT_ID
           value: "nihongo-mobile"
           isEnabled: false
     test:

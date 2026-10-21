@@ -55,6 +55,16 @@ export class SubscriptionController {
   }
 
   @Public()
+  @Get("wallet-config")
+  @ApiOperation({
+    summary:
+      "Publishable key + quốc gia merchant cho Apple Pay / Google Pay trên app",
+  })
+  getWalletConfig() {
+    return this.subscriptionService.walletConfig();
+  }
+
+  @Public()
   @Get("plans")
   @ApiOperation({ summary: "Danh sách plans và giá" })
   getPlans() {

@@ -2,12 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/local/app_database.dart';
 import 'data/local/token_store.dart';
+import 'data/payment/premium_checkout.dart';
+import 'data/payment/stripe_wallet_payer.dart';
 import 'data/remote/ai_tutor_api.dart';
 import 'data/remote/auth_api.dart';
 import 'data/remote/dio_factory.dart';
 import 'data/remote/live_api.dart';
 import 'data/remote/push_service.dart';
 import 'data/remote/sentence_practice_api.dart';
+import 'data/remote/subscription_api.dart';
 import 'data/remote/translate_api.dart';
 import 'data/remote/vocabulary_api.dart';
 import 'data/repository/vocabulary_repository_impl.dart';
@@ -87,4 +90,14 @@ final pushServiceProvider = Provider(
 
 final sentencePracticeApiProvider = Provider(
   (ref) => SentencePracticeApi(ref.watch(dioProvider)),
+);
+
+final subscriptionApiProvider = Provider(
+  (ref) => SubscriptionApi(ref.watch(dioProvider)),
+);
+
+final walletPayerProvider = Provider<WalletPayer>((ref) => StripeWalletPayer());
+
+final premiumCheckoutProvider = Provider(
+  (ref) => PremiumCheckout(ref.watch(subscriptionApiProvider), ref.watch(walletPayerProvider)),
 );

@@ -11,4 +11,5 @@ abstract final class Routes {
   static const aiTutor          = '/ai-tutor';
   static const pronunciation    = '/pronunciation';
   static const kanjiDraw        = '/kanji-draw';
+  static const premium          = '/premium';
 }

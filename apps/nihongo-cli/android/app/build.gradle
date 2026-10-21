@@ -17,6 +17,13 @@ react {
     //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
     // cliFile = file("../../node_modules/react-native/cli.js")
 
+    // Monorepo (npm workspaces): hỏi node vị trí react-native và codegen đúng phiên bản của app
+    // (xem settings.gradle)
+    def rnDir = resolveNodePackage("react-native/package.json", null)
+    reactNativeDir = rnDir
+    codegenDir = resolveNodePackage("@react-native/codegen/package.json", "react-native/package.json")
+    cliFile = new File(rnDir, "cli.js")
+
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. Default is "debug", "debugOptimized".
@@ -84,6 +91,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // react-native-app-auth bắt buộc: khớp REDIRECT_URI 'com.nihongocli://oauth/callback' ở src/hooks/useOAuth.ts
+        manifestPlaceholders = [appAuthRedirectScheme: "com.nihongocli"]
     }
     signingConfigs {
         debug {
@@ -116,4 +125,14 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+}
+
+/** Thư mục của gói npm, resolve như Node (tương đối theo gói [from] nếu có). */
+def resolveNodePackage(String pkg, String from) {
+    def paths = from ? "{ paths: [require.resolve('${from}')] }" : "{ paths: [process.cwd()] }"
+    def out = providers.exec {
+        workingDir(rootDir)
+        commandLine("node", "--print", "require.resolve('${pkg}', ${paths})")
+    }.standardOutput.asText.get().trim()
+    return new File(out).getParentFile()
 }
