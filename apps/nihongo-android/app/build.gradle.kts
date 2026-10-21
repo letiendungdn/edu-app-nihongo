@@ -77,6 +77,14 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // lifecycle-runtime 2.8.7 ship detector NullSafeMutableLiveData biên dịch khi
+    // KaCallableMemberCall còn là interface. Lint của AGP 8.7 tải bản Kotlin Analysis API
+    // mà kiểu đó là class, nên :app:lintVitalAnalyzeRelease crash (IncompatibleClassChangeError).
+    // App không dùng LiveData, check này không có gì để bắt.
+    lint {
+        disable += "NullSafeMutableLiveData"
+    }
 }
 
 // Room ghi schema mỗi version vào đây (commit vào git) để viết và test migration
