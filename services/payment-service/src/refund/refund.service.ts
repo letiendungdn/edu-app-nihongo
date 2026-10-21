@@ -163,9 +163,13 @@ export class RefundService {
         ? Math.min(params.amountCents, payment.amountCents)
         : payment.amountCents;
 
+    // Mỗi giao dịch chỉ hoàn MỘT lần (đã hoàn thì chặn ở trên), nên khóa theo giao dịch: bấm hai
+    // lần hay hai request cùng lúc (đều qua bước kiểm tra trạng thái) → cùng một refund trên Stripe.
+    // Bản cũ không có khóa: hoàn một phần hai lần là hoàn hai lần.
     const stripeRefund = await this.stripe.refundPayment(
       payment.stripeChargeId,
       refundAmount < payment.amountCents ? refundAmount : undefined,
+      `refund-payment-${payment.id}`,
     );
 
     const newStatus =

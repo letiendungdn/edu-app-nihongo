@@ -40,6 +40,7 @@ infra/stripe-cli/stripe.zip
 
 # Media tải về (Drive — không commit)
 apps/nihongo-web/public/media/book-audio/
+apps/nihongo-web/public/media/mori-course/
 tmp-drive-test/
 tmp-mailee.csv
 Thumbs.db
@@ -53,3 +54,9 @@ Thumbs.db
 .DS_Store
 xcuserdata/
 *.xcuserstate
+
+# Package dùng chung chạy thẳng từ .ts (main: ./src/index.ts). File biên dịch nằm cạnh .ts bị Node
+# load TRƯỚC .ts khi chạy dev (ts-node + tsconfig-paths) → chạy code cũ.
+packages/nest-*/src/**/*.js
+packages/nest-*/src/**/*.js.map
+packages/nest-*/src/**/*.d.ts

@@ -1,4 +1,4 @@
-import { verify } from 'jsonwebtoken';
+import { verify } from "jsonwebtoken";
 
 export interface WsTokenPayload {
   sub: number;

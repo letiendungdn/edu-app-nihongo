@@ -1,0 +1,28 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testTimeout": 60000,
+  "testRegex": ".db-spec.ts$",
+  "setupFiles": [
+    "<rootDir>/test/jest-db-setup.ts"
+  ],
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@app/common$": "<rootDir>/../packages/nest-common/src",
+    "^@app/common/(.*)$": "<rootDir>/../packages/nest-common/src/$1",
+    "^@app/prisma$": "<rootDir>/../packages/nest-prisma/src",
+    "^@app/prisma/(.*)$": "<rootDir>/../packages/nest-prisma/src/$1",
+    "^@app/contracts$": "<rootDir>/../packages/nest-contracts/src",
+    "^@app/contracts/(.*)$": "<rootDir>/../packages/nest-contracts/src/$1",
+    "^@edu/vocab-images$": "<rootDir>/../packages/vocab-images/src",
+    "^@prisma/client$": "<rootDir>/../packages/prisma-nihongo/generated/client",
+    "^@prisma/client/(.*)$": "<rootDir>/../packages/prisma-nihongo/generated/client/$1"
+  }
+}

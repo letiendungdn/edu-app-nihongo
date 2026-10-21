@@ -971,6 +971,20 @@ export function getPresignedUploadUrl(token: string, contentType: string, folder
   );
 }
 
+export interface CallTicket {
+  token: string;
+  expiresAt: string;
+  iceServers: RTCIceServer[];
+}
+
+/** Vé vào phòng video call + ICE server (STUN/TURN). Chỉ học viên/coach của buổi, đúng khung giờ. */
+export function fetchCallTicket(token: string, sessionId: number) {
+  return apiRequest<CallTicket>(`/marketplace/sessions/${sessionId}/call-token`, {
+    method: 'POST',
+    token,
+  });
+}
+
 export function fetchSessionMessages(token: string, sessionId: number) {
   return apiRequest<import('../types/chat').SessionChatMessage[]>(
     `/marketplace/sessions/${sessionId}/messages`,

@@ -19,6 +19,7 @@ import {
 import { BookingService } from "../../../payment-service/src/booking/booking.service";
 import { MarketplaceService } from "../../../payment-service/src/marketplace/marketplace.service";
 import { SessionChatService } from "../../../payment-service/src/booking/session-chat.service";
+import { CallTokenService } from "../../../payment-service/src/booking/call-token.service";
 import {
   BookSessionDto,
   CancelSessionDto,
@@ -33,6 +34,7 @@ export class MarketplaceController {
     private readonly marketplaceService: MarketplaceService,
     private readonly bookingService: BookingService,
     private readonly sessionChat: SessionChatService,
+    private readonly callTokens: CallTokenService,
   ) {}
 
   @Public()
@@ -73,6 +75,20 @@ export class MarketplaceController {
       scheduledAt: new Date(dto.scheduledAt),
       topic: dto.topic,
     });
+  }
+
+  @Post("sessions/:id/call-token")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      "Vé vào phòng video call (chỉ học viên/coach của buổi, đúng khung giờ)",
+  })
+  callToken(
+    @CurrentUser() user: AuthUserPayload,
+    @Param("id", ParseIntPipe) id: number,
+  ) {
+    return this.callTokens.issue(id, user.id);
   }
 
   @Post("sessions/:id/cancel")

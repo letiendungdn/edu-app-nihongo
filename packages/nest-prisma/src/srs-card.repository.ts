@@ -79,32 +79,37 @@ export class SrsCardRepository {
 
   // ── Legacy mistake-bank (unchanged) ──────────────────────────────────────
 
+  /**
+   * Ghi trạng thái ôn của một thẻ từ máy gửi lên. Chỉ ghi khi lần ôn gửi lên MỚI HƠN bản đang lưu.
+   *
+   * Bản cũ upsert vô điều kiện (ai gửi sau thắng): điện thoại offline cả tuần rồi đẩy hàng đợi cũ
+   * lên là đè mất tiến độ mới hơn từ máy khác. Điều kiện nằm trong WHERE nên không đua được.
+   */
   async upsertVocabularyReviewCard(
     userId: number,
     contentId: number,
     item: ReviewBankSyncItem,
     lastReviewedAt: Date | null,
   ): Promise<void> {
-    await this.prisma.srsCard.upsert({
-      where: {
-        userId_contentType_contentId: { userId, contentType: VOCABULARY_CONTENT_TYPE, contentId },
-      },
-      create: {
-        userId,
-        contentType: VOCABULARY_CONTENT_TYPE,
-        contentId,
-        wrongCount: item.wrongCount,
-        reviewStreak: item.reviewStreak,
-        mastered: item.mastered,
-        lastReviewedAt,
-      },
-      update: {
-        wrongCount: item.wrongCount,
-        reviewStreak: item.reviewStreak,
-        mastered: item.mastered,
-        lastReviewedAt,
-      },
-    });
+    const key = { userId, contentType: VOCABULARY_CONTENT_TYPE, contentId };
+    const data = {
+      wrongCount: item.wrongCount,
+      reviewStreak: item.reviewStreak,
+      mastered: item.mastered,
+      lastReviewedAt,
+    };
+    if (lastReviewedAt) {
+      const { count } = await this.prisma.srsCard.updateMany({
+        where: {
+          ...key,
+          OR: [{ lastReviewedAt: null }, { lastReviewedAt: { lt: lastReviewedAt } }],
+        },
+        data,
+      });
+      if (count > 0) return;
+    }
+    // Chưa có thẻ thì tạo; đã có (và mới hơn hoặc bằng) thì giữ nguyên
+    await this.prisma.srsCard.createMany({ data: [{ ...key, ...data }], skipDuplicates: true });
   }
 
   async findVocabularyReviewBank(userId: number): Promise<ReviewBankItem[]> {

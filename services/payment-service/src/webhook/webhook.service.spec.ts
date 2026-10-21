@@ -5,7 +5,6 @@ import Stripe from "stripe";
 import { PrismaService } from "@app/prisma";
 import { StripeService } from "../stripe/stripe.service";
 import { RefundService } from "../refund/refund.service";
-import { KafkaProducerService } from "../kafka/kafka-producer.service";
 import { NotificationService } from "../../../api-gateway/src/realtime/notification.service";
 import { WebhookService } from "./webhook.service";
 
@@ -20,6 +19,9 @@ describe("WebhookService", () => {
     };
     subscription: { updateMany: jest.Mock; findFirst: jest.Mock };
     payment: { updateMany: jest.Mock; findMany: jest.Mock };
+    coachingSession: { updateMany: jest.Mock };
+    outboxEvent: { create: jest.Mock };
+    $transaction: jest.Mock;
   };
   let stripe: { constructWebhookEvent: jest.Mock };
 
@@ -41,7 +43,14 @@ describe("WebhookService", () => {
         findFirst: jest.fn().mockResolvedValue(null),
       },
       payment: { updateMany: jest.fn(), findMany: jest.fn() },
+      coachingSession: { updateMany: jest.fn() },
+      outboxEvent: { create: jest.fn() },
+      $transaction: jest.fn(),
     };
+    // Transaction chạy callback với chính các mock trên (ghi trong tx = ghi vào mock)
+    prisma.$transaction.mockImplementation((fn: (tx: unknown) => unknown) =>
+      fn(prisma),
+    );
     stripe = { constructWebhookEvent: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -51,10 +60,6 @@ describe("WebhookService", () => {
         { provide: StripeService, useValue: stripe },
         { provide: RefundService, useValue: { refundByChargeId: jest.fn() } },
         {
-          provide: KafkaProducerService,
-          useValue: { emit: jest.fn(), send: jest.fn() },
-        },
-        {
           provide: NotificationService,
           useValue: { notifyUser: jest.fn(), create: jest.fn() },
         },
@@ -63,6 +68,9 @@ describe("WebhookService", () => {
 
     service = module.get(WebhookService);
     jest.clearAllMocks();
+    prisma.$transaction.mockImplementation((fn: (tx: unknown) => unknown) =>
+      fn(prisma),
+    );
   });
 
   describe("handleStripeEvent", () => {
@@ -173,6 +181,82 @@ describe("WebhookService", () => {
           errorMessage: "DB error",
         }),
       });
+    });
+  });
+
+  describe("payment_intent.succeeded → outbox", () => {
+    it("buổi coach: Payment SUCCEEDED, buổi CONFIRMED và event outbox ghi trong CÙNG transaction", async () => {
+      stripe.constructWebhookEvent.mockReturnValue({
+        id: "evt_s",
+        type: "payment_intent.succeeded",
+        data: { object: { id: "pi_s", latest_charge: "ch_s" } },
+      });
+      prisma.webhookEvent.findUnique.mockResolvedValue(null);
+      prisma.webhookEvent.upsert.mockResolvedValue({ id: 9 });
+      prisma.payment.findMany.mockResolvedValue([
+        {
+          id: 5,
+          userId: 2,
+          amountCents: 5000,
+          sessionId: 11,
+          subscriptionId: null,
+          session: null,
+          subscription: null,
+        },
+      ]);
+
+      await service.handleStripeEvent(rawBody, signature);
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.coachingSession.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 11 }),
+          data: { status: "CONFIRMED" },
+        }),
+      );
+      expect(prisma.outboxEvent.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          topic: "edu.payment.succeeded",
+          key: "2",
+          payload: expect.objectContaining({
+            eventId: "payment-5-pi_s",
+            paymentId: 5,
+            type: "session",
+            referenceId: "11",
+          }),
+        }),
+      });
+    });
+
+    it("ghi outbox lỗi → cả transaction lỗi, webhook FAILED (Stripe gửi lại), không mất event", async () => {
+      stripe.constructWebhookEvent.mockReturnValue({
+        id: "evt_x",
+        type: "payment_intent.succeeded",
+        data: { object: { id: "pi_x", latest_charge: "ch_x" } },
+      });
+      prisma.webhookEvent.findUnique.mockResolvedValue(null);
+      prisma.webhookEvent.upsert.mockResolvedValue({ id: 10 });
+      prisma.payment.findMany.mockResolvedValue([
+        {
+          id: 6,
+          userId: 2,
+          amountCents: 5000,
+          sessionId: null,
+          subscriptionId: 4,
+          session: null,
+          subscription: { plan: "PRO" },
+        },
+      ]);
+      prisma.outboxEvent.create.mockRejectedValue(new Error("outbox down"));
+
+      await expect(
+        service.handleStripeEvent(rawBody, signature),
+      ).rejects.toThrow("outbox down");
+      expect(prisma.webhookEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: "FAILED" }),
+        }),
+      );
     });
   });
 

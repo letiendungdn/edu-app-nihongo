@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import { PrismaService } from "@app/prisma";
+import { claimCronRun, PrismaService, vietnamDate } from "@app/prisma";
 import { MailService } from "@app/common/mail/mail.service";
 
 const MILESTONE_DAYS = [7, 30, 100];
@@ -17,6 +17,11 @@ export class MailSchedulerService {
   /** Every Sunday 8:00 AM Vietnam time */
   @Cron("0 8 * * 0", { timeZone: "Asia/Ho_Chi_Minh" })
   async sendWeeklyProgress(): Promise<void> {
+    // Mọi pod gateway đều nổ cron này: chỉ một pod gửi (bản cũ: mỗi pod gửi một email)
+    if (
+      !(await claimCronRun(this.prisma, "mail.weekly-progress", vietnamDate()))
+    )
+      return;
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const users = await this.prisma.user.findMany({
@@ -78,6 +83,14 @@ export class MailSchedulerService {
   /** Every day 9:00 AM Vietnam time — check streak milestones */
   @Cron("0 9 * * *", { timeZone: "Asia/Ho_Chi_Minh" })
   async sendStreakMilestones(): Promise<void> {
+    if (
+      !(await claimCronRun(
+        this.prisma,
+        "mail.streak-milestones",
+        vietnamDate(),
+      ))
+    )
+      return;
     const users = await this.prisma.user.findMany({
       where: { emailBounced: false },
       select: {

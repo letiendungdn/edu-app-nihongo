@@ -4,10 +4,17 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
+import {
+  AccessToken,
+  RoomServiceClient,
+  WebhookReceiver,
+} from "livekit-server-sdk";
 import { PrismaService } from "@app/prisma";
 
 export type LiveRole = "host" | "viewer";
+
+/** Phòng vừa tạo có thể chưa hiện trên listRooms: không coi là "ma" trong 1 phút đầu. */
+const GHOST_GRACE_MS = 60_000;
 
 @Injectable()
 export class LiveService {
@@ -66,14 +73,75 @@ export class LiveService {
     return at.toJwt();
   }
 
+  /**
+   * Phòng đang LIVE. Đối chiếu với LiveKit: phòng không còn trên LiveKit (coach thoát app không bấm
+   * kết thúc, LiveKit tự xóa phòng sau 5 phút trống) thì đánh dấu ENDED. Bản cũ chỉ đọc DB: phiên "ma"
+   * nằm mãi trong danh sách. Webhook room_finished (handleWebhook) xử lý ngay; đây là lớp dự phòng.
+   */
   async listLiveSessions() {
-    return this.prisma.liveSession.findMany({
+    const live = await this.prisma.liveSession.findMany({
       where: { status: "LIVE" },
       orderBy: { startedAt: "desc" },
       include: {
         coach: { select: { id: true, name: true, avatarUrl: true } },
       },
     });
+    const ghosts = await this.findGhosts(live);
+    if (ghosts.size === 0) return live;
+    await this.markEnded([...ghosts]);
+    return live.filter((s) => !ghosts.has(s.roomName));
+  }
+
+  /** Phòng LIVE trong DB nhưng không còn trên LiveKit (bỏ qua phòng vừa tạo < 1 phút). */
+  private async findGhosts(
+    sessions: { roomName: string; startedAt: Date }[],
+  ): Promise<Set<string>> {
+    if (!this.roomClient || sessions.length === 0) return new Set();
+    let active: Set<string>;
+    try {
+      const rooms = await this.roomClient.listRooms(
+        sessions.map((s) => s.roomName),
+      );
+      active = new Set(rooms.map((r) => r.name));
+    } catch {
+      return new Set(); // LiveKit lỗi: giữ nguyên, không kết thúc nhầm
+    }
+    const settled = Date.now() - GHOST_GRACE_MS;
+    return new Set(
+      sessions
+        .filter(
+          (s) => !active.has(s.roomName) && s.startedAt.getTime() < settled,
+        )
+        .map((s) => s.roomName),
+    );
+  }
+
+  private async markEnded(roomNames: string[]) {
+    await this.prisma.liveSession.updateMany({
+      where: { roomName: { in: roomNames }, status: "LIVE" },
+      data: { status: "ENDED", endedAt: new Date() },
+    });
+  }
+
+  /** Webhook của LiveKit (POST /api/live/webhook): room_finished → ENDED ngay. */
+  async handleWebhook(rawBody: string, authHeader: string | undefined) {
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    if (!apiKey || !apiSecret)
+      throw new ServiceUnavailableException("LiveKit chưa cấu hình");
+    let event: { event: string; room?: { name: string } };
+    try {
+      // Kiểm chữ ký (header Authorization là JWT ký bằng API secret, chứa sha256 của body)
+      event = await new WebhookReceiver(apiKey, apiSecret).receive(
+        rawBody,
+        authHeader,
+      );
+    } catch {
+      throw new ForbiddenException("Webhook LiveKit sai chữ ký");
+    }
+    if (event.event === "room_finished" && event.room?.name) {
+      await this.markEnded([event.room.name]);
+    }
   }
 
   async createLiveSession(coachId: number, title: string) {
@@ -116,6 +184,10 @@ export class LiveService {
       where: { id: sessionId, status: "LIVE" },
     });
     if (!session) {
+      throw new NotFoundException("Phòng không tồn tại hoặc đã kết thúc");
+    }
+    if ((await this.findGhosts([session])).size > 0) {
+      await this.markEnded([session.roomName]);
       throw new NotFoundException("Phòng không tồn tại hoặc đã kết thúc");
     }
 

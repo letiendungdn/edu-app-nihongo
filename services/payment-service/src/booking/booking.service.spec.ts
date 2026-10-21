@@ -85,11 +85,24 @@ describe("BookingService", () => {
         currency: "usd",
         user: { email: "coach@test.com" },
       });
-      prisma.coachingSession.findFirst.mockResolvedValue({ id: 99 });
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: learnerId,
+        subscription: null,
+      });
+      const create = jest.fn();
+      prisma.$transaction.mockImplementation(async (fn) =>
+        fn({
+          $executeRaw: jest.fn(),
+          $queryRaw: jest.fn().mockResolvedValue([{ id: 99 }]), // có buổi chồng giờ
+          coachingSession: { create },
+          payment: { create: jest.fn() },
+        }),
+      );
 
       await expect(
         service.bookSession({ learnerId, coachId, scheduledAt }),
       ).rejects.toThrow(ConflictException);
+      expect(create).not.toHaveBeenCalled();
     });
 
     it("creates session and payment in transaction", async () => {
@@ -109,7 +122,6 @@ describe("BookingService", () => {
         currency: "usd",
         user: { email: "coach@test.com" },
       });
-      prisma.coachingSession.findFirst.mockResolvedValue(null);
       prisma.user.findUniqueOrThrow.mockResolvedValue({
         id: learnerId,
         email: "learner@test.com",
@@ -118,6 +130,8 @@ describe("BookingService", () => {
       });
       prisma.$transaction.mockImplementation(async (fn) => {
         const tx = {
+          $executeRaw: jest.fn(),
+          $queryRaw: jest.fn().mockResolvedValue([]), // không có buổi chồng giờ
           coachingSession: { create: jest.fn().mockResolvedValue(mockSession) },
           payment: { create: jest.fn().mockResolvedValue({ id: 100 }) },
         };
@@ -149,7 +163,6 @@ describe("BookingService", () => {
         currency: "usd",
         user: { email: "coach@test.com" },
       });
-      prisma.coachingSession.findFirst.mockResolvedValue(null);
       prisma.user.findUniqueOrThrow.mockResolvedValue({
         id: learnerId,
         email: "learner@test.com",
@@ -158,6 +171,8 @@ describe("BookingService", () => {
       });
       prisma.$transaction.mockImplementation(async (fn) => {
         const tx = {
+          $executeRaw: jest.fn(),
+          $queryRaw: jest.fn().mockResolvedValue([]), // không có buổi chồng giờ
           coachingSession: { create: jest.fn().mockResolvedValue(mockSession) },
           payment: { create: jest.fn().mockResolvedValue({}) },
         };
@@ -195,7 +210,6 @@ describe("BookingService", () => {
         currency: "usd",
         user: { email: "coach@test.com" },
       });
-      prisma.coachingSession.findFirst.mockResolvedValue(null);
       prisma.user.findUniqueOrThrow.mockResolvedValue({
         id: learnerId,
         email: "learner@test.com",
@@ -203,6 +217,8 @@ describe("BookingService", () => {
       });
       prisma.$transaction.mockImplementation(async (fn) => {
         const tx = {
+          $executeRaw: jest.fn(),
+          $queryRaw: jest.fn().mockResolvedValue([]), // không có buổi chồng giờ
           coachingSession: { create: jest.fn().mockResolvedValue(mockSession) },
           payment: { create: jest.fn().mockResolvedValue({}) },
         };

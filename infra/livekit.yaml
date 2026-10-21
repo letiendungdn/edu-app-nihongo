@@ -10,3 +10,9 @@ keys:
 
 logging:
   level: info
+
+# Báo gateway khi phòng đóng (room_finished), để phiên không còn LIVE "ma" trong DB
+webhook:
+  api_key: devkey
+  urls:
+    - http://api-gateway:3000/api/live/webhook

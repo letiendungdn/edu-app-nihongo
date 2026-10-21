@@ -35,74 +35,7 @@ describe("PayoutService", () => {
     service = module.get(PayoutService);
   });
 
-  describe("processWeeklyPayouts", () => {
-    it("skips coaches without stripe account or payout disabled", async () => {
-      prisma.coachingSession.findMany.mockResolvedValue([
-        {
-          coachId: 1,
-          priceUsdCents: 5000,
-          platformFeePercent: 20,
-          coach: { stripeAccountId: null, payoutEnabled: false },
-        },
-      ]);
-
-      await service.processWeeklyPayouts();
-
-      expect(stripe.transferToCoach).not.toHaveBeenCalled();
-      expect(prisma.payout.create).not.toHaveBeenCalled();
-    });
-
-    it("creates PAID payout after successful Stripe transfer", async () => {
-      prisma.coachingSession.findMany.mockResolvedValue([
-        {
-          coachId: 2,
-          priceUsdCents: 10000,
-          platformFeePercent: 20,
-          coach: { stripeAccountId: "acct_1", payoutEnabled: true },
-        },
-      ]);
-
-      await service.processWeeklyPayouts();
-
-      expect(stripe.transferToCoach).toHaveBeenCalledWith(
-        expect.objectContaining({
-          amountCents: 8000,
-          stripeAccountId: "acct_1",
-        }),
-      );
-      expect(prisma.payout.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            status: PayoutStatus.PAID,
-            amountCents: 8000,
-          }),
-        }),
-      );
-    });
-
-    it("creates FAILED payout when Stripe transfer throws", async () => {
-      prisma.coachingSession.findMany.mockResolvedValue([
-        {
-          coachId: 3,
-          priceUsdCents: 5000,
-          platformFeePercent: 20,
-          coach: { stripeAccountId: "acct_2", payoutEnabled: true },
-        },
-      ]);
-      stripe.transferToCoach.mockRejectedValue(new Error("transfer failed"));
-
-      await service.processWeeklyPayouts();
-
-      expect(prisma.payout.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            status: PayoutStatus.FAILED,
-            failReason: "transfer failed",
-          }),
-        }),
-      );
-    });
-  });
+  // Luồng trả tiền (gom buổi, chống trả trùng, thử lại) chạy SQL thật: xem payout.db-spec.ts
 
   describe("getReconciliationReport", () => {
     it("aggregates revenue, payouts and platform fees", async () => {

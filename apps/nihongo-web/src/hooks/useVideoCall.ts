@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { fetchCallTicket } from '@/api';
 
 export type CallStatus =
   | 'idle'
@@ -19,7 +20,8 @@ interface UseVideoCallOptions {
   signalingUrl?: string;
 }
 
-const ICE_SERVERS: RTCIceServer[] = [
+/** Dự phòng khi server không trả ICE server. Server trả cả TURN (bản cũ chỉ có STUN ghi cứng ở đây). */
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ];
@@ -38,12 +40,13 @@ export function useVideoCall({ sessionId, token, signalingUrl }: UseVideoCallOpt
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const sessionActiveRef = useRef(false);
+  const iceServersRef = useRef<RTCIceServer[]>(FALLBACK_ICE_SERVERS);
 
   const SIGNAL_URL =
     signalingUrl ?? process.env.NEXT_PUBLIC_SIGNALING_URL ?? 'http://localhost:3002';
 
   const createPeerConnection = useCallback(() => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({ iceServers: iceServersRef.current });
 
     pc.onicecandidate = (e) => {
       if (e.candidate && socketRef.current) {
@@ -94,6 +97,19 @@ export function useVideoCall({ sessionId, token, signalingUrl }: UseVideoCallOpt
     setStatus('connecting');
     sessionActiveRef.current = true;
 
+    // Vé vào phòng: server kiểm tra mình là học viên/coach của buổi này và đang trong khung giờ
+    let callToken: string;
+    try {
+      const ticket = await fetchCallTicket(token, sessionId);
+      callToken = ticket.token;
+      if (ticket.iceServers?.length) iceServersRef.current = ticket.iceServers;
+    } catch (e) {
+      sessionActiveRef.current = false;
+      setError(e instanceof Error ? e.message : 'Không vào được phòng của buổi học này.');
+      setStatus('error');
+      return;
+    }
+
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -115,8 +131,14 @@ export function useVideoCall({ sessionId, token, signalingUrl }: UseVideoCallOpt
     });
     socketRef.current = socket;
 
+    // Mỗi lần (tái) kết nối đều join lại bằng vé: vé sống tới lúc phòng đóng
     socket.on('connect', () => {
-      socket.emit('join-room', { sessionId });
+      socket.emit('join-room', { sessionId, callToken });
+    });
+
+    socket.on('exception', (err: { message?: string }) => {
+      setError(err?.message ?? 'Không có quyền vào phòng này.');
+      setStatus('error');
     });
 
     socket.on('joined', () => {

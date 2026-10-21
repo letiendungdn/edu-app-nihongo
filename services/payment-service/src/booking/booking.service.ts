@@ -14,6 +14,11 @@ import { PrismaService } from "@app/prisma";
 import { StripeService } from "../stripe/stripe.service";
 import { RefundService } from "../refund/refund.service";
 
+/** Thời lượng buổi đặt qua marketplace (khớp `durationMin` mặc định của CoachingSession). */
+const SESSION_DURATION_MIN = 60;
+/** Không gian khóa advisory cho đặt lịch (tránh đụng khóa của tính năng khác). */
+export const BOOKING_LOCK_NAMESPACE = 41_001;
+
 @Injectable()
 export class BookingService {
   constructor(
@@ -35,16 +40,6 @@ export class BookingService {
     if (!coach.isActive)
       throw new BadRequestException("Coach is not available");
 
-    const conflict = await this.prisma.coachingSession.findFirst({
-      where: {
-        coachId: params.coachId,
-        scheduledAt: params.scheduledAt,
-        status: { notIn: [SessionStatus.CANCELED] },
-      },
-    });
-    if (conflict)
-      throw new ConflictException("This time slot is already booked");
-
     const learner = await this.prisma.user.findUniqueOrThrow({
       where: { id: params.learnerId },
       include: { subscription: true },
@@ -52,7 +47,24 @@ export class BookingService {
     const priceUsdCents = coach.hourlyRateUsd;
     const platformFeePercent = 20;
 
+    // Kiểm tra trùng lịch và tạo buổi trong CÙNG transaction, giữ khóa theo coach.
+    // Bản cũ kiểm tra ngoài transaction (check-then-act): hai người đặt cùng lúc đều qua bước kiểm
+    // tra và cùng được tạo. Bản cũ cũng chỉ so `scheduledAt` bằng nhau: 10:00 và 10:30 (buổi 60 phút)
+    // chồng nhau vẫn lọt.
     const session = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${BOOKING_LOCK_NAMESPACE}::int, ${params.coachId}::int)`;
+      const start = params.scheduledAt;
+      const end = new Date(start.getTime() + SESSION_DURATION_MIN * 60_000);
+      const overlapping = await tx.$queryRaw<{ id: number }[]>`
+        SELECT id FROM "CoachingSession"
+        WHERE "coachId" = ${params.coachId}
+          AND status <> 'CANCELED'
+          AND "scheduledAt" < ${end}
+          AND "scheduledAt" + make_interval(mins => "durationMin") > ${start}
+        LIMIT 1`;
+      if (overlapping.length > 0) {
+        throw new ConflictException("This time slot is already booked");
+      }
       const created = await tx.coachingSession.create({
         data: {
           learnerId: params.learnerId,

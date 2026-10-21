@@ -1,56 +1,78 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import Redis from "ioredis";
 
 const PRESENCE_TTL_SEC = 120;
-const KEY_PREFIX = 'vc:presence:';
+/** Sorted set: member = userId, score = thời điểm hết hạn (ms). Gateway đọc chung key này. */
+export const ONLINE_KEY = "vc:presence:online";
+const socketsKey = (userId: number) => `vc:presence:sockets:${userId}`;
 
+/**
+ * Ai đang online, dùng chung giữa mọi instance signaling qua Redis.
+ *
+ * Bản cũ giữ socket của từng user trong RAM của instance: user mở 2 tab nối vào 2 instance, đóng tab
+ * ở instance A thì A thấy "hết socket" và xóa key online → user bị coi là offline dù tab kia còn mở.
+ * Instance chết thì không ai dọn: TTL trên sorted set lo việc đó (không ping thì hết hạn sau 120 giây).
+ */
 @Injectable()
-export class PresenceService implements OnModuleInit {
+export class PresenceService implements OnModuleInit, OnModuleDestroy {
   private redis!: Redis;
-  private userSockets = new Map<number, Set<string>>();
 
   onModuleInit() {
-    this.redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
-    this.redis.on('error', (err) => {
-      console.error('[PresenceService] Redis error:', err.message);
+    this.redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
+    this.redis.on("error", (err) => {
+      console.error("[PresenceService] Redis error:", err.message);
     });
   }
 
-  private key(userId: number) {
-    return `${KEY_PREFIX}${userId}`;
+  async onModuleDestroy() {
+    await this.redis.quit();
+  }
+
+  private expiry() {
+    return Date.now() + PRESENCE_TTL_SEC * 1000;
   }
 
   async addSocket(userId: number, socketId: string): Promise<number[]> {
-    let sockets = this.userSockets.get(userId);
-    if (!sockets) {
-      sockets = new Set();
-      this.userSockets.set(userId, sockets);
-    }
-    sockets.add(socketId);
-    await this.redis.set(this.key(userId), String(Date.now()), 'EX', PRESENCE_TTL_SEC);
+    await this.redis
+      .multi()
+      .sadd(socketsKey(userId), socketId)
+      .expire(socketsKey(userId), PRESENCE_TTL_SEC)
+      .zadd(ONLINE_KEY, this.expiry(), String(userId))
+      .exec();
     return this.listOnlineUserIds();
   }
 
   async removeSocket(userId: number, socketId: string): Promise<number[]> {
-    const sockets = this.userSockets.get(userId);
-    if (!sockets) return this.listOnlineUserIds();
-
-    sockets.delete(socketId);
-    if (sockets.size === 0) {
-      this.userSockets.delete(userId);
-      await this.redis.del(this.key(userId));
-    } else {
-      await this.redis.expire(this.key(userId), PRESENCE_TTL_SEC);
+    const replies = await this.redis
+      .multi()
+      .srem(socketsKey(userId), socketId)
+      .scard(socketsKey(userId))
+      .exec();
+    if (replies?.[1]?.[1] === 0) {
+      await this.redis
+        .multi()
+        .zrem(ONLINE_KEY, String(userId))
+        .del(socketsKey(userId))
+        .exec();
     }
     return this.listOnlineUserIds();
   }
 
   async refresh(userId: number): Promise<void> {
-    if (!this.userSockets.has(userId)) return;
-    await this.redis.set(this.key(userId), String(Date.now()), 'EX', PRESENCE_TTL_SEC);
+    await this.redis
+      .multi()
+      .zadd(ONLINE_KEY, "XX", this.expiry(), String(userId)) // chỉ gia hạn user đang online
+      .expire(socketsKey(userId), PRESENCE_TTL_SEC)
+      .exec();
   }
 
   async listOnlineUserIds(): Promise<number[]> {
-    return [...this.userSockets.keys()].sort((a, b) => a - b);
+    const now = Date.now();
+    await this.redis.zremrangebyscore(ONLINE_KEY, "-inf", now);
+    const ids = await this.redis.zrangebyscore(ONLINE_KEY, now, "+inf");
+    return ids
+      .map(Number)
+      .filter((id) => !Number.isNaN(id))
+      .sort((a, b) => a - b);
   }
 }

@@ -1,0 +1,151 @@
+.mori-view {
+  max-width: 960px;
+}
+
+.mori-header {
+  margin-bottom: 1.25rem;
+}
+
+.mori-subtitle {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+
+.mori-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mori-tab-count {
+  margin-left: 0.35rem;
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+.mori-search {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.mori-search input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: inherit;
+}
+
+.mori-player {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.mori-player h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.mori-player video,
+.mori-player img,
+.mori-player iframe {
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  border-radius: 10px;
+  border: 0;
+}
+
+.mori-player img {
+  object-fit: contain;
+  background: #111;
+}
+
+.mori-player iframe {
+  height: 70vh;
+}
+
+.mori-lessons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mori-lesson {
+  padding: 0.75rem 1rem;
+}
+
+.mori-lesson summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.mori-lesson summary span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mori-lesson ul {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mori-lesson button {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mori-lesson button:hover,
+.mori-lesson button.is-current {
+  border-color: var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mori-doc {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mori-doc-kind {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.mori-empty {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 2rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

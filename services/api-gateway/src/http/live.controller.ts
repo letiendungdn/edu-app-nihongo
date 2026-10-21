@@ -1,13 +1,19 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  Headers,
+  HttpCode,
   Param,
   ParseIntPipe,
   Post,
+  Req,
   UseGuards,
+  type RawBodyRequest,
 } from "@nestjs/common";
+import type { Request } from "express";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
 import {
@@ -25,6 +31,21 @@ import { LiveService } from "./live.service";
 @Controller("api/live")
 export class LiveController {
   constructor(private readonly liveService: LiveService) {}
+
+  @Post("webhook")
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({
+    summary: "Webhook của LiveKit (room_finished → kết thúc phiên)",
+  })
+  async webhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers("authorization") auth: string | undefined,
+  ) {
+    if (!req.rawBody) throw new BadRequestException("Missing raw body");
+    await this.liveService.handleWebhook(req.rawBody.toString("utf8"), auth);
+    return { received: true };
+  }
 
   @Get("sessions")
   @Public()

@@ -14,7 +14,6 @@ import {
 import Stripe from "stripe";
 import { KafkaTopics, PaymentSucceededEvent } from "@app/contracts";
 import { PrismaService } from "@app/prisma";
-import { KafkaProducerService } from "../kafka/kafka-producer.service";
 import {
   getInvoiceSubscriptionId,
   getSubscriptionPeriod,
@@ -35,7 +34,6 @@ export class WebhookService {
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
     private readonly refundService: RefundService,
-    @Optional() private readonly kafkaProducer?: KafkaProducerService,
     @Optional() private readonly notificationService?: NotificationService,
   ) {}
 
@@ -142,63 +140,67 @@ export class WebhookService {
     });
   }
 
+  /**
+   * Payment SUCCEEDED + buổi coach CONFIRMED + event `edu.payment.succeeded` ghi trong CÙNG một
+   * transaction (transactional outbox, relay của exam-service đẩy lên Kafka). Bản cũ gửi thẳng Kafka
+   * sau khi đã cập nhật DB: Kafka lỗi đúng lúc đó là event mất, không thử lại.
+   */
   private async handlePaymentSucceeded(
     intent: Stripe.PaymentIntent,
   ): Promise<void> {
-    await this.prisma.payment.updateMany({
-      where: { stripePaymentIntentId: intent.id },
-      data: {
-        status: PaymentStatus.SUCCEEDED,
-        stripeChargeId: intent.latest_charge as string,
-      },
-    });
-
-    const payments = await this.prisma.payment.findMany({
-      where: {
-        stripePaymentIntentId: intent.id,
-        status: PaymentStatus.SUCCEEDED,
-      },
-      include: {
-        subscription: { select: { plan: true } },
-        session: { select: { id: true, scheduledAt: true } },
-      },
-    });
-
-    for (const payment of payments) {
-      if (payment.sessionId) {
-        await this.prisma.coachingSession.updateMany({
-          where: { id: payment.sessionId, status: SessionStatus.PENDING },
-          data: { status: SessionStatus.CONFIRMED },
+    const payments = await this.prisma.$transaction(async (tx) => {
+      await tx.payment.updateMany({
+        where: { stripePaymentIntentId: intent.id },
+        data: {
+          status: PaymentStatus.SUCCEEDED,
+          stripeChargeId: intent.latest_charge as string,
+        },
+      });
+      const succeeded = await tx.payment.findMany({
+        where: {
+          stripePaymentIntentId: intent.id,
+          status: PaymentStatus.SUCCEEDED,
+        },
+        include: {
+          subscription: { select: { plan: true } },
+          session: { select: { id: true, scheduledAt: true } },
+        },
+      });
+      for (const payment of succeeded) {
+        if (payment.sessionId) {
+          await tx.coachingSession.updateMany({
+            where: { id: payment.sessionId, status: SessionStatus.PENDING },
+            data: { status: SessionStatus.CONFIRMED },
+          });
+        }
+        const referenceId = payment.sessionId ?? payment.subscriptionId;
+        if (referenceId == null) continue;
+        const event: PaymentSucceededEvent = {
+          paymentId: payment.id,
+          userId: payment.userId,
+          amountCents: payment.amountCents,
+          type: payment.sessionId ? "session" : "subscription",
+          referenceId: referenceId.toString(),
+          paidAt: new Date().toISOString(),
+        };
+        await tx.outboxEvent.create({
+          data: {
+            topic: KafkaTopics.PAYMENT_SUCCEEDED,
+            key: String(payment.userId),
+            // eventId theo payment + intent: Stripe gửi lại webhook thì consumer bỏ được bản trùng
+            payload: {
+              eventId: `payment-${payment.id}-${intent.id}`,
+              ...event,
+            },
+          },
         });
       }
+      return succeeded;
+    });
 
+    // Thông báo trong app gửi SAU khi commit (lỗi gửi thông báo không làm hỏng việc ghi nhận tiền)
+    for (const payment of payments) {
       await this.sendPaymentNotification(payment);
-
-      const referenceId = payment.sessionId ?? payment.subscriptionId;
-      if (referenceId == null || !this.kafkaProducer) continue;
-
-      const payload: PaymentSucceededEvent = {
-        paymentId: payment.id,
-        userId: payment.userId,
-        amountCents: payment.amountCents,
-        type: payment.sessionId ? "session" : "subscription",
-        referenceId: referenceId.toString(),
-        paidAt: new Date().toISOString(),
-      };
-
-      try {
-        await this.kafkaProducer.emit(
-          KafkaTopics.PAYMENT_SUCCEEDED,
-          payload as unknown as Record<string, unknown>,
-        );
-        this.logger.log(
-          `Emitted ${KafkaTopics.PAYMENT_SUCCEEDED}: paymentId=${payment.id}`,
-        );
-      } catch (error) {
-        this.logger.warn(
-          `Failed to emit ${KafkaTopics.PAYMENT_SUCCEEDED}: ${String(error)}`,
-        );
-      }
     }
   }
 

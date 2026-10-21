@@ -25,6 +25,7 @@
     "cheerio": "^1.2.0",
     "fabric": "^7.4.0",
     "hanzi-writer": "^3.7.3",
+    "hls.js": "^1.7.3",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "mapbox-gl": "^3.26.0",

@@ -549,6 +549,7 @@ mindmap
 | File | Nội dung |
 |------|----------|
 | [system-design.md](./system-design.md) | Kiến trúc & request flows |
+| [core-flows.md](./core-flows.md) | Luồng chi tiết theo code của các tính năng lõi + rủi ro đã thấy |
 | [db-design.md](./db-design.md) | ER / schema PostgreSQL |
 | [accounts.md](./accounts.md) | Tài khoản demo theo role |
 | [nginx.md](./nginx.md) | Cổng vào reverse proxy |

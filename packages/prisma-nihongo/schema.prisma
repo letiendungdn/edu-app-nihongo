@@ -1041,15 +1041,28 @@ model LiveSession {
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
+  id        String    @id @default(cuid())
+  token     String    @unique
   userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
-  revoked   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  revoked   Boolean   @default(false)
+  /// Lúc bị thu hồi DO QUAY VÒNG (refresh). Đăng xuất / đổi mật khẩu / phát hiện đánh cắp để trống.
+  /// Dùng lại token quay vòng quá REFRESH_REUSE_GRACE_MS, hoặc token có revokedAt trống = bị đánh cắp
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
 
   @@index([userId])
+}
+
+/// Mỗi lượt chạy của một cron (ví dụ "push.daily-srs" + "2026-10-21"). Khóa chính chặn pod thứ hai
+/// chạy lại cùng lượt: gateway chạy nhiều pod, @Cron nổ ở TẤT CẢ các pod.
+model CronRun {
+  name      String
+  slot      String
+  startedAt DateTime @default(now())
+
+  @@id([name, slot])
 }
 
 model PasswordResetToken {
@@ -1516,6 +1529,9 @@ model CoachingSession {
   notes              String?       @db.Text
   priceUsdCents      Int
   platformFeePercent Int           @default(20)
+  /// Lượt trả tiền cho coach đã gồm buổi này. Khác null = đã trả (hoặc đang trả): không bao giờ gom lại lần hai
+  payoutId           Int?
+  payoutRecord       Payout?       @relation(fields: [payoutId], references: [id])
   payment            Payment?
   review             CoachReview?
   canceledAt         DateTime?
@@ -1528,6 +1544,7 @@ model CoachingSession {
   @@index([learnerId, scheduledAt])
   @@index([coachId, scheduledAt])
   @@index([status, scheduledAt])
+  @@index([coachId, status, payoutId])
 }
 
 // ─────────────────────────────────────────────
@@ -1564,23 +1581,25 @@ model Payment {
 // ─────────────────────────────────────────────
 
 model Payout {
-  id               Int          @id @default(autoincrement())
+  id               Int               @id @default(autoincrement())
   coachId          Int
-  coach            CoachProfile @relation(fields: [coachId], references: [id])
+  coach            CoachProfile      @relation(fields: [coachId], references: [id])
   amountCents      Int
-  currency         String       @default("USD")
-  status           PayoutStatus @default(PENDING)
-  stripeTransferId String?      @unique
+  currency         String            @default("USD")
+  status           PayoutStatus      @default(PENDING)
+  stripeTransferId String?           @unique
   stripePayoutId   String?
   periodStart      DateTime
   periodEnd        DateTime
-  sessionCount     Int          @default(0)
+  sessionCount     Int               @default(0)
   grossAmountCents Int
   feeAmountCents   Int
   processedAt      DateTime?
   failReason       String?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  attempts         Int               @default(0)
+  sessions         CoachingSession[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([coachId, status])
   @@index([periodStart, periodEnd])

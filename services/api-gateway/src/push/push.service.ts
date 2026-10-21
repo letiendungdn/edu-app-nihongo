@@ -1,18 +1,31 @@
-import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "@app/prisma";
 import * as apn from "@parse/node-apn";
+import { FcmSender } from "./fcm.sender";
+
+/** Token giả (không phải FCM) do bản app cũ tạo: "android-" + id thiết bị / uuid. */
+const FAKE_ANDROID_TOKEN = /^android-[0-9a-f-]+$/i;
 
 @Injectable()
 export class PushService implements OnModuleDestroy {
   private readonly logger = new Logger(PushService.name);
   private provider: apn.Provider | null = null;
   private readonly bundleId: string;
+  private readonly fcm: FcmSender | null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    // Test truyền sender giả; chạy thật Nest truyền undefined → đọc cấu hình từ env
+    @Optional() fcm?: FcmSender | null,
   ) {
+    this.fcm = fcm === undefined ? FcmSender.fromEnv() : fcm;
+    if (!this.fcm) {
+      this.logger.warn(
+        "FCM not configured — set FCM_SERVICE_ACCOUNT_JSON or FCM_SERVICE_ACCOUNT_PATH to push Android",
+      );
+    }
     const keyPath = config.get<string>("APNS_KEY_PATH", "");
     const keyId = config.get<string>("APNS_KEY_ID", "");
     const teamId = config.get<string>("APNS_TEAM_ID", "");
@@ -58,29 +71,39 @@ export class PushService implements OnModuleDestroy {
   }
 
   async sendSrsReminder(userId: number, dueCount: number): Promise<void> {
-    if (!this.provider) return;
-
     const rows = await this.prisma.pushDeviceToken.findMany({
-      where: { userId, platform: "ios" },
-      select: { token: true },
+      where: { userId },
+      select: { token: true, platform: true },
     });
-    if (!rows.length) return;
+    const ios = rows.filter((r) => r.platform === "ios").map((r) => r.token);
+    const android = rows
+      .filter((r) => r.platform === "android")
+      .map((r) => r.token);
+    const title = "📚 Ôn tập hôm nay";
+    const body = `Bạn có ${dueCount} thẻ cần ôn — duy trì streak nhé!`;
+    await Promise.all([
+      this.sendApns(ios, title, body, dueCount),
+      this.sendFcm(android, title, body),
+    ]);
+  }
 
+  private async sendApns(
+    tokens: string[],
+    title: string,
+    body: string,
+    badge: number,
+  ) {
+    if (!this.provider || tokens.length === 0) return;
     const note = new apn.Notification();
     note.topic = this.bundleId;
-    note.alert = {
-      title: "📚 Ôn tập hôm nay",
-      body: `Bạn có ${dueCount} thẻ cần ôn — duy trì streak nhé!`,
-    };
-    note.badge = dueCount;
+    note.alert = { title, body };
+    note.badge = badge;
     note.sound = "default";
     note.payload = { screen: "srs" };
     // expire after 1 hour so stale reminders don't pile up
     note.expiry = Math.floor(Date.now() / 1000) + 3600;
 
-    const deviceTokens = rows.map((r) => r.token);
-    const result = await this.provider.send(note, deviceTokens);
-
+    const result = await this.provider.send(note, tokens);
     for (const failure of result.failed) {
       this.logger.warn(
         `APNs failure for device ${failure.device}: ${failure.response?.reason ?? "unknown"}`,
@@ -88,6 +111,29 @@ export class PushService implements OnModuleDestroy {
       const reason = failure.response?.reason;
       if (reason === "BadDeviceToken" || reason === "Unregistered") {
         await this.removeInvalidToken(failure.device);
+      }
+    }
+  }
+
+  private async sendFcm(tokens: string[], title: string, body: string) {
+    for (const token of tokens) {
+      // App Flutter cũ gửi "android-<uuid>" làm token: không phải token FCM, gửi chỉ tốn lượt gọi
+      if (FAKE_ANDROID_TOKEN.test(token)) {
+        await this.removeInvalidToken(token);
+        continue;
+      }
+      if (!this.fcm) continue;
+      try {
+        const result = await this.fcm.send(token, {
+          title,
+          body,
+          data: { screen: "srs" },
+        });
+        if (result === "invalid-token") await this.removeInvalidToken(token);
+      } catch (err) {
+        this.logger.warn(
+          `FCM lỗi: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
   }

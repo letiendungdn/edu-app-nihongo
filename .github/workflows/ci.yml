@@ -83,6 +83,16 @@ jobs:
           JWT_SECRET: test-secret
           CONTENT_GRPC_URL: localhost:50051
           EXAM_GRPC_URL: localhost:50052
+      # Test chạy SQL thật cho chỗ dễ đua nhau (trả tiền coach, đặt lịch, refresh token, cron nhiều pod)
+      # và signaling thật (quyền vào phòng). DB riêng: test xóa dữ liệu.
+      - name: DB integration tests
+        run: |
+          PGPASSWORD=nihongo psql -h localhost -U nihongo -d nihongo -c "CREATE DATABASE nihongo_test"
+          DATABASE_URL=postgresql://nihongo:nihongo@localhost:5432/nihongo_test npm run migrate:deploy -w @edu/prisma-nihongo
+          npm run test:db -w @edu/nihongo-services
+        env:
+          TEST_DATABASE_URL: postgresql://nihongo:nihongo@localhost:5432/nihongo_test
+          REDIS_URL: redis://localhost:6379
       - name: Seed mock exam templates
         run: npm run seed:mock-exam-templates -w @edu/prisma-nihongo
         env:

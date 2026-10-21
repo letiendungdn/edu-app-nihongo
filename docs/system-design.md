@@ -119,6 +119,8 @@ WebSocket WebRTC **1-1 call** (tùy chọn) — khác livestream LiveKit.
 
 ## 3. Request Flows
 
+> Bản tóm tắt. Luồng chi tiết theo code (sơ đồ sequence, file chính, rủi ro đã thấy): [core-flows.md](./core-flows.md).
+
 ### 3.1 Học vocab (nihongo-web)
 
 ```
@@ -167,7 +169,7 @@ Browser → POST /api/support/messages { content }
         → saveMessage() → UPDATE lastMessageAt
         → NotificationService (admin nhận SUPPORT_MESSAGE)
 
-Frontend → refetch mỗi 5–8s (React Query)
+Frontend → SSE GET /api/support/stream (MQTT làm bus giữa các pod), poll dự phòng
 ```
 
 ### 3.5 Community chat (học viên)
@@ -241,10 +243,10 @@ POST /api/auth/register  → 3 req / 3600s
 
 | Topic | Producer | Mục đích |
 |-------|----------|----------|
-| `edu.exam.submitted` | exam-service | Async scoring |
-| `edu.payment.succeeded` | payment-service | Trigger payout |
-| `edu.session.completed` | payment-service | Coach stats update |
-| `edu.vocab.reviewed` | exam-service | Study streak |
+| `edu.exam.submitted` | exam-service (transactional outbox) | Consumer `progress-updater` cập nhật tiến độ; lỗi 3 lần → `edu.exam.submitted.dlq` |
+| `edu.payment.succeeded` | payment-service (webhook, transactional outbox) | Chưa có consumer; event không mất (ghi cùng transaction với Payment, relay của exam-service đẩy lên) |
+| `edu.session.completed` | — | Chỉ khai báo trong `kafka-topics.ts`, chưa ai gửi |
+| `edu.vocab.reviewed` | — | Chỉ khai báo trong `kafka-topics.ts`, chưa ai gửi |
 
 ---
 
@@ -264,7 +266,7 @@ CI/CD: `.github/workflows/`
 |---|---|
 | ✅ Unified gateway | Web + mobile qua 1 entry (nginx/API) |
 | ✅ gRPC + in-process | Microservices content/exam; payment in-process |
-| ✅ Stripe + Connect | Subscription + coach payout |
+| ✅ Stripe + Connect | Subscription; coach payout hằng tuần (mỗi buổi gắn `payoutId`, không trả trùng; xem [core-flows.md](./core-flows.md) 2e) |
 | ✅ LiveKit + Keycloak | Livestream SFU + OIDC IdP |
 | ✅ REST chat | Support + community, polling nhẹ |
 | ✅ Google OAuth + OIDC | Gmail + Keycloak |

@@ -31,6 +31,8 @@ import {
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_DAYS = 7;
+/** Hai tab web cùng cookie refresh cùng lúc: request đến sau vẫn được cấp token trong khoảng này. */
+export const REFRESH_REUSE_GRACE_MS = 30_000;
 
 const publicUserSelect = {
   id: true,
@@ -435,6 +437,17 @@ export class AuthService implements OnModuleInit {
     return { ...tokens, user: this.toPublicUser(user) };
   }
 
+  /**
+   * Đổi refresh token lấy cặp token mới (rotation).
+   *
+   * Bản cũ: tìm → kiểm tra → thu hồi bằng 3 bước rời: hai request cùng token đều qua bước kiểm tra
+   * và đều được cấp token. Và dùng lại token đã thu hồi chỉ bị 401: kẻ cắp được token chỉ cần dùng
+   * trước chủ thật là chiếm phiên, không ai biết.
+   *
+   * Giờ: thu hồi nguyên tử (`updateMany ... revoked = false`). Token bị thu hồi trong
+   * REFRESH_REUSE_GRACE_MS (hai tab web refresh cùng lúc) vẫn được cấp token. Dùng lại token đã thu
+   * hồi lâu hơn = bị đánh cắp → thu hồi MỌI phiên của user, buộc đăng nhập lại.
+   */
   async refreshTokens(refreshToken: string) {
     const [tokenId, secret] = refreshToken.split(".");
     if (!tokenId || !secret) {
@@ -447,24 +460,49 @@ export class AuthService implements OnModuleInit {
         user: { select: publicUserSelect },
       },
     });
-
-    if (!stored || stored.revoked || stored.expiresAt < new Date()) {
+    if (!stored || !(await bcrypt.compare(secret, stored.token))) {
+      throw new UnauthorizedException("Refresh token không hợp lệ");
+    }
+    if (stored.expiresAt < new Date()) {
       throw new UnauthorizedException(
         "Refresh token không hợp lệ hoặc đã hết hạn",
       );
     }
 
-    const valid = await bcrypt.compare(secret, stored.token);
-    if (!valid) {
-      throw new UnauthorizedException("Refresh token không hợp lệ");
+    if (!stored.revoked) {
+      const { count } = await this.prisma.refreshToken.updateMany({
+        where: { id: stored.id, revoked: false },
+        data: { revoked: true, revokedAt: new Date() },
+      });
+      if (count === 1) return this.generateTokens(stored.user);
+      // Thua race với request khác cùng token (vừa thu hồi xong): xử lý như token vừa bị thu hồi
     }
 
-    await this.prisma.refreshToken.update({
+    const current = await this.prisma.refreshToken.findUnique({
       where: { id: stored.id },
+      select: { revokedAt: true },
+    });
+    const revokedAt = current?.revokedAt;
+    if (
+      revokedAt &&
+      Date.now() - revokedAt.getTime() <= REFRESH_REUSE_GRACE_MS
+    ) {
+      return this.generateTokens(stored.user);
+    }
+
+    // Token đã thu hồi lâu (hoặc do đăng xuất / đổi mật khẩu) mà vẫn có người dùng → bị đánh cắp.
+    // KHÔNG ghi revokedAt: revokedAt chỉ dành cho quay vòng, nếu ghi thì các token vừa bị thu hồi ở
+    // đây lại lọt vào khoảng cho phép và refresh tiếp được.
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: stored.userId, revoked: false },
       data: { revoked: true },
     });
-
-    return this.generateTokens(stored.user);
+    this.logger.warn(
+      `Refresh token đã thu hồi bị dùng lại (user ${stored.userId}): thu hồi mọi phiên`,
+    );
+    throw new UnauthorizedException(
+      "Phiên đăng nhập không còn hợp lệ, hãy đăng nhập lại",
+    );
   }
 
   async revokeRefreshToken(refreshToken: string) {
@@ -479,6 +517,7 @@ export class AuthService implements OnModuleInit {
     const valid = await bcrypt.compare(secret, stored.token);
     if (!valid) return;
 
+    // Không ghi revokedAt (chỉ dành cho quay vòng): token đã đăng xuất mà bị dùng lại = bị đánh cắp
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
       data: { revoked: true },

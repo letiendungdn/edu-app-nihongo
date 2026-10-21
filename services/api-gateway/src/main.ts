@@ -33,6 +33,8 @@ async function bootstrap() {
   app.use(bodyLimitMiddleware);
   // Route soạn nội dung gửi ảnh data URL — parser cho phép tới 8 MB
   app.useBodyParser("json", { limit: "8mb" });
+  // Webhook LiveKit gửi Content-Type application/webhook+json (parser trên chỉ nhận application/json)
+  app.useBodyParser("json", { type: "application/webhook+json" });
   // SIGTERM (K8s rolling update) → đóng server, Prisma, Kafka gọn gàng thay vì cắt ngang request
   app.enableShutdownHooks();
   app.useLogger(app.get(PinoLogger));

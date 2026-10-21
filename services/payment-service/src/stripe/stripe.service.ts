@@ -131,14 +131,19 @@ export class StripeService {
     });
   }
 
+  /** `idempotencyKey`: bấm hoàn tiền hai lần / hai request cùng lúc → Stripe trả đúng refund cũ. */
   async refundPayment(
     chargeId: string,
     amountCents?: number,
+    idempotencyKey?: string,
   ): Promise<Stripe.Refund> {
-    return this.stripe.refunds.create({
-      charge: chargeId,
-      amount: amountCents,
-    });
+    return this.stripe.refunds.create(
+      {
+        charge: chargeId,
+        amount: amountCents,
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
   }
 
   async allowPaymentMethodRedisplay(paymentMethodId: string): Promise<void> {
@@ -215,18 +220,25 @@ export class StripeService {
     });
   }
 
+  /** `idempotencyKey`: thử lại cùng khóa (trong 24 giờ) thì Stripe trả đúng transfer cũ, không chuyển lần hai. */
   async transferToCoach(params: {
     amountCents: number;
     currency: string;
     stripeAccountId: string;
     metadata?: Record<string, string>;
+    idempotencyKey?: string;
   }): Promise<Stripe.Transfer> {
-    return this.stripe.transfers.create({
-      amount: params.amountCents,
-      currency: params.currency.toLowerCase(),
-      destination: params.stripeAccountId,
-      metadata: params.metadata ?? {},
-    });
+    return this.stripe.transfers.create(
+      {
+        amount: params.amountCents,
+        currency: params.currency.toLowerCase(),
+        destination: params.stripeAccountId,
+        metadata: params.metadata ?? {},
+      },
+      params.idempotencyKey
+        ? { idempotencyKey: params.idempotencyKey }
+        : undefined,
+    );
   }
 
   constructWebhookEvent(

@@ -41,7 +41,8 @@
     "book-audio:fetch": "python scripts/parse-mailee-book-audio.py",
     "book-audio:download": "python scripts/download-book-audio-drive.py --fetch-csv",
     "book-audio:sync-db": "npm run generate -w @edu/prisma-nihongo && npx ts-node packages/prisma-nihongo/sync-book-audio-drive.ts",
-    "book-audio:setup": "npm run book-audio:download && npm run book-audio:sync-db"
+    "book-audio:setup": "npm run book-audio:download && npm run book-audio:sync-db",
+    "mori:index": "python scripts/index-mori-course.py"
   },
   "engines": {
     "node": ">=22"

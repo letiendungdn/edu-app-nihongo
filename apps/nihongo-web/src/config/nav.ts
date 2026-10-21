@@ -26,6 +26,7 @@ export const NAV_GROUPS = [
     label: 'Giáo trình',
     items: [
       { href: '/book-audio', icon: '聴', label: 'File nghe sách' },
+      { href: '/mori', icon: '講', label: 'Video Dũng Mori' },
     ],
   },
   {
