@@ -79,15 +79,33 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Configure kubeconfig
+        id: kubeconfig
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
+          # Không có secret thì kubectl mặc định gọi http://localhost:8080 và fail
+          # "connection refused" dù manifest đúng.
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "has_cluster=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secret KUBE_CONFIG trống — bỏ qua deploy Kubernetes. Thêm kubeconfig (nội dung file hoặc base64) vào environment production khi đã có cluster."
+            exit 0
+          fi
+          echo "has_cluster=true" >> "$GITHUB_OUTPUT"
           mkdir -p "$HOME/.kube"
-          echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          if printf '%s' "$KUBE_CONFIG" | grep -q 'apiVersion:'; then
+            printf '%s\n' "$KUBE_CONFIG" > "$HOME/.kube/config"
+          else
+            printf '%s' "$KUBE_CONFIG" | base64 -d > "$HOME/.kube/config"
+          fi
           chmod 600 "$HOME/.kube/config"
+          kubectl cluster-info
 
       - name: Apply namespace
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: kubectl apply -f infra/k8s/namespace.yaml
 
       - name: Sync secrets from GitHub Secrets
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           kubectl create secret generic edu-app-secrets \
             --namespace edu-app \
@@ -108,12 +126,14 @@ jobs:
       # Postgres/Redis phải có trước khi migrate (lần deploy đầu tiên).
       # Mosquitto cũng apply ở đây vì api-gateway đọc MQTT_URL từ configmap.
       - name: Apply data stores
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           kubectl apply -f infra/k8s/postgres.yaml -f infra/k8s/redis.yaml -f infra/k8s/mqtt/mosquitto.yaml
           kubectl rollout status statefulset/postgres -n edu-app --timeout=300s
 
       # Migration TRƯỚC khi đổi code: lỗi → dừng deploy, pod đang chạy không bị đụng tới
       - name: Migrate database
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           JOB_SUFFIX="${DEPLOY_SHA:0:12}"
           sed -e "s/__IMAGE_TAG__/${DEPLOY_SHA}/" -e "s/__JOB_SUFFIX__/${JOB_SUFFIX}/" \
@@ -127,6 +147,7 @@ jobs:
       # Image đổi sang tag bất biến :<sha> ngay khi apply → mỗi deploy là một revision rollout thật
       # (:latest cũ làm `kubectl apply` báo unchanged, pod vẫn chạy code cũ).
       - name: Deploy workloads (pinned to commit sha)
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           for f in infra/k8s/*.yaml; do
             case "$(basename "$f")" in
@@ -136,6 +157,7 @@ jobs:
           done
 
       - name: Wait for rollouts (rollback on failure)
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           for d in api-gateway content-service exam-service nihongo-web; do
             if ! kubectl rollout status "deployment/$d" -n edu-app --timeout=300s; then
@@ -146,6 +168,7 @@ jobs:
           done
 
       - name: Smoke test (readiness)
+        if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: |
           kubectl run "smoke-${DEPLOY_SHA:0:12}" -n edu-app --rm -i --restart=Never --image=curlimages/curl:8.10.1 -- \
             curl -fsS --retry 5 --retry-delay 3 http://api-gateway:3000/health/ready
