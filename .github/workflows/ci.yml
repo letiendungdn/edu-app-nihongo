@@ -93,6 +93,20 @@ jobs:
         env:
           TEST_DATABASE_URL: postgresql://nihongo:nihongo@localhost:5432/nihongo_test
           REDIS_URL: redis://localhost:6379
+      # Pipeline Airflow learner_insights: SQL chạy trên Postgres thật (Prisma + Flyway V1, V2) và cấu
+      # trúc DAG, trong đúng image Airflow chạy thật (driver psycopg 3 của PostgresHook)
+      - name: Airflow learner_insights tests
+        run: |
+          PGPASSWORD=nihongo psql -h localhost -U nihongo -d nihongo -c "CREATE DATABASE nihongo_insights_test"
+          DATABASE_URL=postgresql://nihongo:nihongo@localhost:5432/nihongo_insights_test npm run migrate:deploy -w @edu/prisma-nihongo
+          docker run --rm --network host -v "$PWD/infra/flyway/sql:/flyway/sql:ro" flyway/flyway:10 \
+            -url=jdbc:postgresql://localhost:5432/nihongo_insights_test -user=nihongo -password=nihongo \
+            -defaultSchema=flyway -schemas=flyway migrate
+          docker run --rm --network host -v "$PWD/infra/airflow:/work" -w /work \
+            -e PYTHONPATH=/work/dags \
+            -e INSIGHTS_TEST_DATABASE_URL=postgresql://nihongo:nihongo@localhost:5432/nihongo_insights_test \
+            --entrypoint bash apache/airflow:3.3.2-python3.12 \
+            -c "pip install -q --user pytest==8.4.2 && python -m pytest -q -p no:cacheprovider tests"
       - name: Seed mock exam templates
         run: npm run seed:mock-exam-templates -w @edu/prisma-nihongo
         env:

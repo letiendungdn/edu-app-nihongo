@@ -5,6 +5,15 @@
 
 export type JlptKanjiLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
 
+export type JlptKanjiVocab = {
+  word: string;
+  reading: string;
+  meaningVi: string;
+  exampleJa?: string;
+  exampleKana?: string;
+  exampleVi?: string;
+};
+
 export type JlptKanjiEntry = {
   character: string;
   /** Bỏ trống với chữ do Nhật tạo (国字) — không có âm Hán-Việt */
@@ -13,6 +22,9 @@ export type JlptKanjiEntry = {
   kunyomi?: string;
   meaningVi: string;
   strokeCount?: number;
+  mnemonicVi?: string;
+  grade?: number;
+  vocabularies?: JlptKanjiVocab[];
 };
 
 export type JlptKanjiLesson = {

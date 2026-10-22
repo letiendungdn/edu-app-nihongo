@@ -4,7 +4,8 @@ export type MailTemplateId =
   | 'password_reset'
   | 'password_changed'
   | 'weekly_progress'
-  | 'streak_milestone';
+  | 'streak_milestone'
+  | 'reengagement';
 
 export type WelcomeTemplateVars = {
   appName: string;
@@ -245,3 +246,41 @@ ${unsubscribeFooterHtml(vars.unsubscribeUrl)}
 </body></html>`,
   };
 }
+
+export type ReengagementTemplateVars = {
+  appName: string;
+  userName: string;
+  daysInactive: number;
+  dueCards: number;
+  appUrl: string;
+  unsubscribeUrl: string;
+};
+
+/** Học viên đang học đều rồi nghỉ vài ngày (pipeline Airflow learner_insights phát hiện). */
+export function renderReengagementMail(vars: ReengagementTemplateVars): RenderedMail {
+  const name = escapeHtml(vars.userName || 'bạn');
+  const appUrl = escapeHtml(vars.appUrl);
+  const dueLine =
+    vars.dueCards > 0
+      ? `Có ${vars.dueCards} thẻ đang chờ bạn ôn, ôn sớm thì nhớ lâu hơn.`
+      : 'Chỉ cần 5 phút hôm nay để giữ nhịp học.';
+  return {
+    subject: `Đã ${vars.daysInactive} ngày rồi, quay lại ôn một chút nhé? — ${vars.appName}`,
+    text: [
+      `Xin chào ${vars.userName || 'bạn'},`,
+      '',
+      `Bạn đã nghỉ ${vars.daysInactive} ngày. ${dueLine}`,
+      '',
+      `Học tiếp tại: ${vars.appUrl}/srs`,
+      unsubscribeFooterText(vars.unsubscribeUrl),
+    ].join('\n'),
+    html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#111;max-width:520px;margin:0 auto;padding:16px">
+<h2 style="font-size:20px;margin-bottom:4px">Lâu rồi không gặp 👋</h2>
+<p style="color:#666;margin-top:0">Xin chào <strong>${name}</strong>,</p>
+<p>Bạn đã nghỉ <strong>${vars.daysInactive} ngày</strong>. ${escapeHtml(dueLine)}</p>
+<p><a href="${appUrl}/srs" style="display:inline-block;padding:10px 20px;background:#ef4444;color:#fff;text-decoration:none;border-radius:6px">Ôn tiếp 5 phút</a></p>
+${unsubscribeFooterHtml(vars.unsubscribeUrl)}
+</body></html>`,
+  };
+}
+

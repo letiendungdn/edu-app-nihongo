@@ -56,6 +56,7 @@ export const queryKeys = {
   adminStats: ['admin', 'stats'] as const,
   adminUsers: ['admin', 'users'] as const,
   adminPayments: (filters: AdminPaymentsFilters) => ['admin', 'payments', filters] as const,
+  adminInsights: (day?: string) => ['admin', 'insights', day ?? 'latest'] as const,
   supportThread: ['support', 'thread'] as const,
   adminSupportThreads: ['admin', 'support', 'threads'] as const,
   adminSupportThread: (id: number) => ['admin', 'support', 'thread', id] as const,

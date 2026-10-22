@@ -229,10 +229,25 @@ export async function seedJlptExpand(prisma: PrismaClientType) {
           onyomi: e.onyomi ?? null,
           kunyomi: e.kunyomi ?? null,
           meaningVi: e.meaningVi,
+          mnemonicVi: e.mnemonicVi ?? null,
           jlptLevel: kl.jlptLevel,
           strokeCount: e.strokeCount ?? null,
+          grade: e.grade ?? null,
           sortOrder: sortOrder++,
           lessonId: lesson.id,
+          vocabularies: e.vocabularies?.length
+            ? {
+                create: e.vocabularies.map((v, index) => ({
+                  word: v.word,
+                  reading: v.reading,
+                  meaningVi: v.meaningVi,
+                  exampleJa: v.exampleJa ?? null,
+                  exampleKana: v.exampleKana ?? null,
+                  exampleVi: v.exampleVi ?? null,
+                  sortOrder: index,
+                })),
+              }
+            : undefined,
         },
       });
       globalKanjiChars.add(e.character);

@@ -256,6 +256,8 @@ services:
       # ICE server cho video call (trả kèm vé vào phòng). TURN_SECRET phải trùng với service coturn
       TURN_URLS: ${TURN_URLS:-turn:localhost:3478?transport=udp,turn:localhost:3478?transport=tcp}
       TURN_SECRET: ${TURN_SECRET:-dev-turn-secret}
+      # Airflow (learner_insights) gọi /api/internal/insights/* bằng token này
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-dev-internal-token-change-me}
       STRIPE_MERCHANT_COUNTRY: ${STRIPE_MERCHANT_COUNTRY:-US}
       AWS_REGION: ${AWS_REGION:-ap-southeast-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
@@ -315,7 +317,8 @@ services:
     container_name: edu-signaling
     restart: unless-stopped
     ports:
-      - '3002:3002'
+      # Đổi cổng trên máy khi 3002 bị chiếm (nhớ đổi NEXT_PUBLIC_SIGNALING_URL của web theo)
+      - '${SIGNALING_HOST_PORT:-3002}:3002'
     environment:
       PORT: 3002
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET chua dat - xem .env (api-gateway khong chay voi secret mac dinh)}
@@ -323,6 +326,53 @@ services:
       CORS_ORIGIN: ${SIGNALING_CORS_ORIGIN:-http://localhost:8080,http://localhost:5173,http://nihongo.localhost:8080}
     depends_on:
       redis:
+        condition: service_healthy
+
+  # ── Airflow: pipeline dữ liệu hằng đêm (infra/airflow) ───────────────────────
+  # Bật: docker compose --profile airflow up -d airflow   →  UI http://localhost:8090
+  airflow-db:
+    profiles: [airflow]
+    image: postgres:16-alpine
+    container_name: edu-airflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD:-airflow}
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U airflow']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow:
+    profiles: [airflow]
+    image: apache/airflow:3.3.2-python3.12
+    container_name: edu-airflow
+    restart: unless-stopped
+    # standalone: scheduler + API server + dag-processor trong một container (dev). Chạy thật thì tách.
+    command: standalone
+    ports:
+      - '8090:8080'
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${AIRFLOW_DB_PASSWORD:-airflow}@airflow-db:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Ho_Chi_Minh
+      # Chỉ dev: vào UI không cần đăng nhập. Chạy thật phải bỏ dòng này.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: 'True'
+      # Postgres của app: đọc public, ghi schema insights (Flyway V2)
+      AIRFLOW_CONN_NIHONGO_DB: postgresql://nihongo:${POSTGRES_PASSWORD:-nihongo}@postgres-nihongo:5432/nihongo
+      AIRFLOW_VAR_GATEWAY_URL: http://api-gateway:3000
+      AIRFLOW_VAR_INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-dev-internal-token-change-me}
+    volumes:
+      - ./infra/airflow/dags:/opt/airflow/dags:ro
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+      postgres-nihongo:
         condition: service_healthy
 
   # TURN: chuyển tiếp media khi hai bên không nối P2P được (NAT đối xứng: 4G/5G, mạng công ty).
@@ -492,6 +542,7 @@ services:
       retries: 5
 
 volumes:
+  airflow_db_data:
   mori_hls_cache:
   mosquitto_data:
   # Giữ data từ stack cũ `nihongo-app` (chỉ DB tiếng Nhật)

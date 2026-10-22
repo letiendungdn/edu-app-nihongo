@@ -138,4 +138,48 @@ export const JLPT_KANJI_BOOST4_N1_I: JlptKanjiLesson[] = [
       { character: '枠', kunyomi: 'わく', meaningVi: 'khung, viền; giới hạn, phạm vi (chữ do Nhật tạo, không có âm Hán-Việt)', strokeCount: 8 },
     ],
   },
+  {
+    lessonNumber: 846,
+    jlptLevel: 'N1',
+    title: 'Kanji N1 bổ sung — chìa khóa',
+    sortOrder: 8460,
+    entries: [
+      {
+        character: '鍵',
+        hanViet: 'KIỆN',
+        onyomi: 'けん',
+        kunyomi: 'かぎ',
+        meaningVi: 'chìa khóa, then khóa',
+        strokeCount: 17,
+        grade: 8,
+        mnemonicVi: 'Kim loại (金) được dựng (建) thành chiếc chìa khóa.',
+        vocabularies: [
+          {
+            word: '鍵',
+            reading: 'かぎ',
+            meaningVi: 'chìa khóa',
+            exampleJa: 'ドアの鍵を忘れました。',
+            exampleKana: 'ドアのかぎをわすれました。',
+            exampleVi: 'Tôi quên chìa khóa cửa.',
+          },
+          {
+            word: '鍵盤',
+            reading: 'けんばん',
+            meaningVi: 'bàn phím (đàn, máy)',
+            exampleJa: 'ピアノの鍵盤を弾きます。',
+            exampleKana: 'ピアノのけんばんをひきます。',
+            exampleVi: 'Tôi đánh phím đàn piano.',
+          },
+          {
+            word: '合鍵',
+            reading: 'あいかぎ',
+            meaningVi: 'chìa khóa dự phòng',
+            exampleJa: '合鍵を作りました。',
+            exampleKana: 'あいかぎをつくりました。',
+            exampleVi: 'Tôi đã làm chìa khóa dự phòng.',
+          },
+        ],
+      },
+    ],
+  },
 ];

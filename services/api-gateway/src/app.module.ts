@@ -17,6 +17,7 @@ import { AuditService } from "@app/common/audit/audit.service";
 import configuration from "@app/common/config/configuration";
 import { JwtAuthGuard } from "@app/common/auth/jwt-auth.guard";
 import { MailModule } from "@app/common/mail/mail.module";
+import { InsightsModule } from "./insights/insights.module";
 import { pinoConfig } from "@app/common/logger/pino.config";
 import { RedisModule } from "@app/common/redis/redis.module";
 import { PrismaModule } from "@app/prisma";
@@ -89,6 +90,7 @@ class NoopAuditService {
     RedisModule,
     ...(mongoEnabled ? [AuditModule] : []),
     MailModule,
+    InsightsModule,
     MicroservicesModule,
     PrismaModule,
     AuthModule,

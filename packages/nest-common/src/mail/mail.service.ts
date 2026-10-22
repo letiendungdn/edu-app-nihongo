@@ -5,6 +5,7 @@ import {
   renderEmailVerificationMail,
   renderPasswordChangedMail,
   renderPasswordResetMail,
+  renderReengagementMail,
   renderStreakMilestoneMail,
   renderWeeklyProgressMail,
   renderWelcomeMail,
@@ -39,6 +40,14 @@ export type SendPasswordChangedInput = {
   toEmail: string;
   toName?: string | null;
   attachments?: MailAttachment[];
+};
+
+export type SendReengagementInput = {
+  userId: number;
+  toEmail: string;
+  toName?: string | null;
+  daysInactive: number;
+  dueCards: number;
 };
 
 export type SendWeeklyProgressInput = {
@@ -306,6 +315,32 @@ export class MailService {
       text: rendered.text,
       tags: ['weekly_progress', 'product'],
       attachments: [...(input.attachments ?? []), ...extraAttachments],
+    });
+  }
+
+  // ─── Re-engagement (Airflow learner_insights) ─────────────────────────────
+
+  async sendReengagement(input: SendReengagementInput): Promise<void> {
+    const vars = {
+      appName: this.appName,
+      userName: input.toName?.trim() || input.toEmail.split('@')[0] || 'bạn',
+      daysInactive: input.daysInactive,
+      dueCards: input.dueCards,
+      appUrl: this.appPublicUrl,
+      unsubscribeUrl: this.buildUnsubscribeUrl(input.userId, input.toEmail),
+    };
+    const { rendered, extraAttachments } = await this.resolveTemplate(
+      'reengagement',
+      renderReengagementMail(vars),
+      vars as unknown as Record<string, unknown>,
+    );
+    await this.mailPort.send({
+      to: { email: input.toEmail, name: input.toName ?? undefined },
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      tags: ['reengagement', 'product'],
+      attachments: extraAttachments,
     });
   }
 

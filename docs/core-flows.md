@@ -18,6 +18,7 @@ Viết ngày 21/10/2026, cập nhật sau đợt sửa 12 rủi ro cùng ngày.
 - [8. Nội dung học](#8-nội-dung-học)
 - [9. AI](#9-ai)
 - [10. Nhắc ôn (push, email)](#10-nhắc-ôn-push-email)
+- [10b. Học viên sắp bỏ học (Airflow)](#10b-học-viên-sắp-bỏ-học-airflow)
 - [11. Rủi ro đã sửa](#11-rủi-ro-đã-sửa)
 
 ---
@@ -534,6 +535,40 @@ App Android native nhắc ôn bằng thông báo **local** (`SrsReminderWorker`,
 **Vì sao không dùng advisory lock cho cron (R11):** khóa kiểu "đang chạy" không chặn được trường hợp pod A chạy xong trong vài giây rồi nhả khóa, sau đó pod B nổ trễ vài trăm mili giây vẫn lấy được khóa. Cần ghi nhớ "lượt này **đã** chạy": khóa chính `(name, slot)` của bảng `CronRun`. Test: `cron-run.db-spec.ts`.
 
 ---
+
+## 10b. Học viên sắp bỏ học (Airflow)
+
+Pipeline `learner_insights` (Airflow 3, chạy 2:00 sáng giờ VN) tính số liệu của ngày hôm trước và gửi email kéo học viên quay lại. Chi tiết, cách chạy và test: [infra/airflow/README.md](../infra/airflow/README.md).
+
+```mermaid
+sequenceDiagram
+  participant AF as Airflow (learner_insights)
+  participant DB as Postgres (public → insights)
+  participant GW as api-gateway
+  participant M as MailService
+
+  AF->>DB: build_learner_day + score_churn_risk (song song, idempotent theo ngày)
+  AF->>DB: build_daily_kpi
+  AF->>DB: quality_check (lỗi → fail, KHÔNG gửi email)
+  AF->>DB: giành dòng insights.reengagement (pending)
+  AF->>GW: POST /api/internal/insights/reengagement (x-internal-token)
+  GW->>DB: claimCronRun("reengagement.user-N", ngày) → đã gửi thì trả already_sent
+  GW->>M: sendReengagement (tôn trọng EmailPrefs, emailBounced)
+  GW-->>AF: results
+  AF->>DB: đánh dấu sent / skipped
+```
+
+- **File:**
+  - Airflow: `infra/airflow/dags/learner_insights.py`, `infra/airflow/dags/insights/queries.py`;
+  - schema: `infra/flyway/sql/V2__learner_insights.sql`;
+  - gateway: `services/api-gateway/src/insights/`;
+  - web: `apps/nihongo-web/src/views/admin/AdminInsightsPage.tsx` (`/admin/insights`).
+- **Điểm thiết kế:**
+  - **Đúng việc cho Airflow:** nhiều bước phụ thuộc nhau, retry từng bước, kiểm tra chất lượng chặn bước có tác dụng phụ (gửi email), backfill, và lịch sử chạy trên UI.
+  - **Bảng `insights` do Flyway quản** (read model), Prisma chỉ quản `public`, nên không có drift.
+  - **Mọi bước idempotent theo ngày:** xóa rồi ghi lại trong một transaction.
+  - **Backfill không gửi email:** lần chạy cho ngày cũ hơn 2 ngày tự bỏ qua bước gửi.
+  - **Chống gửi trùng hai lớp:** Airflow giành dòng `pending`, gateway chặn theo (học viên, ngày). Đã thử thật: gateway nhận 4 request (lần chạy đầu + retry), học viên nhận đúng 1 email.
 
 ## 11. Rủi ro đã sửa
 

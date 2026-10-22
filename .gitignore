@@ -45,6 +45,10 @@ tmp-drive-test/
 tmp-mailee.csv
 Thumbs.db
 
+# Python (Airflow DAGs)
+__pycache__/
+.pytest_cache/
+
 # IDE
 .idea/
 .vscode/*

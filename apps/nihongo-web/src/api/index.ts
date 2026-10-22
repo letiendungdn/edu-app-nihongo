@@ -862,6 +862,41 @@ export type AdminPaymentsFilters = {
   limit?: number;
 };
 
+export interface AdminInsightsKpi {
+  day: string;
+  activeLearners: number;
+  newLearners: number;
+  atRisk: number;
+  totalSeconds: number;
+  cardsReviewed: number;
+  examsTaken: number;
+}
+
+export interface AdminAtRiskLearner {
+  userId: number;
+  email: string;
+  name: string | null;
+  riskScore: number;
+  daysInactive: number;
+  activeDaysPrior: number;
+  dueCards: number;
+  lastActiveDay: string;
+  reasons: string[];
+  reengagement: 'pending' | 'sent' | 'skipped' | null;
+}
+
+export interface AdminInsights {
+  ready: boolean;
+  day: string | null;
+  kpi: AdminInsightsKpi[];
+  atRisk: AdminAtRiskLearner[];
+}
+
+/** Kết quả pipeline Airflow learner_insights (KPI hằng ngày + học viên sắp bỏ học). */
+export function fetchAdminInsights(token: string, day?: string) {
+  return apiRequest<AdminInsights>(`/admin/insights${day ? `?day=${day}` : ''}`, { token });
+}
+
 export function fetchAdminPayments(token: string, filters: AdminPaymentsFilters = {}) {
   const params = new URLSearchParams();
   if (filters.userId) params.set('userId', String(filters.userId));

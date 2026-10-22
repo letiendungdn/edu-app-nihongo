@@ -32,6 +32,7 @@ const NAV: NavSection[] = [
     title: 'Quản lý',
     items: [
       { href: '/admin/payments', label: 'Thanh toán', icon: '💳' },
+      { href: '/admin/insights', label: 'Học viên sắp bỏ học', icon: '📉' },
       { href: '/admin/messages', label: 'Tin nhắn hỗ trợ', icon: '💬' },
       { href: '/admin/import', label: 'Import từ vựng', icon: '📥' },
     ],

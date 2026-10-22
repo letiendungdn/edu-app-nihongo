@@ -3,6 +3,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/query-keys';
 import { STALE_5M } from '../api/hooks/constants';
 import {
+  fetchAdminInsights,
   fetchAdminPayments,
   fetchAdminSupportThread,
   fetchAdminSupportThreads,
@@ -336,6 +337,16 @@ export function useAdminUsersQuery(enabled = true) {
     queryFn: () => fetchAdminUsers(token!),
     enabled: enabled && !!token,
     staleTime: 60_000,
+  });
+}
+
+export function useAdminInsightsQuery(day?: string, enabled = true) {
+  const token = getStoredToken();
+  return useQuery({
+    queryKey: queryKeys.adminInsights(day),
+    queryFn: () => fetchAdminInsights(token!, day),
+    enabled: enabled && !!token,
+    staleTime: 60_000, // pipeline chạy mỗi đêm, không cần làm mới liên tục
   });
 }
 
