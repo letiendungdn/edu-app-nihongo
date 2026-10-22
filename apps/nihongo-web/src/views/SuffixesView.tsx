@@ -447,6 +447,11 @@ function SuffixPopup({
         onClose();
         return;
       }
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        playAudio(item.kana);
+        return;
+      }
       if (editing) return;
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -459,7 +464,7 @@ function SuffixPopup({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [editing, onClose, onStep]);
+  }, [editing, item.kana, onClose, onStep]);
 
   const heardKey = useRef<string | null>(null);
   useEffect(() => {
@@ -554,7 +559,7 @@ function SuffixPopup({
             →
           </button>
         </div>
-        <p className="sfx-popup-key-hint">← → đổi hậu tố</p>
+        <p className="sfx-popup-key-hint">← → đổi hậu tố · phím cách nghe</p>
 
         <div className="sfx-popup-stroke">
           <StrokeOrder key={`${item.id ?? item.suffix}-${item.kana}`} text={item.suffix} width={180} height={180} />

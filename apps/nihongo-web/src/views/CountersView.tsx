@@ -31,6 +31,11 @@ function CounterPopup({
         onClose();
         return;
       }
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        playAudio(item.kana);
+        return;
+      }
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         onStep(-1);
@@ -42,15 +47,11 @@ function CounterPopup({
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose, onStep]);
+  }, [item.kana, onClose, onStep]);
 
   const heardKey = useRef<string | null>(null);
   useEffect(() => {
     const key = `${item.n}:${item.kana}`;
-    if (heardKey.current == null) {
-      heardKey.current = key;
-      return;
-    }
     if (heardKey.current === key) return;
     heardKey.current = key;
     playAudio(item.kana);
@@ -79,10 +80,10 @@ function CounterPopup({
             →
           </button>
         </div>
-        <p className="counter-popup-key-hint">← → đổi chữ</p>
+        <p className="counter-popup-key-hint">← → đổi chữ · phím cách nghe</p>
 
         <div className="counter-popup-stroke">
-          <StrokeOrder key={`${item.n}-${strokeText}`} text={strokeText} width={200} height={200} />
+          <StrokeOrder key={`${item.n}-${strokeText}`} text={strokeText} compact />
           <p className="counter-popup-stroke-hint">Nhấn vào chữ để xem lại nét</p>
         </div>
 
