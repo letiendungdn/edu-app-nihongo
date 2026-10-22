@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -460,6 +460,18 @@ function SuffixPopup({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [editing, onClose, onStep]);
+
+  const heardKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${item.id ?? item.suffix}:${item.kana}`;
+    if (heardKey.current == null) {
+      heardKey.current = key;
+      return;
+    }
+    if (heardKey.current === key) return;
+    heardKey.current = key;
+    playAudio(item.kana);
+  }, [item.id, item.suffix, item.kana]);
 
   function handleCopy() {
     void navigator.clipboard.writeText(item.suffix).then(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { playAudio } from '../utils/speech';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
@@ -43,6 +43,18 @@ function CounterPopup({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose, onStep]);
+
+  const heardKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${item.n}:${item.kana}`;
+    if (heardKey.current == null) {
+      heardKey.current = key;
+      return;
+    }
+    if (heardKey.current === key) return;
+    heardKey.current = key;
+    playAudio(item.kana);
+  }, [item.n, item.kana]);
 
   const strokeText = item.kanji || item.kana;
 
