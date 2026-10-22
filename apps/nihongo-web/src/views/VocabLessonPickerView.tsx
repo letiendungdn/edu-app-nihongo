@@ -6,7 +6,15 @@ import { useLessons } from '../hooks/queries';
 import { groupLessons } from '../utils/lessonGroups';
 import './VocabLessonPickerView.css';
 
-export default function VocabLessonPickerView() {
+export default function VocabLessonPickerView({
+  hrefFor = (lessonNumber: number) => `/vocab?lesson=${lessonNumber}`,
+  title = 'Từ vựng — Chọn bài học',
+  subtitle = 'Chọn bài để học flashcard. Sau đó có thể đổi bài, xem danh sách từ hoặc làm trắc nghiệm.',
+}: {
+  hrefFor?: (lessonNumber: number) => string;
+  title?: string;
+  subtitle?: string;
+} = {}) {
   const { data: lessons = [], isLoading, isError } = useLessons({ has: 'vocab' });
   const [filter, setFilter] = useState('');
 
@@ -27,10 +35,8 @@ export default function VocabLessonPickerView() {
   return (
     <div className="container vocab-lesson-picker">
       <header className="vocab-lesson-picker__header">
-        <h2 className="view-title">Từ vựng — Chọn bài học</h2>
-        <p className="vocab-lesson-picker__subtitle">
-          Chọn bài để học flashcard. Sau đó có thể đổi bài, xem danh sách từ hoặc làm trắc nghiệm.
-        </p>
+        <h2 className="view-title">{title}</h2>
+        <p className="vocab-lesson-picker__subtitle">{subtitle}</p>
         <nav className="vocab-lesson-picker__links" aria-label="Công cụ từ vựng">
           <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
             Trắc nghiệm JP ↔ VI
@@ -81,7 +87,7 @@ export default function VocabLessonPickerView() {
                   return (
                     <Link
                       key={lesson.id}
-                      href={`/vocab?lesson=${lesson.lessonNumber}`}
+                      href={hrefFor(lesson.lessonNumber)}
                       className="vocab-lesson-picker__card glass-panel"
                     >
                       <span className="vocab-lesson-picker__num">Bài {lesson.lessonNumber}</span>

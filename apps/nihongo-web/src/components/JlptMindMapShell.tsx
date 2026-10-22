@@ -497,7 +497,8 @@ function TextbookPanel({
           return (
             <div key={series} className="gmm-books__series">
               <a href={meta.url} target="_blank" rel="noopener noreferrer" className="gmm-books__name">
-                {meta.name} <span className="japanese-text">{meta.nameJa}</span>
+                <span>{meta.name}</span>
+                <span className="japanese-text">{meta.nameJa}</span>
               </a>
               <p className="gmm-books__blurb">
                 {meta.publisher} · {meta.blurb}

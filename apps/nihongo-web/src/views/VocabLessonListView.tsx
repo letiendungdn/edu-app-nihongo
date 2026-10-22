@@ -62,21 +62,34 @@ function WritingWord({
 
 function StrokeModal({
   vocab,
+  field,
   order,
   onClose,
   onStep,
 }: {
   vocab: Vocabulary;
+  field: StrokeField;
   order: number;
   onClose: () => void;
   onStep: (direction: -1 | 1) => void;
 }) {
   const { openKanjiStructure } = useKanjiStructure();
   const kanji = vocab.kanji?.trim() ?? '';
-  const hasKanji = Boolean(getStrokeText(kanji));
-  const headline = hasKanji ? kanji : vocab.kana;
-  const reading = hasKanji && vocab.kana.trim() && vocab.kana.trim() !== kanji ? vocab.kana : '';
-  const analyzable = kanjiCharsOf(headline).length > 0;
+  const kana = vocab.kana.trim();
+  const kanjiStroke = getStrokeText(kanji);
+  const kanaStroke = getStrokeText(kana);
+  // Cột nào vừa bấm thì vẽ cột đó. Từ chỉ có kana thì cột Kanji cũng rơi về kana.
+  const script: StrokeField = field === 'kana' || !kanjiStroke ? 'kana' : 'kanji';
+  const headline = script === 'kanji' ? kanji : kana;
+  const counterpart =
+    script === 'kanji'
+      ? kanaStroke && kanaStroke !== kanjiStroke
+        ? kana
+        : ''
+      : kanjiStroke && kanjiStroke !== kanaStroke
+        ? kanji
+        : '';
+  const analyzable = script === 'kanji' && kanjiCharsOf(headline).length > 0;
   const size = strokeBoxSize(headline);
   const speak = () => speakWord(vocab);
 
@@ -143,7 +156,9 @@ function StrokeModal({
             >
               {headline}
             </button>
-            {reading ? <p className="vocab-stroke-modal__reading japanese-text">{reading}</p> : null}
+            {counterpart ? (
+              <p className="vocab-stroke-modal__reading japanese-text">{counterpart}</p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -159,13 +174,15 @@ function StrokeModal({
           </button>
         </div>
         <p className="vocab-stroke-modal__label">
-          {analyzable
-            ? 'Nhấn chữ để phân tích từng kanji · 🔊 / phím cách nghe · ← → sang từ kế'
-            : 'Tự đọc tiếng Nhật rồi nghĩa tiếng Việt · phím cách nghe lại · ← → sang từ kế'}
+          {script === 'kana'
+            ? 'Cách viết hiragana · 🔊 / phím cách nghe · ← → sang từ kế'
+            : analyzable
+              ? 'Cách viết kanji · nhấn chữ để phân tích · 🔊 / phím cách nghe · ← → sang từ kế'
+              : 'Tự đọc tiếng Nhật rồi nghĩa tiếng Việt · phím cách nghe lại · ← → sang từ kế'}
         </p>
         <div className="vocab-stroke-modal__canvas">
           <StrokeOrder
-            key={`${vocab.id}-${headline}`}
+            key={`${vocab.id}-${script}-${headline}`}
             text={headline}
             width={size}
             height={size}
@@ -284,6 +301,9 @@ export default function VocabLessonListView({
             </p>
           </div>
           <nav className="vocab-lesson-list__links" aria-label="Học từ vựng">
+            <Link href="/vocab/list" className="btn btn-outline btn-sm">
+              ← Chọn bài
+            </Link>
             <Link href={`/vocab?lesson=${lessonNumber}`} className="btn btn-primary btn-sm">
               Học thẻ
             </Link>
@@ -383,6 +403,7 @@ export default function VocabLessonListView({
       {stroke && strokeVocab && (
         <StrokeModal
           vocab={strokeVocab}
+          field={stroke.field}
           order={rows[strokeRow].index + 1}
           onClose={() => setStroke(null)}
           onStep={stepStroke}

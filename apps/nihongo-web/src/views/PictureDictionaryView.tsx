@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LessonSelector from '../components/LessonSelector';
 import StrokeOrder from '../components/StrokeOrder';
 import { useLessons, useVocabRangeQuery, useVocab } from '../hooks/queries';
@@ -156,6 +156,7 @@ function mapPictureVocab(list: Vocabulary[], lessonNumber?: number): PictureVoca
 }
 
 export default function PictureDictionaryView() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { data: lessons = [] } = useLessons();
   const maxLesson = lessons[lessons.length - 1]?.lessonNumber ?? 50;
@@ -239,11 +240,14 @@ export default function PictureDictionaryView() {
           </p>
         </div>
         <div className="picture-dict-links">
-          <Link href="/vocab" className="btn btn-outline">
+          <Link href="/vocab/picture" className="btn btn-outline">
+            ← Chọn bài
+          </Link>
+          <Link href={`/vocab?lesson=${lesson}`} className="btn btn-outline">
             Flashcard
           </Link>
-          <Link href="/kanji" className="btn btn-primary">
-            Kanji
+          <Link href={`/vocab/list?lesson=${lesson}`} className="btn btn-outline">
+            Danh sách từ
           </Link>
         </div>
       </div>
@@ -270,7 +274,13 @@ export default function PictureDictionaryView() {
       </div>
 
       {scopeMode === 'single' ? (
-        <LessonSelector value={lesson} onChange={setLesson} />
+        <LessonSelector
+          value={lesson}
+          onChange={(next) => {
+            setLesson(next);
+            router.replace(`/vocab/picture?lesson=${next}`, { scroll: false });
+          }}
+        />
       ) : (
         <div className="picture-dict-range">
           <div className="picture-dict-range-fields">

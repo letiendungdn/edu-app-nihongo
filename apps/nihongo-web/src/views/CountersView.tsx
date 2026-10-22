@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { playAudio } from '../utils/speech';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
@@ -15,15 +15,34 @@ import './DrillView.css';
 function CounterPopup({
   item,
   onClose,
+  onStep,
 }: {
   item: CounterItem;
   onClose: () => void;
+  onStep: (direction: -1 | 1) => void;
 }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        onStep(-1);
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        onStep(1);
+      }
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, onStep]);
 
   const strokeText = item.kanji || item.kana;
 
@@ -32,17 +51,26 @@ function CounterPopup({
       <div className="counter-popup" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="counter-popup-close" onClick={onClose} aria-label="Đóng">✕</button>
 
-        <div className="counter-popup-header">
-          {item.kanji && <span className="counter-popup-kanji japanese-text">{item.kanji}</span>}
-          <div className="counter-popup-meta">
-            <span className="counter-popup-num">{item.n}</span>
-            <span className="counter-popup-kana japanese-text">{item.kana}</span>
-            <span className="counter-popup-romaji">{item.romaji}</span>
+        <div className="counter-popup-nav">
+          <button type="button" className="counter-popup-step" onClick={() => onStep(-1)} aria-label="Chữ trước">
+            ←
+          </button>
+          <div className="counter-popup-header">
+            {item.kanji && <span className="counter-popup-kanji japanese-text">{item.kanji}</span>}
+            <div className="counter-popup-meta">
+              <span className="counter-popup-num">{item.n}</span>
+              <span className="counter-popup-kana japanese-text">{item.kana}</span>
+              <span className="counter-popup-romaji">{item.romaji}</span>
+            </div>
           </div>
+          <button type="button" className="counter-popup-step" onClick={() => onStep(1)} aria-label="Chữ sau">
+            →
+          </button>
         </div>
+        <p className="counter-popup-key-hint">← → đổi chữ</p>
 
         <div className="counter-popup-stroke">
-          <StrokeOrder text={strokeText} width={200} height={200} />
+          <StrokeOrder key={`${item.n}-${strokeText}`} text={strokeText} width={200} height={200} />
           <p className="counter-popup-stroke-hint">Nhấn vào chữ để xem lại nét</p>
         </div>
 
@@ -93,6 +121,16 @@ export default function CountersView() {
   );
   const currentQ = questions[qIndex];
   const hintBullets = category ? counterHintBullets(category.hint) : [];
+
+  const stepPopup = useCallback((direction: -1 | 1) => {
+    setPopupItem((current) => {
+      const items = (category?.items ?? []) as CounterItem[];
+      if (!current || items.length === 0) return current;
+      const idx = items.findIndex((entry) => entry.n === current.n && entry.kana === current.kana);
+      if (idx < 0) return current;
+      return items[(idx + direction + items.length) % items.length];
+    });
+  }, [category]);
 
   if (isLoading || !category) {
     return (
@@ -310,7 +348,7 @@ export default function CountersView() {
       )}
 
       {popupItem && (
-        <CounterPopup item={popupItem} onClose={() => setPopupItem(null)} />
+        <CounterPopup item={popupItem} onClose={() => setPopupItem(null)} onStep={stepPopup} />
       )}
     </div>
   );

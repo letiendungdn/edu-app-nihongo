@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import VocabLessonListView from '@/views/VocabLessonListView';
+import VocabLessonPickerView from '@/views/VocabLessonPickerView';
 
 function positiveInt(raw: string | null): number | undefined {
   const value = raw ? Number(raw) : NaN;
@@ -11,7 +12,19 @@ function positiveInt(raw: string | null): number | undefined {
 
 function VocabListPageInner() {
   const searchParams = useSearchParams();
-  return <VocabLessonListView initialLessonNumber={positiveInt(searchParams.get('lesson'))} />;
+  const lesson = positiveInt(searchParams.get('lesson'));
+
+  if (lesson == null) {
+    return (
+      <VocabLessonPickerView
+        hrefFor={(lessonNumber) => `/vocab/list?lesson=${lessonNumber}`}
+        title="Danh sách từ — Chọn bài học"
+        subtitle="Chọn một bài để xem bảng từ. Sau đó có thể học thẻ, xem từ điển tranh hoặc làm trắc nghiệm."
+      />
+    );
+  }
+
+  return <VocabLessonListView initialLessonNumber={lesson} />;
 }
 
 export default function VocabListPage() {

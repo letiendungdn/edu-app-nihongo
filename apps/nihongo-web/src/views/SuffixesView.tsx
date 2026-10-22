@@ -415,12 +415,14 @@ function SuffixPopup({
   isAdmin,
   onClose,
   onSaved,
+  onStep,
 }: {
   item: VocabSuffixItem;
   token?: string;
   isAdmin: boolean;
   onClose: () => void;
   onSaved: () => void;
+  onStep: (direction: -1 | 1) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -436,10 +438,28 @@ function SuffixPopup({
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (editing) return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        onStep(-1);
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        onStep(1);
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [editing, onClose, onStep]);
 
   function handleCopy() {
     void navigator.clipboard.writeText(item.suffix).then(() => {
@@ -494,19 +514,38 @@ function SuffixPopup({
           <button className="sfx-popup-close" onClick={onClose} aria-label="Đóng">✕</button>
         </div>
 
-        {/* Header */}
-        <div className="sfx-popup-header">
-          <span className="sfx-popup-ja japanese-text">{item.suffix}</span>
-          {item.kana !== item.suffix && (
-            <span className="sfx-popup-kana japanese-text">{item.kana}</span>
-          )}
-          <span className="sfx-popup-romaji">{item.romaji}</span>
-          {item.attachesTo && <span className="sfx-popup-attach-tag">Gắn: {item.attachesTo}</span>}
+        <div className="sfx-popup-nav">
+          <button
+            type="button"
+            className="sfx-popup-step"
+            onClick={() => onStep(-1)}
+            disabled={editing}
+            aria-label="Hậu tố trước"
+          >
+            ←
+          </button>
+          <div className="sfx-popup-header">
+            <span className="sfx-popup-ja japanese-text">{item.suffix}</span>
+            {item.kana !== item.suffix && (
+              <span className="sfx-popup-kana japanese-text">{item.kana}</span>
+            )}
+            <span className="sfx-popup-romaji">{item.romaji}</span>
+            {item.attachesTo && <span className="sfx-popup-attach-tag">Gắn: {item.attachesTo}</span>}
+          </div>
+          <button
+            type="button"
+            className="sfx-popup-step"
+            onClick={() => onStep(1)}
+            disabled={editing}
+            aria-label="Hậu tố sau"
+          >
+            →
+          </button>
         </div>
+        <p className="sfx-popup-key-hint">← → đổi hậu tố</p>
 
-        {/* Stroke order */}
         <div className="sfx-popup-stroke">
-          <StrokeOrder text={item.suffix} width={180} height={180} />
+          <StrokeOrder key={`${item.id ?? item.suffix}-${item.kana}`} text={item.suffix} width={180} height={180} />
           <p className="sfx-popup-stroke-hint">Nhấn vào chữ để xem lại nét</p>
         </div>
 
@@ -639,6 +678,23 @@ export default function SuffixesView() {
     return groupItems.filter((item) => matchesSuffix(item, q));
   }, [groupItems, orderedItems, canReorder, searchQuery]);
 
+  const stepPopup = useCallback((direction: -1 | 1) => {
+    setPopupItem((current) => {
+      if (!current || items.length === 0) return current;
+      const idx = items.findIndex((entry) =>
+        entry.id != null && current.id != null
+          ? entry.id === current.id
+          : entry.suffix === current.suffix && entry.kana === current.kana,
+      );
+      if (idx < 0) return current;
+      return items[(idx + direction + items.length) % items.length];
+    });
+  }, [items]);
+
+  useEffect(() => {
+    if (popupItem && category) setSelectedKey(itemKey(category.id, popupItem));
+  }, [popupItem, category]);
+
   const handlePlayAll = () => {
     startPlayAll(items.map((item) => item.kana));
   };
@@ -738,6 +794,7 @@ export default function SuffixesView() {
           isAdmin={isAdmin}
           onClose={() => setPopupItem(null)}
           onSaved={() => { setPopupItem(null); invalidate(); }}
+          onStep={stepPopup}
         />
       )}
       <div className="suffixes-header">
