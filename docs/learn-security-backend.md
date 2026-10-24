@@ -17,8 +17,10 @@
 > - **CI job `security`**: gitleaks trên commit mới ([`.gitleaks.toml`](../.gitleaks.toml)) + `audit-ci` chặn **HIGH và CRITICAL**
 >   ([`audit-ci.jsonc`](../audit-ci.jsonc)). Đã nâng `next` (nihongo-web ≥15.5.28), `source-map-js` ≥1.2.2,
 >   `follow-redirects` 1.16.1, `launch-editor` 2.14.2 (override),
->   Prisma 6.19.3, fabric 7.4, OpenTelemetry 0.222. Allowlist tạm: `GHSA-86w9-cpqp-85rv` (node-forge chưa vá),
->   `GHSA-vfj7-8cjw-p6xm` (braces upstream không phát hành).
+>   Prisma 6.19.3, fabric 7.4, OpenTelemetry 0.222. Override thêm: `body-parser` 2.4.0,
+>   `dompurify` 3.4.17, `multer` 2.5.0, `undici` 7.30.1, `qs` 6.16.1. Allowlist tạm:
+>   `GHSA-86w9-cpqp-85rv` (node-forge chưa vá), `GHSA-mrhx-c7xc-m3w5` (zod 3 trong Expo CLI;
+>   bản vá chỉ có ở zod 4).
 > - ⚠️ **Repo đang PUBLIC**: `.env` (GOOGLE_CLIENT_SECRET, BREVO_API_KEY…) và backup DB trong `infra/backups/` đã công khai —
 >   cần đổi các key và chuyển repo private / bỏ theo dõi các file này.
 
