@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useKatakanaVocabQuery } from '../hooks/queries';
+import { usePlayAll } from '../hooks/usePlayAll';
 import StrokeOrder from '../components/StrokeOrder';
+import PlayAllButton from '../components/PlayAllButton';
 import { playAudio } from '../utils/speech';
 import { lessonShortLabel } from '../utils/lessonHeading';
 import type { KatakanaVocabulary } from '../types/api';
@@ -73,7 +75,7 @@ function KanaChart({
 }: {
   caption: string;
   rows: readonly (readonly string[])[];
-  selected: string | null;
+  selected: readonly string[];
   counts: Map<string, number>;
   onPick: (kana: string) => void;
 }) {
@@ -91,9 +93,9 @@ function KanaChart({
                   key={kana}
                   type="button"
                   className="vocab-kana-chart__cell japanese-text"
-                  aria-pressed={selected === kana}
+                  aria-pressed={selected.includes(kana)}
                   aria-label={`${kana}, ${count} từ`}
-                  disabled={count === 0 && selected !== kana}
+                  disabled={count === 0 && !selected.includes(kana)}
                   onClick={() => onPick(kana)}
                 >
                   <span className="vocab-kana-chart__glyph">{kana}</span>
@@ -118,7 +120,9 @@ export default function KatakanaVocabView() {
   const [lessonOpen, setLessonOpen] = useState(false);
   const [lessonQuery, setLessonQuery] = useState('');
   const [query, setQuery] = useState('');
-  const [initial, setInitial] = useState<string | null>(null);
+  const [initials, setInitials] = useState<string[]>([]);
+  const [speakingId, setSpeakingId] = useState<number | null>(null);
+  const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const lessonPickerRef = useRef<HTMLDivElement>(null);
 
   const lessons = useMemo(() => {
@@ -171,9 +175,12 @@ export default function KatakanaVocabView() {
   }, [scoped]);
 
   const visible = useMemo(() => {
-    const filtered = initial ? scoped.filter((word) => initialKana(word) === initial) : scoped;
+    const selected = new Set(initials);
+    const filtered = initials.length > 0
+      ? scoped.filter((word) => selected.has(initialKana(word)))
+      : scoped;
     return [...filtered].sort((a, b) => compareWords(a, b, sortKey, sortDir));
-  }, [scoped, initial, sortKey, sortDir]);
+  }, [scoped, initials, sortKey, sortDir]);
 
   const lessonChoices = useMemo(() => {
     const q = lessonQuery.trim().toLowerCase();
@@ -194,6 +201,28 @@ export default function KatakanaVocabView() {
       return next.length === current.length ? current : next;
     });
   }, [lessonsForLevel]);
+
+  const playbackKey = `${jlpt}|${lessonNumbers.join(',')}|${query}|${initials.join('')}|${sortKey}|${sortDir}`;
+
+  useEffect(() => {
+    stopPlayAll();
+  }, [playbackKey, stopPlayAll]);
+
+  useEffect(() => {
+    if (!isPlayingAll) setSpeakingId(null);
+  }, [isPlayingAll]);
+
+  useEffect(() => {
+    if (speakingId == null) return;
+    document.querySelector(`[data-vocab-id="${speakingId}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [speakingId]);
+
+  function handlePlayAll() {
+    void startPlayAll(
+      visible.map((word) => ({ text: word.kana.trim() || writtenForm(word), cue: word.id })),
+      { onItemIndex: (id) => setSpeakingId(id), pauseMs: 280 },
+    );
+  }
 
   useEffect(() => {
     if (!lessonOpen) return;
@@ -219,12 +248,14 @@ export default function KatakanaVocabView() {
   }
 
   function pickKana(kana: string) {
-    setInitial((current) => {
-      const next = current === kana ? null : kana;
-      if (next) playAudio(next);
-      return next;
+    setInitials((current) => {
+      if (current.includes(kana)) return current.filter((item) => item !== kana);
+      playAudio(kana);
+      return [...current, kana];
     });
   }
+
+  const strokeKana = initials[initials.length - 1] ?? null;
 
   function onSort(key: SortKey) {
     if (sortKey === key) {
@@ -243,7 +274,14 @@ export default function KatakanaVocabView() {
         <div>
           <h1 className="view-title">Từ viết bằng katakana</h1>
           <p className="vocab-lesson-list__meta">
-            {words.length > 0 ? `${visible.length} / ${words.length} từ` : 'Các từ có dạng viết là katakana'}
+            {words.length > 0 ? (
+              <>
+                <strong>{`${visible.length} từ`}</strong>
+                {visible.length !== words.length ? <span>{` trong ${words.length}`}</span> : null}
+              </>
+            ) : (
+              'Các từ có dạng viết là katakana'
+            )}
           </p>
         </div>
         <div className="vocab-lesson-list__toolbar">
@@ -298,6 +336,13 @@ export default function KatakanaVocabView() {
               </div>
             )}
           </div>
+          <PlayAllButton
+            isPlaying={isPlayingAll}
+            onPlay={handlePlayAll}
+            onStop={stopPlayAll}
+            disabled={visible.length === 0}
+            label="Phát toàn bộ"
+          />
         </div>
         <div className="vocab-lesson-list__levels" role="group" aria-label="Lọc theo cấp JLPT">
           <button
@@ -374,7 +419,11 @@ export default function KatakanaVocabView() {
               {visible.map((word) => {
                 const written = writtenForm(word);
                 return (
-                  <tr key={word.id}>
+                  <tr
+                    key={word.id}
+                    data-vocab-id={word.id}
+                    className={speakingId === word.id ? 'is-speaking' : undefined}
+                  >
                     <td>
                       <button
                         type="button"
@@ -409,21 +458,47 @@ export default function KatakanaVocabView() {
         {words.length > 0 && (
           <aside className="vocab-kana-rail">
             <div className="vocab-kana-stroke">
-              {initial ? (
+              {strokeKana ? (
                 <>
                   <p className="vocab-kana-stroke__title">
-                    <span className="japanese-text">{initial}</span>
+                    <span className="japanese-text">{strokeKana}</span>
                     <span>Cách viết</span>
+                    <button
+                      type="button"
+                      className="vocab-kana-stroke__speak"
+                      onClick={() => playAudio(strokeKana)}
+                      aria-label={`Nghe ${strokeKana}`}
+                      title={`Nghe ${strokeKana}`}
+                    >
+                      🔊
+                    </button>
                   </p>
-                  <StrokeOrder key={initial} text={initial} width={148} height={148} compact />
+                  <StrokeOrder key={strokeKana} text={strokeKana} width={148} height={148} compact />
                 </>
               ) : (
                 <p className="vocab-kana-stroke__empty">Chọn một chữ bên dưới để xem cách viết.</p>
               )}
             </div>
             <section className="vocab-kana-chart" aria-label="Bảng chữ cái katakana">
-              <KanaChart caption="清音" rows={KANA_ROWS} selected={initial} counts={kanaCounts} onPick={pickKana} />
-              <KanaChart caption="濁音" rows={VOICED_ROWS} selected={initial} counts={kanaCounts} onPick={pickKana} />
+              <div className="vocab-kana-chart__summary">
+                <p className="vocab-kana-chart__count">{`${visible.length} từ`}</p>
+                {initials.length > 0 && (
+                  <button
+                    type="button"
+                    className="vocab-kana-chart__clear"
+                    onClick={() => setInitials([])}
+                  >
+                    Bỏ chọn
+                  </button>
+                )}
+              </div>
+              {initials.length > 0 && (
+                <p className="vocab-kana-chart__picked japanese-text">
+                  {initials.map((kana) => `${kana} ${kanaCounts.get(kana) ?? 0}`).join(' · ')}
+                </p>
+              )}
+              <KanaChart caption="清音" rows={KANA_ROWS} selected={initials} counts={kanaCounts} onPick={pickKana} />
+              <KanaChart caption="濁音" rows={VOICED_ROWS} selected={initials} counts={kanaCounts} onPick={pickKana} />
             </section>
           </aside>
         )}

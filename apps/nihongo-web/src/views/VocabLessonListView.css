@@ -26,6 +26,13 @@
 .vocab-lesson-list__meta {
   margin: 0.35rem 0 0;
   color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.vocab-lesson-list__meta strong {
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 800;
 }
 
 .vocab-lesson-list__links,
@@ -291,12 +298,31 @@
 
 .vocab-kana-stroke__title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   gap: 0.4rem;
   margin: 0 0 0.15rem;
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.vocab-kana-stroke__speak {
+  width: 2rem;
+  height: 2rem;
+  margin-left: 0.15rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.45rem;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vocab-kana-stroke__speak:hover,
+.vocab-kana-stroke__speak:focus-visible {
+  border-color: var(--primary-color);
+  outline: none;
 }
 
 .vocab-kana-stroke__title .japanese-text {
@@ -335,6 +361,41 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
+}
+
+.vocab-kana-chart__summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.vocab-kana-chart__count {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.vocab-kana-chart__picked {
+  margin: -0.45rem 0 0;
+  width: 100%;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.vocab-kana-chart__clear {
+  appearance: none;
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
 }
 
 .vocab-kana-chart__rows {

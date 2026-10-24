@@ -16,8 +16,10 @@ import {
   queryKeys,
 } from '../hooks/queries';
 import { useAuth } from '../hooks/useAuth';
-import { playAudio } from '../utils/speech';
-import { getKanjiSpeakItems } from '../utils/kanjiSpeak';
+import { playAudio, playAudioSequence } from '../utils/speech';
+import { getKanjiReadingGroups, getKanjiSpeakItems } from '../utils/kanjiSpeak';
+import PlayAllButton from '../components/PlayAllButton';
+import { usePlayAll } from '../hooks/usePlayAll';
 import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import type {
@@ -109,6 +111,20 @@ function matchesSearch(entry: KanjiEntry, query: string): boolean {
 
 function getPrimaryReading(entry: KanjiEntry): string {
   return getKanjiSpeakItems(entry)[0] ?? entry.character;
+}
+
+function kanjiReadingClips(entry: KanjiEntry): string[] {
+  const readings = getKanjiReadingGroups(entry).flatMap((group) => group.map((token) => token.speak));
+  return readings.length > 0 ? readings : [entry.character];
+}
+
+function speakKanjiRow(entry: KanjiEntry) {
+  const readings = kanjiReadingClips(entry);
+  if (readings.length > 1) {
+    void playAudioSequence(readings, { pauseMs: 280 });
+    return;
+  }
+  playAudio(readings[0]);
 }
 
 function getEntryJlpt(entry: KanjiEntry): string {
@@ -397,6 +413,8 @@ export default function KanjiListView({
   const [displayMode, setDisplayMode] = useState<DisplayMode>('grid');
   const [selectedEntry, setSelectedEntry] = useState<KanjiEntry | null>(null);
   const [popupEntry, setPopupEntry] = useState<KanjiEntry | null>(null);
+  const [speakingId, setSpeakingId] = useState<number | null>(null);
+  const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const kanjiLoggedRef = useRef(false);
   const [editMode, setEditMode] = useState(false);
   const [formState, setFormState] = useState<
@@ -454,6 +472,35 @@ export default function KanjiListView({
     setSelectedEntry(null);
     setPopupEntry(null);
     setFormState(null);
+    stopPlayAll();
+  }
+
+  useEffect(() => {
+    stopPlayAll();
+  }, [activeLevel, searchInput, stopPlayAll]);
+
+  useEffect(() => {
+    if (!isPlayingAll) setSpeakingId(null);
+  }, [isPlayingAll]);
+
+  useEffect(() => {
+    if (speakingId == null) return;
+    document
+      .querySelector(`[data-kanji-id="${speakingId}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [speakingId]);
+
+  function handlePlayAll() {
+    setPopupEntry(null);
+    void startPlayAll(
+      filteredEntries.flatMap((entry) =>
+        kanjiReadingClips(entry).map((text, index) => ({
+          text,
+          cue: index === 0 ? entry.id : undefined,
+        })),
+      ),
+      { onItemIndex: (id) => setSpeakingId(id), pauseMs: 280 },
+    );
   }
 
   function selectEntry(entry: KanjiEntry) {
@@ -666,7 +713,15 @@ export default function KanjiListView({
           disabled={!activeMeta?.hasData}
         />
 
-        <div className="kanji-display-toggle" role="group" aria-label="Kiểu hiển thị">
+        <div className="kanji-list-actions">
+          <PlayAllButton
+            isPlaying={isPlayingAll}
+            onPlay={handlePlayAll}
+            onStop={stopPlayAll}
+            disabled={filteredEntries.length === 0}
+            label="Phát toàn bộ"
+          />
+          <div className="kanji-display-toggle" role="group" aria-label="Kiểu hiển thị">
           <button
             type="button"
             className={`display-btn ${displayMode === 'grid' ? 'active' : ''}`}
@@ -683,6 +738,7 @@ export default function KanjiListView({
           >
             Bảng
           </button>
+          </div>
         </div>
       </div>
 
@@ -722,8 +778,8 @@ export default function KanjiListView({
                     role="listitem"
                     data-kanji-id={entry.id}
                     className={`kanji-cell ${selectedEntry?.id === entry.id ? 'selected' : ''} ${
-                      isAllView ? `level-${jlpt.toLowerCase()}` : ''
-                    }`}
+                      speakingId === entry.id ? 'speaking' : ''
+                    } ${isAllView ? `level-${jlpt.toLowerCase()}` : ''}`}
                     onClick={() => selectEntry(entry)}
                     title={[entry.hanViet, entry.onyomi, entry.kunyomi, entry.meaningVi]
                       .filter(Boolean)
@@ -813,7 +869,10 @@ export default function KanjiListView({
                 <tr
                   key={entry.id}
                   data-kanji-id={entry.id}
-                  className={selectedEntry?.id === entry.id ? 'selected' : undefined}
+                  className={[
+                    selectedEntry?.id === entry.id ? 'selected' : '',
+                    speakingId === entry.id ? 'speaking' : '',
+                  ].filter(Boolean).join(' ') || undefined}
                 >
                   <td>{index + 1}</td>
                   {isAllView && (
@@ -822,14 +881,25 @@ export default function KanjiListView({
                     </td>
                   )}
                   <td>
-                    <button
-                      type="button"
-                      className="kanji-list-char"
-                      onClick={() => selectEntry(entry)}
-                      title="Xem nét viết và nghĩa"
-                    >
-                      {entry.character}
-                    </button>
+                    <div className="kanji-list-kanji">
+                      <button
+                        type="button"
+                        className="kanji-list-char"
+                        onClick={() => selectEntry(entry)}
+                        title="Xem nét viết và nghĩa"
+                      >
+                        {entry.character}
+                      </button>
+                      <button
+                        type="button"
+                        className="kanji-list-speak"
+                        aria-label={`Nghe ${entry.character}`}
+                        title={`Nghe ${entry.character}`}
+                        onClick={() => speakKanjiRow(entry)}
+                      >
+                        🔊
+                      </button>
+                    </div>
                   </td>
                   <td className="kanji-list-hanviet">{entry.hanViet ?? '—'}</td>
                   <td className="kanji-list-reading">{entry.onyomi ?? '—'}</td>

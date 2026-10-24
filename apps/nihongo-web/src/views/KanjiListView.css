@@ -167,7 +167,8 @@
   background: rgba(99, 102, 241, 0.08);
 }
 
-.kanji-list-table tbody tr.selected {
+.kanji-list-table tbody tr.selected,
+.kanji-list-table tbody tr.speaking {
   background: color-mix(in srgb, var(--primary-color) 14%, transparent);
   outline: 2px solid var(--primary-color);
   outline-offset: -2px;
@@ -177,12 +178,38 @@
   border-bottom: none;
 }
 
+.kanji-list-kanji {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .kanji-list-char {
   font-size: 1.75rem;
   line-height: 1;
   font-family: var(--font-japanese, 'Noto Sans JP', sans-serif);
   color: #f8fafc;
   cursor: pointer;
+}
+
+.kanji-list-speak {
+  appearance: none;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.45rem;
+  background: transparent;
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kanji-list-speak:hover,
+.kanji-list-speak:focus-visible {
+  border-color: var(--primary-color);
+  outline: none;
 }
 
 .kanji-list-char:hover {
@@ -319,6 +346,38 @@
 .kanji-list-jlpt.level-n2 { color: #fb923c; }
 .kanji-list-jlpt.level-n1 { color: var(--primary-color); }
 
+.kanji-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kanji-list-view .btn-play-all {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kanji-list-view .btn-play-all:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.kanji-list-view .btn-play-all:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kanji-list-view .btn-play-all.playing {
+  background: #c2410c;
+}
+
 .kanji-display-toggle {
   display: flex;
   gap: 0.35rem;
@@ -388,7 +447,8 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-.kanji-cell.selected {
+.kanji-cell.selected,
+.kanji-cell.speaking {
   background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 25%, transparent);
@@ -539,6 +599,7 @@
 
 [data-theme="light"] .kanji-list-char    { color: var(--text-primary); }
 [data-theme="light"] .kanji-list-char:hover { color: var(--primary-color); }
+[data-theme="light"] .kanji-list-speak { background: var(--bg-color); color: var(--text-primary); }
 [data-theme="light"] .kanji-list-hanviet { color: #b45309; }
 [data-theme="light"] .kanji-list-reading { color: var(--text-secondary); }
 [data-theme="light"] .kanji-list-meaning { color: var(--text-primary); }
