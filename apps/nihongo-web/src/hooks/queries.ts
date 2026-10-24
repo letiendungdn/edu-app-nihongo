@@ -37,6 +37,7 @@ import {
   fetchFeatureFlags,
   fetchKanjiByJlpt,
   fetchGrammarCountByJlpt,
+  fetchKatakanaVocabularies,
   fetchVocabulariesRange,
   fetchListeningPlaylist,
 } from '../api';
@@ -121,6 +122,14 @@ export function useFeatureFlag(key: string): boolean {
     retry: false,
   });
   return data?.includes(key) ?? false;
+}
+
+export function useKatakanaVocabQuery() {
+  return useQuery({
+    queryKey: queryKeys.vocab.katakana,
+    queryFn: fetchKatakanaVocabularies,
+    staleTime: STALE_5M,
+  });
 }
 
 export function useVocabSearchQuery(query: string) {

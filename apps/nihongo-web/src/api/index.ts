@@ -11,6 +11,7 @@ import type {
   JlptDaNangSchedule,
   KanjiEntry,
   KanjiLesson,
+  KatakanaVocabulary,
   Lesson,
   ListeningPlaylist,
   LoginResponse,
@@ -79,6 +80,10 @@ export type LessonContentFilter = 'grammar' | 'vocab';
 export function fetchLessons(options?: { has?: LessonContentFilter }) {
   const qs = options?.has ? `?has=${options.has}` : '';
   return apiRequest<Lesson[]>(`/lessons${qs}`);
+}
+
+export function fetchKatakanaVocabularies() {
+  return apiRequest<PaginatedResponse<KatakanaVocabulary>>('/vocabularies?script=katakana');
 }
 
 export function fetchVocabularies(lessonNumber: number) {

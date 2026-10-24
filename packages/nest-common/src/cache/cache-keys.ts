@@ -1,5 +1,6 @@
 export const CacheKeys = {
   vocabByLesson: (id: number) => `vocab:lesson:${id}`,
+  vocabKatakana: () => 'vocab:katakana',
   grammarByLesson: (id: number) => `grammar:lesson:${id}`,
   lessonList: (has?: 'grammar' | 'vocab') =>
     has ? `lessons:${has}` : 'lessons:all',

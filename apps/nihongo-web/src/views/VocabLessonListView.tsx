@@ -313,6 +313,9 @@ export default function VocabLessonListView({
             <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
               Trắc nghiệm
             </Link>
+            <Link href="/vocab/katakana" className="btn btn-outline btn-sm">
+              Từ katakana
+            </Link>
           </nav>
         </div>
         <div className="vocab-lesson-list__toolbar">

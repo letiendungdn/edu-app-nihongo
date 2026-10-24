@@ -37,4 +37,12 @@ export class LessonPaginationDto extends PaginationDto {
   @IsOptional()
   @IsString()
   q?: string;
+
+  @ApiPropertyOptional({
+    description: 'Chỉ lấy từ có dạng viết là katakana',
+    enum: ['katakana'],
+  })
+  @IsOptional()
+  @IsIn(['katakana'])
+  script?: 'katakana';
 }

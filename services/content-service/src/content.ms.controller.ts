@@ -75,6 +75,7 @@ export class ContentMsController implements OnModuleInit {
             limit?: number;
             jlptLevel?: string;
             query?: string;
+            script?: string;
           },
         ),
       [CONTENT_PATTERNS.GET_VOCABULARY]: (data) =>
@@ -295,6 +296,7 @@ export class ContentMsController implements OnModuleInit {
     limit?: number;
     jlptLevel?: string;
     query?: string;
+    script?: string;
   }) {
     return this.vocabulariesService.findAll(
       data.lessonNumber,
@@ -302,6 +304,7 @@ export class ContentMsController implements OnModuleInit {
       data.limit,
       data.jlptLevel,
       data.query,
+      data.script,
     );
   }
 

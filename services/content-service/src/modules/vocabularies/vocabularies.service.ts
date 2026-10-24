@@ -9,6 +9,15 @@ import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
 /** Số ứng viên tối đa lấy về để xếp hạng khi tra từ. */
 const SEARCH_POOL = 500;
 
+/** Dạng viết (kanji nếu có, không thì kana) là katakana, không kèm hiragana hay Hán tự. */
+export function isKatakanaWritten(
+  kanji: string | null | undefined,
+  kana: string,
+): boolean {
+  const written = (kanji?.trim() || kana || "").trim();
+  return /[ァ-ヶ]/.test(written) && !/[ぁ-ん一-龯]/.test(written);
+}
+
 type SearchableVocab = {
   id: number;
   kanji: string | null;
@@ -136,7 +145,10 @@ export class VocabulariesService {
     limit = 50,
     jlptLevel?: string,
     query?: string,
+    script?: string,
   ) {
+    if (script === "katakana") return this.findKatakana();
+
     if (jlptLevel || query) {
       const where: Record<string, unknown> = {};
       if (lessonNumber) {
@@ -208,6 +220,40 @@ export class VocabulariesService {
     return result;
   }
 
+  private async findKatakana() {
+    const cacheKey = CacheKeys.vocabKatakana();
+    const cached = await this.cacheManager.get<{
+      data: unknown[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(cacheKey);
+    if (cached) return cached;
+
+    const rows = await this.prisma.vocabulary.findMany({
+      select: {
+        id: true,
+        kanji: true,
+        kana: true,
+        romaji: true,
+        meaning: true,
+        jlptLevel: true,
+        lesson: {
+          select: { lessonNumber: true, title: true, textbook: true },
+        },
+      },
+      orderBy: [
+        { lesson: { lessonNumber: "asc" } },
+        { sortOrder: "asc" },
+        { id: "asc" },
+      ],
+    });
+    const data = rows.filter((row) => isKatakanaWritten(row.kanji, row.kana));
+    const result = { data, total: data.length, page: 1, limit: data.length };
+    await this.cacheManager.set(cacheKey, result, CacheTTL.medium * 1000);
+    return result;
+  }
+
   findOne(id: number) {
     return this.prisma.vocabulary.findUnique({ where: { id } });
   }
@@ -267,6 +313,7 @@ export class VocabulariesService {
 
   private async invalidateLessonCaches(lessonId: number) {
     await this.cacheManager.del(CacheKeys.vocabByLesson(lessonId));
+    await this.cacheManager.del(CacheKeys.vocabKatakana());
     await Promise.all(
       CacheKeys.lessonListAll().map((key) => this.cacheManager.del(key)),
     );

@@ -1,7 +1,11 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { PrismaService } from "@app/prisma";
-import { VocabulariesService, rankVocabSearch } from "./vocabularies.service";
+import {
+  VocabulariesService,
+  isKatakanaWritten,
+  rankVocabSearch,
+} from "./vocabularies.service";
 
 describe("VocabulariesService", () => {
   let service: VocabulariesService;
@@ -51,6 +55,50 @@ describe("VocabulariesService", () => {
     }).compile();
 
     service = module.get(VocabulariesService);
+  });
+
+  it("isKatakanaWritten accepts a katakana spelling", () => {
+    expect(isKatakanaWritten("コーヒー", "コーヒー")).toBe(true);
+    expect(isKatakanaWritten(null, "ノート")).toBe(true);
+    expect(isKatakanaWritten("私", "わたし")).toBe(false);
+    expect(isKatakanaWritten("パン屋", "パンや")).toBe(false);
+  });
+
+  it("findAll script=katakana returns only katakana spellings", async () => {
+    prisma.vocabulary.findMany.mockResolvedValue([
+      {
+        id: 1,
+        kanji: "コーヒー",
+        kana: "コーヒー",
+        romaji: "kohii",
+        meaning: "cà phê",
+        jlptLevel: "N5",
+        lesson: { lessonNumber: 2, textbook: "MINNA", title: null },
+      },
+      {
+        id: 2,
+        kanji: "私",
+        kana: "わたし",
+        romaji: "watashi",
+        meaning: "tôi",
+        jlptLevel: "N5",
+        lesson: { lessonNumber: 1, textbook: "MINNA", title: null },
+      },
+    ]);
+
+    const result = await service.findAll(
+      undefined,
+      1,
+      50,
+      undefined,
+      undefined,
+      "katakana",
+    );
+
+    expect(result.total).toBe(1);
+    expect(result.data).toEqual([
+      expect.objectContaining({ kana: "コーヒー" }),
+    ]);
   });
 
   it("findAll returns empty when lesson not found", async () => {

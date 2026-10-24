@@ -11,6 +11,7 @@ export const queryKeys = {
     all: ['vocab'] as const,
     byLesson: (id: number) => ['vocab', 'lesson', id] as const,
     byRange: (from: number, to: number) => ['vocab', 'range', from, to] as const,
+    katakana: ['vocab', 'katakana'] as const,
     review: () => ['vocab', 'review'] as const,
   },
   grammar: {

@@ -53,6 +53,7 @@ export class VocabulariesController {
         limit: query.limit ?? 50,
         jlptLevel: query.jlptLevel,
         query: query.q,
+        script: query.script,
       }),
     );
   }

@@ -16,6 +16,20 @@ export interface Lesson {
   };
 }
 
+export interface KatakanaVocabulary {
+  id: number;
+  kanji: string | null;
+  kana: string;
+  romaji: string;
+  meaning: string;
+  jlptLevel: string | null;
+  lesson: {
+    lessonNumber: number;
+    title: string | null;
+    textbook: string | null;
+  };
+}
+
 export interface Vocabulary {
   id: number;
   kanji: string | null;
