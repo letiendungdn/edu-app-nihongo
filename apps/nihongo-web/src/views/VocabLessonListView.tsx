@@ -7,9 +7,11 @@ import { useRouter } from 'next/navigation';
 import LessonSelector from '../components/LessonSelector';
 import PlayAllButton from '../components/PlayAllButton';
 import StrokeOrder from '../components/StrokeOrder';
+import VocabPicture from '../components/VocabPicture';
 import { kanjiCharsOf, useKanjiStructure } from '../contexts/KanjiStructureContext';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useLessons, useVocab } from '../hooks/queries';
+import { resolveVocabImage } from '@edu/vocab-images';
 import { getStrokeText } from '../utils/japanese';
 import { isKanji } from '../utils/kanji-structure';
 import { meaningForSpeech, speakJapaneseThenMeaning } from '../utils/speech';
@@ -21,11 +23,12 @@ function speakWord(vocab: Vocabulary) {
   speakJapaneseThenMeaning(vocab.kana, vocab.meaning);
 }
 
-function strokeBoxSize(text: string): number {
+function strokeBoxSize(text: string, withPicture: boolean): number {
   const count = Math.max(1, [...getStrokeText(text)].length);
-  const available = 860;
+  const available = withPicture ? 600 : 860;
   const size = Math.floor((available - (count - 1) * 12) / count);
-  return Math.max(96, Math.min(count === 1 ? 300 : 220, size));
+  const cap = withPicture ? (count === 1 ? 240 : 168) : count === 1 ? 300 : 220;
+  return Math.max(88, Math.min(cap, size));
 }
 
 type StrokeField = 'kanji' | 'kana';
@@ -90,7 +93,14 @@ function StrokeModal({
         ? kanji
         : '';
   const analyzable = script === 'kanji' && kanjiCharsOf(headline).length > 0;
-  const size = strokeBoxSize(headline);
+  const illustration = resolveVocabImage({
+    word: vocab.romaji,
+    meaning: vocab.meaning,
+    kana: vocab.kana,
+    kanji: vocab.kanji,
+    imageUrl: vocab.imageUrl,
+  });
+  const size = strokeBoxSize(headline, Boolean(illustration));
   const speak = () => speakWord(vocab);
 
   const openStructure = (char?: string) => {
@@ -180,7 +190,19 @@ function StrokeModal({
               ? 'Cách viết kanji · nhấn chữ để phân tích · 🔊 / phím cách nghe · ← → sang từ kế'
               : 'Tự đọc tiếng Nhật rồi nghĩa tiếng Việt · phím cách nghe lại · ← → sang từ kế'}
         </p>
-        <div className="vocab-stroke-modal__canvas">
+        <div className={`vocab-stroke-modal__canvas${illustration ? ' vocab-stroke-modal__canvas--split' : ''}`}>
+          {illustration ? (
+            <VocabPicture
+              word={vocab.romaji}
+              meaning={vocab.meaning}
+              kana={vocab.kana}
+              kanji={vocab.kanji}
+              imageUrl={vocab.imageUrl}
+              size="lg"
+              className="vocab-stroke-modal__picture"
+              alt={`Ảnh minh hoạ ${vocab.meaning}`}
+            />
+          ) : null}
           <StrokeOrder
             key={`${vocab.id}-${script}-${headline}`}
             text={headline}

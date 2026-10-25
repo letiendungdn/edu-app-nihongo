@@ -330,6 +330,19 @@
   line-height: 1;
 }
 
+.vocab-kana-stroke__romaji {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.vocab-kana-stroke__label {
+  margin: 0 0 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .vocab-kana-stroke__empty {
   margin: 0;
   color: var(--text-secondary);
@@ -450,19 +463,8 @@
 }
 
 .vocab-kana-chart__glyph {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 600;
-}
-
-.vocab-kana-chart__count {
-  font-family: var(--font-sans, inherit);
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.vocab-kana-chart__cell[aria-pressed="true"] .vocab-kana-chart__count {
-  color: inherit;
 }
 
 .vocab-lesson-list__sort {
@@ -661,9 +663,31 @@
 .vocab-stroke-modal__canvas {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 1.15rem;
   padding: 0.65rem;
   border-radius: 0.9rem;
   background: var(--bg-color);
+}
+
+.vocab-stroke-modal__canvas--split {
+  justify-content: center;
+}
+
+.vocab-stroke-modal__picture.vocab-picture {
+  width: min(240px, 36vw);
+  height: min(240px, 36vw);
+  padding: 0.4rem;
+  border-radius: 0.85rem;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 640px) {
+  .vocab-stroke-modal__canvas--split {
+    flex-direction: column;
+  }
 }
 
 .sr-only {

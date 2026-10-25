@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CountryNameItem } from '../types/reference';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
@@ -15,15 +15,47 @@ import './CountriesView.css';
 function CountryPopup({
   item,
   onClose,
+  onStep,
 }: {
   item: CountryNameItem;
   onClose: () => void;
+  onStep: (direction: -1 | 1) => void;
 }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        playAudio(item.kana);
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        onStep(-1);
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        onStep(1);
+      }
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [item.kana, onClose, onStep]);
+
+  const heardKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${item.code}:${item.nameJa}:${item.kana}`;
+    if (heardKey.current === key) return;
+    heardKey.current = key;
+    playAudio(item.kana);
+  }, [item.code, item.nameJa, item.kana]);
 
   return (
     <div className="country-popup-overlay" onClick={onClose} role="dialog" aria-modal="true">
@@ -40,7 +72,7 @@ function CountryPopup({
         </div>
 
         <div className="country-popup-stroke">
-          <StrokeOrder text={item.nameJa} width={220} height={220} />
+          <StrokeOrder text={item.nameJa} compact />
           <p className="country-popup-stroke-hint">Nhấn vào chữ để xem lại nét</p>
         </div>
 
@@ -93,6 +125,22 @@ export default function CountriesView() {
   }, [searchQuery]);
 
   const count = isPeopleTab ? peopleRows.length : items.length;
+
+  const stepPopup = useCallback((direction: -1 | 1) => {
+    setPopupItem((current) => {
+      if (!current || items.length === 0) return current;
+      const index = items.findIndex((entry) => entry.code === current.code && entry.nameJa === current.nameJa);
+      if (index < 0) return items[0];
+      return items[(index + direction + items.length) % items.length];
+    });
+  }, [items]);
+
+  useEffect(() => {
+    if (!popupItem) return;
+    document
+      .querySelector(`[data-country="${popupItem.code}-${popupItem.nameJa}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [popupItem]);
 
   const handlePlayAll = () => {
     if (isPeopleTab) {
@@ -214,7 +262,8 @@ export default function CountriesView() {
             {items.map((item) => (
               <div
                 key={`${item.code}-${item.nameJa}`}
-                className="country-card"
+                data-country={`${item.code}-${item.nameJa}`}
+                className={`country-card${popupItem?.code === item.code && popupItem.nameJa === item.nameJa ? ' selected' : ''}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setPopupItem(item)}
@@ -245,7 +294,7 @@ export default function CountriesView() {
       </div>
 
       {popupItem && (
-        <CountryPopup item={popupItem} onClose={() => setPopupItem(null)} />
+        <CountryPopup item={popupItem} onClose={() => setPopupItem(null)} onStep={stepPopup} />
       )}
     </div>
   );
