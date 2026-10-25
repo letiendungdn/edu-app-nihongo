@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict f4BOeWM9eg0phsdiTvcDgOTwiHeS5dAlzFA4o9sEc8SxKAxrUVNOgos14DQFKHk
+\restrict 6FxVfUldMdayrwr7nrNTBzR9UenAjwk6zQkgnE0eevJ4MBm9ITPAU4XYW1tf8Bc
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -26,6 +26,15 @@ CREATE SCHEMA flyway;
 
 
 ALTER SCHEMA flyway OWNER TO nihongo;
+
+--
+-- Name: insights; Type: SCHEMA; Schema: -; Owner: nihongo
+--
+
+CREATE SCHEMA insights;
+
+
+ALTER SCHEMA insights OWNER TO nihongo;
 
 --
 -- Name: ContentType; Type: TYPE; Schema: public; Owner: nihongo
@@ -289,6 +298,84 @@ CREATE TABLE flyway.flyway_schema_history (
 
 
 ALTER TABLE flyway.flyway_schema_history OWNER TO nihongo;
+
+--
+-- Name: churn_risk; Type: TABLE; Schema: insights; Owner: nihongo
+--
+
+CREATE TABLE insights.churn_risk (
+    day date NOT NULL,
+    user_id integer NOT NULL,
+    risk_score integer NOT NULL,
+    days_inactive integer NOT NULL,
+    active_days_prior integer NOT NULL,
+    due_cards integer DEFAULT 0 NOT NULL,
+    last_active_day date NOT NULL,
+    reasons text[] DEFAULT '{}'::text[] NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT churn_risk_risk_score_check CHECK (((risk_score >= 0) AND (risk_score <= 100)))
+);
+
+
+ALTER TABLE insights.churn_risk OWNER TO nihongo;
+
+--
+-- Name: daily_kpi; Type: TABLE; Schema: insights; Owner: nihongo
+--
+
+CREATE TABLE insights.daily_kpi (
+    day date NOT NULL,
+    active_learners integer NOT NULL,
+    new_learners integer NOT NULL,
+    at_risk integer NOT NULL,
+    total_seconds bigint NOT NULL,
+    cards_reviewed bigint NOT NULL,
+    exams_taken integer NOT NULL,
+    computed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE insights.daily_kpi OWNER TO nihongo;
+
+--
+-- Name: learner_day; Type: TABLE; Schema: insights; Owner: nihongo
+--
+
+CREATE TABLE insights.learner_day (
+    day date NOT NULL,
+    user_id integer NOT NULL,
+    seconds integer DEFAULT 0 NOT NULL,
+    cards_reviewed integer DEFAULT 0 NOT NULL,
+    vocab_count integer DEFAULT 0 NOT NULL,
+    kanji_count integer DEFAULT 0 NOT NULL,
+    exams_taken integer DEFAULT 0 NOT NULL,
+    exam_avg_percent numeric(5,2),
+    computed_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT learner_day_cards_reviewed_check CHECK ((cards_reviewed >= 0)),
+    CONSTRAINT learner_day_exams_taken_check CHECK ((exams_taken >= 0)),
+    CONSTRAINT learner_day_kanji_count_check CHECK ((kanji_count >= 0)),
+    CONSTRAINT learner_day_seconds_check CHECK ((seconds >= 0)),
+    CONSTRAINT learner_day_vocab_count_check CHECK ((vocab_count >= 0))
+);
+
+
+ALTER TABLE insights.learner_day OWNER TO nihongo;
+
+--
+-- Name: reengagement; Type: TABLE; Schema: insights; Owner: nihongo
+--
+
+CREATE TABLE insights.reengagement (
+    user_id integer NOT NULL,
+    day date NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    claimed_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    CONSTRAINT reengagement_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'skipped'::text])))
+);
+
+
+ALTER TABLE insights.reengagement OWNER TO nihongo;
 
 --
 -- Name: BookAudioDriveFolder; Type: TABLE; Schema: public; Owner: nihongo
@@ -620,7 +707,8 @@ CREATE TABLE public."CoachingSession" (
     "canceledBy" text,
     "cancelReason" text,
     "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp(3) without time zone NOT NULL
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    "payoutId" integer
 );
 
 
@@ -1006,6 +1094,19 @@ ALTER SEQUENCE public."CountryRegion_id_seq" OWNER TO nihongo;
 
 ALTER SEQUENCE public."CountryRegion_id_seq" OWNED BY public."CountryRegion".id;
 
+
+--
+-- Name: CronRun; Type: TABLE; Schema: public; Owner: nihongo
+--
+
+CREATE TABLE public."CronRun" (
+    name text NOT NULL,
+    slot text NOT NULL,
+    "startedAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."CronRun" OWNER TO nihongo;
 
 --
 -- Name: DailyActivity; Type: TABLE; Schema: public; Owner: nihongo
@@ -3203,7 +3304,8 @@ CREATE TABLE public."Payout" (
     "processedAt" timestamp(3) without time zone,
     "failReason" text,
     "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp(3) without time zone NOT NULL
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL
 );
 
 
@@ -3633,7 +3735,8 @@ CREATE TABLE public."RefreshToken" (
     "userId" integer NOT NULL,
     "expiresAt" timestamp(3) without time zone NOT NULL,
     revoked boolean DEFAULT false NOT NULL,
-    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "revokedAt" timestamp(3) without time zone
 );
 
 
@@ -5146,6 +5249,38 @@ ALTER TABLE ONLY flyway.flyway_schema_history
 
 
 --
+-- Name: churn_risk churn_risk_pkey; Type: CONSTRAINT; Schema: insights; Owner: nihongo
+--
+
+ALTER TABLE ONLY insights.churn_risk
+    ADD CONSTRAINT churn_risk_pkey PRIMARY KEY (day, user_id);
+
+
+--
+-- Name: daily_kpi daily_kpi_pkey; Type: CONSTRAINT; Schema: insights; Owner: nihongo
+--
+
+ALTER TABLE ONLY insights.daily_kpi
+    ADD CONSTRAINT daily_kpi_pkey PRIMARY KEY (day);
+
+
+--
+-- Name: learner_day learner_day_pkey; Type: CONSTRAINT; Schema: insights; Owner: nihongo
+--
+
+ALTER TABLE ONLY insights.learner_day
+    ADD CONSTRAINT learner_day_pkey PRIMARY KEY (day, user_id);
+
+
+--
+-- Name: reengagement reengagement_pkey; Type: CONSTRAINT; Schema: insights; Owner: nihongo
+--
+
+ALTER TABLE ONLY insights.reengagement
+    ADD CONSTRAINT reengagement_pkey PRIMARY KEY (user_id, day);
+
+
+--
 -- Name: BookAudioDriveFolder BookAudioDriveFolder_pkey; Type: CONSTRAINT; Schema: public; Owner: nihongo
 --
 
@@ -5287,6 +5422,14 @@ ALTER TABLE ONLY public."CountryNameItem"
 
 ALTER TABLE ONLY public."CountryRegion"
     ADD CONSTRAINT "CountryRegion_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: CronRun CronRun_pkey; Type: CONSTRAINT; Schema: public; Owner: nihongo
+--
+
+ALTER TABLE ONLY public."CronRun"
+    ADD CONSTRAINT "CronRun_pkey" PRIMARY KEY (name, slot);
 
 
 --
@@ -6049,6 +6192,20 @@ CREATE INDEX flyway_schema_history_s_idx ON flyway.flyway_schema_history USING b
 
 
 --
+-- Name: churn_risk_day_score_idx; Type: INDEX; Schema: insights; Owner: nihongo
+--
+
+CREATE INDEX churn_risk_day_score_idx ON insights.churn_risk USING btree (day, risk_score DESC);
+
+
+--
+-- Name: reengagement_user_day_idx; Type: INDEX; Schema: insights; Owner: nihongo
+--
+
+CREATE INDEX reengagement_user_day_idx ON insights.reengagement USING btree (user_id, day DESC);
+
+
+--
 -- Name: BookAudioDriveFolder_driveId_key; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -6161,6 +6318,13 @@ CREATE INDEX "CoachingSession_coachId_scheduledAt_idx" ON public."CoachingSessio
 
 
 --
+-- Name: CoachingSession_coachId_status_payoutId_idx; Type: INDEX; Schema: public; Owner: nihongo
+--
+
+CREATE INDEX "CoachingSession_coachId_status_payoutId_idx" ON public."CoachingSession" USING btree ("coachId", status, "payoutId");
+
+
+--
 -- Name: CoachingSession_learnerId_scheduledAt_idx; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -6252,13 +6416,6 @@ CREATE INDEX "CountryRegion_sortOrder_idx" ON public."CountryRegion" USING btree
 
 
 --
--- Name: DailyActivity_userId_date_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "DailyActivity_userId_date_idx" ON public."DailyActivity" USING btree ("userId", date);
-
-
---
 -- Name: DailyActivity_userId_date_kind_key; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -6273,24 +6430,10 @@ CREATE INDEX "DailyGoalItem_goalId_sortOrder_idx" ON public."DailyGoalItem" USIN
 
 
 --
--- Name: DailyGoal_userId_date_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "DailyGoal_userId_date_idx" ON public."DailyGoal" USING btree ("userId", date);
-
-
---
 -- Name: DailyGoal_userId_date_key; Type: INDEX; Schema: public; Owner: nihongo
 --
 
 CREATE UNIQUE INDEX "DailyGoal_userId_date_key" ON public."DailyGoal" USING btree ("userId", date);
-
-
---
--- Name: DailyNote_userId_date_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "DailyNote_userId_date_idx" ON public."DailyNote" USING btree ("userId", date);
 
 
 --
@@ -6539,13 +6682,6 @@ CREATE INDEX "JlptRoadmapTask_phaseId_sortOrder_idx" ON public."JlptRoadmapTask"
 
 
 --
--- Name: KanaCell_sectionId_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "KanaCell_sectionId_idx" ON public."KanaCell" USING btree ("sectionId");
-
-
---
 -- Name: KanaCell_sectionId_rowIndex_colIndex_key; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -6683,13 +6819,6 @@ CREATE UNIQUE INDEX "Lesson_lessonNumber_key" ON public."Lesson" USING btree ("l
 --
 
 CREATE INDEX "Lesson_textbook_lessonNumber_idx" ON public."Lesson" USING btree (textbook, "lessonNumber");
-
-
---
--- Name: ListeningLog_userId_date_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "ListeningLog_userId_date_idx" ON public."ListeningLog" USING btree ("userId", date);
 
 
 --
@@ -7008,13 +7137,6 @@ CREATE INDEX "SrsCard_userId_nextReviewAt_idx" ON public."SrsCard" USING btree (
 
 
 --
--- Name: StudySession_userId_date_idx; Type: INDEX; Schema: public; Owner: nihongo
---
-
-CREATE INDEX "StudySession_userId_date_idx" ON public."StudySession" USING btree ("userId", date);
-
-
---
 -- Name: StudySession_userId_date_key; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -7297,6 +7419,14 @@ ALTER TABLE ONLY public."CoachingSession"
 
 ALTER TABLE ONLY public."CoachingSession"
     ADD CONSTRAINT "CoachingSession_learnerId_fkey" FOREIGN KEY ("learnerId") REFERENCES public."User"(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: CoachingSession CoachingSession_payoutId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: nihongo
+--
+
+ALTER TABLE ONLY public."CoachingSession"
+    ADD CONSTRAINT "CoachingSession_payoutId_fkey" FOREIGN KEY ("payoutId") REFERENCES public."Payout"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -7815,5 +7945,5 @@ ALTER TABLE ONLY public."Vocabulary"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict f4BOeWM9eg0phsdiTvcDgOTwiHeS5dAlzFA4o9sEc8SxKAxrUVNOgos14DQFKHk
+\unrestrict 6FxVfUldMdayrwr7nrNTBzR9UenAjwk6zQkgnE0eevJ4MBm9ITPAU4XYW1tf8Bc
 
