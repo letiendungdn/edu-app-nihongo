@@ -439,3 +439,584 @@
   background: linear-gradient(135deg, var(--accent-color), var(--accent-color));
   box-shadow: 0 2px 10px color-mix(in srgb, var(--accent-color) 28%, transparent);
 }
+
+/* ─────────────────────────────────────────────
+   Giao diện trang Ngữ pháp (thẻ kính, tô màu mẫu ngữ pháp).
+   Chỉ áp dụng trong .grammar-view — các class như .example-item, .btn-audio-small
+   còn được trang khác dùng.
+   ───────────────────────────────────────────── */
+
+.grammar-view {
+  --gv-grad: linear-gradient(135deg, #e0344f 0%, #ff7a3d 100%);
+  --gv-grad-shadow: 0 6px 18px rgba(232 64 72 / 0.35);
+  --gv-key: #ff5c72;
+  --gv-jp: #6fb6ff;
+  --gv-vi: #f3d27c;
+  --gv-analysis: #5fd0c0;
+  --gv-card-bg: linear-gradient(160deg, rgba(46 28 32 / 0.92) 0%, rgba(22 24 32 / 0.94) 60%);
+  --gv-card-border: rgba(240 90 80 / 0.42);
+  --gv-card-glow: 0 0 0 1px rgba(240 90 80 / 0.12), 0 18px 48px rgba(200 40 50 / 0.18);
+  --gv-panel-bg: rgba(255 255 255 / 0.04);
+  --gv-panel-border: rgba(255 255 255 / 0.09);
+  --gv-explain-bg: rgba(255 255 255 / 0.035);
+  --gv-explain-border: rgba(255 255 255 / 0.08);
+  --gv-explain-title: #f2d27a;
+  --gv-example-bg: linear-gradient(135deg, rgba(122 32 46 / 0.5) 0%, rgba(30 34 46 / 0.88) 65%);
+  --gv-example-border: rgba(255 120 120 / 0.24);
+  --gv-example-divider: rgba(255 255 255 / 0.1);
+  --gv-pin-bg: rgba(232 52 79 / 0.18);
+  --gv-pin-color: #ff8a96;
+  --gv-pin-border: rgba(255 110 120 / 0.45);
+  --gv-watermark: rgba(255 255 255 / 0.06);
+  --gv-bar: rgba(232 87 63 / 0.85);
+  --gv-bar-muted: rgba(255 255 255 / 0.12);
+  --gv-select-bg: rgba(255 255 255 / 0.05);
+  --gv-select-border: rgba(240 90 80 / 0.55);
+  --gv-select-color: #ff6f78;
+  gap: 1.5rem;
+}
+
+[data-theme="light"] .grammar-view {
+  --gv-grad: linear-gradient(135deg, #b3243f 0%, #ff6a3d 100%);
+  --gv-grad-shadow: 0 6px 16px rgba(200 50 50 / 0.28);
+  --gv-key: #d4294a;
+  --gv-jp: #1f6fb2;
+  --gv-vi: #1c1917;
+  --gv-analysis: #0f766e;
+  --gv-card-bg: #ffffff;
+  --gv-card-border: rgba(0 0 0 / 0.05);
+  --gv-card-glow: 0 4px 28px rgba(60 40 20 / 0.07);
+  --gv-panel-bg: #ffffff;
+  --gv-panel-border: rgba(60 40 20 / 0.08);
+  --gv-explain-bg: #fdf4d8;
+  --gv-explain-border: #f0dc9e;
+  --gv-explain-title: #8a6400;
+  --gv-example-bg: linear-gradient(180deg, #f6f5f3 0%, #ecebe8 100%);
+  --gv-example-border: rgba(0 0 0 / 0.06);
+  --gv-example-divider: rgba(0 0 0 / 0.08);
+  --gv-pin-bg: #fde3e5;
+  --gv-pin-color: #b3243f;
+  --gv-pin-border: rgba(179 36 63 / 0.12);
+  --gv-watermark: rgba(0 0 0 / 0.045);
+  --gv-bar: #c8323f;
+  --gv-bar-muted: rgba(0 0 0 / 0.08);
+  --gv-select-bg: #ffffff;
+  --gv-select-border: rgba(200 50 63 / 0.55);
+  --gv-select-color: #c8323f;
+}
+
+/* Tiêu đề + đường dẫn */
+.grammar-view .grammar-view-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+  font-weight: 800;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.grammar-view .grammar-view-title-accent {
+  background: var(--gv-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme="light"] .grammar-view .grammar-view-title-accent {
+  background: none;
+  color: inherit;
+}
+
+.grammar-view .grammar-lesson-links {
+  margin: 0;
+  font-size: 0.98rem;
+  color: var(--text-secondary);
+}
+
+.grammar-view .grammar-lesson-links a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+[data-theme="light"] .grammar-view .grammar-lesson-links a {
+  color: var(--gv-key);
+}
+
+.grammar-view .grammar-lesson-links a:hover {
+  color: var(--gv-key);
+}
+
+.grammar-header-bars {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: -0.55rem;
+}
+
+.grammar-header-bars span {
+  height: 3px;
+  width: 3rem;
+  border-radius: 999px;
+  background: var(--gv-bar);
+}
+
+.grammar-header-bars span:nth-child(3),
+.grammar-header-bars span:nth-child(4) {
+  width: 2.75rem;
+  opacity: 0.55;
+}
+
+.grammar-header-bars span:nth-child(n + 5) {
+  width: 1.2rem;
+  background: var(--gv-bar-muted);
+}
+
+/* Chọn bài: nhãn ở trên, mũi tên hai bên */
+.grammar-lesson-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 46rem;
+}
+
+.grammar-lesson-nav .lesson-selector {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  background: none;
+  padding: 0;
+}
+
+.grammar-lesson-nav .lesson-selector label {
+  color: var(--text-primary);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.grammar-lesson-nav .select-input {
+  width: 100%;
+  max-width: none;
+  appearance: none;
+  padding: 0.75rem 2.75rem 0.75rem 1rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid var(--gv-select-border);
+  background-color: var(--gv-select-bg);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.35rem) 50%,
+    calc(100% - 1rem) 50%;
+  background-size: 0.38rem 0.38rem;
+  background-repeat: no-repeat;
+  color: var(--gv-select-color);
+  font: inherit;
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gv-select-border) 10%, transparent);
+  cursor: pointer;
+}
+
+.grammar-lesson-nav .select-input option,
+.grammar-lesson-nav .select-input optgroup {
+  color: var(--text-primary);
+  background: var(--surface-color);
+  text-transform: none;
+}
+
+.grammar-lesson-step {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2.9rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+.grammar-lesson-step:hover:not(:disabled) {
+  color: var(--gv-key);
+}
+
+.grammar-lesson-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Thanh điều khiển dạng viên thuốc */
+.grammar-view .grammar-audio-controls {
+  gap: 0.75rem 1rem;
+  padding: 0.55rem 0.7rem 0.55rem 1rem;
+  border-radius: 1.1rem;
+  background: var(--gv-panel-bg);
+  border: 1px solid var(--gv-panel-border);
+  box-shadow: 0 8px 24px rgba(0 0 0 / 0.12);
+}
+
+.grammar-view .grammar-auto-read,
+.grammar-switch {
+  color: var(--text-primary);
+}
+
+.grammar-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  user-select: none;
+  position: relative;
+}
+
+.grammar-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.grammar-switch-track {
+  width: 2.15rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--gv-bar-muted);
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.grammar-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0 0 0 / 0.3);
+  transition: transform 0.2s ease;
+}
+
+.grammar-switch input:checked + .grammar-switch-track {
+  background: var(--gv-grad);
+}
+
+.grammar-switch input:checked + .grammar-switch-track::after {
+  transform: translateX(0.95rem);
+}
+
+.grammar-switch input:focus-visible + .grammar-switch-track {
+  outline: 2px solid var(--gv-key);
+  outline-offset: 2px;
+}
+
+.grammar-view .btn-play-all,
+[data-theme="light"] .grammar-view .btn-play-all {
+  background: var(--gv-grad);
+  box-shadow: var(--gv-grad-shadow);
+  border-radius: 0.8rem;
+  padding: 0.7rem 1.2rem;
+}
+
+.grammar-view .btn-play-all.playing {
+  background: linear-gradient(135deg, #7c2d12, #f97316);
+}
+
+.grammar-play-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 0.8rem;
+  background: var(--gv-grad);
+  box-shadow: var(--gv-grad-shadow);
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.grammar-play-round:hover {
+  transform: translateY(-1px);
+  opacity: 0.93;
+}
+
+/* Thẻ mẫu ngữ pháp */
+.grammar-view .grammar-card,
+[data-theme="light"] .grammar-view .grammar-card {
+  position: relative;
+  overflow: hidden;
+  padding: 1.75rem 1.75rem 1.5rem;
+  border-radius: 1.1rem;
+  background: var(--gv-card-bg);
+  border: 1px solid var(--gv-card-border);
+  box-shadow: var(--gv-card-glow);
+}
+
+.grammar-card-watermark {
+  position: absolute;
+  top: 0.4rem;
+  left: 50%;
+  transform: translateX(-20%);
+  font-size: clamp(4.5rem, 10vw, 7rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--gv-watermark);
+  pointer-events: none;
+  user-select: none;
+}
+
+.grammar-view .grammar-pattern-header,
+.grammar-view .grammar-meaning,
+.grammar-view .grammar-explain-box,
+.grammar-view .grammar-examples {
+  position: relative;
+}
+
+.grammar-view .grammar-pattern {
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.grammar-view .grammar-index {
+  width: 2.1rem;
+  height: 2.1rem;
+  background: rgba(148 163 184 / 0.2);
+  color: var(--text-secondary);
+}
+
+.grammar-hl-key {
+  color: var(--gv-key);
+}
+
+.grammar-hl-jp {
+  color: var(--gv-jp);
+}
+
+.btn-grammar-pin {
+  border-radius: 999px;
+  padding: 0.38rem 0.95rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--gv-pin-bg);
+  color: var(--gv-pin-color);
+  border: 1px solid var(--gv-pin-border);
+}
+
+.btn-grammar-pin:hover {
+  filter: brightness(1.08);
+}
+
+.grammar-view .btn-grammar-explain {
+  margin-top: 0;
+  background: color-mix(in srgb, var(--gv-key) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gv-key) 22%, transparent);
+}
+
+.grammar-view .btn-grammar-read-card {
+  background: var(--gv-grad);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  box-shadow: var(--gv-grad-shadow);
+}
+
+.grammar-view .btn-grammar-read-card:hover {
+  background: var(--gv-grad);
+  filter: brightness(1.06);
+}
+
+.grammar-view .grammar-meaning {
+  font-size: 1.05rem;
+  margin-bottom: 0.85rem;
+}
+
+.grammar-explain-box {
+  background: var(--gv-explain-bg);
+  border: 1px solid var(--gv-explain-border);
+  border-radius: 0.85rem;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.1rem;
+  line-height: 1.65;
+}
+
+.grammar-explain-title {
+  display: block;
+  color: var(--gv-explain-title);
+  font-weight: 700;
+}
+
+.grammar-view .grammar-bullet-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.grammar-view .grammar-bullet-list li {
+  position: relative;
+  padding-left: 1.05rem;
+}
+
+.grammar-view .grammar-bullet-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #f5b13d;
+}
+
+.grammar-view .grammar-bullet-list li:nth-child(2n)::before {
+  background: #4fb4e8;
+}
+
+.grammar-explain-box .grammar-note,
+.grammar-explain-box .grammar-explanation {
+  margin: 0.45rem 0 0;
+}
+
+/* Ví dụ */
+.grammar-view .grammar-examples h4 {
+  font-size: 1.05rem;
+  margin-bottom: 0.85rem;
+}
+
+.grammar-view .example-list {
+  padding: 0;
+  margin: 0;
+}
+
+.grammar-view .example-item,
+[data-theme="light"] .grammar-view .example-item {
+  position: relative;
+  overflow: hidden;
+  padding: 1.1rem 1.25rem 1rem;
+  border-radius: 0.9rem;
+  background: var(--gv-example-bg);
+  border: 1px solid var(--gv-example-border);
+  box-shadow: 0 6px 18px rgba(0 0 0 / 0.08);
+}
+
+.grammar-view .example-item::after {
+  content: '✦';
+  position: absolute;
+  right: 1.4rem;
+  bottom: 0.6rem;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--text-primary);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.grammar-view .example-jp {
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.7rem;
+  border-bottom: 1px solid var(--gv-example-divider);
+}
+
+.example-jp-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.85rem;
+}
+
+.grammar-view .example-jp .japanese-text {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.grammar-view .example-jp rt {
+  color: var(--gv-key);
+  font-size: 0.5em;
+  font-weight: 500;
+}
+
+.grammar-view .example-romaji-inline {
+  font-size: 1rem;
+}
+
+.grammar-view .example-romaji-inline::before {
+  content: none;
+}
+
+.grammar-view .btn-example-audio,
+[data-theme="light"] .grammar-view .btn-example-audio {
+  margin: 0 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  background: var(--gv-grad);
+  box-shadow: var(--gv-grad-shadow);
+  color: #fff;
+}
+
+.grammar-view .example-vi,
+[data-theme="light"] .grammar-view .example-vi {
+  color: var(--gv-vi);
+  font-size: 1.05rem;
+  margin-bottom: 0.3rem;
+}
+
+.grammar-view .example-analysis,
+[data-theme="light"] .grammar-view .example-analysis {
+  color: var(--gv-analysis);
+  font-size: 0.92rem;
+}
+
+.grammar-view .grammar-card--speaking {
+  outline: 2px solid color-mix(in srgb, var(--gv-key) 60%, transparent);
+}
+
+.grammar-view .example-item--speaking {
+  outline: 2px solid color-mix(in srgb, var(--gv-key) 60%, transparent);
+}
+
+@media (max-width: 640px) {
+  .grammar-view .grammar-card,
+  [data-theme="light"] .grammar-view .grammar-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .grammar-card-watermark {
+    left: auto;
+    right: 0.5rem;
+    transform: none;
+  }
+
+  .grammar-view .grammar-audio-controls {
+    border-radius: 0.9rem;
+  }
+}
+
+.grammar-view .btn-grammar-explain {
+  color: var(--gv-key);
+}
+
+.grammar-speaker-icon {
+  display: block;
+}
+
+.grammar-play-round .grammar-speaker-icon,
+.btn-example-audio .grammar-speaker-icon {
+  width: 22px;
+  height: 22px;
+}

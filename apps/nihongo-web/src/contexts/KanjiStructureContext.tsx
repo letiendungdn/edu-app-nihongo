@@ -113,7 +113,7 @@ function KanjiStructureModal({ state, onClose }: { state: OpenState; onClose: ()
           >
             Mở trang phân tích đầy đủ →
           </Link>
-          <button type="button" className="btn btn-outline btn-sm" onClick={onClose}>
+          <button type="button" className="btn btn-sm ks-modal-done" onClick={onClose}>
             Đóng
           </button>
         </div>

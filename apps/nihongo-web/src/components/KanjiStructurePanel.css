@@ -909,3 +909,128 @@ body.ks-modal-open .tc-stroke-modal-backdrop {
   padding: 0 0.35rem;
   font-size: 0.8rem;
 }
+
+/* ─────────────────────────────────────────────
+   Giao diện "son & kính" (2026-10) cho popup và trang cấu tạo kanji.
+   Thành phần thứ 2 dùng màu ngọc (teal) như mẫu thay cho xanh dương.
+   ───────────────────────────────────────────── */
+
+.ks-result {
+  --ks-c0: #ff5c6c;
+  --ks-c1: #4fd1c5;
+}
+
+[data-theme="light"] .ks-result {
+  --ks-c0: #d4294a;
+  --ks-c1: #0e9aa7;
+}
+
+.ks-modal-backdrop {
+  background: rgba(8 10 18 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.ks-modal {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow), 0 30px 80px rgba(0 0 0 / 0.35);
+  border-radius: 1.25rem;
+}
+
+[data-theme="light"] .ks-modal {
+  background: #fff;
+}
+
+.ks-modal-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ks-glyph-card {
+  border: 1.5px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.ks-overview {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.ks-formula {
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 70%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.ks-formula-part {
+  border: none;
+  background: none;
+  padding: 0.1rem 0.2rem;
+}
+
+.ks-note {
+  border-left: none;
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.ks-note-label {
+  color: var(--text-primary);
+}
+
+.ks-note--tip {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, #ff7a3d 55%, transparent);
+  background: linear-gradient(135deg, rgba(255 122 61 / 0.22), rgba(224 52 79 / 0.12));
+  color: var(--text-primary);
+  font-size: 1.02rem;
+}
+
+[data-theme="light"] .ks-note--tip {
+  background: linear-gradient(135deg, #ffe7da, #ffd9d6);
+}
+
+.ks-note--tip .ks-note-label {
+  color: #ff8a5c;
+}
+
+[data-theme="light"] .ks-note--tip .ks-note-label {
+  color: #c2410c;
+}
+
+.ks-comp {
+  overflow: hidden;
+}
+
+.ks-comp-head {
+  margin: -0.95rem -1rem 0;
+  padding: 0.95rem 1rem 0.8rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ks-ink) 22%, transparent), transparent);
+}
+
+.ks-modal-done {
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  background: var(--text-primary);
+  color: var(--bg-color);
+  border: none;
+}
+
+.ks-modal-done:hover {
+  filter: brightness(1.1);
+}
+
+.ks-modal-foot .ks-link-btn {
+  color: #3cc4b4;
+}
+
+[data-theme="light"] .ks-modal-foot .ks-link-btn {
+  color: #0e7f86;
+}

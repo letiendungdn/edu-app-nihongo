@@ -17,12 +17,15 @@ export default function HomePage() {
     <div className="home-page">
       <HomeHero />
 
-      <HomeGoalBanner />
+      {!isLoading && !isError && stats.length > 0 ? <HomeStats stats={stats} /> : null}
 
-      {/* SRS due today + Word of the day — nằm dưới hero, trên stats */}
-      <div className="home-widgets">
-        <HomeSrsWidget />
-        <HomeWordOfDay />
+      {/* Mục tiêu · nhiệm vụ hôm nay · (thẻ SRS + từ hôm nay) — 3 cột trên màn rộng */}
+      <div className="home-dashboard">
+        <HomeGoalBanner />
+        <div className="home-widgets">
+          <HomeSrsWidget />
+          <HomeWordOfDay />
+        </div>
       </div>
 
       {isLoading ? (
@@ -33,12 +36,11 @@ export default function HomePage() {
       ) : isError ? (
         <p className="home-loading">Không tải được nội dung trang chủ.</p>
       ) : (
-        <>
-          <HomeStats stats={stats} />
+        <div className="home-sections">
           {sections.map((section) => (
             <HomeFeatureSection key={section.id} section={section} />
           ))}
-        </>
+        </div>
       )}
     </div>
   );

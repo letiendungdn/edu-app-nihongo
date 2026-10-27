@@ -78,7 +78,13 @@ function ThemeToggle() {
   const isDark = theme === 'dark';
 
   return (
-    <button className="theme-toggle" onClick={toggle} aria-label="Đổi chủ đề" title="Đổi chủ đề">
+    <button
+      className="theme-toggle"
+      onClick={toggle}
+      aria-label="Chế độ tối"
+      aria-pressed={isDark}
+      title="Đổi chủ đề"
+    >
       {isDark ? (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -98,7 +104,8 @@ function ThemeToggle() {
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       )}
-      <span className="theme-toggle__label">{isDark ? 'Chế độ sáng' : 'Chế độ tối'}</span>
+      <span className="theme-toggle__label">Chế độ tối/sáng</span>
+      <span className={`theme-toggle__switch${isDark ? ' is-on' : ''}`} aria-hidden="true" />
     </button>
   );
 }
@@ -255,7 +262,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       >
         <div className="app-sidebar__header">
           <Link href="/" className="app-sidebar__logo" title={collapsed ? 'Nihongo' : undefined}>
-            <div className="app-sidebar__logo-icon" aria-hidden>日</div>
+            <img className="app-sidebar__logo-icon app-sidebar__logo-img" src="/logo-128.png" alt="" aria-hidden width={36} height={36} />
             <div className="app-sidebar__brand">
               <div className="app-sidebar__logo-text">Nihongo</div>
               <div className="app-sidebar__logo-sub">Learn Japanese</div>

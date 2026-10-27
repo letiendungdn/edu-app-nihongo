@@ -29,3 +29,9 @@ export function lessonShortLabel(lesson: {
   if (lesson.textbook === 'MINNA') return `Minna · Bài ${lesson.lessonNumber}`;
   return lesson.title?.trim() || `Bài ${lesson.lessonNumber}`;
 }
+
+/** Tách tiêu đề thành phần đầu ("Ngữ pháp" / "Từ vựng") và tên giáo trình để tô màu riêng. */
+export function splitLessonHeading(title: string): { lead: string; rest: string } {
+  const m = title.match(/^(Ngữ pháp|Từ vựng)\s+(.+)$/i);
+  return m ? { lead: m[1], rest: m[2] } : { lead: title, rest: '' };
+}

@@ -30,14 +30,21 @@ import {
   grammarUsageBullets,
   parseGrammarExplanation,
 } from '../utils/grammar';
-import FuriganaText from '../components/FuriganaText';
+import { renderFuriganaParts, stripParenFurigana } from '../utils/furiganaDisplay';
+import {
+  grammarPatternKeys,
+  highlightExplanation,
+  highlightKeys,
+  type HighlightSegment,
+} from '../utils/grammarHighlight';
 import {
   isGrammarPinned,
   pinGrammar,
   unpinGrammar,
 } from '../utils/grammarSrs';
+import SpeakerIcon from '../components/SpeakerIcon';
 import './GrammarView.css';
-import { lessonHeading } from '../utils/lessonHeading';
+import { lessonHeading, splitLessonHeading } from '../utils/lessonHeading';
 
 const AUTO_READ_KEY = 'nihongo-grammar-auto-read';
 
@@ -117,6 +124,69 @@ function grammarCardId(grammar: Grammar, index: number): string {
   return String(grammar.id ?? index);
 }
 
+function allLessonCardTexts(grammars: Grammar[]): SpeechSequenceItem[] {
+  return grammars.flatMap((grammar, index) =>
+    grammarCardSpeechParts(grammar).map((part, partIndex) => ({
+      ...part,
+      cue: partIndex === 0 ? index : undefined,
+    })),
+  );
+}
+
+function segmentClass(kind: HighlightSegment['kind']): string | undefined {
+  if (kind === 'key') return 'grammar-hl-key';
+  if (kind === 'jp') return 'grammar-hl-jp';
+  return undefined;
+}
+
+function renderSegments(segments: HighlightSegment[], keyPrefix: string) {
+  return segments.map((seg, i) =>
+    seg.kind === 'plain' ? (
+      <span key={`${keyPrefix}-${i}`}>{seg.text}</span>
+    ) : (
+      <span key={`${keyPrefix}-${i}`} className={segmentClass(seg.kind)}>
+        {seg.text}
+      </span>
+    ),
+  );
+}
+
+/** Câu tiếng Nhật có furigana (漢字（かな）), tô màu phần cố định của mẫu ngữ pháp. */
+function HighlightedJapanese({
+  text,
+  keys,
+  showFuri,
+  className,
+}: {
+  text: string;
+  keys: string[];
+  showFuri: boolean;
+  className?: string;
+}) {
+  if (!showFuri) {
+    return (
+      <span className={className}>
+        {renderSegments(highlightKeys(stripParenFurigana(text), keys), 't')}
+      </span>
+    );
+  }
+  return (
+    <span className={className}>
+      {renderFuriganaParts(text).map((part, i) => {
+        if ('text' in part) return renderSegments(highlightKeys(part.text, keys), `p${i}`);
+        const isKey = keys.includes(part.kanji);
+        return (
+          <ruby key={i} className={isKey ? 'grammar-hl-key' : undefined}>
+            {part.kanji}
+            <rt>{part.reading}</rt>
+          </ruby>
+        );
+      })}
+    </span>
+  );
+}
+
+
 export default function GrammarView({
   initialLessonNumber,
   hideLessonSelector = false,
@@ -134,6 +204,7 @@ export default function GrammarView({
   const { isAdmin, token } = useAuth();
   const queryClient = useQueryClient();
   const { data: lessons = [] } = useLessons();
+  const { data: grammarLessons = [] } = useLessons({ has: 'grammar' });
   const { data: lessonGrammar = [], isLoading: loading } = useGrammar(currentLesson);
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const [editMode, setEditMode] = useState(Boolean(startInEditMode));
@@ -265,6 +336,20 @@ export default function GrammarView({
   }, [autoRead, loading, currentLesson, lessonGrammar, stopPlayAll, focusGrammar, clearFocus]);
 
   const allSegments = allLessonExplanationTexts(lessonGrammar);
+  const lessonNumbers = grammarLessons.map((lesson) => lesson.lessonNumber);
+  const lessonPos = lessonNumbers.indexOf(currentLesson);
+  const prevLesson = lessonPos > 0 ? lessonNumbers[lessonPos - 1] : null;
+  const nextLesson =
+    lessonPos >= 0 && lessonPos < lessonNumbers.length - 1 ? lessonNumbers[lessonPos + 1] : null;
+  const lessonBadge = String(currentLesson).padStart(2, '0');
+  const titleParts = splitLessonHeading(viewTitle);
+
+  const handlePlayAllWithExamples = () => {
+    startPlayAll(allLessonCardTexts(lessonGrammar), {
+      pauseMs: 500,
+      onItemIndex: (index) => focusGrammar(index),
+    }).finally(clearFocus);
+  };
 
   const handlePlayAll = () => {
     startPlayAll(allSegments, {
@@ -505,19 +590,52 @@ export default function GrammarView({
       <div className="grammar-header">
         {!hideLessonSelector && (
           <>
-            <h2 className="view-title grammar-view-title">{viewTitle}</h2>
-            <p className="grammar-lesson-summary">
+            <h2 className="view-title grammar-view-title">
+              {titleParts.lead}
+              {titleParts.rest ? (
+                <>
+                  {' '}
+                  <span className="grammar-view-title-accent">{titleParts.rest}</span>
+                </>
+              ) : null}
+            </h2>
+            <p className="grammar-lesson-links">
               <Link href="/grammar-srs">Ôn mẫu đã ghim</Link>
               {' · '}
               <Link href="/grammar/mindmap">Sơ đồ tư duy N5–N1</Link>
             </p>
+            <div className="grammar-header-bars" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <span key={i} />
+              ))}
+            </div>
 
-            <LessonSelector
-              id="grammar-lesson-select"
-              value={currentLesson}
-              onChange={setCurrentLesson}
-              countKind="grammar"
-            />
+            <div className="grammar-lesson-nav">
+              <button
+                type="button"
+                className="grammar-lesson-step"
+                disabled={prevLesson == null}
+                onClick={() => prevLesson != null && setCurrentLesson(prevLesson)}
+                aria-label="Bài trước"
+              >
+                ‹
+              </button>
+              <LessonSelector
+                id="grammar-lesson-select"
+                value={currentLesson}
+                onChange={setCurrentLesson}
+                countKind="grammar"
+              />
+              <button
+                type="button"
+                className="grammar-lesson-step"
+                disabled={nextLesson == null}
+                onClick={() => nextLesson != null && setCurrentLesson(nextLesson)}
+                aria-label="Bài sau"
+              >
+                ›
+              </button>
+            </div>
           </>
         )}
 
@@ -537,12 +655,14 @@ export default function GrammarView({
             />
             <span>Tự đọc khi chọn bài</span>
           </label>
-          <label className="grammar-auto-read">
+          <label className="grammar-switch">
             <input
               type="checkbox"
+              role="switch"
               checked={showFuri}
               onChange={() => setShowFuri((v) => !v)}
             />
+            <span className="grammar-switch-track" aria-hidden="true" />
             <span>Hiện furigana</span>
           </label>
 
@@ -553,6 +673,17 @@ export default function GrammarView({
               onStop={handleStopAll}
               label="Đọc cả bài (giải thích)"
             />
+          )}
+          {!loading && lessonGrammar.length > 0 && !isPlayingAll && (
+            <button
+              type="button"
+              className="grammar-play-round"
+              onClick={handlePlayAllWithExamples}
+              title="Đọc cả bài: giải thích, mẫu và ví dụ"
+              aria-label="Đọc cả bài kèm mẫu và ví dụ"
+            >
+              <SpeakerIcon className="grammar-speaker-icon" />
+            </button>
           )}
 
           {isAdmin && (
@@ -605,6 +736,7 @@ export default function GrammarView({
             const activeExampleIndex = isCardActive ? speechFocus?.exampleIndex : null;
             const parsedExplanation = parseGrammarExplanation(grammar.explanation);
             const usageBullets = grammarUsageBullets(parsedExplanation.usage);
+            const patternKeys = grammarPatternKeys(grammar.pattern);
 
             if (canEdit && editingId === grammar.id) {
               return (
@@ -631,15 +763,20 @@ export default function GrammarView({
                 data-grammar-index={index}
                 aria-current={isCardActive ? 'true' : undefined}
               >
+                <span className="grammar-card-watermark" aria-hidden="true">
+                  {lessonBadge}
+                </span>
                 <div className="grammar-pattern-header">
                   <span className={`grammar-index${isCardActive ? ' grammar-index--speaking' : ''}`}>
                     {index + 1}
                   </span>
-                  <h3 className="grammar-pattern japanese-text">{grammar.pattern}</h3>
+                  <h3 className="grammar-pattern japanese-text">
+                    {renderSegments(highlightKeys(grammar.pattern, patternKeys), 'pat')}
+                  </h3>
                   {grammar.id != null && (
                     <button
                       type="button"
-                      className="btn-grammar-read-card"
+                      className="btn-grammar-pin"
                       onClick={() => {
                         if (isGrammarPinned(grammar.id)) unpinGrammar(grammar.id);
                         else pinGrammar({
@@ -656,12 +793,12 @@ export default function GrammarView({
                   )}
                   <button
                     type="button"
-                    className="btn-audio-small"
+                    className="btn-audio-small btn-grammar-explain"
                     onClick={() => void playGrammarExplanation(grammar, index)}
                     title="Đọc giải thích: tiếng Việt và chữ Nhật"
                     aria-label="Đọc giải thích tiếng Việt và chữ Nhật"
                   >
-                    🔊
+                    <SpeakerIcon className="grammar-speaker-icon" />
                   </button>
                   <button
                     type="button"
@@ -692,26 +829,31 @@ export default function GrammarView({
                   <strong>Ý nghĩa:</strong> {grammar.meaning}
                 </div>
 
-                {usageBullets.length > 0 && (
-                  <div className="grammar-explanation">
-                    <strong>Giải thích:</strong>
-                    <ul className="grammar-bullet-list">
-                      {usageBullets.map((line, lineIndex) => (
-                        <li key={lineIndex}>{line}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {parsedExplanation.note && (
-                  <div className="grammar-note">
-                    <strong>Chú ý:</strong> {parsedExplanation.note}
-                  </div>
-                )}
-
-                {!usageBullets.length && !parsedExplanation.note && grammar.explanation && (
-                  <div className="grammar-explanation" style={{ whiteSpace: 'pre-wrap' }}>
-                    <strong>Giải thích:</strong> {grammar.explanation}
+                {(usageBullets.length > 0 || parsedExplanation.note || grammar.explanation) && (
+                  <div className="grammar-explain-box">
+                    <strong className="grammar-explain-title">
+                      <span aria-hidden="true">👋</span> Ý nghĩa &amp; Giải thích:
+                    </strong>
+                    {usageBullets.length > 0 ? (
+                      <ul className="grammar-bullet-list">
+                        {usageBullets.map((line, lineIndex) => (
+                          <li key={lineIndex}>
+                            {renderSegments(highlightExplanation(line, patternKeys), `u${lineIndex}`)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {parsedExplanation.note ? (
+                      <p className="grammar-note">
+                        <strong>Chú ý:</strong>{' '}
+                        {renderSegments(highlightExplanation(parsedExplanation.note, patternKeys), 'note')}
+                      </p>
+                    ) : null}
+                    {!usageBullets.length && !parsedExplanation.note && grammar.explanation ? (
+                      <p className="grammar-explanation" style={{ whiteSpace: 'pre-wrap' }}>
+                        {renderSegments(highlightExplanation(grammar.explanation, patternKeys), 'raw')}
+                      </p>
+                    ) : null}
                   </div>
                 )}
 
@@ -732,20 +874,27 @@ export default function GrammarView({
                             className={`example-item${isExActive ? ' example-item--speaking' : ''}`}
                           >
                             <div className="example-jp">
-                              <FuriganaText className="japanese-text" text={ex.jp} show={showFuri} />
-                              {grammarExampleRomaji(ex.romaji) && (
-                                <span className="example-romaji-inline">
-                                  {grammarExampleRomaji(ex.romaji)}
-                                </span>
-                              )}
+                              <div className="example-jp-text">
+                                <HighlightedJapanese
+                                  className="japanese-text"
+                                  text={ex.jp}
+                                  keys={patternKeys}
+                                  showFuri={showFuri}
+                                />
+                                {grammarExampleRomaji(ex.romaji) && (
+                                  <span className="example-romaji-inline">
+                                    {grammarExampleRomaji(ex.romaji)}
+                                  </span>
+                                )}
+                              </div>
                               <button
                                 type="button"
-                                className="btn-audio-small"
+                                className="btn-audio-small btn-example-audio"
                                 onClick={() => playExample(index, exIndex, ex.jp, ex.vi || ex.en)}
                                 title="Nghe phát âm"
                                 aria-label="Nghe phát âm ví dụ"
                               >
-                                🔊
+                                <SpeakerIcon className="grammar-speaker-icon" />
                               </button>
                             </div>
                             {(ex.vi || ex.en) && (

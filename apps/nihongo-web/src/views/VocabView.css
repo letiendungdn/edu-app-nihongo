@@ -2579,3 +2579,553 @@
     transform: rotateY(180deg);
   }
 }
+
+/* ─────────────────────────────────────────────
+   Trang học thẻ — giao diện "son & kính" (2026-10).
+   Chỉ trong .vocab-view--study; dùng --brand-grad / --panel-* ở globals.css.
+   ───────────────────────────────────────────── */
+
+.vocab-view--study {
+  --vc-chip-bg: var(--surface-color);
+  --vc-chip-border: color-mix(in srgb, var(--primary-color) 28%, var(--border-color));
+  --vc-row-bg: rgba(255 255 255 / 0.04);
+  --vc-row-border: rgba(255 255 255 / 0.08);
+  --vc-row-active-bg: linear-gradient(135deg, rgba(150 36 52 / 0.5), rgba(46 30 40 / 0.85));
+  --vc-example-bg: linear-gradient(135deg, #fde4e2 0%, #fbcfcd 100%);
+  --vc-example-border: rgba(232 64 72 / 0.35);
+  --vc-example-text: #1e1b17;
+  --vc-watermark: rgba(255 255 255 / 0.07);
+}
+
+[data-theme="light"] .vocab-view--study {
+  --vc-row-bg: #ffffff;
+  --vc-row-border: rgba(60 40 20 / 0.07);
+  --vc-row-active-bg: linear-gradient(135deg, #fff1f1, #ffe4e4);
+  --vc-watermark: rgba(0 0 0 / 0.05);
+}
+
+/* Tiêu đề + nút liên kết */
+.vocab-view--study .vocab-topbar {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.vocab-view--study .vocab-topbar__title {
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  font-weight: 800;
+}
+
+.vocab-topbar__title-accent {
+  background: var(--brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vocab-chip {
+  border-radius: 999px !important;
+  background: var(--vc-chip-bg) !important;
+  border: 1px solid var(--vc-chip-border) !important;
+  padding: 0.3rem 0.8rem !important;
+  font-weight: 500 !important;
+  box-shadow: var(--shadow-sm);
+  gap: 0.35rem;
+}
+
+.vocab-chip--accent {
+  border-color: var(--primary-color) !important;
+  background: var(--primary-subtle) !important;
+}
+
+.vocab-chip__icon {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.vocab-chip__icon--tile {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+  background: var(--brand-grad);
+  color: #fff;
+  font-size: 0.65rem;
+}
+
+.vocab-chip__icon--text {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Ô tra từ: viên thuốc, nút Tìm gắn liền */
+.vocab-view--study .vocab-toolbar {
+  width: 100%;
+}
+
+.vocab-view--study .vocab-search__form {
+  gap: 0;
+}
+
+.vocab-view--study .vocab-search__input {
+  border-radius: 999px 0 0 999px !important;
+  padding: 0.7rem 1.1rem !important;
+  border-right: none !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.vocab-view--study .vocab-search__submit {
+  border-radius: 999px !important;
+  margin-left: -1.25rem;
+  padding: 0.65rem 1.4rem !important;
+  min-height: 2.75rem;
+  font-size: 0.95rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Hàng chọn bài + điều khiển */
+.vocab-lesson-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.75rem;
+  width: 100%;
+}
+
+.vocab-view--study .vocab-lesson-row .lesson-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0;
+  background: none;
+}
+
+.vocab-view--study .vocab-lesson-row .lesson-selector label {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.vocab-view--study .vocab-lesson-row .select-input {
+  min-width: 14rem;
+  max-width: 18rem;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #fff 50%),
+    linear-gradient(135deg, #fff 50%, transparent 50%),
+    var(--brand-grad);
+  background-position:
+    calc(100% - 1.3rem) 52%,
+    calc(100% - 0.95rem) 52%,
+    0 0;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem, 100% 100%;
+  background-repeat: no-repeat;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: var(--brand-grad-shadow);
+  cursor: pointer;
+}
+
+.vocab-view--study .vocab-lesson-row .select-input option,
+.vocab-view--study .vocab-lesson-row .select-input optgroup {
+  color: var(--text-primary);
+  background: var(--surface-color);
+}
+
+.vocab-view--study .vocab-playbar {
+  flex: 1;
+  justify-content: flex-start;
+  gap: 0.6rem;
+}
+
+.vocab-view--study .vocab-progress__text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.vocab-view--study .vocab-playbar__controls .btn {
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  background: var(--vc-chip-bg);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.vocab-view--study .vocab-playbar__controls .btn-play-all {
+  background: var(--brand-grad);
+  border: none;
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+/* Cột danh sách từ: mỗi từ là một thẻ */
+.vocab-view--study .vocab-word-list {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0.25rem 0;
+}
+
+.vocab-view--study .vocab-word-list-title {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.85rem;
+}
+
+.vocab-view--study .vocab-word-list-search {
+  border-radius: 12px;
+}
+
+.vocab-view--study .vocab-word-list-row-wrap {
+  height: calc(100% - 8px);
+  margin: 4px 0;
+  padding: 0 0.4rem 0 0;
+  align-items: center;
+  border-radius: 12px;
+  background: var(--vc-row-bg);
+  border: 1px solid var(--vc-row-border);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vocab-view--study .vocab-word-list-row-wrap:has(.vocab-word-list-item.active) {
+  background: var(--vc-row-active-bg);
+  border-color: color-mix(in srgb, var(--primary-color) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.vocab-view--study .vocab-word-list-item,
+.vocab-view--study .vocab-word-list-item:hover,
+.vocab-view--study .vocab-word-list-item.active {
+  background: none;
+  box-shadow: none;
+}
+
+.vocab-view--study .vocab-word-list-num {
+  font-size: 0.85rem;
+}
+
+.vocab-view--study .vocab-word-list-jp {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.vocab-view--study .vocab-word-list-meaning {
+  font-size: 0.82rem;
+}
+
+.vocab-view--study .vocab-admin-row-actions {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Mặt trước thẻ */
+.vocab-view--study .flashcard-front.vocab-card {
+  position: relative;
+  overflow: hidden;
+  padding: 1.75rem 1.75rem 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  justify-content: flex-start;
+}
+
+.vocab-card__watermark {
+  position: absolute;
+  top: 0.75rem;
+  left: 1.5rem;
+  font-size: clamp(4rem, 8vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--vc-watermark);
+  pointer-events: none;
+  user-select: none;
+}
+
+.vocab-round-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.vocab-round-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.06);
+}
+
+.vocab-round-btn--soft {
+  width: 2.2rem;
+  height: 2.2rem;
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.vocab-card__audio {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  z-index: 2;
+  width: 2.3rem;
+  height: 2.3rem;
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.vocab-speaker-icon {
+  display: block;
+}
+
+.vocab-view--study .vocab-card .flashcard-front-body {
+  align-items: stretch;
+  text-align: left;
+  gap: 1rem;
+  padding-top: 2.6rem;
+  position: relative;
+}
+
+.vocab-view--study .vocab-card__cols {
+  justify-content: flex-start;
+  gap: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.vocab-view--study .vocab-card__cols .flashcard-text-col {
+  align-items: flex-start;
+  flex: 1;
+  padding: 0 1.5rem;
+}
+
+.vocab-view--study .vocab-card__cols .flashcard-text-col:first-child {
+  padding-left: 0.25rem;
+}
+
+.vocab-view--study .vocab-card__cols .flashcard-text-col--kanji + .flashcard-text-col--kana {
+  border-left: 1px solid var(--border-color);
+}
+
+.vocab-view--study .vocab-card .flashcard-char-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.vocab-view--study .vocab-card .vocab-kanji {
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+}
+
+.vocab-view--study .vocab-card .vocab-kana {
+  font-size: clamp(2.2rem, 5vw, 3rem);
+}
+
+.vocab-card__col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.vocab-card__kana-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.vocab-card__kana-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.vocab-view--study .vocab-card .vocab-copy-btn {
+  position: static;
+  border-radius: 8px;
+}
+
+.vocab-view--study .vocab-card__meta {
+  align-items: flex-start;
+  max-width: none;
+  gap: 0.6rem;
+}
+
+.vocab-card__headline {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.6rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.vocab-view--study .vocab-card__headline .vocab-romaji,
+.vocab-view--study .vocab-card__headline .vocab-meaning {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  letter-spacing: 0;
+}
+
+.vocab-card__sep {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.vocab-card__examples-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.vocab-example-card {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  background: var(--vc-example-bg);
+  border: 1px solid var(--vc-example-border);
+  box-shadow: 0 8px 22px rgba(200 50 50 / 0.12);
+  color: var(--vc-example-text);
+  text-align: left;
+}
+
+.vocab-example-card__top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(160 40 40 / 0.15);
+}
+
+.vocab-example-card__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vocab-example-card__kana {
+  font-size: 0.78rem;
+  color: #c8323f;
+  line-height: 1.3;
+}
+
+.vocab-example-card__ja {
+  font-size: clamp(1.3rem, 2.6vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.vocab-example-card__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.6rem;
+}
+
+.vocab-example-card__vi {
+  font-size: 1.05rem;
+}
+
+.vocab-example-card__picture {
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0 0 0 / 0.12);
+  background: #fff;
+}
+
+.vocab-example-card .ks-open-btn {
+  color: #6a3b3b;
+  border-color: rgba(160 40 40 / 0.2);
+  background: rgba(255 255 255 / 0.55);
+}
+
+@media (max-width: 640px) {
+  .vocab-view--study .vocab-card__cols .flashcard-text-col {
+    padding: 0 0.75rem;
+  }
+
+  .vocab-view--study .vocab-lesson-row .select-input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* Sửa sau khi xem thử: hàng chọn bài một dòng, kana không vỡ chữ, số mờ không đè nhãn */
+.vocab-view--study .vocab-lesson-row .lesson-selector {
+  border: none;
+  box-shadow: none;
+}
+
+.vocab-view--study .vocab-lesson-row .select-input {
+  min-width: 0;
+  width: 12.5rem;
+}
+
+.vocab-view--study .vocab-lesson-row .vocab-playbar {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.vocab-view--study .vocab-lesson-row .vocab-playbar__controls {
+  flex-wrap: nowrap;
+}
+
+.vocab-view--study .vocab-lesson-row .vocab-playbar__controls .btn {
+  padding: 0.5rem 0.8rem;
+  white-space: nowrap;
+}
+
+.vocab-card__kana-row {
+  flex-wrap: wrap;
+}
+
+.vocab-card__kana-row > :first-child {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.vocab-view--study .vocab-card__cols:not([class*="--tier-"]) .vocab-kana,
+.vocab-view--study .vocab-card__cols:not([class*="--tier-"]) .vocab-kanji {
+  white-space: nowrap;
+}
+
+.vocab-view--study .vocab-card .flashcard-front-body {
+  padding-top: 3.75rem;
+}

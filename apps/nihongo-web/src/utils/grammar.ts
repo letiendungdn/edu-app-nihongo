@@ -52,5 +52,5 @@ export function grammarQuickAnalysis(pattern: string, jp: string): string | null
   const n2 = text.slice(waIndex + 1).trim();
   if (!n1 || !n2) return null;
 
-  return `Phân tích nhanh: N1: ${n1} / N2: ${n2}`;
+  return `Phân tích ngữ pháp: N1: ${n1} / N2: ${n2}`;
 }

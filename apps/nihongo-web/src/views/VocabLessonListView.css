@@ -64,8 +64,8 @@
 }
 
 .vocab-lesson-list .btn-play-all {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color));
-  color: #fff;
+  background: var(--primary-color);
+  color: var(--primary-contrast, #fff);
   padding: 0.45rem 0.9rem;
   border-radius: 0.5rem;
   border: none;
@@ -700,4 +700,392 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ─────────────────────────────────────────────
+   Giao diện "son & kính" (2026-10): bảng dạng thẻ, popup chi tiết từ.
+   ───────────────────────────────────────────── */
+
+.vocab-lesson-list {
+  --vl-row-bg: rgba(255 255 255 / 0.035);
+  --vl-row-alt-bg: rgba(255 255 255 / 0.06);
+  --vl-row-active-bg: linear-gradient(90deg, rgba(150 36 52 / 0.45), rgba(46 30 40 / 0.6));
+  --vl-kana: #ff7b85;
+  --vl-example-bg: linear-gradient(135deg, rgba(122 32 46 / 0.55), rgba(40 30 36 / 0.9));
+  --vl-example-text: var(--text-primary);
+}
+
+[data-theme="light"] .vocab-lesson-list {
+  --vl-row-bg: #ffffff;
+  --vl-row-alt-bg: #f3f1ee;
+  --vl-row-active-bg: linear-gradient(90deg, #ffe9e9, #fff4f2);
+  --vl-kana: #c8323f;
+}
+
+/* Popup gắn vào body nên cần biến màu riêng ở :root */
+:root {
+  --vsm-example-bg: linear-gradient(135deg, rgba(122 32 46 / 0.55), rgba(36 30 40 / 0.92));
+  --vsm-example-text: #f3f1ee;
+  --vsm-kana: #ff7b85;
+}
+
+[data-theme="light"] {
+  --vsm-example-bg: linear-gradient(135deg, #fde4e2, #fbd5d3);
+  --vsm-example-text: #1e1b17;
+  --vsm-kana: #c8323f;
+}
+
+.vocab-lesson-list .view-title {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+}
+
+.vocab-lesson-list__title-accent {
+  background: var(--brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vocab-lesson-list__meta {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.vocab-lesson-list__chip {
+  border-radius: 999px !important;
+  gap: 0.35rem;
+  font-weight: 500 !important;
+  padding: 0.4rem 0.9rem !important;
+}
+
+.vocab-lesson-list__chip.btn-outline {
+  border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-strong));
+  background: var(--surface-color);
+}
+
+.vocab-lesson-list__chip-icon {
+  color: var(--primary-color);
+}
+
+/* Thanh công cụ */
+.vocab-lesson-list .lesson-selector {
+  background: none;
+  padding: 0;
+  font-weight: 500;
+}
+
+.vocab-lesson-list .select-input {
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
+  background: var(--surface-color);
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  font-weight: 600;
+}
+
+.vocab-lesson-list__search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.vocab-lesson-list__search-wrap .vocab-lesson-list__search {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.55rem 2.4rem 0.55rem 1rem;
+  background: var(--surface-color);
+  border: 1px solid var(--border-strong);
+}
+
+.vocab-lesson-list__search-icon {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.vocab-lesson-list .btn-play-all {
+  background: var(--primary-color);
+  color: var(--primary-contrast, #fff);
+  box-shadow: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.6rem 1.1rem;
+}
+
+/* Bảng: khung kính, mỗi dòng là một thẻ */
+.vocab-lesson-list__table-wrap {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  border-radius: 1.1rem;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.vocab-lesson-list__table {
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
+}
+
+.vocab-lesson-list__table th {
+  border-bottom: none;
+  font-size: 0.92rem;
+  padding-top: 0.9rem;
+}
+
+.vocab-lesson-list__table td {
+  border-bottom: none;
+  background: var(--vl-row-bg);
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.vocab-lesson-list__table tbody tr:nth-child(even) td {
+  background: var(--vl-row-alt-bg);
+}
+
+.vocab-lesson-list__table td:first-child {
+  border-radius: 10px 0 0 10px;
+  border-left: 1px solid transparent;
+}
+
+.vocab-lesson-list__table td:last-child {
+  border-radius: 0 10px 10px 0;
+  border-right: 1px solid transparent;
+}
+
+.vocab-lesson-list__table tbody tr:hover td {
+  background: color-mix(in srgb, var(--primary-color) 7%, var(--vl-row-bg));
+}
+
+.vocab-lesson-list__table tbody tr.is-speaking td,
+.vocab-lesson-list__table tbody tr.is-speaking:nth-child(even) td {
+  background: var(--vl-row-active-bg);
+  border-color: color-mix(in srgb, var(--primary-color) 65%, transparent);
+}
+
+.vocab-lesson-list__table tbody tr:hover {
+  background: none;
+}
+
+.vocab-lesson-list__kana,
+.vocab-lesson-list__kana .vocab-lesson-list__word {
+  color: var(--vl-kana);
+  font-weight: 600;
+}
+
+.vocab-lesson-list__romaji {
+  color: var(--text-secondary);
+}
+
+.vocab-lesson-list__listen-col {
+  text-align: right !important;
+  width: 4rem;
+}
+
+.vocab-list-audio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.vocab-list-audio:hover {
+  transform: scale(1.08);
+}
+
+.vocab-list-audio--lg {
+  width: 2.8rem;
+  height: 2.8rem;
+  flex-shrink: 0;
+}
+
+/* Popup chi tiết từ */
+.vocab-stroke-modal__backdrop {
+  background: rgba(8 10 18 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.vocab-stroke-modal {
+  width: min(560px, calc(100vw - 2rem));
+  border-radius: 1.25rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow), 0 30px 80px rgba(0 0 0 / 0.35);
+  padding: 1.25rem 1.25rem 1.1rem;
+}
+
+[data-theme="light"] .vocab-stroke-modal {
+  background: #fff;
+}
+
+.vocab-stroke-modal__close {
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+}
+
+.vocab-stroke-modal__nav {
+  margin-bottom: 0;
+}
+
+.vocab-stroke-modal__order {
+  display: none;
+}
+
+.vocab-stroke-modal__char {
+  font-size: 2.9rem;
+  font-weight: 800;
+}
+
+.vocab-stroke-modal__step {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.vocab-stroke-modal__speak {
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.vocab-stroke-modal__speak:hover,
+.vocab-stroke-modal__speak:focus-visible {
+  background: var(--brand-grad);
+  filter: brightness(1.06);
+}
+
+/* Thứ tự: ← chữ 🔊 → */
+.vocab-stroke-modal__nav > .vocab-stroke-modal__step:first-child { order: 0; }
+.vocab-stroke-modal__nav > .vocab-stroke-modal__heading { order: 1; }
+.vocab-stroke-modal__nav > .vocab-stroke-modal__speak { order: 2; }
+.vocab-stroke-modal__nav > .vocab-stroke-modal__step:last-child { order: 3; }
+
+.vocab-stroke-modal__sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.vocab-stroke-modal__sub-reading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--vsm-kana);
+}
+
+.vocab-stroke-modal__sub-meta {
+  margin: 0.1rem 0 0.35rem;
+  color: var(--text-secondary);
+}
+
+.vocab-stroke-modal__label {
+  font-size: 0.8rem;
+}
+
+.vocab-stroke-modal__canvas {
+  background: none;
+  padding: 0.25rem 0;
+  align-items: flex-start;
+}
+
+.vocab-stroke-modal__picture.vocab-picture {
+  width: min(210px, 40vw);
+  height: min(210px, 40vw);
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
+}
+
+.vocab-stroke-modal__strokes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.vocab-stroke-modal__meta {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0.85rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.vocab-stroke-modal__meta-sep {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.vocab-stroke-modal__meta-meaning {
+  font-weight: 500;
+}
+
+.vocab-stroke-modal__example {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  background: var(--vsm-example-bg);
+  color: var(--vsm-example-text);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+  text-align: left;
+}
+
+.vocab-stroke-modal__example-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.vocab-stroke-modal__example-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vocab-stroke-modal__example-kana {
+  font-size: 0.75rem;
+  color: var(--vsm-kana);
+}
+
+.vocab-stroke-modal__example-ja {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.vocab-stroke-modal__example-vi {
+  font-size: 0.98rem;
+}
+
+.vocab-lesson-list__table td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }

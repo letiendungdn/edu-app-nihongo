@@ -15,7 +15,10 @@ import { resolveVocabImage } from '@edu/vocab-images';
 import { getStrokeText } from '../utils/japanese';
 import { isKanji } from '../utils/kanji-structure';
 import { meaningForSpeech, speakJapaneseThenMeaning } from '../utils/speech';
-import { lessonHeading, lessonShortLabel } from '../utils/lessonHeading';
+import { lessonHeading, lessonShortLabel, splitLessonHeading } from '../utils/lessonHeading';
+import { getVocabExamples } from '../utils/vocabPatternExample';
+import KanjiStructureButton from '../components/KanjiStructureButton';
+import SpeakerIcon from '../components/SpeakerIcon';
 import type { Vocabulary } from '../types/api';
 import './VocabLessonListView.css';
 
@@ -102,6 +105,7 @@ function StrokeModal({
   });
   const size = strokeBoxSize(headline, Boolean(illustration));
   const speak = () => speakWord(vocab);
+  const examples = getVocabExamples(vocab);
 
   const openStructure = (char?: string) => {
     if (!analyzable) {
@@ -166,9 +170,6 @@ function StrokeModal({
             >
               {headline}
             </button>
-            {counterpart ? (
-              <p className="vocab-stroke-modal__reading japanese-text">{counterpart}</p>
-            ) : null}
           </div>
           <button
             type="button"
@@ -177,12 +178,23 @@ function StrokeModal({
             aria-label={`Nghe ${vocab.kana}`}
             title={`Nghe ${vocab.kana}`}
           >
-            🔊
+            <SpeakerIcon size={22} />
           </button>
           <button type="button" className="vocab-stroke-modal__step" onClick={() => onStep(1)} aria-label="Từ sau">
             →
           </button>
         </div>
+        {counterpart || kanjiStroke ? (
+          <div className="vocab-stroke-modal__sub">
+            {counterpart ? (
+              <span className="vocab-stroke-modal__sub-reading japanese-text">{counterpart}</span>
+            ) : null}
+            <KanjiStructureButton text={vocab.kanji} />
+          </div>
+        ) : null}
+        <p className="vocab-stroke-modal__sub-meta">
+          {vocab.romaji} · {vocab.meaning}
+        </p>
         <p className="vocab-stroke-modal__label">
           {script === 'kana'
             ? 'Cách viết hiragana · 🔊 / phím cách nghe · ← → sang từ kế'
@@ -203,20 +215,45 @@ function StrokeModal({
               alt={`Ảnh minh hoạ ${vocab.meaning}`}
             />
           ) : null}
-          <StrokeOrder
-            key={`${vocab.id}-${script}-${headline}`}
-            text={headline}
-            width={size}
-            height={size}
-            onCharClick={(char) => {
-              if (isKanji(char)) openStructure(char);
-              else speak();
-            }}
-          />
+          <div className="vocab-stroke-modal__strokes">
+            <StrokeOrder
+              key={`${vocab.id}-${script}-${headline}`}
+              text={headline}
+              width={size}
+              height={size}
+              onCharClick={(char) => {
+                if (isKanji(char)) openStructure(char);
+                else speak();
+              }}
+            />
+          </div>
         </div>
         <p className="vocab-stroke-modal__meta">
-          {vocab.romaji} · {vocab.meaning}
+          <span>{vocab.romaji}</span>
+          <span className="vocab-stroke-modal__meta-sep" aria-hidden="true">|</span>
+          <span className="vocab-stroke-modal__meta-meaning">{vocab.meaning}</span>
         </p>
+        {examples.map((example) => (
+          <div key={example.ja} className="vocab-stroke-modal__example">
+            <div className="vocab-stroke-modal__example-text">
+              <span className="vocab-stroke-modal__example-label">Ví dụ</span>
+              {example.kana && example.kana !== example.ja ? (
+                <span className="vocab-stroke-modal__example-kana japanese-text">{example.kana}</span>
+              ) : null}
+              <span className="vocab-stroke-modal__example-ja japanese-text">{example.ja}</span>
+              {example.vi ? <span className="vocab-stroke-modal__example-vi">{example.vi}</span> : null}
+            </div>
+            <button
+              type="button"
+              className="vocab-list-audio vocab-list-audio--lg"
+              aria-label="Nghe ví dụ"
+              title="Nghe ví dụ"
+              onClick={() => speakJapaneseThenMeaning(example.speak, example.vi)}
+            >
+              <SpeakerIcon size={22} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>,
     document.body,
@@ -252,6 +289,7 @@ export default function VocabLessonListView({
   }, [initialLessonNumber]);
 
   const lesson = lessons.find((item) => item.lessonNumber === lessonNumber);
+  const titleParts = splitLessonHeading(lessonHeading('vocab', lesson));
   const query = filter.trim().toLowerCase();
   const rows = useMemo(
     () =>
@@ -316,40 +354,54 @@ export default function VocabLessonListView({
       <header className="vocab-lesson-list__header">
         <div className="vocab-lesson-list__title-row">
           <div>
-            <h1 className="view-title">{lessonHeading('vocab', lesson)}</h1>
+            <h1 className="view-title">
+              {titleParts.lead}
+              {titleParts.rest ? (
+                <>
+                  {' '}
+                  <span className="vocab-lesson-list__title-accent">{titleParts.rest}</span>
+                </>
+              ) : null}
+            </h1>
             <p className="vocab-lesson-list__meta">
               {lesson ? lessonShortLabel(lesson) : `Bài ${lessonNumber}`}
               {words.length > 0 ? ` · ${words.length} từ` : ''}
             </p>
           </div>
           <nav className="vocab-lesson-list__links" aria-label="Học từ vựng">
-            <Link href="/vocab/list" className="btn btn-outline btn-sm">
-              ← Chọn bài
+            <Link href="/vocab/list" className="btn btn-outline btn-sm vocab-lesson-list__chip">
+              <span aria-hidden="true">←</span> Chọn bài
             </Link>
-            <Link href={`/vocab?lesson=${lessonNumber}`} className="btn btn-primary btn-sm">
-              Học thẻ
+            <Link href={`/vocab?lesson=${lessonNumber}`} className="btn btn-primary btn-sm vocab-lesson-list__chip">
+              <span aria-hidden="true">▭</span> Học thẻ
             </Link>
-            <Link href={`/vocab/picture?lesson=${lessonNumber}`} className="btn btn-outline btn-sm">
-              Từ điển tranh
+            <Link href={`/vocab/picture?lesson=${lessonNumber}`} className="btn btn-outline btn-sm vocab-lesson-list__chip">
+              <span className="vocab-lesson-list__chip-icon" aria-hidden="true">▣</span> Từ điển tranh
             </Link>
-            <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
-              Trắc nghiệm
+            <Link href="/vocab/quiz" className="btn btn-outline btn-sm vocab-lesson-list__chip">
+              <span className="vocab-lesson-list__chip-icon" aria-hidden="true">✎</span> Trắc nghiệm
             </Link>
-            <Link href="/vocab/katakana" className="btn btn-outline btn-sm">
-              Từ katakana
+            <Link href="/vocab/katakana" className="btn btn-outline btn-sm vocab-lesson-list__chip">
+              <span className="vocab-lesson-list__chip-icon japanese-text" aria-hidden="true">片</span> Từ katakana
             </Link>
           </nav>
         </div>
         <div className="vocab-lesson-list__toolbar">
           <LessonSelector value={lessonNumber} onChange={selectLesson} id="vocab-list-lesson" />
-          <input
-            type="search"
-            className="vocab-lesson-list__search"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-            placeholder="Lọc trong bài: kanji, kana, romaji, nghĩa"
-            aria-label="Lọc từ trong bài"
-          />
+          <div className="vocab-lesson-list__search-wrap">
+            <input
+              type="search"
+              className="vocab-lesson-list__search"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              placeholder="Lọc trong bài: kanji, kana, romaji, nghĩa"
+              aria-label="Lọc từ trong bài"
+            />
+            <svg className="vocab-lesson-list__search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+              <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
           <PlayAllButton
             isPlaying={isPlayingAll}
             onPlay={handlePlayAll}
@@ -380,9 +432,7 @@ export default function VocabLessonListView({
                 <th scope="col">Kana</th>
                 <th scope="col">Romaji</th>
                 <th scope="col">Nghĩa</th>
-                <th scope="col">
-                  <span className="sr-only">Nghe</span>
-                </th>
+                <th scope="col" className="vocab-lesson-list__listen-col">Nghe</th>
               </tr>
             </thead>
             <tbody>
@@ -390,7 +440,9 @@ export default function VocabLessonListView({
                 <tr
                   key={vocab.id}
                   data-vocab-id={vocab.id}
-                  className={speakingId === vocab.id ? 'is-speaking' : undefined}
+                  className={
+                    speakingId === vocab.id || stroke?.vocabId === vocab.id ? 'is-speaking' : undefined
+                  }
                 >
                   <td className="vocab-lesson-list__num">{index + 1}</td>
                   <td>
@@ -400,23 +452,23 @@ export default function VocabLessonListView({
                       onOpen={() => setStroke({ vocabId: vocab.id, field: 'kanji' })}
                     />
                   </td>
-                  <td>
+                  <td className="vocab-lesson-list__kana">
                     <WritingWord
                       text={vocab.kana}
                       onOpen={() => setStroke({ vocabId: vocab.id, field: 'kana' })}
                     />
                   </td>
-                  <td>{vocab.romaji}</td>
+                  <td className="vocab-lesson-list__romaji">{vocab.romaji}</td>
                   <td>{vocab.meaning}</td>
-                  <td>
+                  <td className="vocab-lesson-list__listen-col">
                     <button
                       type="button"
-                      className="btn-audio-small"
+                      className="vocab-list-audio"
                       title={`Nghe ${vocab.kana}`}
                       aria-label={`Nghe ${vocab.kana}`}
                       onClick={() => speakWord(vocab)}
                     >
-                      🔊
+                      <SpeakerIcon size={16} />
                     </button>
                   </td>
                 </tr>

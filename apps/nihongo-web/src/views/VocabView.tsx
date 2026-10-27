@@ -22,8 +22,9 @@ import FlashcardJapaneseText from '../components/FlashcardJapaneseText';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import { getVocabExamples } from '../utils/vocabPatternExample';
 import { logActivity } from '../api';
+import SpeakerIcon from '../components/SpeakerIcon';
 import './VocabView.css';
-import { lessonHeading, lessonShortLabel } from '../utils/lessonHeading';
+import { lessonHeading, lessonShortLabel, splitLessonHeading } from '../utils/lessonHeading';
 import type { VocabularySearchHit } from '../types/api';
 
 /**
@@ -127,6 +128,7 @@ export default function VocabView({
   const lessonId = currentLessonMeta?.id ?? null;
   const expectedCount = currentLessonMeta?._count?.vocabularies ?? null;
   const vocabTitle = lessonHeading('vocab', currentLessonMeta);
+  const vocabTitleParts = splitLessonHeading(vocabTitle);
 
   useEffect(() => {
     stopPlayAll();
@@ -331,24 +333,38 @@ export default function VocabView({
   const vocabHeader = (
     <div className="vocab-header vocab-header--compact">
       <div className="vocab-topbar">
-        <h2 className="view-title vocab-topbar__title">{vocabTitle}</h2>
+        <h2 className="view-title vocab-topbar__title">
+          {vocabTitleParts.lead}
+          {vocabTitleParts.rest ? (
+            <>
+              {' '}
+              <span className="vocab-topbar__title-accent">{vocabTitleParts.rest}</span>
+            </>
+          ) : null}
+        </h2>
         <nav className="vocab-topbar__links" aria-label="Công cụ từ vựng">
-          <Link href="/vocab" className="btn btn-outline btn-sm">
-            ← Chọn bài
+          <Link href="/vocab" className="btn btn-outline btn-sm vocab-chip">
+            <span className="vocab-chip__icon" aria-hidden="true">←</span>
+            Chọn bài
           </Link>
-          <Link href={`/vocab/list?lesson=${currentLesson}`} className="btn btn-outline btn-sm">
+          <Link href={`/vocab/list?lesson=${currentLesson}`} className="btn btn-outline btn-sm vocab-chip vocab-chip--accent">
+            <span className="vocab-chip__icon" aria-hidden="true">☰</span>
             Danh sách từ
           </Link>
-          <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
+          <Link href="/vocab/quiz" className="btn btn-outline btn-sm vocab-chip">
+            <span className="vocab-chip__icon vocab-chip__icon--tile" aria-hidden="true">✓</span>
             Trắc nghiệm JP ↔ VI
           </Link>
-          <Link href="/kanji/quiz?source=minna" className="btn btn-outline btn-sm">
+          <Link href="/kanji/quiz?source=minna" className="btn btn-outline btn-sm vocab-chip">
+            <span className="vocab-chip__icon vocab-chip__icon--text" aria-hidden="true">TN</span>
             TN Kanji (Minna)
           </Link>
-          <Link href={`/vocab/picture?lesson=${currentLesson}`} className="btn btn-outline btn-sm">
+          <Link href={`/vocab/picture?lesson=${currentLesson}`} className="btn btn-outline btn-sm vocab-chip">
+            <span className="vocab-chip__icon vocab-chip__icon--tile" aria-hidden="true">▣</span>
             Từ điển tranh
           </Link>
-          <Link href="/vocab/mindmap" className="btn btn-outline btn-sm">
+          <Link href="/vocab/mindmap" className="btn btn-outline btn-sm vocab-chip">
+            <span className="vocab-chip__icon" aria-hidden="true">✳</span>
             Sơ đồ tư duy
           </Link>
         </nav>
@@ -369,7 +385,11 @@ export default function VocabView({
               }}
               aria-label="Tra từ vựng"
             />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={searching}>
+            <button type="submit" className="btn btn-primary btn-sm vocab-search__submit" disabled={searching}>
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="2.2" />
+                <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
               {searching ? 'Đang tìm...' : 'Tìm'}
             </button>
             {isSearchActive && (
@@ -429,26 +449,19 @@ export default function VocabView({
         </div>
         ) : null}
 
+      </div>
+
+      <div className="vocab-lesson-row">
         <LessonSelector
           id="lesson-select"
           value={currentLesson}
           onChange={goToLesson}
         />
-      </div>
-
       {lessonVocab.length > 0 && (
         <div className="vocab-playbar">
-          <div className="vocab-progress">
-            <div className="vocab-progress__track">
-              <div
-                className="vocab-progress__fill"
-                style={{ width: `${((currentIndex + 1) / lessonVocab.length) * 100}%` }}
-              />
-            </div>
-            <span className="vocab-progress__text">
-              {currentIndex + 1} / {lessonVocab.length}
-            </span>
-          </div>
+          <span className="vocab-progress__text">
+            {currentIndex + 1}/{lessonVocab.length}
+          </span>
           <div className="vocab-playbar__controls">
             <PlayAllButton
               isPlaying={isPlayingAll}
@@ -462,7 +475,7 @@ export default function VocabView({
               aria-keyshortcuts="ArrowLeft"
               title="Từ trước (phím ←)"
             >
-              ← Trước
+              ◂ Trước
             </button>
             <button
               type="button"
@@ -471,11 +484,12 @@ export default function VocabView({
               aria-keyshortcuts="ArrowRight"
               title="Từ sau (phím →)"
             >
-              Sau →
+              Sau ▸
             </button>
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 
@@ -517,75 +531,103 @@ export default function VocabView({
                 }
               }}
             >
-              <div className="flashcard-face flashcard-front">
+              <div className="flashcard-face flashcard-front vocab-card">
+                <span className="vocab-card__watermark" aria-hidden="true">
+                  {String(currentIndex + 1).padStart(2, '0')}
+                </span>
+                <button
+                  type="button"
+                  className="vocab-card__audio vocab-round-btn"
+                  onClick={handlePronounce}
+                  title="Nghe phát âm"
+                  aria-label="Nghe phát âm"
+                >
+                  <SpeakerIcon className="vocab-speaker-icon" />
+                </button>
                 <div className="flashcard-front-body">
-                  <div className={`flashcard-text-dual${frontTextTierClass}`}>
+                  <div className={`flashcard-text-dual vocab-card__cols${frontTextTierClass}`}>
                     {currentVocab.kanji ? (
                       <div className="flashcard-text-col flashcard-text-col--kanji">
                         <span className="flashcard-char-label">Kanji</span>
                         <FlashcardJapaneseText text={currentVocab.kanji} className="vocab-kanji japanese-text" />
-                        <div className="flashcard-col-actions">
-                          <button
-                            type="button"
-                            className="btn-audio btn-audio--card"
-                            onClick={handlePronounce}
-                            title="Nghe phát âm"
-                          >
-                            🔊
-                          </button>
-                          <KanjiStructureButton text={currentVocab.kanji} className="ks-open-btn--card" />
-                        </div>
                       </div>
                     ) : null}
                     <div className="flashcard-text-col flashcard-text-col--kana">
-                      <span className="flashcard-char-label">Kana</span>
-                      <FlashcardJapaneseText text={currentVocab.kana} className="vocab-kana japanese-text" />
-                      {!currentVocab.kanji ? (
+                      <div className="vocab-card__col-head">
+                        <span className="flashcard-char-label">Kana</span>
                         <button
                           type="button"
-                          className="btn-audio btn-audio--card"
-                          onClick={handlePronounce}
-                          title="Nghe phát âm"
+                          className={`vocab-copy-btn${flashcardCopied ? ' vocab-copy-btn--copied' : ''}`}
+                          onClick={handleCopyVocab}
+                          title="Sao chép từ vựng"
                         >
-                          🔊
+                          {flashcardCopied ? '✓ Đã copy' : '⧉ Copy'}
                         </button>
-                      ) : null}
+                      </div>
+                      <div className="vocab-card__kana-row">
+                        <FlashcardJapaneseText text={currentVocab.kana} className="vocab-kana japanese-text" />
+                        <div className="vocab-card__kana-actions">
+                          <KanjiStructureButton text={currentVocab.kanji} className="ks-open-btn--card" />
+                          <button
+                            type="button"
+                            className="vocab-round-btn vocab-round-btn--soft"
+                            onClick={handlePronounce}
+                            title="Nghe phát âm"
+                            aria-label="Nghe phát âm"
+                          >
+                            <SpeakerIcon className="vocab-speaker-icon" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flashcard-front-meta">
-                    <button
-                      type="button"
-                      className={`vocab-copy-btn${flashcardCopied ? ' vocab-copy-btn--copied' : ''}`}
-                      onClick={handleCopyVocab}
-                      title="Sao chép từ vựng"
-                    >
-                      {flashcardCopied ? '✓ Đã copy' : '📋 Copy'}
-                    </button>
-                    <FlashcardJapaneseText text={currentVocab.romaji} className="vocab-romaji" />
-                    <span className="vocab-meaning">{currentVocab.meaning}</span>
+                  <div className="flashcard-front-meta vocab-card__meta">
+                    <p className="vocab-card__headline">
+                      <FlashcardJapaneseText text={currentVocab.romaji} className="vocab-romaji" />
+                      <span className="vocab-card__sep" aria-hidden="true">|</span>
+                      <span className="vocab-meaning">{currentVocab.meaning}</span>
+                    </p>
                     {currentVocab.pitchAccent ? (
                       <span className="vocab-pitch">Cao điệu {currentVocab.pitchAccent}</span>
                     ) : null}
-                    {patternExamples?.map((example) => (
-                      <div key={`front-${example.ja}`} className="vocab-pattern-example">
-                        <div className="vocab-pattern-example-head">
-                          <span className="vocab-pattern-example-label">Ví dụ</span>
+                    {patternExamples?.length ? (
+                      <span className="vocab-card__examples-label">Ví dụ</span>
+                    ) : null}
+                    {patternExamples?.map((example, exampleIndex) => (
+                      <div key={`front-${example.ja}`} className="vocab-example-card">
+                        <div className="vocab-example-card__top">
+                          <div className="vocab-example-card__text">
+                            {example.kana && example.kana !== example.ja ? (
+                              <span className="vocab-example-card__kana japanese-text">{example.kana}</span>
+                            ) : null}
+                            <span className="vocab-example-card__ja japanese-text">{example.ja}</span>
+                          </div>
+                          <KanjiStructureButton text={example.ja} className="ks-open-btn--sm" />
                           <button
                             type="button"
-                            className="btn-audio-small"
+                            className="vocab-round-btn"
                             title="Nghe ví dụ"
                             aria-label="Nghe ví dụ"
                             onClick={(e) => handleExamplePronounce(e, example.speak, example.vi)}
                           >
-                            🔊
+                            <SpeakerIcon className="vocab-speaker-icon" />
                           </button>
-                          <KanjiStructureButton text={example.ja} className="ks-open-btn--sm" />
                         </div>
-                        <span className="vocab-pattern-example-ja japanese-text">{example.ja}</span>
-                        {example.kana && example.kana !== example.ja ? (
-                          <span className="vocab-pattern-example-kana">{example.kana}</span>
-                        ) : null}
-                        <span className="vocab-pattern-example-vi">{example.vi}</span>
+                        <div className="vocab-example-card__bottom">
+                          <span className="vocab-example-card__vi">{example.vi}</span>
+                          {exampleIndex === 0 ? (
+                            <VocabPicture
+                              word={currentVocab.romaji}
+                              meaning={currentVocab.meaning}
+                              kana={currentVocab.kana}
+                              kanji={currentVocab.kanji}
+                              imageUrl={currentVocab.imageUrl}
+                              size="sm"
+                              className="vocab-example-card__picture"
+                              alt={currentVocab.kana}
+                            />
+                          ) : null}
+                        </div>
                       </div>
                     ))}
                   </div>
