@@ -148,15 +148,18 @@ function mountKanjiVgSvg(
   });
 
   svgEl.appendChild(fgPathsGroup);
-  if (rainbow) {
-    bgPaths.forEach((path) => { path.style.stroke = 'none'; });
-    numbersGroup?.remove();
-  } else if (numbersGroup) {
+  if (rainbow) bgPaths.forEach((path) => { path.style.stroke = 'none'; });
+  if (numbersGroup) {
     svgEl.appendChild(numbersGroup);
     Array.from(numbersGroup.querySelectorAll('text')).forEach((el) => {
       const textEl = el as SVGTextElement;
-      textEl.style.fill = colors.number;
+      if (rainbow) textEl.setAttribute('fill', 'currentColor');
+      else textEl.style.fill = colors.number;
       textEl.style.fontWeight = '700';
+      if (rainbow) {
+        textEl.style.fontSize = '9px';
+        textEl.style.fontFamily = 'system-ui, sans-serif';
+      }
     });
   }
 
@@ -194,7 +197,7 @@ interface Props {
   width?: number;
   height?: number;
   compact?: boolean;
-  /** Thẻ học: nét nhiều màu, không mũi tên và không số thứ tự. */
+  /** Thẻ học: nét nhiều màu, có số thứ tự, không mũi tên. */
   rainbow?: boolean;
   onCharClick?: (char: string, index: number) => void;
 }

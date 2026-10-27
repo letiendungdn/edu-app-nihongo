@@ -11,6 +11,7 @@ import {
 import { queryKeys } from '../hooks/queries';
 import { useAuth } from '../hooks/useAuth';
 import type { KanjiVocabItem } from '../types/api';
+import SpeakerIcon from './SpeakerIcon';
 import KanjiStructureButton from './KanjiStructureButton';
 
 type Props = {
@@ -293,9 +294,10 @@ export default function KanjiVocabSidepanel({
               className="kanji-vocab-audio"
               onClick={(e) => onPronounce(e, v.reading)}
               title="Nghe"
+              aria-label={`Nghe ${v.reading}`}
               type="button"
             >
-              🔊
+              <SpeakerIcon size={15} />
             </button>
 
             {canEdit && editingId === v.id ? (
@@ -375,7 +377,7 @@ export default function KanjiVocabSidepanel({
                           aria-label="Nghe ví dụ"
                           onClick={(e) => onPronounce(e, v.exampleJa!)}
                         >
-                          🔊
+                          <SpeakerIcon size={14} />
                         </button>
                       ) : null}
                     </div>

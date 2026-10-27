@@ -3418,3 +3418,22 @@
 .vocab-view--study .vocab-playbar__play .btn-play-all.playing {
   background: linear-gradient(135deg, var(--primary-color), #f97316);
 }
+
+/* Ô nét viết giữa thẻ: nhiều chữ thì xếp ngang, không tràn sang cột KANJI/KANA */
+.vocab-card__strokes {
+  max-width: 17rem;
+}
+
+.vocab-card__strokes .stroke-order-container {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+
+/* Nhiều chữ: sát nhau hơn (ô KanjiVG đã có lề trong) */
+.vocab-card__strokes .stroke-order-char-host {
+  margin: 0 -2px !important;
+}
+
+.vocab-view--study .vocab-card__cols {
+  column-gap: 1.5rem;
+}

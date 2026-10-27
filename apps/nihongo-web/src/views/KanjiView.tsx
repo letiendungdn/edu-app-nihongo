@@ -14,14 +14,14 @@ import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import KanjiVocabSidepanel from '../components/KanjiVocabSidepanel';
 import { toLocalImageUrl } from '@edu/vocab-images';
-import { getKanjiReadingGroups, getKanjiSpeakItems } from '../utils/kanjiSpeak';
+import { getKanjiSpeakItems, splitKanjiReadingField, type KanjiReadingToken } from '../utils/kanjiSpeak';
 import type { KanjiEntry, KanjiLesson } from '../types/api';
 import './VocabView.css';
+import './KanjiView.css';
 
 export default function KanjiView({ initialLessonNumber }: { initialLessonNumber?: number } = {}) {
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingKanjiId, setPendingKanjiId] = useState<number | null>(null);
@@ -46,7 +46,6 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
   useEffect(() => {
     stopPlayAll();
     setCurrentIndex(0);
-    setIsFlipped(false);
   }, [currentLesson, stopPlayAll]);
 
   useEffect(() => {
@@ -54,15 +53,13 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     const idx = lessonKanji.findIndex((k) => k.id === pendingKanjiId);
     if (idx >= 0) {
       setCurrentIndex(idx);
-      setIsFlipped(false);
-      setPendingKanjiId(null);
+        setPendingKanjiId(null);
     }
   }, [pendingKanjiId, lessonKanji]);
 
   const currentKanji = lessonKanji[currentIndex];
   const currentLessonMeta = lessons.find((l) => l.lessonNumber === currentLesson);
   const isSearchActive = searchQuery.trim().length > 0;
-  const readingGroups = currentKanji ? getKanjiReadingGroups(currentKanji) : [];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,18 +81,12 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
 
   const handleNext = () => {
     if (!lessonKanji.length) return;
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % lessonKanji.length);
-    }, 150);
+    setCurrentIndex((prev) => (prev + 1) % lessonKanji.length);
   };
 
   const handlePrev = () => {
     if (!lessonKanji.length) return;
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + lessonKanji.length) % lessonKanji.length);
-    }, 150);
+    setCurrentIndex((prev) => (prev - 1 + lessonKanji.length) % lessonKanji.length);
   };
 
   const handlePronounce = (e: React.MouseEvent, text?: string) => {
@@ -120,27 +111,87 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
         onItemIndex: (index) => {
           const item = playlist[index];
           if (!item) return;
-          setIsFlipped(true);
           setCurrentIndex(item.kanjiIndex);
         },
       },
     );
   };
 
+  const lessonOptions = lessons.length
+    ? lessons
+    : Array.from({ length: 32 }, (_, i) => ({ lessonNumber: i + 1 } as KanjiLesson));
+  const kanjiOrder = String(currentIndex + 1).padStart(2, '0');
+  const onyomi = currentKanji ? splitKanjiReadingField(currentKanji.onyomi) : [];
+  const kunyomi = currentKanji ? splitKanjiReadingField(currentKanji.kunyomi) : [];
+  const mnemonicImage = currentKanji?.imageUrl
+    ? toLocalImageUrl(currentKanji.imageUrl) ?? currentKanji.imageUrl
+    : null;
+  const hasMnemonic = Boolean(mnemonicImage || currentKanji?.mnemonicVi || currentKanji?.mnemonicJp);
+
+  const renderReadings = (tokens: KanjiReadingToken[], tone: 'on' | 'kun') =>
+    tokens.map((token, i) => (
+      <button
+        key={`${token.display}-${i}`}
+        type="button"
+        className={`kanji-ll__reading kanji-ll__reading--${tone} japanese-text`}
+        title={`Phát âm ${token.speak}`}
+        onClick={(e) => handlePronounce(e, token.speak)}
+      >
+        {token.display}
+        {i < tokens.length - 1 ? '、' : ''}
+      </button>
+    ));
+
   return (
-    <div className="container vocab-view">
-      <div className="vocab-header">
-        <h2 className="view-title">Kanji Look and Learn</h2>
-        <div className="vocab-header-links">
-          <Link href="/kanji/quiz" className="btn btn-primary">
-            Trắc nghiệm Kanji
-          </Link>
-          <Link href="/kanji/list" className="btn btn-outline">
-            Bảng N5 → N1
-          </Link>
+    <div className="container kanji-ll">
+      <header className="kanji-ll__top">
+        <div className="kanji-ll__intro">
+          <h2 className="view-title kanji-ll__title">Kanji Look and Learn</h2>
+          <nav className="kanji-ll__links" aria-label="Công cụ kanji">
+            <Link href="/kanji/quiz" className="btn btn-outline btn-sm kanji-ll__chip">
+              <span aria-hidden="true">📝</span> Trắc nghiệm Kanji
+            </Link>
+            <Link href="/kanji/list" className="btn btn-outline btn-sm kanji-ll__chip">
+              <span aria-hidden="true">📊</span> Bảng N5 → N1
+            </Link>
+          </nav>
         </div>
 
-        <form className="kanji-search-form" onSubmit={handleSearchSubmit}>
+        <div className="kanji-ll__lesson">
+          <div className="lesson-selector kanji-ll__lesson-select">
+            <label htmlFor="kanji-lesson-select">Chọn bài học:</label>
+            <select
+              id="kanji-lesson-select"
+              value={currentLesson}
+              onChange={(e) => setCurrentLesson(Number(e.target.value))}
+              className="select-input"
+            >
+              {lessonOptions.map((lesson) => (
+                <option key={lesson.lessonNumber} value={lesson.lessonNumber}>
+                  Bài {lesson.lessonNumber}
+                  {lesson.jlptLevel ? ` (${lesson.jlptLevel})` : ''}
+                  {lesson._count ? ` — ${lesson._count.entries} kanji` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          {currentLessonMeta?.jlptLevel ? (
+            <p className="kanji-ll__level">JLPT {currentLessonMeta.jlptLevel}</p>
+          ) : null}
+          {lessonKanji.length > 0 ? (
+            <p className="kanji-ll__count">
+              Kanji {currentIndex + 1} / {lessonKanji.length}
+            </p>
+          ) : null}
+        </div>
+      </header>
+
+      <div className="kanji-ll__search-wrap">
+        <form className="kanji-search-form kanji-ll__search" onSubmit={handleSearchSubmit} role="search">
+          <svg className="kanji-ll__search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
           <input
             type="search"
             className="vocab-word-list-search kanji-search-input"
@@ -149,14 +200,11 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kanji"
           />
-          <button type="submit" className="btn btn-primary kanji-search-btn" disabled={searching}>
-            {searching ? 'Đang tìm...' : 'Tìm'}
-          </button>
-          {isSearchActive && (
-            <button type="button" className="btn btn-nav kanji-search-clear" onClick={handleClearSearch}>
+          {isSearchActive ? (
+            <button type="button" className="btn btn-nav btn-sm kanji-search-clear" onClick={handleClearSearch}>
               Xóa
             </button>
-          )}
+          ) : null}
         </form>
 
         {isSearchActive && (
@@ -192,38 +240,6 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
             )}
           </div>
         )}
-
-        <div className="lesson-selector">
-          <label htmlFor="kanji-lesson-select">Chọn bài học: </label>
-          <select
-            id="kanji-lesson-select"
-            value={currentLesson}
-            onChange={(e) => setCurrentLesson(Number(e.target.value))}
-            className="select-input"
-          >
-            {(lessons.length
-              ? lessons
-              : Array.from({ length: 32 }, (_, i) => ({ lessonNumber: i + 1 } as KanjiLesson))
-            ).map((lesson) => (
-                <option key={lesson.lessonNumber} value={lesson.lessonNumber}>
-                  Bài {lesson.lessonNumber}
-                  {lesson.jlptLevel ? ` (${lesson.jlptLevel})` : ''}
-                  {lesson._count ? ` — ${lesson._count.entries} kanji` : ''}
-                </option>
-              ),
-            )}
-          </select>
-        </div>
-
-        {currentLessonMeta?.jlptLevel && (
-          <p className="vocab-subtitle">JLPT {currentLessonMeta.jlptLevel}</p>
-        )}
-
-        {lessonKanji.length > 0 && (
-          <p className="vocab-subtitle">
-            Kanji {currentIndex + 1} / {lessonKanji.length}
-          </p>
-        )}
       </div>
 
       {loading ? (
@@ -231,116 +247,86 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
           <p>Đang tải dữ liệu...</p>
         </div>
       ) : lessonKanji.length > 0 && currentKanji ? (
-        <div className="vocab-main-layout vocab-main-layout--kanji">
-          <div className="flashcard-container">
-            <div
-              className={`flashcard flashcard--kanji ${isFlipped ? 'flipped' : ''}`}
-              onClick={() => setIsFlipped(!isFlipped)}
-            >
-              <div className="flashcard-face flashcard-front">
+        <div className="kanji-ll__body">
+          <div className="kanji-ll__main">
+            <div className={`kanji-ll__hero${hasMnemonic ? '' : ' kanji-ll__hero--solo'}`}>
+              <section className="kanji-ll__card kanji-ll__glyph-card" aria-label={`Kanji ${currentKanji.character}`}>
+                <span className="kanji-ll__watermark" aria-hidden="true">{kanjiOrder}</span>
                 <button
-                  className="btn-audio"
+                  type="button"
+                  className="kanji-ll__glyph japanese-text"
                   onClick={(e) => handlePronounce(e)}
                   title="Nghe tất cả cách đọc và từ vựng"
                 >
-                  🔊
+                  {currentKanji.character}
                 </button>
-                <div className="flashcard-front-body">
-                  <div className="kanji-flashcard-hero">
-                    {!currentKanji.imageUrl ? (
-                      <span className="vocab-kanji japanese-text kanji-flashcard-char">
-                        {currentKanji.character}
-                      </span>
-                    ) : (
-                      <div className="kanji-flashcard-illustration">
-                        <img
-                          src={toLocalImageUrl(currentKanji.imageUrl) ?? currentKanji.imageUrl}
-                          alt={currentKanji.character}
-                        />
+                <div className="kanji-ll__glyph-actions">
+                  {currentKanji.hanViet ? (
+                    <span className="kanji-ll__hanviet">{currentKanji.hanViet.toUpperCase()}</span>
+                  ) : null}
+                  <KanjiStructureButton text={currentKanji.character} withLabel />
+                </div>
+              </section>
+
+              {hasMnemonic ? (
+                <section className="kanji-ll__card kanji-ll__mnemonic" aria-label="Mnemonic">
+                  <h3 className="kanji-ll__card-title">
+                    Mnemonic <span>(Trực quan)</span>
+                  </h3>
+                  {mnemonicImage ? (
+                    <img className="kanji-ll__mnemonic-img" src={mnemonicImage} alt={currentKanji.character} />
+                  ) : null}
+                  {currentKanji.mnemonicJp ? (
+                    <p className="kanji-ll__mnemonic-jp japanese-text">{currentKanji.mnemonicJp}</p>
+                  ) : null}
+                  {currentKanji.mnemonicVi ? (
+                    <p className="kanji-ll__mnemonic-vi">{currentKanji.mnemonicVi}</p>
+                  ) : null}
+                </section>
+              ) : null}
+            </div>
+
+            <section className="kanji-ll__card kanji-ll__detail">
+              <div className="kanji-ll__detail-grid">
+                <div className="kanji-ll__stroke">
+                  <h3 className="kanji-ll__card-title">Cách viết chữ</h3>
+                  <div className="stroke-drawing-box kanji-ll__stroke-box">
+                    <StrokeOrder key={currentKanji.id} text={currentKanji.character} width={150} height={150} />
+                  </div>
+                </div>
+                <div className="kanji-ll__readings">
+                  <h3 className="kanji-ll__card-title">Âm đọc &amp; Nghĩa</h3>
+                  <dl>
+                    {onyomi.length ? (
+                      <div>
+                        <dt>Onyomi:</dt>
+                        <dd>{renderReadings(onyomi, 'on')}</dd>
                       </div>
-                    )}
-                  </div>
-                  {currentKanji.hanViet && (
-                    <span className="vocab-romaji">{currentKanji.hanViet}</span>
-                  )}
-                  <KanjiStructureButton text={currentKanji.character} withLabel />
-                  <div
-                    className="flashcard-stroke-block kanji-flashcard-stroke"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className="flashcard-stroke-label">Cách viết chữ</span>
-                    <div className="stroke-drawing-box">
-                      <StrokeOrder text={currentKanji.character} />
+                    ) : null}
+                    {kunyomi.length ? (
+                      <div>
+                        <dt>Kunyomi:</dt>
+                        <dd>{renderReadings(kunyomi, 'kun')}</dd>
+                      </div>
+                    ) : null}
+                    <div className="kanji-ll__meaning-row">
+                      <dt>Nghĩa:</dt>
+                      <dd className="kanji-ll__meaning">{currentKanji.meaningVi}</dd>
                     </div>
-                  </div>
+                  </dl>
                 </div>
               </div>
 
-              <div className="flashcard-face flashcard-back">
-                <button
-                  className="btn-audio"
-                  onClick={(e) => handlePronounce(e)}
-                  title="Nghe tất cả cách đọc và từ vựng"
-                >
-                  🔊
+              <div className="kanji-ll__controls">
+                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handlePrev}>
+                  ← Trước
                 </button>
-                <div className="kanji-flashcard-back-body">
-                  {readingGroups.length > 0 && (
-                    <div className="vocab-kana japanese-text kanji-readings">
-                      {readingGroups.map((group, groupIndex) => (
-                        <span key={`group-${groupIndex}`} className="kanji-reading-group">
-                          {groupIndex > 0 && <span className="kanji-reading-sep">·</span>}
-                          {group.map((token, tokenIndex) => (
-                            <button
-                              key={`${token.display}-${tokenIndex}`}
-                              type="button"
-                              className="kanji-reading-chip"
-                              title={`Phát âm ${token.speak}`}
-                              onClick={(e) => handlePronounce(e, token.speak)}
-                            >
-                              {token.display}
-                              {tokenIndex < group.length - 1 ? ',' : ''}
-                            </button>
-                          ))}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="divider"></div>
-                  <span className="vocab-meaning">{currentKanji.meaningVi}</span>
-                  {currentKanji.mnemonicJp && (
-                    <p className="kanji-mnemonic-jp japanese-text">{currentKanji.mnemonicJp}</p>
-                  )}
-                  {currentKanji.mnemonicVi && (
-                    <p className="kanji-mnemonic">{currentKanji.mnemonicVi}</p>
-                  )}
-                  <KanjiStructureButton text={currentKanji.character} withLabel />
-                  <div
-                    className="flashcard-stroke-block kanji-flashcard-stroke kanji-flashcard-stroke--back"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className="flashcard-stroke-label">Cách viết chữ</span>
-                    <div className="stroke-drawing-box">
-                      <StrokeOrder text={currentKanji.character} />
-                    </div>
-                  </div>
-                </div>
+                <PlayAllButton isPlaying={isPlayingAll} onPlay={handlePlayAll} onStop={stopPlayAll} />
+                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handleNext}>
+                  Sau →
+                </button>
               </div>
-            </div>
-
-            <div className="vocab-controls">
-              <PlayAllButton
-                isPlaying={isPlayingAll}
-                onPlay={handlePlayAll}
-                onStop={stopPlayAll}
-              />
-              <button className="btn btn-nav" onClick={handlePrev}>
-                ⬅️ Trước
-              </button>
-              <button className="btn btn-nav" onClick={handleNext}>
-                Sau ➡️
-              </button>
-            </div>
+            </section>
           </div>
 
           <KanjiVocabSidepanel

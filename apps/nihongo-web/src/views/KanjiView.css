@@ -1,0 +1,483 @@
+/* Trang Kanji Look and Learn — bố cục không lật thẻ (mẫu 2026-10):
+   thẻ chữ + mnemonic, khối cách viết / âm đọc, cột từ vựng liên quan. */
+
+.kanji-ll {
+  --kl-on: #ff6b6b;
+  --kl-kun: #4fb4e8;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1200px;
+  animation: fadeIn var(--transition-normal);
+}
+
+[data-theme="light"] .kanji-ll {
+  --kl-on: #d4294a;
+  --kl-kun: #1f7fc0;
+}
+
+/* Đầu trang: tiêu đề + nút bên trái, chọn bài bên phải */
+.kanji-ll__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
+.kanji-ll__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.kanji-ll__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 800;
+  text-align: left;
+}
+
+.kanji-ll__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.kanji-ll__chip {
+  border-radius: 999px !important;
+  gap: 0.35rem;
+  font-weight: 500 !important;
+  background: var(--surface-color);
+}
+
+.kanji-ll__lesson {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.kanji-ll__lesson-select.lesson-selector {
+  background: none;
+  padding: 0;
+  gap: 0.5rem;
+}
+
+.kanji-ll__lesson-select label {
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.kanji-ll__lesson-select .select-input {
+  width: auto;
+  min-width: 13rem;
+  border-radius: 999px;
+  padding: 0.45rem 2.2rem 0.45rem 1rem;
+  border: 1.5px solid color-mix(in srgb, var(--primary-color) 65%, transparent);
+  background-color: var(--surface-color);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.2rem) 52%,
+    calc(100% - 0.85rem) 52%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  font-weight: 600;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+[data-theme="light"] .kanji-ll__lesson-select .select-input {
+  background-color: #fff1f0;
+}
+
+.kanji-ll__level {
+  margin: 0;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.kanji-ll__count {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+/* Ô tìm: viên thuốc, icon kính lúp bên trái */
+.kanji-ll__search-wrap {
+  position: relative;
+}
+
+.kanji-ll__search.kanji-search-form {
+  position: relative;
+  max-width: none;
+  margin: 0;
+  justify-content: flex-start;
+}
+
+.kanji-ll__search .kanji-search-input {
+  border-radius: 999px;
+  padding: 0.6rem 1rem 0.6rem 2.4rem;
+  background: var(--surface-color);
+  border: 1px solid var(--border-strong);
+}
+
+.kanji-ll__search-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kanji-ll .kanji-search-results {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-width: none;
+  margin: 0;
+  z-index: 30;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Thân trang */
+.kanji-ll__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.kanji-ll__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.kanji-ll__card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  padding: 1rem 1.15rem;
+}
+
+.kanji-ll__card-title {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.kanji-ll__card-title span {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.kanji-ll__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.kanji-ll__hero--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.kanji-ll__glyph-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 15rem;
+  padding-top: 1.5rem;
+}
+
+.kanji-ll__watermark {
+  position: absolute;
+  top: 0.4rem;
+  right: 1rem;
+  font-size: clamp(3.5rem, 7vw, 5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.kanji-ll__glyph {
+  position: relative;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: clamp(5rem, 10vw, 7.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.kanji-ll__glyph-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.kanji-ll__hanviet {
+  padding: 0.35rem 1.1rem;
+  border-radius: 999px;
+  background: var(--brand-grad);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.kanji-ll__mnemonic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.kanji-ll__mnemonic .kanji-ll__card-title {
+  align-self: flex-start;
+}
+
+.kanji-ll__mnemonic-img {
+  width: 100%;
+  max-height: 10rem;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.kanji-ll__mnemonic-jp {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.kanji-ll__mnemonic-vi {
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+/* Cách viết + âm đọc */
+.kanji-ll__detail-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.kanji-ll__stroke-box.stroke-drawing-box {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-color) 70%, transparent);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+}
+
+.kanji-ll__readings dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.kanji-ll__readings dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.kanji-ll__readings dt {
+  flex-shrink: 0;
+  min-width: 5.2rem;
+  color: var(--text-secondary);
+}
+
+.kanji-ll__readings dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.kanji-ll__reading {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.kanji-ll__reading:hover {
+  text-decoration: underline;
+}
+
+.kanji-ll__reading--on {
+  color: var(--kl-on);
+}
+
+.kanji-ll__reading--kun {
+  color: var(--kl-kun);
+}
+
+.kanji-ll__meaning {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.kanji-ll__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.kanji-ll__nav {
+  border-radius: 999px !important;
+}
+
+.kanji-ll .btn-play-all {
+  border-radius: 999px;
+  padding: 0.55rem 1.25rem;
+}
+
+/* Cột từ vựng liên quan: mỗi từ là một thẻ, loa tròn bên phải */
+.kanji-ll .kanji-vocab-sidepanel {
+  width: auto;
+  flex: none;
+  max-height: none;
+  border-radius: 18px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  padding: 1rem;
+}
+
+.kanji-ll .kanji-vocab-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.kanji-ll .kanji-vocab-item,
+.kanji-ll .kanji-vocab-list li:last-child {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-color) 75%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .kanji-ll .kanji-vocab-item {
+  background: #fff;
+}
+
+.kanji-ll .kanji-vocab-audio {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.kanji-ll .kanji-vocab-item-main {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.kanji-ll .kanji-vocab-meaning {
+  font-weight: 400;
+  font-size: 0.92rem;
+}
+
+.kanji-ll .kanji-vocab-example {
+  border: none;
+  background: none;
+  padding: 0.4rem 0 0;
+  border-top: 1px solid var(--border-color);
+  border-radius: 0;
+}
+
+.kanji-ll .kanji-vocab-example-label {
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+}
+
+.kanji-ll .kanji-vocab-example-head {
+  justify-content: space-between;
+}
+
+.kanji-ll .kanji-vocab-example .btn-audio-small {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.kanji-ll .kanji-vocab-example-ja {
+  font-size: 0.98rem;
+}
+
+@media (max-width: 900px) {
+  .kanji-ll__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kanji-ll__lesson {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .kanji-ll__hero,
+  .kanji-ll__detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kanji-ll__stroke {
+    justify-self: center;
+  }
+}
+
+.kanji-ll .kanji-ll__lesson-select,
+[data-theme="light"] .kanji-ll .kanji-ll__lesson-select {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.kanji-ll .kanji-ll__controls .btn-play-all {
+  background: var(--brand-grad);
+  color: #fff;
+  border: none;
+  box-shadow: var(--brand-grad-shadow);
+}

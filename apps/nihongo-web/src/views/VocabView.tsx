@@ -114,12 +114,16 @@ export default function VocabView({
 
   const currentVocab = lessonVocab[currentIndex];
   const patternExamples = currentVocab ? getVocabExamples(currentVocab) : [];
-  // Ô nét viết giữa thẻ chỉ vẽ một chữ: kanji đầu tiên, không có thì chữ kana đầu
-  const strokeChar = currentVocab
-    ? [...(currentVocab.kanji ?? '')].find(isKanji) ??
-      [...currentVocab.kana].find((c) => /[ぁ-ゖァ-ヺ]/.test(c)) ??
-      ''
-    : '';
+  // Ô nét viết giữa thẻ: mọi chữ kanji của từ (先生 → 先生, あの人 → 人);
+  // từ không có kanji thì vẽ phần kana (tối đa 4 chữ). Chữ nhỏ dần khi nhiều chữ.
+  const strokeKanji = currentVocab ? [...(currentVocab.kanji ?? '')].filter(isKanji) : [];
+  const strokeChars = strokeKanji.length
+    ? strokeKanji
+    : currentVocab
+      ? [...currentVocab.kana].filter((c) => /[ぁ-ゖァ-ヺー]/.test(c)).slice(0, 4)
+      : [];
+  const strokeText = strokeChars.join('');
+  const strokeSize = [118, 118, 72, 54][strokeChars.length] ?? 44;
   // Trợ từ trong câu ví dụ tô đỏ, như mẫu (は, を, に…). Cụm dài xếp trước để khớp hết.
   const exampleKeys = ['から', 'まで', 'より', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'へ'];
   const hasMultipleReadings =
@@ -501,9 +505,9 @@ export default function VocabView({
                     >
                       <StrokeOrder
                         key={`front-${currentVocab.id}`}
-                        text={strokeChar}
-                        width={118}
-                        height={118}
+                        text={strokeText}
+                        width={strokeSize}
+                        height={strokeSize}
                         compact
                         rainbow
                         onCharClick={handleStrokeCharClick}
