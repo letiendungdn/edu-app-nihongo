@@ -1,6 +1,6 @@
 # ADR-0002: Đưa nội dung sơ đồ tư duy và danh mục giáo trình từ code web xuống DB
 
-- **Trạng thái:** Đã chấp nhận
+- **Trạng thái:** Đã chấp nhận — phần "dữ liệu seed ở `.data.ts`" được thay bằng [ADR-0007](0007-content-seed-sql-only.md)
 - **Ngày:** 2026-09-26
 - **Phạm vi:** `apps/nihongo-web`, `packages/prisma-nihongo`, `content-service`
 

@@ -9,6 +9,33 @@ const SQL_PATH = path.join(
 );
 
 async function clearContentTables(prisma: PrismaClient) {
+  await prisma.mockExamTemplate.deleteMany(); // câu hỏi + đáp án xóa theo (cascade)
+  await prisma.bookAudioFile.deleteMany();
+  await prisma.bookAudioDriveFolder.deleteMany();
+  await prisma.bookAudioItem.deleteMany();
+  await prisma.bookAudioMeta.deleteMany();
+  await prisma.kanaRomaji.deleteMany();
+  await prisma.mindMapLevel.deleteMany();
+  await prisma.englishKatakanaExample.deleteMany();
+  await prisma.englishKatakanaMapping.deleteMany();
+  await prisma.englishKatakanaPoint.deleteMany();
+  await prisma.englishKatakanaSection.deleteMany();
+  await prisma.englishKatakanaTip.deleteMany();
+  await prisma.englishKatakanaMeta.deleteMany();
+  await prisma.roleplayLine.deleteMany();
+  await prisma.roleplayScene.deleteMany();
+  await prisma.conversationPhraseItem.deleteMany();
+  await prisma.conversationPhraseGroup.deleteMany();
+  await prisma.conversationIntroExample.deleteMany();
+  await prisma.conversationIntroSlot.deleteMany();
+  await prisma.conversationIntroLine.deleteMany();
+  await prisma.homeFeatureItem.deleteMany();
+  await prisma.homeFeatureSection.deleteMany();
+  await prisma.homeStat.deleteMany();
+  await prisma.countryNameItem.deleteMany();
+  await prisma.countryRegion.deleteMany();
+  await prisma.vocabularyKanjiLink.deleteMany();
+  await prisma.vocabularyExample.deleteMany();
   await prisma.example.deleteMany();
   await prisma.exerciseOption.deleteMany();
   await prisma.exercise.deleteMany();
@@ -41,6 +68,8 @@ async function clearContentTables(prisma: PrismaClient) {
   await prisma.kanaCell.deleteMany();
   await prisma.kanaSection.deleteMany();
   await prisma.lesson.deleteMany();
+  await prisma.textbookBook.deleteMany();
+  await prisma.textbookSeries.deleteMany();
 }
 
 /** Database + user đích lấy từ DATABASE_URL — trước đây hard-code "nihongo" nên seed luôn ghi vào DB chính. */

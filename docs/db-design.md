@@ -29,6 +29,7 @@ flowchart LR
     Exercise --> ExerciseOption
     KanjiLesson --> KanjiEntry --> KanjiVocab
     Vocabulary -.-> VocabularyKanjiLink -.-> KanjiEntry
+    Vocabulary --> VocabularyExample
     TextbookSeries --> TextbookBook
     MindMapLevel
   end
@@ -60,8 +61,8 @@ flowchart LR
 
 - `Lesson.textbook` (enum `Textbook`: MINNA/KLL/SOUMATOME/SHINKANZEN/TRY) tách bài theo giáo trình; bài giáo trình đánh số
   `base + cấp×1000 + phần×100 + bài` (SM 20000, SK 30000, TRY 40000) và bị loại khỏi truy vấn "theo cấp" (`@app/prisma/level-pool`).
-- `TextbookSeries`/`TextbookBook`: danh mục giáo trình tham khảo (menu, lộ trình học) — seed `seed:textbook-catalog`.
-- `MindMapLevel`: sơ đồ tư duy chủ đề (kind × level), nhánh lưu JSON — seed `seed:mind-maps`, sửa ở trang admin.
+- `TextbookSeries`/`TextbookBook`: danh mục giáo trình tham khảo (menu, lộ trình học) — seed từ `infra/postgres/nihongo-content-seed.sql`.
+- `MindMapLevel`: sơ đồ tư duy chủ đề (kind × level), nhánh lưu JSON — seed từ `infra/postgres/nihongo-content-seed.sql`, sửa ở trang admin.
 
 ### Chi tiết bảng quan trọng
 
@@ -330,7 +331,7 @@ Các migration cũ trước đó được giữ trong `packages/prisma-nihongo/m
 | `20260929120000_outbox_drop_redundant_indexes` | Bảng `OutboxEvent` (transactional outbox, ADR-0006); xoá 6 index trùng với UNIQUE |
 | `20260929180000_processed_event_feature_flag` | `ProcessedEvent` (consumer idempotent), `FeatureFlag` + cờ mặc định `vocab-search-all-lessons` |
 
-Seed dữ liệu: `seed.ts` gọi lần lượt các seed con (`seed:textbooks`, `seed:textbook-catalog`, `seed:mind-maps`, `seed-plans.ts`…).
+Seed dữ liệu: `seed.ts` nạp nội dung học từ `infra/postgres/nihongo-content-seed.sql` (xem [ADR-0007](adr/0007-content-seed-sql-only.md)), rồi gọi các seed con còn lại (`seed:textbooks`, `seed-plans.ts`…).
 
 ---
 

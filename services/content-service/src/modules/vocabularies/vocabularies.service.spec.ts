@@ -134,13 +134,72 @@ describe("VocabulariesService", () => {
     prisma.vocabulary.aggregate.mockResolvedValue({ _max: { sortOrder: 2 } });
     prisma.vocabulary.create.mockResolvedValue({ id: 1, ...dto, sortOrder: 3 });
     await service.create(dto);
-    expect(prisma.vocabulary.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        kana: "う",
-        lessonId: 1,
-        partOfSpeech: "noun",
-        sortOrder: 3,
+    expect(prisma.vocabulary.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          kana: "う",
+          lessonId: 1,
+          partOfSpeech: "noun",
+          sortOrder: 3,
+        }),
       }),
+    );
+  });
+
+  it("create stores the example sentence in VocabularyExample", async () => {
+    prisma.vocabulary.create.mockResolvedValue({
+      id: 1,
+      kana: "え",
+      examples: [{ ja: "絵を描く。", kana: "えを かく。", vi: "Vẽ tranh." }],
+    });
+    const result = await service.create({
+      kana: "え",
+      romaji: "e",
+      meaning: "tranh",
+      lessonId: 1,
+      exampleJa: " 絵を描く。 ",
+      exampleKana: "えを かく。",
+      exampleVi: "Vẽ tranh.",
+    });
+    expect(prisma.vocabulary.create.mock.calls[0][0].data.examples).toEqual({
+      create: {
+        ja: "絵を描く。",
+        kana: "えを かく。",
+        vi: "Vẽ tranh.",
+        sortOrder: 0,
+      },
+    });
+    expect(result).toMatchObject({
+      exampleJa: "絵を描く。",
+      exampleKana: "えを かく。",
+      exampleVi: "Vẽ tranh.",
+    });
+  });
+
+  it("update upserts the first example and keeps other fields", async () => {
+    prisma.vocabulary.findUnique.mockResolvedValue({ lessonId: 1 });
+    prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });
+    const result = await service.update(7, {
+      meaning: "mới",
+      exampleJa: "新しい。",
+    });
+    const arg = prisma.vocabulary.update.mock.calls[0][0];
+    expect(arg.data.meaning).toBe("mới");
+    expect(arg.data.exampleJa).toBeUndefined();
+    expect(arg.data.examples.upsert).toEqual({
+      where: { vocabularyId_sortOrder: { vocabularyId: 7, sortOrder: 0 } },
+      create: { ja: "新しい。", sortOrder: 0 },
+      update: { ja: "新しい。" },
+    });
+    expect(result).toMatchObject({ examples: [], exampleJa: null });
+  });
+
+  it("update with an empty exampleJa removes the first example", async () => {
+    prisma.vocabulary.findUnique.mockResolvedValue({ lessonId: 1 });
+    prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });
+    await service.update(7, { exampleJa: "" });
+    expect(prisma.vocabulary.update.mock.calls[0][0].data.examples).toEqual({
+      deleteMany: { sortOrder: 0 },
     });
   });
 

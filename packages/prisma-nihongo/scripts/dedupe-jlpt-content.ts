@@ -26,7 +26,7 @@ function scoreVocab(
   v: {
     id: number;
     kanji: string | null;
-    exampleJa: string | null;
+    _count: { examples: number };
     jlptLevel: string | null;
     audioUrl: string | null;
     imageUrl: string | null;
@@ -35,7 +35,7 @@ function scoreVocab(
 ): number {
   let s = 0;
   if (lessonNumber <= 50) s += 10_000;
-  if (v.exampleJa) s += 100;
+  if (v._count.examples) s += 100;
   if (v.kanji) s += 50;
   if (v.audioUrl) s += 20;
   if (v.imageUrl) s += 10;
@@ -80,7 +80,10 @@ function scoreGrammar(
 
 async function dedupeVocabulary(): Promise<number> {
   const rows = await prisma.vocabulary.findMany({
-    include: { lesson: { select: { lessonNumber: true } } },
+    include: {
+      lesson: { select: { lessonNumber: true } },
+      _count: { select: { examples: true } },
+    },
     orderBy: { id: 'asc' },
   });
 

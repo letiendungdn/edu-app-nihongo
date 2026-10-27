@@ -74,7 +74,7 @@ export function MindMapStatus({ title, loading, error }: { title: string; loadin
           ? 'Đang tải sơ đồ…'
           : error
             ? 'Không tải được sơ đồ — kiểm tra API rồi thử lại.'
-            : 'Chưa có sơ đồ trong DB. Chạy "npm run seed:mind-maps -w @edu/prisma-nihongo" hoặc tạo ở trang admin.'}
+            : 'Chưa có sơ đồ trong DB. Chạy "npm run seed -w @edu/prisma-nihongo" hoặc tạo ở trang admin.'}
       </p>
     </div>
   );

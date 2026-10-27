@@ -375,7 +375,7 @@ export default function AdminMindMapsView() {
       ) : !draft ? (
         <div className="amm-empty glass-panel">
           <p>
-            Chưa có sơ đồ {kindMeta?.label ?? kind}. Chạy <code>npm run seed:mind-maps -w @edu/prisma-nihongo</code> để nạp
+            Chưa có sơ đồ {kindMeta?.label ?? kind}. Chạy <code>npm run seed -w @edu/prisma-nihongo</code> để nạp
             sơ đồ mặc định, hoặc thêm cấp N5–N1.
           </p>
         </div>

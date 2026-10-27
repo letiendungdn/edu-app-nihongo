@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6FxVfUldMdayrwr7nrNTBzR9UenAjwk6zQkgnE0eevJ4MBm9ITPAU4XYW1tf8Bc
+\restrict 7CPvBn7mnbAVWwJjfChMd6J4364JhOzLmoLA4KmRJwrPb93EUjtQqqtgGK0qXh6
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -4389,14 +4389,51 @@ CREATE TABLE public."Vocabulary" (
     "audioUrl" text,
     "frequencyRank" integer,
     "imageUrl" text,
-    "sortOrder" integer DEFAULT 0 NOT NULL,
-    "exampleJa" text,
-    "exampleKana" text,
-    "exampleVi" text
+    "sortOrder" integer DEFAULT 0 NOT NULL
 );
 
 
 ALTER TABLE public."Vocabulary" OWNER TO nihongo;
+
+--
+-- Name: VocabularyExample; Type: TABLE; Schema: public; Owner: nihongo
+--
+
+CREATE TABLE public."VocabularyExample" (
+    id integer NOT NULL,
+    "vocabularyId" integer NOT NULL,
+    ja text NOT NULL,
+    kana text,
+    vi text,
+    "sortOrder" integer DEFAULT 0 NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."VocabularyExample" OWNER TO nihongo;
+
+--
+-- Name: VocabularyExample_id_seq; Type: SEQUENCE; Schema: public; Owner: nihongo
+--
+
+CREATE SEQUENCE public."VocabularyExample_id_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public."VocabularyExample_id_seq" OWNER TO nihongo;
+
+--
+-- Name: VocabularyExample_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: nihongo
+--
+
+ALTER SEQUENCE public."VocabularyExample_id_seq" OWNED BY public."VocabularyExample".id;
+
 
 --
 -- Name: VocabularyKanjiLink; Type: TABLE; Schema: public; Owner: nihongo
@@ -5224,6 +5261,13 @@ ALTER TABLE ONLY public."VocabSuffixItem" ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public."Vocabulary" ALTER COLUMN id SET DEFAULT nextval('public."Vocabulary_id_seq"'::regclass);
+
+
+--
+-- Name: VocabularyExample id; Type: DEFAULT; Schema: public; Owner: nihongo
+--
+
+ALTER TABLE ONLY public."VocabularyExample" ALTER COLUMN id SET DEFAULT nextval('public."VocabularyExample_id_seq"'::regclass);
 
 
 --
@@ -6150,6 +6194,14 @@ ALTER TABLE ONLY public."VocabSuffixGroup"
 
 ALTER TABLE ONLY public."VocabSuffixItem"
     ADD CONSTRAINT "VocabSuffixItem_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: VocabularyExample VocabularyExample_pkey; Type: CONSTRAINT; Schema: public; Owner: nihongo
+--
+
+ALTER TABLE ONLY public."VocabularyExample"
+    ADD CONSTRAINT "VocabularyExample_pkey" PRIMARY KEY (id);
 
 
 --
@@ -7270,6 +7322,13 @@ CREATE INDEX "VocabSuffixItem_groupId_sortOrder_idx" ON public."VocabSuffixItem"
 
 
 --
+-- Name: VocabularyExample_vocabularyId_sortOrder_key; Type: INDEX; Schema: public; Owner: nihongo
+--
+
+CREATE UNIQUE INDEX "VocabularyExample_vocabularyId_sortOrder_key" ON public."VocabularyExample" USING btree ("vocabularyId", "sortOrder");
+
+
+--
 -- Name: VocabularyKanjiLink_kanjiEntryId_idx; Type: INDEX; Schema: public; Owner: nihongo
 --
 
@@ -7918,6 +7977,14 @@ ALTER TABLE ONLY public."VocabSuffixItem"
 
 
 --
+-- Name: VocabularyExample VocabularyExample_vocabularyId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: nihongo
+--
+
+ALTER TABLE ONLY public."VocabularyExample"
+    ADD CONSTRAINT "VocabularyExample_vocabularyId_fkey" FOREIGN KEY ("vocabularyId") REFERENCES public."Vocabulary"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: VocabularyKanjiLink VocabularyKanjiLink_kanjiEntryId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: nihongo
 --
 
@@ -7945,5 +8012,5 @@ ALTER TABLE ONLY public."Vocabulary"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6FxVfUldMdayrwr7nrNTBzR9UenAjwk6zQkgnE0eevJ4MBm9ITPAU4XYW1tf8Bc
+\unrestrict 7CPvBn7mnbAVWwJjfChMd6J4364JhOzLmoLA4KmRJwrPb93EUjtQqqtgGK0qXh6
 

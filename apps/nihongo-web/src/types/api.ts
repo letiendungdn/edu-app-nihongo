@@ -41,9 +41,18 @@ export interface Vocabulary {
   partOfSpeech?: string | null;
   imageUrl?: string | null;
   pitchAccent?: string | null;
+  /** Câu ví dụ đầu tiên (giữ cho client cũ); đủ các câu nằm ở `examples`. */
   exampleJa?: string | null;
   exampleKana?: string | null;
   exampleVi?: string | null;
+  examples?: VocabularyExample[];
+}
+
+/** Một câu ví dụ của từ (bảng VocabularyExample). */
+export interface VocabularyExample {
+  ja: string;
+  kana: string | null;
+  vi: string | null;
 }
 
 /** Kết quả tra từ vựng (GET /vocabularies?q=) — kèm bài chứa từ để mở đúng bài. */

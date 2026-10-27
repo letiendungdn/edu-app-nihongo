@@ -1,6 +1,6 @@
 /**
- * Map example sentences stored on Vocabulary (exampleJa / exampleKana / exampleVi).
- * Generators live in DB — do not rebuild sentences on the client.
+ * Map example sentences from the API (`examples`, or the first one as exampleJa / exampleKana / exampleVi).
+ * Sentences live in DB (VocabularyExample) — do not rebuild them on the client.
  */
 
 export type VocabPatternSource = {
@@ -9,6 +9,7 @@ export type VocabPatternSource = {
   exampleJa?: string | null;
   exampleKana?: string | null;
   exampleVi?: string | null;
+  examples?: Array<{ ja: string; kana?: string | null; vi?: string | null }>;
 };
 
 export type VocabPatternExample = {
@@ -32,20 +33,30 @@ export function isVocabPattern(vocab: {
   );
 }
 
-export function getVocabExamples(vocab: VocabPatternSource): VocabPatternExample[] {
-  const ja = vocab.exampleJa?.trim();
-  if (!ja) return [];
+function toExample(
+  jaRaw: string | null | undefined,
+  kanaRaw: string | null | undefined,
+  viRaw: string | null | undefined,
+): VocabPatternExample | null {
+  const ja = jaRaw?.trim();
+  if (!ja) return null;
+  const kana = kanaRaw?.trim() || undefined;
+  return {
+    ja,
+    kana,
+    vi: viRaw?.trim() || '',
+    speak: (kana || ja).replace(/[。！？]/g, ''),
+  };
+}
 
-  const kana = vocab.exampleKana?.trim() || undefined;
-  const vi = vocab.exampleVi?.trim() || '';
-  return [
-    {
-      ja,
-      kana,
-      vi,
-      speak: (kana || ja).replace(/[。！？]/g, ''),
-    },
-  ];
+export function getVocabExamples(vocab: VocabPatternSource): VocabPatternExample[] {
+  if (vocab.examples?.length) {
+    return vocab.examples
+      .map((e) => toExample(e.ja, e.kana, e.vi))
+      .filter((e): e is VocabPatternExample => e !== null);
+  }
+  const single = toExample(vocab.exampleJa, vocab.exampleKana, vocab.exampleVi);
+  return single ? [single] : [];
 }
 
 /** @deprecated Dùng getVocabExamples */

@@ -1,6 +1,6 @@
 /**
  * Kiểu + hàm tiện ích cho danh mục giáo trình. Dữ liệu nằm trong DB
- * (TextbookSeries / TextbookBook, seed: packages/prisma-nihongo/textbooks/series.data.ts),
+ * (TextbookSeries / TextbookBook, seed: infra/postgres/nihongo-content-seed.sql),
  * đọc qua GET /reference/textbooks — xem hooks/useTextbookCatalog.
  */
 import type { JlptMindKind, JlptMindLevel } from './jlpt-mind-map-shared';

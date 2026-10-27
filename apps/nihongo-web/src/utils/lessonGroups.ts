@@ -6,7 +6,10 @@ export type LessonGroup = {
   items: Lesson[];
 };
 
-/** Nhóm bài như dropdown LessonSelector: Minna 1–50, JLPT, rồi sách luyện thi. */
+/** Bài "Từ vựng bổ sung" theo chủ đề: N1 51xxx … N5 55xxx (lessonNumber lưu trong DB). */
+export const isSupplementaryTopicLesson = (n: number) => n >= 51000 && n <= 55999;
+
+/** Nhóm bài như dropdown LessonSelector: Minna 1–50, JLPT, từ vựng bổ sung theo chủ đề, rồi sách luyện thi. */
 export function groupLessons(lessons: Lesson[]): LessonGroup[] {
   const isMinna = (n: number) => n >= 1 && n <= 50;
   const byNumber = (a: Lesson, b: Lesson) => a.lessonNumber - b.lessonNumber;
@@ -19,7 +22,9 @@ export function groupLessons(lessons: Lesson[]): LessonGroup[] {
   const isBook = (l: Lesson) => BOOKS.some((b) => b.code === l.textbook);
 
   const minna = lessons.filter((l) => isMinna(l.lessonNumber)).sort(byNumber);
-  const rest = lessons.filter((l) => !isMinna(l.lessonNumber) && !isBook(l));
+  const rest = lessons.filter(
+    (l) => !isMinna(l.lessonNumber) && !isBook(l) && !isSupplementaryTopicLesson(l.lessonNumber),
+  );
   const bookGroups = BOOKS.flatMap((b) =>
     ['N5', 'N4', 'N3', 'N2', 'N1'].map((lv) => ({
       key: `${b.code}-${lv}`,
@@ -48,11 +53,22 @@ export function groupLessons(lessons: Lesson[]): LessonGroup[] {
     }))
     .filter((g) => g.items.length > 0);
 
+  const supplementaryGroups = order
+    .map((g) => ({
+      key: `${g.key}-supplementary`,
+      label: `${g.label} · Từ vựng bổ sung theo chủ đề`,
+      items: lessons
+        .filter((l) => isSupplementaryTopicLesson(l.lessonNumber) && g.levels.includes(l.jlptLevel ?? ''))
+        .sort(byNumber),
+    }))
+    .filter((g) => g.items.length > 0);
+
   return [
     ...(minna.length
       ? [{ key: 'minna', label: 'Minna no Nihongo (bài 1–50)', items: minna }]
       : []),
     ...levelGroups,
+    ...supplementaryGroups,
     ...bookGroups,
   ];
 }

@@ -134,9 +134,6 @@ model Vocabulary {
   pitchAccent   String?
   audioUrl      String?
   imageUrl      String?
-  exampleJa     String?
-  exampleKana   String?
-  exampleVi     String?
   frequencyRank Int?
   sortOrder     Int                   @default(0)
   lessonId      Int
@@ -144,6 +141,7 @@ model Vocabulary {
   dictations    DictationAttempt[]
   kanjiVocabs   KanjiVocab[]
   kanjiLinks    VocabularyKanjiLink[]
+  examples      VocabularyExample[]
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 
@@ -961,6 +959,21 @@ model KanjiVocab {
 
 /// Liên kết từ vựng ↔ kanji (từ chứa chữ kanji nào). Bảng có sẵn trong DB (~2.5k dòng),
 /// trước đây tạo bằng db push nên nằm ngoài schema — giữ lại, không xóa.
+/// Câu ví dụ của từ vựng — mỗi từ có thể có nhiều câu, xếp theo sortOrder (câu 0 hiện đầu tiên).
+model VocabularyExample {
+  id           Int        @id @default(autoincrement())
+  vocabularyId Int
+  ja           String
+  kana         String?
+  vi           String?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([vocabularyId, sortOrder])
+}
+
 model VocabularyKanjiLink {
   id           Int        @id @default(autoincrement())
   vocabularyId Int

@@ -1,5 +1,0 @@
--- Re-apply home page stats/sections from packages/prisma-nihongo/home-page.data.ts
--- Usage:
---   psql "$DATABASE_URL" -f packages/prisma-nihongo/migrations-archive/20260826180000_home_page/migration.sql
---   psql "$DATABASE_URL" -f packages/prisma-nihongo/scripts/home-page-seed.sql
--- Or: FORCE_HOME_PAGE_SEED=1 npm run seed:home-page -w @edu/prisma-nihongo

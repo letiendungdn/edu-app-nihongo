@@ -85,7 +85,7 @@ async function main() {
   console.log('\nGhi chú:');
   console.log('- Minna bài 1–50 ≈ N5→N2; JLPT seed (bài 301+) ≈ N3/N2/N1 bổ sung.');
   console.log('- Mục tiêu là ước lượng ôn thi, không phải list chính thức JLPT.');
-  console.log('- Chạy seed:jlpt-tags để gắn nhãn Minna; seed:jlpt-expand để thêm N2/N1.\n');
+  console.log('- Chạy seed:jlpt-tags để gắn nhãn Minna; thêm nội dung N2/N1 vào DB rồi npm run db:export-content.\n');
 
   await prisma.$disconnect();
 }

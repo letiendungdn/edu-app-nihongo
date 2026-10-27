@@ -36,7 +36,7 @@ export function apiToView(rows: MindMapLevelApi[]): JlptMindMapLevel[] {
 }
 
 /**
- * Sơ đồ chủ đề từ DB (bảng MindMapLevel, seed: packages/prisma-nihongo/seed-mind-maps.ts).
+ * Sơ đồ chủ đề từ DB (bảng MindMapLevel, seed: infra/postgres/nihongo-content-seed.sql).
  * Không còn bản sao trong code — sửa qua trang admin "Sơ đồ tư duy".
  */
 export function useMindMapLevels(kind: MindMapKindApi) {

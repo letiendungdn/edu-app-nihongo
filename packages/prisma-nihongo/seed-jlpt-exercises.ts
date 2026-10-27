@@ -2,12 +2,13 @@ import { PrismaClient, type PrismaClient as PrismaClientType } from './generated
 
 /**
  * Sinh Exercise (trắc nghiệm) cho MỌI Lesson N3/N2/N1 đã tồn tại trong DB —
- * kể cả các lesson đến từ những file "boost/expand" (seed-jlpt-expand.ts),
+ * kể cả các lesson JLPT bổ sung (boost/expand) đã nạp vào DB,
  * vốn không bao giờ tạo Exercise. Đây là nguồn câu hỏi chính cho mock exam
  * ở sourceMode=GENERATED (xem mock-exams.service.ts).
  *
- * Idempotent: bỏ qua lesson đã có Exercise, trừ khi FORCE_JLPT_EXERCISES_SEED=1
- * (khi đó xoá Exercise cũ của đúng những lesson đang xử lý rồi tạo lại).
+ * Idempotent: chỉ tạo câu cho từ / mẫu ngữ pháp chưa có câu hỏi trong lesson (so theo
+ * nội dung câu hỏi), nên lesson có sẵn một phần bài tập cũng được bù đủ.
+ * FORCE_JLPT_EXERCISES_SEED=1 xoá Exercise cũ của các lesson đang xử lý rồi tạo lại.
  */
 
 const DIFFICULTY: Record<'N3' | 'N2' | 'N1', number> = { N3: 2, N2: 3, N1: 4 };
@@ -54,26 +55,29 @@ export async function seedJlptExercises(prisma: PrismaClientType) {
 
     const allGrammar = await prisma.grammar.findMany({
       where: { lessonId: { in: lessonIds } },
-      include: { examples: true },
+      // Thứ tự cố định: examples[0] phải là cùng một câu trên mọi DB, kể cả DB vừa khôi phục từ SQL
+      include: { examples: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
     });
     const viPool = allGrammar.flatMap((g) =>
       g.examples.map((e) => e.vi).filter((v): v is string => !!v?.trim()),
     );
 
     for (const lesson of lessons) {
-      const existingCount = await prisma.exercise.count({ where: { lessonId: lesson.id } });
-      if (existingCount > 0 && !force) {
-        lessonsSkipped += 1;
-        continue;
-      }
-      if (force && existingCount > 0) {
+      if (force) {
         await prisma.exerciseOption.deleteMany({ where: { exercise: { lessonId: lesson.id } } });
         await prisma.exercise.deleteMany({ where: { lessonId: lesson.id } });
       }
+      const existing = await prisma.exercise.findMany({
+        where: { lessonId: lesson.id },
+        select: { question: true, sortOrder: true },
+      });
+      const existingQuestions = new Set(existing.map((e) => e.question));
+      const createdBefore = totalCreated;
 
-      let exOrder = 0;
+      let exOrder = existing.reduce((max, e) => Math.max(max, e.sortOrder), -1) + 1;
       const mkExercise = async (question: string, answer: string, optionTexts: string[]) => {
-        if (optionTexts.length < 2) return;
+        if (optionTexts.length < 2 || existingQuestions.has(question)) return;
+        existingQuestions.add(question);
         await prisma.exercise.create({
           data: {
             type: 'MULTIPLE_CHOICE',
@@ -110,13 +114,14 @@ export async function seedJlptExercises(prisma: PrismaClientType) {
         await mkExercise(`Câu 「${ex.jp}」 có nghĩa là gì?`, ex.vi, shuffleStrings(opts));
       }
 
-      lessonsTouched += 1;
+      if (totalCreated > createdBefore) lessonsTouched += 1;
+      else lessonsSkipped += 1;
     }
   }
 
   console.log(
     `JLPT exercises: +${totalCreated} câu hỏi trắc nghiệm trên ${lessonsTouched} lesson ` +
-      `(${lessonsSkipped} lesson đã có Exercise, bỏ qua).`,
+      `(${lessonsSkipped} lesson đã đủ, bỏ qua).`,
   );
 }
 

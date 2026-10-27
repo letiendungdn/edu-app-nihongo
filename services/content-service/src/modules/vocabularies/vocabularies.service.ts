@@ -6,6 +6,77 @@ import { CacheKeys, CacheTTL } from "@app/common";
 import { CreateVocabularyDto, UpdateVocabularyDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
 
+/** Câu ví dụ nằm ở bảng VocabularyExample; đọc kèm theo thứ tự hiển thị. */
+const EXAMPLES_INCLUDE = {
+  examples: {
+    orderBy: { sortOrder: "asc" as const },
+    select: { ja: true, kana: true, vi: true },
+  },
+};
+
+type VocabExampleRow = { ja: string; kana: string | null; vi: string | null };
+
+/**
+ * Giữ exampleJa/Kana/Vi (câu đầu tiên) trong response để client cũ vẫn chạy;
+ * `examples` là toàn bộ câu của từ.
+ */
+export function withExampleFields<T extends { examples?: VocabExampleRow[] }>(
+  vocab: T,
+) {
+  const examples = vocab.examples ?? [];
+  const [first] = examples;
+  return {
+    ...vocab,
+    examples,
+    exampleJa: first?.ja ?? null,
+    exampleKana: first?.kana ?? null,
+    exampleVi: first?.vi ?? null,
+  };
+}
+
+type ExampleDto = {
+  exampleJa?: string | null;
+  exampleKana?: string | null;
+  exampleVi?: string | null;
+};
+
+/** Ghi câu ví dụ đầu tiên (sortOrder 0) theo các trường example* của DTO. */
+function firstExampleWrite(vocabularyId: number, dto: ExampleDto) {
+  const kana = dto.exampleKana?.trim() || null;
+  const vi = dto.exampleVi?.trim() || null;
+  if (dto.exampleJa !== undefined) {
+    const ja = dto.exampleJa?.trim();
+    if (!ja) return { deleteMany: { sortOrder: 0 } };
+    const fields = {
+      ja,
+      ...(dto.exampleKana !== undefined ? { kana } : {}),
+      ...(dto.exampleVi !== undefined ? { vi } : {}),
+    };
+    return {
+      upsert: {
+        where: { vocabularyId_sortOrder: { vocabularyId, sortOrder: 0 } },
+        create: { ...fields, sortOrder: 0 },
+        update: fields,
+      },
+    };
+  }
+  if (dto.exampleKana === undefined && dto.exampleVi === undefined) return undefined;
+  return {
+    updateMany: {
+      where: { sortOrder: 0 },
+      data: {
+        ...(dto.exampleKana !== undefined ? { kana } : {}),
+        ...(dto.exampleVi !== undefined ? { vi } : {}),
+      },
+    },
+  };
+}
+
+function splitExampleDto<T extends ExampleDto>(dto: T) {
+  const { exampleJa, exampleKana, exampleVi, ...rest } = dto;
+  return { examples: { exampleJa, exampleKana, exampleVi }, rest };
+}
+
 /** Số ứng viên tối đa lấy về để xếp hạng khi tra từ. */
 const SEARCH_POOL = 500;
 
@@ -82,15 +153,23 @@ export class VocabulariesService {
           ? { partOfSpeech: dto.partOfSpeech }
           : {}),
         ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
-        ...(dto.exampleJa !== undefined ? { exampleJa: dto.exampleJa } : {}),
-        ...(dto.exampleKana !== undefined
-          ? { exampleKana: dto.exampleKana }
+        ...(dto.exampleJa?.trim()
+          ? {
+              examples: {
+                create: {
+                  ja: dto.exampleJa.trim(),
+                  kana: dto.exampleKana?.trim() || null,
+                  vi: dto.exampleVi?.trim() || null,
+                  sortOrder: 0,
+                },
+              },
+            }
           : {}),
-        ...(dto.exampleVi !== undefined ? { exampleVi: dto.exampleVi } : {}),
       },
+      include: EXAMPLES_INCLUDE,
     });
     await this.invalidateLessonCaches(dto.lessonId);
-    return vocab;
+    return withExampleFields(vocab);
   }
 
   /**
@@ -109,6 +188,7 @@ export class VocabulariesService {
       OR: fields.map((f) => ({ [f]: { [op]: query, mode: "insensitive" } })),
     });
     const include = {
+      ...EXAMPLES_INCLUDE,
       // Kết quả tra từ cần biết từ nằm ở bài nào để mở đúng bài
       lesson: {
         select: {
@@ -135,7 +215,9 @@ export class VocabulariesService {
     ]);
     const byId = new Map([...exact, ...candidates].map((v) => [v.id, v]));
     const ranked = rankVocabSearch([...byId.values()], query);
-    const data = ranked.slice((page - 1) * limit, page * limit);
+    const data = ranked
+      .slice((page - 1) * limit, page * limit)
+      .map(withExampleFields);
     return { data, total, page, limit };
   }
 
@@ -168,13 +250,14 @@ export class VocabulariesService {
       const [data, total] = await this.prisma.$transaction([
         this.prisma.vocabulary.findMany({
           where,
+          include: EXAMPLES_INCLUDE,
           orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
           skip: (page - 1) * limit,
           take: limit,
         }),
         this.prisma.vocabulary.count({ where }),
       ]);
-      return { data, total, page, limit };
+      return { data: data.map(withExampleFields), total, page, limit };
     }
 
     let lessonId: number | undefined;
@@ -199,9 +282,10 @@ export class VocabulariesService {
     }
 
     const where = lessonId ? { lessonId } : {};
-    const [data, total] = await this.prisma.$transaction([
+    const [rows, total] = await this.prisma.$transaction([
       this.prisma.vocabulary.findMany({
         where,
+        include: EXAMPLES_INCLUDE,
         orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
@@ -209,7 +293,7 @@ export class VocabulariesService {
       this.prisma.vocabulary.count({ where }),
     ]);
 
-    const result = { data, total, page, limit };
+    const result = { data: rows.map(withExampleFields), total, page, limit };
     if (lessonId) {
       await this.cacheManager.set(
         CacheKeys.vocabByLesson(lessonId),
@@ -254,8 +338,12 @@ export class VocabulariesService {
     return result;
   }
 
-  findOne(id: number) {
-    return this.prisma.vocabulary.findUnique({ where: { id } });
+  async findOne(id: number) {
+    const vocab = await this.prisma.vocabulary.findUnique({
+      where: { id },
+      include: EXAMPLES_INCLUDE,
+    });
+    return vocab ? withExampleFields(vocab) : null;
   }
 
   async update(id: number, dto: UpdateVocabularyDto) {
@@ -263,15 +351,18 @@ export class VocabulariesService {
       where: { id },
       select: { lessonId: true },
     });
+    const { examples, rest } = splitExampleDto(dto);
+    const examplesWrite = firstExampleWrite(id, examples);
     const vocab = await this.prisma.vocabulary.update({
       where: { id },
-      data: dto,
+      data: { ...rest, ...(examplesWrite ? { examples: examplesWrite } : {}) },
+      include: EXAMPLES_INCLUDE,
     });
     await this.invalidateLessonCaches(vocab.lessonId);
     if (prev && prev.lessonId !== vocab.lessonId) {
       await this.invalidateLessonCaches(prev.lessonId);
     }
-    return vocab;
+    return withExampleFields(vocab);
   }
 
   async remove(id: number) {
@@ -305,10 +396,12 @@ export class VocabulariesService {
     );
 
     await this.invalidateLessonCaches(lessonId);
-    return this.prisma.vocabulary.findMany({
+    const rows = await this.prisma.vocabulary.findMany({
       where: { lessonId },
+      include: EXAMPLES_INCLUDE,
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
     });
+    return rows.map(withExampleFields);
   }
 
   private async invalidateLessonCaches(lessonId: number) {

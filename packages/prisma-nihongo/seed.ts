@@ -1,58 +1,36 @@
 import { PrismaClient } from './generated/client';
 import { seedContent } from './seed-content';
-import { seedJlptContent } from './seed-jlpt-content';
-import { seedJlptExpand } from './seed-jlpt-expand';
 import { seedJlptExercises } from './seed-jlpt-exercises';
-import { seedJlptReadingExpand } from './seed-jlpt-reading-expand';
 import { seedListeningPresetsExpand } from './seed-listening-presets-expand';
 import { seedMockExamRecent } from './seed-mock-exam-recent';
-import { seedPronunciationRules } from './seed-pronunciation-rules';
-import { seedEnglishKatakana } from './seed-english-katakana';
 import { seedKanaRomaji } from './seed-kana-romaji';
 import { seedBookAudio } from './seed-book-audio';
 import { seedBookAudioOfficial } from './seed-book-audio-official';
 import { seedTextbooks } from './seed-textbooks';
-import { seedTextbookCatalog } from './seed-textbook-catalog';
-import { seedMindMaps } from './seed-mind-maps';
 import { seedSubscriptionPlans } from './seed-plans';
-import { seedCountryNames } from './seed-country-names';
 import { seedVocabSuffixes } from './seed-vocab-suffixes';
 import { seedKanjiVocabExamples } from './seed-kanji-vocab-examples';
-import { seedConversation } from './seed-conversation';
-import { seedRoleplay } from './seed-roleplay';
-import { seedHomePage } from './seed-home-page';
 import { seedJlptTags } from './seed-jlpt-tags';
-import { seedJlptRoadmapN2N1 } from './seed-jlpt-roadmap-n2-n1';
 import { seedMockExamTemplates } from './seed-mock-exam-templates';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Nội dung học (từ vựng, câu ví dụ, kanji, ngữ pháp, JLPT, hội thoại, sơ đồ…) nạp từ
+  // infra/postgres/nihongo-content-seed.sql — DB là nguồn gốc, không còn file .data.ts.
   await seedContent(prisma);
-  await seedJlptContent(prisma);
-  await seedJlptExpand(prisma);
   await seedJlptExercises(prisma);
-  await seedJlptReadingExpand(prisma);
   await seedListeningPresetsExpand(prisma);
   await seedJlptTags(prisma);
-  await seedJlptRoadmapN2N1(prisma);
   await seedMockExamTemplates(prisma);
   await seedMockExamRecent(prisma);
-  await seedPronunciationRules(prisma);
-  await seedEnglishKatakana(prisma);
   await seedKanaRomaji(prisma);
   await seedBookAudio(prisma);
   await seedBookAudioOfficial(prisma);
   await seedTextbooks(prisma);
-  await seedTextbookCatalog(prisma);
-  await seedMindMaps(prisma);
   await seedSubscriptionPlans(prisma);
-  await seedCountryNames(prisma);
   await seedVocabSuffixes(prisma);
   await seedKanjiVocabExamples(prisma);
-  await seedConversation(prisma);
-  await seedRoleplay(prisma);
-  await seedHomePage(prisma);
   console.log('\nSeeding finished.');
 }
 

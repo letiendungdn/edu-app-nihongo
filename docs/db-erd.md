@@ -3,13 +3,13 @@
 > **Tự sinh** từ `packages/prisma-nihongo/schema.prisma` bởi `npm run db:erd`.
 > Đừng sửa tay — sửa schema (hoặc cách chia phân hệ trong `packages/prisma-nihongo/scripts/gen-erd.ts`) rồi chạy lại.
 
-**110 bảng · 17 enum · 76 quan hệ khóa ngoại.**
+**112 bảng · 17 enum · 78 quan hệ khóa ngoại.**
 Ký hiệu: `PK` khóa chính · `FK` khóa ngoại · `UK` duy nhất · `"null"` cho phép null · `_list` mảng (Postgres array).
 Bảng thu gọn (`→ xem phân hệ khác`) thuộc phân hệ khác, chỉ vẽ để thấy liên kết.
 
 ## Mục lục
 
-- [Nội dung học](#nội-dung-học) — 16 bảng
+- [Nội dung học](#nội-dung-học) — 17 bảng
 - [JLPT: lịch thi, lộ trình, thi thử](#jlpt-lịch-thi-lộ-trình-thi-thử) — 16 bảng
 - [Tham chiếu ngôn ngữ](#tham-chiếu-ngôn-ngữ) — 20 bảng
 - [Trang & nội dung tĩnh](#trang--nội-dung-tĩnh) — 19 bảng
@@ -17,10 +17,11 @@ Bảng thu gọn (`→ xem phân hệ khác`) thuộc phân hệ khác, chỉ v�
 - [Tiến độ học](#tiến-độ-học) — 14 bảng
 - [Thanh toán & marketplace coach](#thanh-toán--marketplace-coach) — 9 bảng
 - [Giao tiếp & thông báo](#giao-tiếp--thông-báo) — 10 bảng
+- [Khác](#khác) — 1 bảng
 
 ## Nội dung học
 
-Bài học (Minna, JLPT, giáo trình Sou Matome/Shinkanzen/TRY — `Lesson.textbook`), kanji, đọc hiểu, mind map, danh mục giáo trình. (16 bảng; liên kết ngoài: `DictationAttempt`, `ReadingAttempt`)
+Bài học (Minna, JLPT, giáo trình Sou Matome/Shinkanzen/TRY — `Lesson.textbook`), kanji, đọc hiểu, mind map, danh mục giáo trình. (17 bảng; liên kết ngoài: `DictationAttempt`, `ReadingAttempt`)
 
 ```mermaid
 erDiagram
@@ -48,9 +49,6 @@ erDiagram
     string pitchAccent "null"
     string audioUrl "null"
     string imageUrl "null"
-    string exampleJa "null"
-    string exampleKana "null"
-    string exampleVi "null"
     int frequencyRank "null"
     int sortOrder
     int lessonId FK
@@ -147,6 +145,16 @@ erDiagram
     int kanjiEntryId FK
     datetime createdAt
   }
+  VocabularyExample {
+    int id PK
+    int vocabularyId FK
+    string ja
+    string kana "null"
+    string vi "null"
+    int sortOrder
+    datetime createdAt
+    datetime updatedAt
+  }
   ReadingPassage {
     int id PK
     string title
@@ -226,6 +234,7 @@ erDiagram
   KanjiLesson ||--}o KanjiEntry : lesson
   KanjiEntry ||--}o KanjiVocab : kanjiEntry
   Vocabulary o|--}o KanjiVocab : vocabulary
+  Vocabulary ||--}o VocabularyExample : vocabulary
   Vocabulary ||--}o VocabularyKanjiLink : vocabulary
   KanjiEntry ||--}o VocabularyKanjiLink : kanjiEntry
   ReadingPassage ||--}o ReadingQuestion : passage
@@ -234,7 +243,7 @@ erDiagram
   Vocabulary ||--}o DictationAttempt : vocab
 ```
 
-- **VocabularyKanjiLink** — Liên kết từ vựng ↔ kanji (từ chứa chữ kanji nào). Bảng có sẵn trong DB (~2.5k dòng), trước đây tạo bằng db push nên nằm ngoài schema — giữ lại, không xóa.
+- **VocabularyExample** — Liên kết từ vựng ↔ kanji (từ chứa chữ kanji nào). Bảng có sẵn trong DB (~2.5k dòng), trước đây tạo bằng db push nên nằm ngoài schema — giữ lại, không xóa. Câu ví dụ của từ vựng — mỗi từ có thể có nhiều câu, xếp theo sortOrder (câu 0 hiện đầu tiên).
 - **TextbookSeries** — Danh mục bộ giáo trình tham khảo (menu "Giáo trình", trang /textbooks, khung sách ở mind map).
 - **TextbookBook** — Một cuốn sách của bộ giáo trình theo cấp + kỹ năng.
 
@@ -852,6 +861,7 @@ erDiagram
     int userId FK
     datetime expiresAt
     bool revoked
+    datetime revokedAt "null"
     datetime createdAt
   }
   PasswordResetToken {
@@ -1209,6 +1219,7 @@ erDiagram
     string notes "null"
     int priceUsdCents
     int platformFeePercent
+    int payoutId FK "null"
     datetime canceledAt "null"
     string canceledBy "null"
     string cancelReason "null"
@@ -1248,6 +1259,7 @@ erDiagram
     int feeAmountCents
     datetime processedAt "null"
     string failReason "null"
+    int attempts
     datetime createdAt
     datetime updatedAt
   }
@@ -1285,6 +1297,7 @@ erDiagram
   CoachProfile ||--}o CoachAvailability : coach
   User ||--}o CoachingSession : learner
   CoachProfile ||--}o CoachingSession : coach
+  Payout o|--}o CoachingSession : payoutRecord
   User ||--}o Payment : user
   Subscription o|--}o Payment : subscription
   CoachingSession o|--|o Payment : session
@@ -1421,6 +1434,21 @@ erDiagram
   LearnerChatRoom ||--}o LearnerChatMessage : room
   User ||--}o LearnerChatMessage : sender
 ```
+
+## Khác
+
+Bảng chưa được xếp phân hệ trong packages/prisma-nihongo/scripts/gen-erd.ts. (1 bảng)
+
+```mermaid
+erDiagram
+  CronRun {
+    string name
+    string slot
+    datetime startedAt
+  }
+```
+
+- **CronRun** — Mỗi lượt chạy của một cron (ví dụ "push.daily-srs" + "2026-10-21"). Khóa chính chặn pod thứ hai chạy lại cùng lượt: gateway chạy nhiều pod, @Cron nổ ở TẤT CẢ các pod.
 
 ## Enum
 

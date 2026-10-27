@@ -22,7 +22,7 @@ const NIHONGO_DOMAINS: Domain[] = [
     note: 'Bài học (Minna, JLPT, giáo trình Sou Matome/Shinkanzen/TRY — `Lesson.textbook`), kanji, đọc hiểu, mind map, danh mục giáo trình.',
     models: [
       'Lesson', 'Vocabulary', 'Grammar', 'Example', 'Exercise', 'ExerciseOption',
-      'KanjiLesson', 'KanjiEntry', 'KanjiVocab', 'VocabularyKanjiLink',
+      'KanjiLesson', 'KanjiEntry', 'KanjiVocab', 'VocabularyKanjiLink', 'VocabularyExample',
       'ReadingPassage', 'ReadingQuestion', 'ReadingQuestionOption',
       'TextbookSeries', 'TextbookBook', 'MindMapLevel',
     ],
