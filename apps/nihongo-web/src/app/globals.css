@@ -2108,3 +2108,17 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Logo: dòng "Learn Japanese" màu son như mẫu */
+.app-sidebar__logo-sub {
+  color: var(--primary-color);
+}
+
+.app-sidebar__bottom .theme-toggle {
+  gap: 0.45rem;
+  padding-inline: 0.45rem;
+}
+
+.app-sidebar__bottom .theme-toggle__label {
+  font-size: 0.82rem;
+}

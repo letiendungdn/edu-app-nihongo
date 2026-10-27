@@ -24,8 +24,8 @@ function pushSegment(out: HighlightSegment[], text: string, kind: HighlightSegme
 }
 
 /**
- * Đánh dấu các key trong một câu. Key một chữ (trợ từ は, を, に…) chỉ khớp khi chữ sau
- * không phải hiragana — tránh tô nhầm は trong はな.
+ * Đánh dấu các key trong một câu. Key là một chữ kana (trợ từ は, を, に…) chỉ khớp khi
+ * chữ sau không phải hiragana — tránh tô nhầm は trong はな. Kanji một chữ (私) khớp bình thường.
  */
 export function highlightKeys(text: string, keys: string[]): HighlightSegment[] {
   const out: HighlightSegment[] = [];
@@ -34,7 +34,7 @@ export function highlightKeys(text: string, keys: string[]): HighlightSegment[] 
   while (i < text.length) {
     const key = keys.find((k) => {
       if (!text.startsWith(k, i)) return false;
-      if (k.length > 1) return true;
+      if (k.length > 1 || !HIRAGANA.test(k)) return true;
       const next = text[i + k.length];
       return !next || !HIRAGANA.test(next);
     });

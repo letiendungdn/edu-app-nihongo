@@ -27,6 +27,13 @@ describe('grammarHighlight', () => {
     ]);
   });
 
+  it('marks a one-kanji word even when a particle follows', () => {
+    expect(highlightKeys('私は学生です。', ['わたし', '私'])).toEqual([
+      { text: '私', kind: 'key' },
+      { text: 'は学生です。', kind: 'plain' },
+    ]);
+  });
+
   it('separates pattern keys from other Japanese in an explanation', () => {
     expect(highlightExplanation('は (đọc là wa) đánh dấu chủ đề; 職業 hay です', ['です', 'は'])).toEqual([
       { text: 'は', kind: 'key' },

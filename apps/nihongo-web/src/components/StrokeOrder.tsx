@@ -38,6 +38,46 @@ function styleGuidePaths(paths: SVGPathElement[], color: string, width: number):
   });
 }
 
+/** Dải màu trên thẻ học: đỏ ở đầu nét, cam giữa, tím–xanh ở cuối — như mẫu. */
+const RAINBOW_STOPS: { offset: string; color: string }[] = [
+  { offset: '0%', color: '#e23b4a' },
+  { offset: '38%', color: '#f08a32' },
+  { offset: '70%', color: '#7a4de0' },
+  { offset: '100%', color: '#4f6fe8' },
+];
+
+function applyRainbowStroke(svgEl: SVGSVGElement, paths: SVGPathElement[], width: number): void {
+  const ns = 'http://www.w3.org/2000/svg';
+  const gradId = `stroke-rainbow-${Math.random().toString(36).slice(2, 8)}`;
+  let defs = svgEl.querySelector('defs');
+  if (!defs) {
+    defs = document.createElementNS(ns, 'defs');
+    svgEl.insertBefore(defs, svgEl.firstChild);
+  }
+  const grad = document.createElementNS(ns, 'linearGradient');
+  grad.setAttribute('id', gradId);
+  grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  grad.setAttribute('x1', '16');
+  grad.setAttribute('y1', '8');
+  grad.setAttribute('x2', '98');
+  grad.setAttribute('y2', '102');
+  RAINBOW_STOPS.forEach((stop) => {
+    const el = document.createElementNS(ns, 'stop');
+    el.setAttribute('offset', stop.offset);
+    el.setAttribute('stop-color', stop.color);
+    grad.appendChild(el);
+  });
+  defs.appendChild(grad);
+
+  paths.forEach((path) => {
+    path.style.stroke = `url(#${gradId})`;
+    path.style.strokeWidth = `${width}`;
+    path.style.fill = 'none';
+    path.style.strokeLinecap = 'round';
+    path.style.strokeLinejoin = 'round';
+  });
+}
+
 function mountKanjiVgSvg(
   charDiv: HTMLDivElement,
   char: string,
@@ -45,9 +85,10 @@ function mountKanjiVgSvg(
   width: number,
   height: number,
   onCharClick?: (char: string) => void,
+  rainbow = false,
 ) {
   const colors = getStrokeThemeColors();
-  const strokeWidth = strokeWidthForSize(Math.min(width, height));
+  const strokeWidth = rainbow ? 3.6 : strokeWidthForSize(Math.min(width, height));
 
   const svgWrapper = document.createElement('div');
   svgWrapper.className = 'stroke-order-char';
@@ -84,13 +125,18 @@ function mountKanjiVgSvg(
   }
 
   const bgPaths = Array.from(pathsGroup.querySelectorAll('path'));
-  styleGuidePaths(bgPaths, colors.guide, strokeWidth);
+  if (rainbow) {
+    applyRainbowStroke(svgEl, bgPaths, strokeWidth);
+  } else {
+    styleGuidePaths(bgPaths, colors.guide, strokeWidth);
+  }
 
   const fgPathsGroup = pathsGroup.cloneNode(true) as Element;
   const fgPaths = Array.from(fgPathsGroup.querySelectorAll('path'));
+  const drawColor = rainbow ? `url(#${svgEl.querySelector('linearGradient')?.id ?? ''})` : colors.active;
 
   fgPaths.forEach((path) => {
-    path.style.stroke = colors.active;
+    path.style.stroke = drawColor;
     path.style.strokeWidth = `${strokeWidth}`;
     path.style.fill = 'none';
     path.style.strokeLinecap = 'round';
@@ -98,12 +144,15 @@ function mountKanjiVgSvg(
 
     const length = path.getTotalLength();
     path.style.strokeDasharray = `${length + 1}`;
-    path.style.strokeDashoffset = `${length + 1}`;
+    path.style.strokeDashoffset = rainbow ? '0' : `${length + 1}`;
   });
 
   svgEl.appendChild(fgPathsGroup);
-
-  if (numbersGroup) {
+  if (rainbow) {
+    bgPaths.forEach((path) => { path.style.stroke = 'none'; });
+    numbersGroup?.remove();
+  } else if (numbersGroup) {
+    svgEl.appendChild(numbersGroup);
     Array.from(numbersGroup.querySelectorAll('text')).forEach((el) => {
       const textEl = el as SVGTextElement;
       textEl.style.fill = colors.number;
@@ -137,7 +186,7 @@ function mountKanjiVgSvg(
   });
 
   charDiv.appendChild(svgWrapper);
-  setTimeout(animateStrokes, 80);
+  if (!rainbow) setTimeout(animateStrokes, 80);
 }
 
 interface Props {
@@ -145,6 +194,8 @@ interface Props {
   width?: number;
   height?: number;
   compact?: boolean;
+  /** Thẻ học: nét nhiều màu, không mũi tên và không số thứ tự. */
+  rainbow?: boolean;
   onCharClick?: (char: string, index: number) => void;
 }
 
@@ -153,6 +204,7 @@ export default function StrokeOrder({
   width,
   height,
   compact = false,
+  rainbow = false,
   onCharClick,
 }: Props) {
   const resolvedWidth = width ?? (compact ? 96 : 200);
@@ -185,7 +237,15 @@ export default function StrokeOrder({
 
       fetchStrokeSvg(char)
         .then((svgText) =>
-          mountKanjiVgSvg(charDiv, char, svgText, resolvedWidth, resolvedHeight, handleCharClick),
+          mountKanjiVgSvg(
+            charDiv,
+            char,
+            svgText,
+            resolvedWidth,
+            resolvedHeight,
+            handleCharClick,
+            rainbow,
+          ),
         )
         .catch(() => {
           const colors = getStrokeThemeColors();
@@ -200,7 +260,7 @@ export default function StrokeOrder({
           });
         });
     });
-  }, [writableText, resolvedWidth, resolvedHeight, compact]);
+  }, [writableText, resolvedWidth, resolvedHeight, compact, rainbow]);
 
   return (
     <div className={`stroke-order-wrapper${compact ? ' stroke-order-wrapper--compact' : ''}`}>
