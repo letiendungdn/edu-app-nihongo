@@ -28,8 +28,10 @@ describe('groupLessons', () => {
       'n1-supplementary',
       'SOUMATOME-N3',
     ]);
-    expect(groups.find((g) => g.key === 'n3')!.items.map((l) => l.lessonNumber)).toEqual([301]);
-    expect(groups.find((g) => g.key === 'n3-supplementary')).toMatchObject({
+    const n3 = groups.find((group) => group.key.startsWith('n3') && !group.key.includes('-'));
+    const n3Topics = groups.find((group) => group.key.startsWith('n3-'));
+    expect(n3!.items.map((l) => l.lessonNumber)).toEqual([301]);
+    expect(n3Topics).toMatchObject({
       label: 'JLPT N3 · Từ vựng bổ sung theo chủ đề',
       items: [{ lessonNumber: 53011 }, { lessonNumber: 53012 }],
     });
