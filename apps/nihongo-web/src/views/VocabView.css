@@ -3437,3 +3437,66 @@
 .vocab-view--study .vocab-card__cols {
   column-gap: 1.5rem;
 }
+
+/* Từ/cụm dài: KANJI và KANA mỗi thứ một hàng, ô nét viết xuống dưới, bỏ dòng tiêu đề
+   (đã có đủ ở các hàng dưới) — tránh chữ ngắt dòng lung tung và đè lên nét viết */
+.vocab-view--study .vocab-card--long .vocab-card__title {
+  display: none;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__top {
+  justify-content: flex-end;
+  margin-bottom: -2.25rem;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__cols {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
+  max-width: none;
+  margin: 0;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__cols .flashcard-text-col,
+.vocab-view--study .vocab-card--long .vocab-card__cols .flashcard-text-col--kana {
+  width: 100%;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__cols .flashcard-text-col--kana {
+  padding-top: 0.75rem !important;
+  border-top: 1px dashed var(--border-color) !important;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__cols .vocab-kanji,
+.vocab-view--study .vocab-card--long .vocab-card__cols .vocab-kana {
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__col-actions {
+  align-self: flex-end;
+  margin-top: 0.25rem;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__strokes {
+  order: 3;
+  align-self: center;
+  max-width: none;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+  width: 100%;
+}
+
+.vocab-view--study .vocab-card--long .vocab-card__headline {
+  font-size: clamp(1.05rem, 1.9vw, 1.3rem);
+}
+
+/* Ô nét viết to hơn: cho cột giữa đủ rộng, không giới hạn 17rem */
+.vocab-card__strokes {
+  max-width: none;
+}

@@ -20,6 +20,23 @@ let playSessionId = 0;
 let activeHtmlAudio: HTMLAudioElement | null = null;
 let cachedVoices: SpeechSynthesisVoice[] | null = null;
 let voicesReadyPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+let voicesListenerInstalled = false;
+
+function watchVoices(): void {
+  if (voicesListenerInstalled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  voicesListenerInstalled = true;
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length) cachedVoices = voices;
+  });
+}
+
+/** Chrome nuốt utterance nếu cancel() khi hàng đợi đang trống. */
+function cancelSpeaking(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const synth = window.speechSynthesis;
+  if (synth.speaking || synth.pending) synth.cancel();
+}
 
 /** Đợi danh sách voice (Chrome/Edge load bất đồng bộ qua voiceschanged). */
 export function loadSpeechVoices(): Promise<SpeechSynthesisVoice[]> {
@@ -27,34 +44,39 @@ export function loadSpeechVoices(): Promise<SpeechSynthesisVoice[]> {
     return Promise.resolve([]);
   }
 
+  watchVoices();
+  const synth = window.speechSynthesis;
+  const current = synth.getVoices();
+  if (current.length) {
+    cachedVoices = current;
+    return Promise.resolve(current);
+  }
   if (cachedVoices?.length) return Promise.resolve(cachedVoices);
 
   if (!voicesReadyPromise) {
     voicesReadyPromise = new Promise((resolve) => {
-      const synth = window.speechSynthesis;
-
-      const capture = () => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
         const voices = synth.getVoices();
-        if (voices.length) {
-          cachedVoices = voices;
-          resolve(voices);
-          return true;
-        }
-        return false;
+        if (voices.length) cachedVoices = voices;
+        voicesReadyPromise = null;
+        resolve(cachedVoices ?? voices);
       };
-
-      if (capture()) return;
 
       const onChanged = () => {
-        if (capture()) synth.removeEventListener('voiceschanged', onChanged);
+        if (synth.getVoices().length) {
+          synth.removeEventListener('voiceschanged', onChanged);
+          finish();
+        }
       };
       synth.addEventListener('voiceschanged', onChanged);
-
-      setTimeout(() => {
+      // Chrome thường bắn voiceschanged trễ hơn 800ms ở lần tải đầu.
+      window.setTimeout(() => {
         synth.removeEventListener('voiceschanged', onChanged);
-        cachedVoices = synth.getVoices();
-        resolve(cachedVoices);
-      }, 800);
+        finish();
+      }, 2000);
     });
   }
 
@@ -222,20 +244,59 @@ async function speakWithBrowser(
 ): Promise<void> {
   const sessionId = playSessionId;
 
-  await new Promise<void>((resolve) => {
-    if (sessionId !== playSessionId) {
-      resolve();
-      return;
-    }
+  const once = (retriesLeft: number) =>
+    new Promise<void>((resolve, reject) => {
+      if (sessionId !== playSessionId || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        resolve();
+        return;
+      }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    applySpeechVoice(utterance, voice, lang);
-    utterance.rate = rate;
-    utterance.pitch = 1.0;
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-    window.speechSynthesis.speak(utterance);
-  });
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      applySpeechVoice(utterance, voice, lang);
+      utterance.rate = rate;
+      utterance.pitch = 1.0;
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      const fail = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        reject(error);
+      };
+      utterance.onend = () => done();
+      utterance.onerror = (event) => {
+        const reason = (event as SpeechSynthesisErrorEvent).error;
+        const retryable = reason === 'not-allowed' || reason === 'interrupted' || reason === 'canceled';
+        // Chrome lần mở trang hay nuốt tiếng đầu (not-allowed / interrupted) dù không bấm gì.
+        if (retriesLeft > 0 && sessionId === playSessionId && retryable) {
+          window.setTimeout(() => {
+            if (sessionId !== playSessionId) {
+              done();
+              return;
+            }
+            synth.resume();
+            void once(retriesLeft - 1).then(done, fail);
+          }, 200);
+          return;
+        }
+        if (reason === 'not-allowed') {
+          fail(new Error('not-allowed'));
+          return;
+        }
+        done();
+      };
+      synth.resume();
+      synth.speak(utterance);
+      window.setTimeout(() => {
+        if (!settled && sessionId === playSessionId && synth.paused) synth.resume();
+      }, 50);
+    });
+
+  await once(3);
 }
 
 function applySpeechVoice(
@@ -443,9 +504,7 @@ export function grammarExplanationSpeechParts(grammar: {
 export const stopAudio = (): void => {
   playSessionId += 1;
   stopHtmlAudio();
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
+  cancelSpeaking();
 };
 
 export interface PlayAudioOptions {
@@ -474,7 +533,7 @@ export function playAudioParts(
 
   const sessionId = ++playSessionId;
   stopHtmlAudio();
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  cancelSpeaking();
 
   void loadSpeechVoices()
     .then((voices) => {
@@ -533,6 +592,9 @@ export function playAudioSequence(
 
   const sessionId = ++playSessionId;
   let index = 0;
+  let itemRetries = 0;
+  stopHtmlAudio();
+  cancelSpeaking();
 
   return loadSpeechVoices().then((voices) => {
     return new Promise<void>((resolve) => {
@@ -562,23 +624,50 @@ export function playAudioSequence(
         const cue = typeof item === 'string' ? index : item.cue;
         if (cue != null) onItem?.(cue, text);
 
+        const started = performance.now();
         void speakText(text, itemLang, voices, speechRate, forceServer)
-          .catch((err) => console.warn('[TTS]', err))
-          .finally(() => {
+          .then(() => {
             if (!isActive()) {
               finish(true);
               return;
             }
+            // Chrome lần tải đầu có thể kết thúc utterance gần như ngay, không phát tiếng.
+            if (performance.now() - started < 120 && itemRetries < 1) {
+              itemRetries += 1;
+              window.setTimeout(speakNext, 250);
+              return;
+            }
+            itemRetries = 0;
             index += 1;
-            setTimeout(speakNext, pauseMs);
+            window.setTimeout(speakNext, pauseMs);
+          })
+          .catch((err) => {
+            console.warn('[TTS]', err);
+            if (!isActive()) {
+              finish(true);
+              return;
+            }
+            if (String(err?.message ?? err).includes('not-allowed')) {
+              finish(true);
+              return;
+            }
+            index += 1;
+            window.setTimeout(speakNext, pauseMs);
           });
       };
 
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
       onStart?.();
-      speakNext();
+      // Đợi cancel() xong rồi mới speak, nếu không Chrome báo interrupted và bỏ qua tiếng.
+      window.setTimeout(() => {
+        if (!isActive()) {
+          finish(true);
+          return;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        speakNext();
+      }, 80);
     });
   });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   createKanjiVocab,
@@ -19,6 +19,7 @@ type Props = {
   lessonNumber: number;
   vocabularies: KanjiVocabItem[];
   onPronounce: (e: React.MouseEvent, reading: string) => void;
+  activeVocabId?: number | null;
 };
 
 type Draft = {
@@ -42,6 +43,7 @@ export default function KanjiVocabSidepanel({
   lessonNumber,
   vocabularies,
   onPronounce,
+  activeVocabId = null,
 }: Props) {
   const { isAdmin, token } = useAuth();
   const queryClient = useQueryClient();
@@ -54,6 +56,21 @@ export default function KanjiVocabSidepanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (activeVocabId == null) return;
+    const item = listRef.current?.querySelector(`[data-vocab-id="${activeVocabId}"]`);
+    const panel = listRef.current?.closest('.kanji-vocab-sidepanel');
+    if (!(item instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+    const panelBox = panel.getBoundingClientRect();
+    const itemBox = item.getBoundingClientRect();
+    if (itemBox.top < panelBox.top) {
+      panel.scrollTop -= panelBox.top - itemBox.top + 8;
+    } else if (itemBox.bottom > panelBox.bottom) {
+      panel.scrollTop += itemBox.bottom - panelBox.bottom + 8;
+    }
+  }, [activeVocabId]);
 
   useEffect(() => {
     setItems(vocabularies);
@@ -269,13 +286,14 @@ export default function KanjiVocabSidepanel({
         </div>
       )}
 
-      <ul>
+      <ul ref={listRef}>
         {items.map((v) => (
           <li
             key={v.id}
+            data-vocab-id={v.id}
             className={`kanji-vocab-item${canEdit ? ' kanji-vocab-item--admin' : ''}${
               draggingId === v.id ? ' kanji-vocab-item--dragging' : ''
-            }`}
+            }${activeVocabId === v.id ? ' kanji-vocab-item--speaking' : ''}`}
             draggable={canEdit && editingId == null && !busy}
             onDragStart={() => canEdit && setDraggingId(v.id)}
             onDragOver={(e) => {

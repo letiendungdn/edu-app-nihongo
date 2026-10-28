@@ -123,7 +123,6 @@ export default function VocabView({
       ? [...currentVocab.kana].filter((c) => /[ぁ-ゖァ-ヺー]/.test(c)).slice(0, 4)
       : [];
   const strokeText = strokeChars.join('');
-  const strokeSize = [118, 118, 72, 54][strokeChars.length] ?? 44;
   // Trợ từ trong câu ví dụ tô đỏ, như mẫu (は, を, に…). Cụm dài xếp trước để khớp hết.
   const exampleKeys = ['から', 'まで', 'より', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'へ'];
   const hasMultipleReadings =
@@ -139,6 +138,12 @@ export default function VocabView({
     (hasOptionalBracketParts(currentVocab.kanji) ||
       hasOptionalBracketParts(currentVocab.kana) ||
       hasOptionalBracketParts(currentVocab.romaji));
+  // Cụm dài ("［どうぞ］よろしく［お願いします］。"): 3 cột không đủ chỗ → thẻ xếp dọc
+  const isLongWord = frontTextTier === 'lg' || frontTextTier === 'xl' || hasOptionalBrackets;
+  // Cỡ ô nét viết theo số chữ. Thẻ dài xếp dọc nên ô nét viết có cả hàng riêng → vẽ to hơn.
+  const strokeSize = isLongWord
+    ? ([200, 200, 160, 130][strokeChars.length] ?? 110)
+    : ([160, 160, 112, 84][strokeChars.length] ?? 68);
   const frontTextTierClass = [
     frontTextTier === 'sm' ? '' : ` flashcard-text-dual--tier-${frontTextTier}`,
     hasOptionalBrackets ? ' flashcard-text-dual--optional-brackets' : '',
@@ -468,7 +473,7 @@ export default function VocabView({
             <div
               className={`flashcard${hasMultipleReadings ? ' flashcard--multi-reading' : ''}`}
             >
-              <div className="flashcard-face flashcard-front vocab-card">
+              <div className={`flashcard-face flashcard-front vocab-card${isLongWord ? ' vocab-card--long' : ''}`}>
                 <div className="vocab-card__top">
                   <p className="vocab-card__title japanese-text">
                     {currentVocab.kanji ? `${currentVocab.kanji} - ` : ''}

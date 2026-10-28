@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { playAudio, playAudioSequence } from '../utils/speech';
+import { useState, useEffect, useRef } from 'react';
+import { loadSpeechVoices, playAudio, playAudioSequence, stopAudio } from '../utils/speech';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import {
@@ -10,6 +10,7 @@ import {
   useKanjiEntriesQuery,
   useKanjiSearchQuery,
 } from '../hooks/queries';
+import SpeakerIcon from '../components/SpeakerIcon';
 import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import KanjiVocabSidepanel from '../components/KanjiVocabSidepanel';
@@ -19,12 +20,26 @@ import type { KanjiEntry, KanjiLesson } from '../types/api';
 import './VocabView.css';
 import './KanjiView.css';
 
+/** Trang đã có thao tác của người dùng chưa (điều kiện để trình duyệt cho phát âm). */
+function hasUserActivation(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } })
+    .userActivation;
+  // Trình duyệt không có API này (Safari cũ): cứ thử phát như trước
+  return activation ? activation.hasBeenActive : true;
+}
+
 export default function KanjiView({ initialLessonNumber }: { initialLessonNumber?: number } = {}) {
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingKanjiId, setPendingKanjiId] = useState<number | null>(null);
+  const [cardAudioPlaying, setCardAudioPlaying] = useState(false);
+  const [spokenMark, setSpokenMark] = useState<
+    { kind: 'reading'; tone: 'on' | 'kun'; index: number } | { kind: 'vocab'; id: number } | null
+  >(null);
+  const cardAudioGen = useRef(0);
 
   const { data: lessons = [] } = useKanjiLessonsQuery();
   const { data: lessonKanji = [], isLoading: loading } = useKanjiEntriesQuery(currentLesson);
@@ -79,19 +94,123 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     handleClearSearch();
   };
 
+  const silenceCardAudio = () => {
+    cardAudioGen.current += 1;
+    setCardAudioPlaying(false);
+    setSpokenMark(null);
+  };
+
   const handleNext = () => {
     if (!lessonKanji.length) return;
+    silenceCardAudio();
+    stopPlayAll();
     setCurrentIndex((prev) => (prev + 1) % lessonKanji.length);
   };
 
   const handlePrev = () => {
     if (!lessonKanji.length) return;
+    silenceCardAudio();
+    stopPlayAll();
     setCurrentIndex((prev) => (prev - 1 + lessonKanji.length) % lessonKanji.length);
   };
+
+  const handlePrevRef = useRef(handlePrev);
+  const handleNextRef = useRef(handleNext);
+  const playCardRef = useRef(() => {});
+  const playingAllRef = useRef(isPlayingAll);
+  handlePrevRef.current = handlePrev;
+  handleNextRef.current = handleNext;
+  playingAllRef.current = isPlayingAll;
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.resume();
+    }
+    void loadSpeechVoices();
+  }, []);
+
+  // Chrome chỉ cho phát âm sau khi người dùng đã bấm/gõ trên trang. Mở thẳng /kanji ở tab mới
+  // thì audio.play() bị chặn và speechSynthesis im lặng → chờ lần tương tác đầu rồi mới đọc.
+  const [needsGesture, setNeedsGesture] = useState(false);
+
+  useEffect(() => {
+    if (playingAllRef.current || !currentKanji) return undefined;
+    let cancelled = false;
+    const play = () => {
+      void loadSpeechVoices().then(() => {
+        if (!cancelled && !playingAllRef.current) playCardRef.current();
+      });
+    };
+
+    if (!hasUserActivation()) {
+      setNeedsGesture(true);
+      const onFirstGesture = (event: Event) => {
+        window.removeEventListener('pointerdown', onFirstGesture, true);
+        window.removeEventListener('keydown', onFirstGesture, true);
+        setNeedsGesture(false);
+        // Bấm vào nút loa/âm đọc thì nút đó tự phát — không đọc chồng cả thẻ
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('button, a, input, select, textarea')) return;
+        // Phím cách / ← → đã có xử lý riêng (đọc thẻ, sang chữ khác)
+        if (event instanceof KeyboardEvent && [' ', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        play();
+      };
+      window.addEventListener('pointerdown', onFirstGesture, true);
+      window.addEventListener('keydown', onFirstGesture, true);
+      return () => {
+        cancelled = true;
+        window.removeEventListener('pointerdown', onFirstGesture, true);
+        window.removeEventListener('keydown', onFirstGesture, true);
+      };
+    }
+
+    const timer = window.setTimeout(play, 150);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [currentIndex, currentLesson, currentKanji?.id]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePrevRef.current();
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleNextRef.current();
+        return;
+      }
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        e.stopPropagation();
+        playCardRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
 
   const handlePronounce = (e: React.MouseEvent, text?: string) => {
     e.stopPropagation();
     if (!currentKanji) return;
+    silenceCardAudio();
     stopPlayAll();
     if (text) {
       playAudio(text);
@@ -101,6 +220,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
   };
 
   const handlePlayAll = () => {
+    silenceCardAudio();
     const playlist = lessonKanji.flatMap((kanji, kanjiIndex) =>
       getKanjiSpeakItems(kanji).map((text) => ({ text, kanjiIndex })),
     );
@@ -128,12 +248,65 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     : null;
   const hasMnemonic = Boolean(mnemonicImage || currentKanji?.mnemonicVi || currentKanji?.mnemonicJp);
 
+  const playCardAudio = () => {
+    if (!currentKanji) return;
+    const marks: Array<
+      { kind: 'reading'; tone: 'on' | 'kun'; index: number } | { kind: 'vocab'; id: number }
+    > = [];
+    const clips: { text: string; cue: number }[] = [];
+    const add = (text: string, mark: (typeof marks)[number]) => {
+      const value = text.replace(/-/g, '').trim();
+      if (!value) return;
+      clips.push({ text: value, cue: marks.length });
+      marks.push(mark);
+    };
+    onyomi.forEach((token, index) => add(token.speak, { kind: 'reading', tone: 'on', index }));
+    kunyomi.forEach((token, index) => add(token.speak, { kind: 'reading', tone: 'kun', index }));
+    for (const vocab of currentKanji.vocabularies ?? []) {
+      add(vocab.reading, { kind: 'vocab', id: vocab.id });
+    }
+    if (!clips.length) return;
+    const gen = ++cardAudioGen.current;
+    stopPlayAll();
+    setCardAudioPlaying(true);
+    setSpokenMark(marks[0]);
+    void playAudioSequence(clips, {
+      pauseMs: 700,
+      onItem: (cue) => {
+        if (cardAudioGen.current !== gen) return;
+        setSpokenMark(marks[cue] ?? null);
+      },
+      onEnd: () => {
+        if (cardAudioGen.current !== gen) return;
+        setCardAudioPlaying(false);
+        setSpokenMark(null);
+      },
+      onStop: () => {
+        if (cardAudioGen.current !== gen) return;
+        setCardAudioPlaying(false);
+        setSpokenMark(null);
+      },
+    });
+  };
+
+  const stopCardAudio = () => {
+    cardAudioGen.current += 1;
+    stopAudio();
+    setCardAudioPlaying(false);
+    setSpokenMark(null);
+  };
+  playCardRef.current = playCardAudio;
+
   const renderReadings = (tokens: KanjiReadingToken[], tone: 'on' | 'kun') =>
     tokens.map((token, i) => (
       <button
         key={`${token.display}-${i}`}
         type="button"
-        className={`kanji-ll__reading kanji-ll__reading--${tone} japanese-text`}
+        className={`kanji-ll__reading kanji-ll__reading--${tone} japanese-text${
+          spokenMark?.kind === 'reading' && spokenMark.tone === tone && spokenMark.index === i
+            ? ' kanji-ll__reading--speaking'
+            : ''
+        }`}
         title={`Phát âm ${token.speak}`}
         onClick={(e) => handlePronounce(e, token.speak)}
       >
@@ -260,6 +433,11 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                 >
                   {currentKanji.character}
                 </button>
+                {needsGesture ? (
+                  <p className="kanji-ll__tap-hint" role="status">
+                    Bấm vào trang hoặc nhấn phím cách để nghe đọc
+                  </p>
+                ) : null}
                 <div className="kanji-ll__glyph-actions">
                   {currentKanji.hanViet ? (
                     <span className="kanji-ll__hanviet">{currentKanji.hanViet.toUpperCase()}</span>
@@ -318,14 +496,28 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
               </div>
 
               <div className="kanji-ll__controls">
-                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handlePrev}>
+                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handlePrev} aria-keyshortcuts="ArrowLeft">
                   ← Trước
                 </button>
-                <PlayAllButton isPlaying={isPlayingAll} onPlay={handlePlayAll} onStop={stopPlayAll} />
-                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handleNext}>
+                <div className="kanji-ll__play-group">
+                  <PlayAllButton isPlaying={isPlayingAll} onPlay={handlePlayAll} onStop={stopPlayAll} />
+                  <button
+                    type="button"
+                    className={`kanji-ll__vocab-play${cardAudioPlaying ? ' kanji-ll__vocab-play--on' : ''}`}
+                    onClick={cardAudioPlaying ? stopCardAudio : playCardAudio}
+                    disabled={!onyomi.length && !kunyomi.length && !(currentKanji.vocabularies?.length)}
+                    aria-label={cardAudioPlaying ? 'Dừng đọc từ vựng' : 'Phát tất cả từ vựng'}
+                    title={cardAudioPlaying ? 'Dừng' : 'Phát âm đọc và từ vựng, tô chữ đang đọc'}
+                  >
+                    <SpeakerIcon size={16} />
+                    {cardAudioPlaying ? 'Dừng' : 'Từ vựng'}
+                  </button>
+                </div>
+                <button type="button" className="btn btn-outline kanji-ll__nav" onClick={handleNext} aria-keyshortcuts="ArrowRight">
                   Sau →
                 </button>
               </div>
+              <p className="kanji-ll__keys">← → đổi chữ và nghe · Space nghe lại</p>
             </section>
           </div>
 
@@ -334,6 +526,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
             lessonNumber={currentLesson}
             vocabularies={currentKanji.vocabularies ?? []}
             onPronounce={handlePronounce}
+            activeVocabId={spokenMark?.kind === 'vocab' ? spokenMark.id : null}
           />
         </div>
       ) : (
