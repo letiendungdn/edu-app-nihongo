@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useLessons } from '../hooks/queries';
+import type { LessonContentFilter } from '../api';
+import type { Lesson } from '../types/api';
 import { groupLessons } from '../utils/lessonGroups';
 import './VocabLessonPickerView.css';
 
@@ -10,12 +12,20 @@ export default function VocabLessonPickerView({
   hrefFor = (lessonNumber: number) => `/vocab?lesson=${lessonNumber}`,
   title = 'Từ vựng — Chọn bài học',
   subtitle = 'Chọn bài để học flashcard. Sau đó có thể đổi bài, xem danh sách từ hoặc làm trắc nghiệm.',
+  has = 'vocab',
+  countOf = (lesson: Lesson) => lesson._count?.vocabularies,
+  countUnit = 'từ',
+  links,
 }: {
   hrefFor?: (lessonNumber: number) => string;
   title?: string;
   subtitle?: string;
+  has?: LessonContentFilter;
+  countOf?: (lesson: Lesson) => number | undefined;
+  countUnit?: string;
+  links?: ReactNode;
 } = {}) {
-  const { data: lessons = [], isLoading, isError } = useLessons({ has: 'vocab' });
+  const { data: lessons = [], isLoading, isError } = useLessons({ has });
   const [filter, setFilter] = useState('');
 
   const groups = useMemo(() => {
@@ -37,16 +47,20 @@ export default function VocabLessonPickerView({
       <header className="vocab-lesson-picker__header">
         <h2 className="view-title">{title}</h2>
         <p className="vocab-lesson-picker__subtitle">{subtitle}</p>
-        <nav className="vocab-lesson-picker__links" aria-label="Công cụ từ vựng">
-          <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
-            Trắc nghiệm JP ↔ VI
-          </Link>
-          <Link href="/vocab/picture" className="btn btn-outline btn-sm">
-            Từ điển tranh
-          </Link>
-          <Link href="/vocab/mindmap" className="btn btn-outline btn-sm">
-            Sơ đồ tư duy
-          </Link>
+        <nav className="vocab-lesson-picker__links" aria-label="Công cụ học">
+          {links ?? (
+            <>
+              <Link href="/vocab/quiz" className="btn btn-outline btn-sm">
+                Trắc nghiệm JP ↔ VI
+              </Link>
+              <Link href="/vocab/picture" className="btn btn-outline btn-sm">
+                Từ điển tranh
+              </Link>
+              <Link href="/vocab/mindmap" className="btn btn-outline btn-sm">
+                Sơ đồ tư duy
+              </Link>
+            </>
+          )}
         </nav>
         <label className="vocab-lesson-picker__filter">
           <span className="sr-only">Lọc bài</span>
@@ -69,21 +83,18 @@ export default function VocabLessonPickerView({
       ) : (
         groups.map((group) => {
           const lessonCount = group.items.length;
-          const wordCount = group.items.reduce(
-            (sum, l) => sum + (l._count?.vocabularies ?? 0),
-            0,
-          );
+          const itemCount = group.items.reduce((sum, lesson) => sum + (countOf(lesson) ?? 0), 0);
           return (
             <section key={group.key} className="vocab-lesson-picker__group">
               <h3 className="vocab-lesson-picker__group-title">
                 <span>{group.label}</span>
                 <span className="vocab-lesson-picker__group-stats">
-                  {lessonCount} bài · {wordCount.toLocaleString('vi-VN')} từ
+                  {lessonCount} bài · {itemCount.toLocaleString('vi-VN')} {countUnit}
                 </span>
               </h3>
               <div className="vocab-lesson-picker__grid">
                 {group.items.map((lesson) => {
-                  const count = lesson._count?.vocabularies;
+                  const count = countOf(lesson);
                   return (
                     <Link
                       key={lesson.id}
@@ -96,7 +107,7 @@ export default function VocabLessonPickerView({
                       </span>
                       <span className="vocab-lesson-picker__meta">
                         {lesson.jlptLevel ? `${lesson.jlptLevel} · ` : ''}
-                        {count != null ? `${count} từ` : 'Học ngay →'}
+                        {count != null ? `${count} ${countUnit}` : 'Học ngay →'}
                       </span>
                     </Link>
                   );

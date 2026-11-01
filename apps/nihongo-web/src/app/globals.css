@@ -2136,3 +2136,25 @@ select {
   width: fit-content;
   max-width: 100%;
 }
+
+.also-in-books {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.also-in-books__mark {
+  font-size: 0.95rem;
+  line-height: 1;
+}

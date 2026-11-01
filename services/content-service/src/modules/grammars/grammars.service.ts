@@ -9,6 +9,7 @@ import {
   UpdateGrammarDto,
 } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
+import { withAlsoIn } from "../shared/book-overlap";
 
 @Injectable()
 export class GrammarsService {
@@ -42,13 +43,15 @@ export class GrammarsService {
   ) {
     if (jlptLevel || query) {
       const where: Record<string, unknown> = {};
+      let lessonTextbook: string | null = null;
       if (lessonNumber) {
         const lesson = await this.prisma.lesson.findUnique({
           where: { lessonNumber },
-          select: { id: true },
+          select: { id: true, textbook: true },
         });
         if (!lesson) return { data: [], total: 0, page, limit };
         where.lessonId = lesson.id;
+        lessonTextbook = lesson.textbook;
       }
       if (jlptLevel) {
         where.jlptLevel = jlptLevel;
@@ -71,19 +74,24 @@ export class GrammarsService {
         }),
         this.prisma.grammar.count({ where }),
       ]);
-      return { data, total, page, limit };
+      const dataWithBooks = lessonNumber
+        ? await withAlsoIn(this.prisma, "grammar", data, (row) => row.pattern, lessonTextbook)
+        : data;
+      return { data: dataWithBooks, total, page, limit };
     }
 
     let lessonId: number | undefined;
+    let lessonTextbook: string | null = null;
     if (lessonNumber) {
       const lesson = await this.prisma.lesson.findUnique({
         where: { lessonNumber },
-        select: { id: true },
+        select: { id: true, textbook: true },
       });
       if (!lesson) return { data: [], total: 0, page, limit };
       lessonId = lesson.id;
+      lessonTextbook = lesson.textbook;
 
-      const cacheKey = CacheKeys.grammarByLesson(lessonId);
+      const cacheKey = `${CacheKeys.grammarByLesson(lessonId)}:books`;
       const cached = await this.cacheManager.get<{
         data: unknown[];
         total: number;
@@ -107,10 +115,13 @@ export class GrammarsService {
       this.prisma.grammar.count({ where }),
     ]);
 
-    const result = { data, total, page, limit };
+    const dataWithBooks = lessonId
+      ? await withAlsoIn(this.prisma, "grammar", data, (row) => row.pattern, lessonTextbook)
+      : data;
+    const result = { data: dataWithBooks, total, page, limit };
     if (lessonId) {
       await this.cacheManager.set(
-        CacheKeys.grammarByLesson(lessonId),
+        `${CacheKeys.grammarByLesson(lessonId)}:books`,
         result,
         CacheTTL.medium * 1000,
       );

@@ -20,6 +20,7 @@ describe("GrammarsService", () => {
       createMany: jest.Mock;
     };
     $transaction: jest.Mock;
+    $queryRaw: jest.Mock;
   };
   const mockCache = {
     get: jest.fn(),
@@ -43,6 +44,7 @@ describe("GrammarsService", () => {
         createMany: jest.fn(),
       },
       $transaction: jest.fn(),
+      $queryRaw: jest.fn().mockResolvedValue([]),
     };
     mockCache.get.mockResolvedValue(null);
     mockCache.set.mockResolvedValue(undefined);

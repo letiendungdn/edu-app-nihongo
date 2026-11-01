@@ -20,6 +20,7 @@ import {
 } from '../utils/japanese';
 import FlashcardJapaneseText from '../components/FlashcardJapaneseText';
 import KanjiStructureButton from '../components/KanjiStructureButton';
+import AlsoInBooks from '../components/AlsoInBooks';
 import { getVocabExamples } from '../utils/vocabPatternExample';
 import { highlightKeys } from '../utils/grammarHighlight';
 import { isKanji } from '../utils/kanji-structure';
@@ -477,11 +478,14 @@ export default function VocabView({
             >
               <div className={`flashcard-face flashcard-front vocab-card${isLongWord ? ' vocab-card--long' : ''}`}>
                 <div className="vocab-card__top">
-                  <p className="vocab-card__title japanese-text">
-                    {currentVocab.kanji ? `${currentVocab.kanji} - ` : ''}
-                    {currentVocab.kana}
-                    {currentVocab.romaji ? <span className="vocab-card__title-romaji"> ({currentVocab.romaji})</span> : null}
-                  </p>
+                  <div className="vocab-card__heading">
+                    <p className="vocab-card__title japanese-text">
+                      {currentVocab.kanji ? `${currentVocab.kanji} - ` : ''}
+                      {currentVocab.kana}
+                      {currentVocab.romaji ? <span className="vocab-card__title-romaji"> ({currentVocab.romaji})</span> : null}
+                    </p>
+                    <AlsoInBooks books={currentVocab.alsoInTextbooks} />
+                  </div>
                   <span className="vocab-card__watermark" aria-hidden="true">
                     {String(currentIndex + 1).padStart(2, '0')}
                   </span>

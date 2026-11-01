@@ -251,6 +251,13 @@
   opacity: 0.85;
 }
 
+.vocab-word-list-also-in {
+  flex: none;
+  color: var(--primary-color);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .vocab-admin-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3030,6 +3037,14 @@
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
+}
+
+.vocab-card__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .vocab-card__title {

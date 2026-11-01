@@ -21,6 +21,7 @@ describe("VocabulariesService", () => {
       aggregate: jest.Mock;
     };
     $transaction: jest.Mock;
+    $queryRaw: jest.Mock;
   };
   const mockCache = {
     get: jest.fn(),
@@ -41,6 +42,7 @@ describe("VocabulariesService", () => {
         aggregate: jest.fn().mockResolvedValue({ _max: { sortOrder: -1 } }),
       },
       $transaction: jest.fn(),
+      $queryRaw: jest.fn().mockResolvedValue([]),
     };
     mockCache.get.mockResolvedValue(null);
     mockCache.set.mockResolvedValue(undefined);

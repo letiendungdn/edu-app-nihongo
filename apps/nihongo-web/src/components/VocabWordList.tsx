@@ -498,6 +498,11 @@ export default function VocabWordList({
             {vocab.kanji || vocab.kana}
           </span>
           <span className="vocab-word-list-meaning">{vocab.meaning}</span>
+          {vocab.alsoInTextbooks?.length ? (
+            <span className="vocab-word-list-also-in" title={`Trùng với ${vocab.alsoInTextbooks.join(', ')}`}>
+              ⧉
+            </span>
+          ) : null}
           {canEdit && vocab.imageUrl ? (
             <span className="vocab-word-list-has-image" title="Có ảnh minh họa">
               🖼

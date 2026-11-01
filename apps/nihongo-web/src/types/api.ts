@@ -46,6 +46,8 @@ export interface Vocabulary {
   exampleKana?: string | null;
   exampleVi?: string | null;
   examples?: VocabularyExample[];
+  /** Sách khác cũng có mục này. MINNA, KLL, JLPT, SOUMATOME, SHINKANZEN, TRY. */
+  alsoInTextbooks?: string[];
 }
 
 /** Một câu ví dụ của từ (bảng VocabularyExample). */
@@ -80,6 +82,8 @@ export interface Grammar {
   explanation: string | null;
   lessonId: number;
   examples?: GrammarExample[];
+  /** Sách khác cũng có mẫu này. */
+  alsoInTextbooks?: string[];
 }
 
 export interface Exercise {
@@ -130,6 +134,8 @@ export interface KanjiEntry {
   imageUrl?: string | null;
   sortOrder?: number;
   lesson?: { lessonNumber: number; title: string | null; jlptLevel: string | null };
+  /** Sách khác cũng có chữ này. */
+  alsoInTextbooks?: string[];
   vocabularies?: Array<{
     id: number;
     word: string;

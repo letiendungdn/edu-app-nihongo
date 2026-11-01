@@ -8,6 +8,7 @@ import { PrismaService } from "@app/prisma";
 import type { CreateKanjiVocabDto, UpdateKanjiVocabDto } from "@app/contracts";
 import type { CreateKanjiEntryDto, UpdateKanjiEntryDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
+import { withAlsoIn } from "../shared/book-overlap";
 
 function parseJlptLevel(value?: string): JlptLevel | undefined {
   if (!value) return undefined;
@@ -117,7 +118,7 @@ export class KanjiService {
     });
   }
 
-  findEntries(lessonNumber?: number, query?: string, jlptLevel?: string) {
+  async findEntries(lessonNumber?: number, query?: string, jlptLevel?: string) {
     const q = query?.trim();
     const level = parseJlptLevel(jlptLevel);
     const where: Prisma.KanjiEntryWhereInput = {};
@@ -156,11 +157,23 @@ export class KanjiService {
       ];
     }
 
-    return this.prisma.kanjiEntry.findMany({
+    const entries = await this.prisma.kanjiEntry.findMany({
       where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: [{ lesson: { lessonNumber: "asc" } }, { sortOrder: "asc" }],
       include: entryInclude,
     });
+    if (!lessonNumber || entries.length === 0) return entries;
+    const lesson = await this.prisma.kanjiLesson.findUnique({
+      where: { lessonNumber },
+      select: { textbook: true },
+    });
+    return withAlsoIn(
+      this.prisma,
+      "kanji",
+      entries,
+      (row) => row.character,
+      lesson?.textbook,
+    );
   }
 
   findOne(id: number) {

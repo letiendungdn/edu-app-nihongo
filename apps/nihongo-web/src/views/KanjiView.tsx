@@ -15,6 +15,7 @@ import SpeakerIcon from '../components/SpeakerIcon';
 import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
+import AlsoInBooks from '../components/AlsoInBooks';
 import KanjiVocabSidepanel from '../components/KanjiVocabSidepanel';
 import { KANJI_BOOK_LABELS } from './KanjiLessonPickerView';
 import { toLocalImageUrl } from '@edu/vocab-images';
@@ -462,6 +463,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                     <span className="kanji-ll__hanviet">{currentKanji.hanViet.toUpperCase()}</span>
                   ) : null}
                   <KanjiStructureButton text={currentKanji.character} withLabel />
+                  <AlsoInBooks books={currentKanji.alsoInTextbooks} />
                 </div>
               </section>
 

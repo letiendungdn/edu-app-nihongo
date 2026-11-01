@@ -5,6 +5,7 @@ import { PrismaService } from "@app/prisma";
 import { CacheKeys, CacheTTL } from "@app/common";
 import { CreateVocabularyDto, UpdateVocabularyDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
+import { withAlsoIn } from "../shared/book-overlap";
 
 /** Câu ví dụ nằm ở bảng VocabularyExample; đọc kèm theo thứ tự hiển thị. */
 const EXAMPLES_INCLUDE = {
@@ -233,13 +234,15 @@ export class VocabulariesService {
 
     if (jlptLevel || query) {
       const where: Record<string, unknown> = {};
+      let lessonTextbook: string | null = null;
       if (lessonNumber) {
         const lesson = await this.prisma.lesson.findUnique({
           where: { lessonNumber },
-          select: { id: true },
+          select: { id: true, textbook: true },
         });
         if (!lesson) return { data: [], total: 0, page, limit };
         where.lessonId = lesson.id;
+        lessonTextbook = lesson.textbook;
       }
       if (jlptLevel) {
         where.jlptLevel = jlptLevel;
@@ -257,19 +260,24 @@ export class VocabulariesService {
         }),
         this.prisma.vocabulary.count({ where }),
       ]);
-      return { data: data.map(withExampleFields), total, page, limit };
+      const dataWithBooks = lessonNumber
+        ? await withAlsoIn(this.prisma, "vocab", data.map(withExampleFields), (row) => row.kana, lessonTextbook)
+        : data.map(withExampleFields);
+      return { data: dataWithBooks, total, page, limit };
     }
 
     let lessonId: number | undefined;
+    let lessonTextbook: string | null = null;
     if (lessonNumber) {
       const lesson = await this.prisma.lesson.findUnique({
         where: { lessonNumber },
-        select: { id: true },
+        select: { id: true, textbook: true },
       });
       if (!lesson) return { data: [], total: 0, page, limit };
       lessonId = lesson.id;
+      lessonTextbook = lesson.textbook;
 
-      const cacheKey = CacheKeys.vocabByLesson(lessonId);
+      const cacheKey = `${CacheKeys.vocabByLesson(lessonId)}:books`;
       const cached = await this.cacheManager.get<{
         data: unknown[];
         total: number;
@@ -293,10 +301,14 @@ export class VocabulariesService {
       this.prisma.vocabulary.count({ where }),
     ]);
 
-    const result = { data: rows.map(withExampleFields), total, page, limit };
+    const mapped = rows.map(withExampleFields);
+    const data = lessonId
+      ? await withAlsoIn(this.prisma, "vocab", mapped, (row) => row.kana, lessonTextbook)
+      : mapped;
+    const result = { data, total, page, limit };
     if (lessonId) {
       await this.cacheManager.set(
-        CacheKeys.vocabByLesson(lessonId),
+        `${CacheKeys.vocabByLesson(lessonId)}:books`,
         result,
         CacheTTL.medium * 1000,
       );

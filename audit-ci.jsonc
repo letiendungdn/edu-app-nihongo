@@ -1,6 +1,7 @@
 {
   // CI chặn khi có lỗ hổng HIGH hoặc CRITICAL trong dependency production (npm audit --omit=dev).
-  // next ≥15.5.28, postcss 8.5.30, source-map-js 1.2.2, follow-redirects 1.16.1,
+  // next ≥15.5.28, postcss 8.5.30, source-map-js 1.2.2, follow-redirects 1.16.2,
+  // joi 17.13.9, node-forge 1.4.2, systeminformation 5.33.19,
   // launch-editor 2.14.2, body-parser 2.4.0, dompurify 3.4.17, multer 2.5.0,
   // undici 7.30.1 (override) — xem docs/learn-security-backend.md.
   // Mức moderate chỉ theo dõi, không chặn.
@@ -10,12 +11,13 @@
   "skip-dev": true,
   "report-type": "summary",
   "allowlist": [
-    // node-forge ≤1.4.0 — chưa có bản vá (GHSA-86w9-cpqp-85rv / CVE-2026-85393).
-    // Kéo vào qua Expo / @parse/node-apn / google-signin (mobile). Gỡ khi forge >1.4.0.
-    "GHSA-86w9-cpqp-85rv",
     // zod 3.25.76 qua @expo/cli@57 (khai báo zod ^3.25.76). Bản vá GHSA-mrhx-c7xc-m3w5
     // nằm ở zod 4.6.6 ($ZodArray); ép zod 4 làm hỏng Expo CLI. Gỡ khi @expo/cli
     // phụ thuộc zod >= 4.6.6.
-    "GHSA-mrhx-c7xc-m3w5"
+    "GHSA-mrhx-c7xc-m3w5",
+    // decode-uri-component <0.5.1 qua expo-router > query-string@7 (^0.2.2).
+    // Bản vá 0.5.1 là ESM-only; ép override làm hỏng require() của Expo Router.
+    // Gỡ khi query-string phụ thuộc decode-uri-component >= 0.5.1.
+    "GHSA-qr28-fpjm-wq7f"
   ]
 }

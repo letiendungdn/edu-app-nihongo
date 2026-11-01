@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   grammarExampleRomaji,
@@ -20,6 +21,7 @@ import {
 import type { Grammar } from '../types/api';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
+import AlsoInBooks from '../components/AlsoInBooks';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
@@ -197,6 +199,7 @@ export default function GrammarView({
   hideLessonSelector?: boolean;
   startInEditMode?: boolean;
 } = {}) {
+  const router = useRouter();
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [autoRead, setAutoRead] = useState(false);
   const [speechFocus, setSpeechFocus] = useState<SpeechFocus | null>(null);
@@ -209,6 +212,13 @@ export default function GrammarView({
   const { data: lessonGrammar = [], isLoading: loading } = useGrammar(currentLesson);
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const [editMode, setEditMode] = useState(Boolean(startInEditMode));
+
+  const goToLesson = (next: number) => {
+    setCurrentLesson(next);
+    if (!hideLessonSelector) {
+      router.replace(`/grammar?lesson=${next}`, { scroll: false });
+    }
+  };
 
   useEffect(() => {
     if (initialLessonNumber != null && initialLessonNumber > 0) {
@@ -603,6 +613,8 @@ export default function GrammarView({
             </h2>
             <TextbookFrameworkNote textbook={currentLessonMeta?.textbook} />
             <p className="grammar-lesson-links">
+              <Link href="/grammar">← Chọn bài</Link>
+              {' · '}
               <Link href="/grammar-srs">Ôn mẫu đã ghim</Link>
               {' · '}
               <Link href="/grammar/mindmap">Sơ đồ tư duy N5–N1</Link>
@@ -618,7 +630,7 @@ export default function GrammarView({
                 type="button"
                 className="grammar-lesson-step"
                 disabled={prevLesson == null}
-                onClick={() => prevLesson != null && setCurrentLesson(prevLesson)}
+                onClick={() => prevLesson != null && goToLesson(prevLesson)}
                 aria-label="Bài trước"
               >
                 ‹
@@ -626,14 +638,14 @@ export default function GrammarView({
               <LessonSelector
                 id="grammar-lesson-select"
                 value={currentLesson}
-                onChange={setCurrentLesson}
+                onChange={goToLesson}
                 countKind="grammar"
               />
               <button
                 type="button"
                 className="grammar-lesson-step"
                 disabled={nextLesson == null}
-                onClick={() => nextLesson != null && setCurrentLesson(nextLesson)}
+                onClick={() => nextLesson != null && goToLesson(nextLesson)}
                 aria-label="Bài sau"
               >
                 ›
@@ -776,6 +788,7 @@ export default function GrammarView({
                   <h3 className="grammar-pattern japanese-text">
                     {renderSegments(highlightKeys(grammar.pattern, patternKeys), 'pat')}
                   </h3>
+                  <AlsoInBooks books={grammar.alsoInTextbooks} />
                   {grammar.id != null && (
                     <button
                       type="button"
