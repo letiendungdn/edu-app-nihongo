@@ -938,6 +938,22 @@ model KanjiEntry {
   @@index([jlptLevel])
 }
 
+/// Thành phần / bộ thủ trong cây cấu tạo KanjiVG (亻, 氵, 艹, 袁…) — tên Hán Việt, nghĩa, tên gọi Nhật.
+/// `component` là chữ KanjiVG ghi trong kvg:element / kvg:original (hoặc mã CHISE như CDP-8BC4).
+model KanjiComponent {
+  id        Int      @id @default(autoincrement())
+  component String   @unique
+  hanViet   String
+  meaningVi String
+  nameJp    String?
+  /// Dạng gốc khi đây là biến thể (亻 → 人)
+  baseChar  String?
+  /// Là một trong 214 bộ thủ Khang Hy (hoặc biến thể của bộ)
+  isRadical Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model KanjiVocab {
   id           Int         @id @default(autoincrement())
   word         String

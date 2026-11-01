@@ -9,6 +9,7 @@ import type {
   Exercise,
   Grammar,
   JlptDaNangSchedule,
+  KanjiComponent,
   KanjiEntry,
   KanjiLesson,
   KatakanaVocabulary,
@@ -301,6 +302,10 @@ export async function fetchKanjiEntriesRange(
   return batches.flatMap((list, index) =>
     list.map((entry) => ({ ...entry, lessonNumber: lessonNumbers[index] })),
   );
+}
+
+export function fetchKanjiComponents() {
+  return apiRequest<KanjiComponent[]>('/kanji-components');
 }
 
 export function fetchKanjiSearch(query: string) {

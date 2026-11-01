@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyMinnaWord, compactKana } from './minnaWordClass';
+import { classifyMinnaWord, compactKana, parseStoredWordClass } from './minnaWordClass';
 
 describe('classifyMinnaWord', () => {
   it('nhận động từ dạng ます', () => {
@@ -43,5 +43,16 @@ describe('compactKana', () => {
   it('bỏ khoảng trắng và đánh dấu ［な］', () => {
     expect(compactKana('せが たかい')).toBe('せがたかい');
     expect(compactKana('きれい［な］')).toBe('きれい');
+  });
+
+  it('reads Vietnamese part-of-speech labels stored in the DB', () => {
+    expect(parseStoredWordClass('danh từ')).toBe('noun');
+    expect(parseStoredWordClass('danh từ, động từ する')).toBe('noun');
+    expect(parseStoredWordClass('động từ nhóm 2')).toBe('verb');
+    expect(parseStoredWordClass('tính từ i')).toBe('i-adj');
+    expect(parseStoredWordClass('tính từ na, phó từ')).toBe('na-adj');
+    expect(parseStoredWordClass('cụm động từ')).toBe('other');
+    expect(parseStoredWordClass('phó từ')).toBe('other');
+    expect(parseStoredWordClass('')).toBeNull();
   });
 });

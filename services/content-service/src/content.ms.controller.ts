@@ -170,6 +170,8 @@ export class ContentMsController implements OnModuleInit {
         this.updateKanjiVocab(data as { id: number; dto: UpdateKanjiVocabDto }),
       [CONTENT_PATTERNS.DELETE_KANJI_VOCAB]: (data) =>
         this.deleteKanjiVocab(data as { id: number }),
+      [CONTENT_PATTERNS.GET_KANJI_COMPONENTS]: () =>
+        this.kanjiService.findComponents(),
       [CONTENT_PATTERNS.REORDER_KANJI_VOCAB]: (data) =>
         this.reorderKanjiVocab(
           data as { kanjiEntryId: number; orderedIds: number[] },

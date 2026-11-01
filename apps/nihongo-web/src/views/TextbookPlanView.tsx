@@ -197,8 +197,10 @@ export default function TextbookPlanView({
         <div>
           <h1 className="view-title">Học theo giáo trình</h1>
           <p className="tbp-subtitle">
-            Bài học trong app được xếp theo khung của từng bộ sách. Dùng sách
-            song song, ghi số trang vào từng buổi.
+            Bài học trong app được xếp theo khung của từng bộ sách. Với Sou Matome,
+            Shinkanzen và TRY!, nội dung là kho JLPT chung của app sắp theo lịch học
+            của sách — không phải nội dung gốc. Dùng sách song song, ghi số trang vào
+            từng buổi.
           </p>
         </div>
         <Link href="/grammar/mindmap" className="btn btn-outline">

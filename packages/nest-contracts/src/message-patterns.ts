@@ -33,6 +33,7 @@ export const CONTENT_PATTERNS = {
   UPDATE_KANJI_VOCAB: 'content.kanji-vocab.update',
   DELETE_KANJI_VOCAB: 'content.kanji-vocab.delete',
   REORDER_KANJI_VOCAB: 'content.kanji-vocab.reorder',
+  GET_KANJI_COMPONENTS: 'content.kanji-components.findAll',
   GET_LISTENING_PLAYLIST: 'content.listening.playlist',
   IMPORT_VOCAB: 'content.import.vocab',
   GET_REFERENCE_LIST: 'content.reference.findAll',

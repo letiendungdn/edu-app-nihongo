@@ -19,6 +19,7 @@ import {
 } from '../utils/speech';
 import type { Grammar } from '../types/api';
 import LessonSelector from '../components/LessonSelector';
+import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
@@ -341,7 +342,8 @@ export default function GrammarView({
   const prevLesson = lessonPos > 0 ? lessonNumbers[lessonPos - 1] : null;
   const nextLesson =
     lessonPos >= 0 && lessonPos < lessonNumbers.length - 1 ? lessonNumbers[lessonPos + 1] : null;
-  const lessonBadge = String(currentLesson).padStart(2, '0');
+  // Số mờ trên thẻ: thứ tự bài trong danh sách (sách luyện thi có mã bài 5 chữ số như 23101)
+  const lessonBadge = String(lessonPos >= 0 ? lessonPos + 1 : currentLesson).padStart(2, '0');
   const titleParts = splitLessonHeading(viewTitle);
 
   const handlePlayAllWithExamples = () => {
@@ -599,6 +601,7 @@ export default function GrammarView({
                 </>
               ) : null}
             </h2>
+            <TextbookFrameworkNote textbook={currentLessonMeta?.textbook} />
             <p className="grammar-lesson-links">
               <Link href="/grammar-srs">Ôn mẫu đã ghim</Link>
               {' · '}

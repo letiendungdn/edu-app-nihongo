@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
 import LessonSelector from '../components/LessonSelector';
+import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
 import VocabWordList from '../components/VocabWordList';
 import { usePlayAll } from '../hooks/usePlayAll';
@@ -290,6 +291,7 @@ export default function VocabView({
     <div className="vocab-header vocab-header--compact">
       <div className="vocab-topbar">
         <h2 className="view-title vocab-topbar__title">{vocabTitle}</h2>
+        <TextbookFrameworkNote textbook={currentLessonMeta?.textbook} />
         <nav className="vocab-topbar__links" aria-label="Công cụ từ vựng">
           <Link href="/vocab" className="btn btn-outline btn-sm vocab-chip">
             <span className="vocab-chip__icon" aria-hidden="true">←</span>

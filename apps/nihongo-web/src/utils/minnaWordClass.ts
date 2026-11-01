@@ -126,13 +126,24 @@ export function compactKana(kana: string): string {
     .trim();
 }
 
+/**
+ * Loại từ lưu trong DB: id tiếng Anh ('noun', 'verb'…) hoặc nhãn tiếng Việt
+ * ("danh từ", "động từ nhóm 1", "danh từ, động từ する"…). Nhãn nhiều loại lấy loại đầu tiên.
+ */
 export function parseStoredWordClass(
   value: string | null | undefined,
 ): MinnaWordClass | null {
   if (WORD_CLASS_TABS.some((tab) => tab.id === value)) {
     return value as MinnaWordClass;
   }
-  return null;
+  const first = value?.split(',')[0]?.trim().toLowerCase();
+  if (!first) return null;
+  if (first.startsWith('danh từ')) return 'noun';
+  if (first.startsWith('tính từ i')) return 'i-adj';
+  if (first.startsWith('tính từ na')) return 'na-adj';
+  if (first.startsWith('động từ')) return 'verb';
+  // cụm từ, cụm động từ, phó từ, trợ từ, thán từ, hậu tố…
+  return 'other';
 }
 
 export function classifyMinnaWord(input: {

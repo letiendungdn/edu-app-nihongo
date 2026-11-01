@@ -42,6 +42,7 @@ async function clearContentTables(prisma: PrismaClient) {
   await prisma.grammar.deleteMany();
   await prisma.vocabulary.deleteMany();
   await prisma.kanjiVocab.deleteMany();
+  await prisma.kanjiComponent.deleteMany();
   await prisma.kanjiEntry.deleteMany();
   await prisma.kanjiLesson.deleteMany();
   await prisma.readingQuestionOption.deleteMany();

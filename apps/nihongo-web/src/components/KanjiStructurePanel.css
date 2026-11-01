@@ -108,6 +108,59 @@
   text-align: center;
 }
 
+.ks-lookup-status {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.ks-lookup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ks-lookup-item {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.7rem;
+  background: var(--surface-color);
+  color: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+button.ks-lookup-item {
+  cursor: pointer;
+}
+
+button.ks-lookup-item:hover {
+  border-color: var(--primary-color);
+}
+
+.ks-lookup-word {
+  flex: none;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.ks-lookup-kana {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.ks-lookup-meaning {
+  min-width: 0;
+  color: var(--text-primary);
+}
+
 /* ══ Panel phân tích ══════════════════════════════════════════════════════
    Mỗi thành phần cấp 1 một màu (ks-c0…c3), dùng chung cho nét trên chữ,
    công thức và thẻ thành phần. Bố cục 2 cột theo độ rộng KHUNG CHỨA (container
@@ -169,6 +222,19 @@
   gap: 0.85rem;
   padding: 1rem;
   border-radius: var(--ks-radius);
+}
+
+.ks-glyph-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+}
+
+.ks-glyph-wrap .ks-comp-audio {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 1;
 }
 
 .ks-glyph {
@@ -387,6 +453,15 @@
   font-size: 0.75em;
 }
 
+.ks-formula-char {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
 .ks-formula-part {
   padding: 0.2rem 0.4rem;
   border-radius: 0.6rem;
@@ -537,7 +612,28 @@
 }
 
 .ks-comp-title-wrap {
+  flex: 1;
   min-width: 0;
+}
+
+.ks-comp-audio {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.ks-comp-audio:hover {
+  filter: brightness(1.08);
 }
 
 .ks-comp-title {
@@ -666,6 +762,12 @@
   font-size: 0.72rem;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+.ks-sub-row .ks-comp-audio {
+  width: 1.65rem;
+  height: 1.65rem;
+  margin-left: 0.15rem;
 }
 
 .ks-node-char {

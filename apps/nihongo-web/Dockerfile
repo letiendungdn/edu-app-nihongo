@@ -28,11 +28,11 @@ FROM node:22-alpine AS runner
 RUN apk add --no-cache libc6-compat ffmpeg
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=5173
+ENV PORT=8080
 ENV HOSTNAME=0.0.0.0
 ENV API_URL=http://api-gateway:3000
 COPY --from=builder /app/apps/nihongo-web/.next/standalone ./
 COPY --from=builder /app/apps/nihongo-web/.next/static ./apps/nihongo-web/.next/static
 COPY --from=builder /app/apps/nihongo-web/public ./apps/nihongo-web/public
-EXPOSE 5173
+EXPOSE 8080
 CMD ["node", "apps/nihongo-web/server.js"]

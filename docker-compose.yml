@@ -412,8 +412,6 @@ services:
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     container_name: edu-nihongo-web
     restart: unless-stopped
-    ports:
-      - '5173:5173'
     environment:
       API_URL: http://api-gateway:3000
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
@@ -429,7 +427,7 @@ services:
       - ${MORI_COURSE_DIR:-./apps/nihongo-web/public/media/mori-course}:/media/mori-course:ro
       - mori_hls_cache:/tmp/mori-hls
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:5173/ || exit 1']
+      test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:8080/ || exit 1']
       interval: 15s
       timeout: 5s
       retries: 5

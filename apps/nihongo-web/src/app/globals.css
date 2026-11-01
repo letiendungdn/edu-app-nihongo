@@ -2122,3 +2122,17 @@ select {
 .app-sidebar__bottom .theme-toggle__label {
   font-size: 0.82rem;
 }
+
+/* Ghi chú "theo khung sách" cho bài Sou Matome / Shinkanzen / TRY! */
+.textbook-framework-note {
+  margin: 0;
+  padding: 0.35rem 0.85rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--color-warning) 55%, transparent);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  width: fit-content;
+  max-width: 100%;
+}

@@ -99,6 +99,22 @@ export interface KanjiLesson {
   textbook?: string | null;
   sortOrder?: number;
   _count?: { entries: number };
+  /** Vài chữ đầu của bài (xem trước trên bảng chọn bài) */
+  entries?: Array<{ character: string }>;
+}
+
+/** Thành phần / bộ thủ trong cây cấu tạo KanjiVG (bảng KanjiComponent). */
+export interface KanjiComponent {
+  /** Chữ KanjiVG ghi ở kvg:element / kvg:original (hoặc mã CHISE CDP-…) */
+  component: string;
+  hanViet: string;
+  meaningVi: string;
+  /** Tên gọi tiếng Nhật của bộ (にんべん…) */
+  nameJp: string | null;
+  /** Dạng gốc khi đây là biến thể (亻 → 人) */
+  baseChar: string | null;
+  /** Bộ thủ Khang Hy hoặc biến thể của bộ */
+  isRadical: boolean;
 }
 
 export interface KanjiEntry {

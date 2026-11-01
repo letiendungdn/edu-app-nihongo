@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LessonSelector from '../components/LessonSelector';
+import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
 import StrokeOrder from '../components/StrokeOrder';
 import VocabPicture from '../components/VocabPicture';
@@ -363,6 +364,7 @@ export default function VocabLessonListView({
                 </>
               ) : null}
             </h1>
+            <TextbookFrameworkNote textbook={lesson?.textbook} />
             <p className="vocab-lesson-list__meta">
               {lesson ? lessonShortLabel(lesson) : `Bài ${lessonNumber}`}
               {words.length > 0 ? ` · ${words.length} từ` : ''}

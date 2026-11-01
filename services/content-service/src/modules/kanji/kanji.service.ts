@@ -40,6 +40,12 @@ export class KanjiService {
         _count: {
           select: { entries: true },
         },
+        // Vài chữ đầu của bài — hiện xem trước trên bảng chọn bài
+        entries: {
+          select: { character: true },
+          orderBy: { sortOrder: "asc" },
+          take: 8,
+        },
       },
     });
   }
@@ -94,6 +100,21 @@ export class KanjiService {
       );
     }
     return this.prisma.kanjiLesson.delete({ where: { id } });
+  }
+
+  /** Bảng thành phần / bộ thủ cho màn cấu tạo kanji (vài trăm dòng — trả hết một lần). */
+  findComponents() {
+    return this.prisma.kanjiComponent.findMany({
+      select: {
+        component: true,
+        hanViet: true,
+        meaningVi: true,
+        nameJp: true,
+        baseChar: true,
+        isRadical: true,
+      },
+      orderBy: { component: 'asc' },
+    });
   }
 
   findEntries(lessonNumber?: number, query?: string, jlptLevel?: string) {

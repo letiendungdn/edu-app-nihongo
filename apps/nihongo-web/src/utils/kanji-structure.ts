@@ -31,18 +31,59 @@ export function isCodedElement(value: string): boolean {
 }
 
 /**
- * Chữ dùng để vẽ một nút. Mã không có Unicode được thay bằng các thành phần con
- * (CDP-8BC4 trong 原 là 白 trên 小).
+ * Bảng ghi đè chi tiết cấu tạo cho các chữ bị KanjiVG phân tích sai.
  */
-export function componentParts(node: KanjiNode): string[] {
+const KANJI_OVERRIDE_LABELS: Record<string, string> = {
+  '師': 'Phần trên (biến thể của 方) + 巾',
+  '行': '彳 (Xích) + 亍 (Xúc)',
+};
+
+/**
+ * Bảng ghi đè thành phần con để tránh bị phân tích sai thành các nét đơn.
+ */
+const KANJI_OVERRIDE_COMPONENTS: Record<string, string[]> = {
+  '師': ['Phần trên (biến thể của 方)', '巾'],
+  '行': ['彳', '亍'],
+};
+
+/**
+ * Chữ dùng để vẽ một nút.
+ */
+export function componentParts(node: KanjiNode, rootChar?: string): string[] {
+  // Nếu là nút gốc và có trong bảng ghi đè thành phần, trả về các thành phần đúng.
+  if (rootChar && KANJI_OVERRIDE_COMPONENTS[rootChar] && node.id === '') {
+    return KANJI_OVERRIDE_COMPONENTS[rootChar];
+  }
+
+  // Nếu chữ chính bị lỗi phân tích, chúng ta không cho phép phân tích sâu hơn các nút con
+  // để tránh hiện ra các nét đơn lẻ như 丿, 丨.
+  if (rootChar && KANJI_OVERRIDE_COMPONENTS[rootChar]) {
+    const raw = node.e ?? '';
+    if (raw && !isCodedElement(raw)) return [raw];
+    if (node.o && !isCodedElement(node.o)) return [node.o];
+    
+    // Đối với các nút con của chữ bị override, ta chỉ lấy những thành phần có nghĩa 
+    // và tránh đệ quy sâu vào các nhóm nét đơn.
+    const children = meaningfulChildren(node);
+    if (children.length > 0) {
+        const parts = children.flatMap(c => c.e ? [c.e] : []);
+        if (parts.length > 0) return parts;
+    }
+    return [];
+  }
+
   const raw = node.e ?? '';
   if (raw && !isCodedElement(raw)) return [raw];
   if (node.o && !isCodedElement(node.o)) return [node.o];
-  return meaningfulChildren(node).flatMap(componentParts);
+  return meaningfulChildren(node).flatMap((n) => componentParts(n, rootChar));
 }
 
-export function componentLabel(node: KanjiNode): string {
-  const parts = componentParts(node);
+export function componentLabel(node: KanjiNode, rootChar?: string): string {
+  if (rootChar && KANJI_OVERRIDE_LABELS[rootChar] && node.id === '') {
+    return KANJI_OVERRIDE_LABELS[rootChar];
+  }
+  
+  const parts = componentParts(node, rootChar);
   return parts.length > 0 ? parts.join('+') : '';
 }
 
@@ -169,3 +210,18 @@ export function buildReverseIndex(index: KanjiComponentIndex): Map<string, strin
   }
   return new Map([...map].map(([k, v]) => [k, [...v]]));
 }
+
+/** Vị trí thành phần theo KanjiVG → nhãn tiếng Việt */
+export const KANJI_POSITION_LABEL: Record<string, { vi: string; jp: string }> = {
+  left: { vi: 'Bên trái', jp: '偏 へん' },
+  right: { vi: 'Bên phải', jp: '旁 つくり' },
+  top: { vi: 'Phía trên', jp: '冠 かんむり' },
+  bottom: { vi: 'Phía dưới', jp: '脚 あし' },
+  tare: { vi: 'Che trên – trái', jp: '垂 たれ' },
+  tarec: { vi: 'Bên trong (dưới 垂)', jp: '' },
+  nyo: { vi: 'Bao dưới – trái', jp: '繞 にょう' },
+  nyoc: { vi: 'Bên trong (trên 繞)', jp: '' },
+  kamae: { vi: 'Bao quanh', jp: '構 かまえ' },
+  kamaec: { vi: 'Bên trong (giữa 構)', jp: '' },
+  middle: { vi: 'Ở giữa', jp: '' },
+};

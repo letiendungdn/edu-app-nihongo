@@ -5,7 +5,7 @@
 TABLES="
 TextbookSeries TextbookBook
 Lesson Vocabulary VocabularyExample Grammar Example Exercise ExerciseOption
-KanjiLesson KanjiEntry KanjiVocab
+KanjiLesson KanjiEntry KanjiVocab KanjiComponent
 KanaSection KanaCell KanaRomaji
 CounterCategory CounterItem
 PronunciationRulesMeta PronunciationRuleTip PronunciationRuleSection PronunciationRulePoint PronunciationRuleExample

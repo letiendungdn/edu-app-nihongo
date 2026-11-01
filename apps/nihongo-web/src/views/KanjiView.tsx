@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { loadSpeechVoices, playAudio, playAudioSequence, stopAudio } from '../utils/speech';
 import PlayAllButton from '../components/PlayAllButton';
@@ -13,7 +14,9 @@ import {
 import SpeakerIcon from '../components/SpeakerIcon';
 import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
+import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import KanjiVocabSidepanel from '../components/KanjiVocabSidepanel';
+import { KANJI_BOOK_LABELS } from './KanjiLessonPickerView';
 import { toLocalImageUrl } from '@edu/vocab-images';
 import { getKanjiSpeakItems, splitKanjiReadingField, type KanjiReadingToken } from '../utils/kanjiSpeak';
 import type { KanjiEntry, KanjiLesson } from '../types/api';
@@ -41,6 +44,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
   >(null);
   const cardAudioGen = useRef(0);
 
+  const router = useRouter();
   const { data: lessons = [] } = useKanjiLessonsQuery();
   const { data: lessonKanji = [], isLoading: loading } = useKanjiEntriesQuery(currentLesson);
   const { data: searchResults = [], isFetching: searching } = useKanjiSearchQuery(searchQuery);
@@ -86,11 +90,17 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     setSearchQuery('');
   };
 
+  // Đổi bài thì đổi cả URL: tải lại trang vẫn đúng bài, nút ← Chọn bài về lại bảng chọn
+  const selectLesson = (lessonNumber: number) => {
+    setCurrentLesson(lessonNumber);
+    router.replace(`/kanji?lesson=${lessonNumber}`, { scroll: false });
+  };
+
   const handleSelectSearchResult = (entry: KanjiEntry) => {
     const lessonNumber = entry.lesson?.lessonNumber;
     if (!lessonNumber) return;
     setPendingKanjiId(entry.id);
-    setCurrentLesson(lessonNumber);
+    selectLesson(lessonNumber);
     handleClearSearch();
   };
 
@@ -240,6 +250,11 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
   const lessonOptions = lessons.length
     ? lessons
     : Array.from({ length: 32 }, (_, i) => ({ lessonNumber: i + 1 } as KanjiLesson));
+  const kanjiBookTitle = currentLessonMeta?.textbook
+    ? KANJI_BOOK_LABELS[currentLessonMeta.textbook] ?? 'Kanji'
+    : currentLessonMeta
+      ? `Kanji JLPT ${currentLessonMeta.jlptLevel ?? ''}`.trim()
+      : 'Kanji';
   const kanjiOrder = String(currentIndex + 1).padStart(2, '0');
   const onyomi = currentKanji ? splitKanjiReadingField(currentKanji.onyomi) : [];
   const kunyomi = currentKanji ? splitKanjiReadingField(currentKanji.kunyomi) : [];
@@ -319,8 +334,12 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     <div className="container kanji-ll">
       <header className="kanji-ll__top">
         <div className="kanji-ll__intro">
-          <h2 className="view-title kanji-ll__title">Kanji Look and Learn</h2>
+          <h2 className="view-title kanji-ll__title">{kanjiBookTitle}</h2>
+          <TextbookFrameworkNote textbook={currentLessonMeta?.textbook} />
           <nav className="kanji-ll__links" aria-label="Công cụ kanji">
+            <Link href="/kanji" className="btn btn-outline btn-sm kanji-ll__chip">
+              <span aria-hidden="true">←</span> Chọn bài
+            </Link>
             <Link href="/kanji/quiz" className="btn btn-outline btn-sm kanji-ll__chip">
               <span aria-hidden="true">📝</span> Trắc nghiệm Kanji
             </Link>
@@ -336,12 +355,12 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
             <select
               id="kanji-lesson-select"
               value={currentLesson}
-              onChange={(e) => setCurrentLesson(Number(e.target.value))}
+              onChange={(e) => selectLesson(Number(e.target.value))}
               className="select-input"
             >
               {lessonOptions.map((lesson) => (
                 <option key={lesson.lessonNumber} value={lesson.lessonNumber}>
-                  Bài {lesson.lessonNumber}
+                  {lesson.title?.trim() || `Bài ${lesson.lessonNumber}`}
                   {lesson.jlptLevel ? ` (${lesson.jlptLevel})` : ''}
                   {lesson._count ? ` — ${lesson._count.entries} kanji` : ''}
                 </option>

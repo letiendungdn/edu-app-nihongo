@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchKanjiSearch } from '../api';
-import type { KanjiEntry } from '../types/api';
+import SpeakerIcon from './SpeakerIcon';
+import { playAudio, speakJapaneseThenMeaning } from '../utils/speech';
+import type { KanjiComponent, KanjiEntry } from '../types/api';
 import {
-  KANJI_COMPONENT_INFO,
+  fetchKanjiSvg,
+  loadComponentIndex,
+  loadComponentInfo,
+  type ComponentInfoMap,
+} from '../utils/kanji-structure-fetch';
+import {
   KANJI_POSITION_LABEL,
-  type KanjiComponentInfo,
-} from '../data/kanji-component-info';
-import { fetchKanjiSvg, loadComponentIndex } from '../utils/kanji-structure-fetch';
-import {
   buildReverseIndex,
   focusGroupIds,
   isKanji,
@@ -140,10 +143,15 @@ function LayoutIcon({ symbol }: { symbol: string }) {
 
 type EntryMap = Record<string, KanjiEntry | null>;
 
+/** Dữ liệu tra cứu: bảng thành phần (KanjiComponent) + KanjiEntry của các chữ độc lập. */
+interface Lookup {
+  parts: ComponentInfoMap;
+  entries: EntryMap;
+}
+
 function componentKey(node: KanjiNode): string {
   return node.e ?? node.o ?? '';
 }
-
 /** Chữ hiện trên nút. Mã CHISE (CDP-…) thay bằng các thành phần con, ví dụ 白 trên 小. */
 function NodeChar({ node }: { node: KanjiNode }) {
   const parts = componentParts(node);
@@ -159,16 +167,37 @@ function NodeChar({ node }: { node: KanjiNode }) {
   return <span className="ks-node-char japanese-text">{parts[0] ?? componentLabel(node)}</span>;
 }
 
-function describe(char: string, entries: EntryMap): { title: string; meaning: string } | null {
-  const info: KanjiComponentInfo | undefined = KANJI_COMPONENT_INFO[char];
+/** Tiếng Nhật để đọc (tên bộ), kèm nghĩa tiếng Việt nếu có. */
+function componentSpeech(char: string, lookup: Lookup): { ja: string; vi?: string } {
+  const info = lookup.parts[char];
+  if (info?.nameJp) return { ja: info.nameJp.replace(/-/g, '').trim(), vi: info.meaningVi };
+  const entry = lookup.entries[char];
+  const reading = (entry?.kunyomi || entry?.onyomi || '')
+    .split(/[,、;／/]+/)[0]
+    ?.replace(/-/g, '')
+    .trim();
+  return { ja: reading || char, vi: entry?.meaningVi || info?.meaningVi || undefined };
+}
+
+function speakComponent(char: string, lookup: Lookup) {
+  const { ja, vi } = componentSpeech(char, lookup);
+  if (!ja) return;
+  if (vi) speakJapaneseThenMeaning(ja, vi);
+  else playAudio(ja);
+}
+
+function componentTitle(info: KanjiComponent): string {
+  const name = info.isRadical ? `Bộ ${info.hanViet}` : info.hanViet;
+  return info.nameJp ? `${name} (${info.nameJp})` : name;
+}
+
+function describe(char: string, lookup: Lookup): { title: string; meaning: string } | null {
+  const info = lookup.parts[char];
   if (info) {
-    const base = info.base ? ` · dạng biến thể của ${info.base}` : '';
-    return {
-      title: `Bộ ${info.hv}${info.jp ? ` (${info.jp})` : ''}`,
-      meaning: `${info.vi}${base}`,
-    };
+    const base = info.baseChar ? ` · dạng biến thể của ${info.baseChar}` : '';
+    return { title: componentTitle(info), meaning: `${info.meaningVi}${base}` };
   }
-  const entry = entries[char];
+  const entry = lookup.entries[char];
   if (entry) {
     return {
       title: entry.hanViet ? entry.hanViet.toUpperCase() : char,
@@ -176,6 +205,23 @@ function describe(char: string, entries: EntryMap): { title: string; meaning: st
     };
   }
   return null;
+}
+
+const KANA = /^[\u3040-\u30ff]+$/;
+
+/**
+ * Nghĩa của một nút trong cây. KanjiVG ghi thêm dạng gốc (kvg:original) khi thành phần
+ * chỉ trông giống chữ khác: 儿←八 (具), 月←肉 (腕), 王←玉 (理). Khi đó nghĩa lấy theo dạng gốc —
+ * trừ biến thể đã khai báo đúng gốc (亻←人) và gốc chỉ là hình nét kana (⺍←つ).
+ */
+function describeNode(node: KanjiNode, lookup: Lookup): { title: string; meaning: string } | null {
+  const key = componentKey(node);
+  const orig = node.o && node.o !== key && !KANA.test(node.o) ? node.o : null;
+  if (orig && lookup.parts[key]?.baseChar !== orig) {
+    const fromOrig = describe(orig, lookup);
+    if (fromOrig) return { ...fromOrig, meaning: `${fromOrig.meaning} · ở đây viết thành ${key}` };
+  }
+  return describe(key, lookup) ?? (node.o ? describe(node.o, lookup) : null);
 }
 
 function findRadical(root: KanjiNode): KanjiNode | null {
@@ -232,15 +278,15 @@ function focusHandlers(node: KanjiNode, onFocus: FocusProps['onFocus']) {
 
 function SubComponents({
   nodes,
-  entries,
+  lookup,
   focusId,
   onFocus,
-}: { nodes: KanjiNode[]; entries: EntryMap } & FocusProps) {
+}: { nodes: KanjiNode[]; lookup: Lookup } & FocusProps) {
   return (
     <ul className="ks-sub">
       {mergeParts(nodes).map(({ node, parts }) => {
         const key = componentKey(node);
-        const info = describe(key, entries) ?? (node.o ? describe(node.o, entries) : null);
+        const info = describeNode(node, lookup);
         const children = meaningfulChildren(node);
         return (
           <li key={node.id}>
@@ -264,9 +310,10 @@ function SubComponents({
                 {parts > 1 ? `tách ${parts} phần · ` : ''}
                 {node.n * parts} nét
               </span>
+              <ComponentSpeaker char={key || node.o || ''} lookup={lookup} />
             </div>
             {children.length > 0 && (
-              <SubComponents nodes={children} entries={entries} focusId={focusId} onFocus={onFocus} />
+              <SubComponents nodes={children} lookup={lookup} focusId={focusId} onFocus={onFocus} />
             )}
           </li>
         );
@@ -275,10 +322,31 @@ function SubComponents({
   );
 }
 
+function ComponentSpeaker({ char, lookup }: { char: string; lookup: Lookup }) {
+  const { ja } = componentSpeech(char, lookup);
+  if (!ja) return null;
+  return (
+    <button
+      type="button"
+      className="ks-comp-audio"
+      title={`Nghe ${ja}`}
+      aria-label={`Nghe ${ja}`}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        speakComponent(char, lookup);
+      }}
+    >
+      <SpeakerIcon size={15} />
+    </button>
+  );
+}
+
 function ComponentCard({
   node,
   color,
-  entries,
+  lookup,
   focusId,
   onFocus,
   onBrowse,
@@ -286,12 +354,12 @@ function ComponentCard({
 }: {
   node: KanjiNode;
   color: number;
-  entries: EntryMap;
+  lookup: Lookup;
   onBrowse: (char: string) => void;
   browsing: string | null;
 } & FocusProps) {
   const key = componentKey(node);
-  const info = describe(key, entries) ?? (node.o ? describe(node.o, entries) : null);
+  const info = describeNode(node, lookup);
   const pos = node.p ? KANJI_POSITION_LABEL[node.p] : undefined;
   const children = meaningfulChildren(node);
   const active = focusId !== null && containsId(node, focusId);
@@ -307,6 +375,7 @@ function ComponentCard({
             {info ? info.meaning : 'Chưa có ghi chú cho thành phần này.'}
           </p>
         </div>
+        <ComponentSpeaker char={key} lookup={lookup} />
       </div>
       <div className="ks-tags">
         {pos && (
@@ -327,7 +396,7 @@ function ComponentCard({
       {children.length > 0 && (
         <div className="ks-comp-children">
           <span className="ks-comp-children-label">Gồm</span>
-          <SubComponents nodes={children} entries={entries} focusId={focusId} onFocus={onFocus} />
+          <SubComponents nodes={children} lookup={lookup} focusId={focusId} onFocus={onFocus} />
         </div>
       )}
       <button
@@ -394,6 +463,8 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
   const [tree, setTree] = useState<KanjiNode | null>(null);
   const [loadedChar, setLoadedChar] = useState<string | null>(null);
   const [entries, setEntries] = useState<EntryMap>({});
+  const [parts, setParts] = useState<ComponentInfoMap | null>(null);
+  const lookup = useMemo<Lookup>(() => ({ parts: parts ?? {}, entries }), [parts, entries]);
   const [focus, setFocus] = useState<KanjiNode | null>(null);
   const [browse, setBrowse] = useState<string | null>(null);
   const [showNumbers, setShowNumbers] = useState(false);
@@ -412,6 +483,9 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
     loadComponentIndex()
       .then(setIndex)
       .catch(() => setIndex({}));
+    loadComponentInfo()
+      .then(setParts)
+      .catch(() => setParts({}));
   }, []);
 
   // SVG + cây cấu tạo của chữ đang chọn
@@ -433,9 +507,10 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
 
   // Hán Việt / nghĩa trong DB cho chữ chính và các thành phần là kanji
   useEffect(() => {
+    if (!parts) return undefined;
     const wanted = new Set<string>([char]);
     const walk = (n: KanjiNode) => {
-      for (const k of [n.e, n.o]) if (k && isKanji(k) && !KANJI_COMPONENT_INFO[k]) wanted.add(k);
+      for (const k of [n.e, n.o]) if (k && isKanji(k) && !parts[k]) wanted.add(k);
       n.c?.forEach(walk);
     };
     if (tree && loadedChar === char) tree.c?.forEach(walk);
@@ -448,7 +523,7 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
     return () => {
       cancelled = true;
     };
-  }, [char, tree, loadedChar]);
+  }, [char, tree, loadedChar, parts]);
 
   const browseList = useMemo(() => {
     if (!browse || !index) return [];
@@ -469,12 +544,18 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
   }
 
   const top = meaningfulChildren(tree);
+  // Một số glyph KanjiVG chỉ tách được thành nét; dùng cấu tạo biên tập cho công thức.
+  const formulaOverrides: Record<string, string[]> = {
+    '師': ['上部', '巾'],
+    '行': ['彳', '亍'],
+  };
+  const formulaParts = formulaOverrides[char] ?? top.map((node) => componentLabel(node));
   const layout = kanjiLayout(tree);
   const radical = findRadical(tree);
   const phonetic = findPhonetic(tree);
   const mainEntry = entries[char];
   const focusIds = focus ? focusGroupIds(tree, focus) : null;
-  const radicalInfo = radical ? describe(componentKey(radical), entries) : null;
+  const radicalInfo = radical ? describeNode(radical, lookup) : null;
 
   // Mỗi thành phần cấp 1 một màu; chữ đơn thì để nét màu chữ thường.
   const topGroups = top.length > 1 ? top.map((n) => new Set(focusGroupIds(tree, n))) : [];
@@ -492,11 +573,14 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
       <div className="ks-layout">
         <aside className="ks-aside">
           <div className="ks-glyph-card glass-panel">
-            {svgText ? (
-              <KanjiGlyph svgText={svgText} colorOf={colorOf} focus={focusIds} showNumbers={showNumbers} />
-            ) : (
-              <span className="ks-glyph-fallback japanese-text">{char}</span>
-            )}
+            <div className="ks-glyph-wrap">
+              {svgText ? (
+                <KanjiGlyph svgText={svgText} colorOf={colorOf} focus={focusIds} showNumbers={showNumbers} />
+              ) : (
+                <span className="ks-glyph-fallback japanese-text">{char}</span>
+              )}
+              <ComponentSpeaker char={char} lookup={lookup} />
+            </div>
             {svgText && (
               <button
                 type="button"
@@ -553,26 +637,36 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
                 ))}
               </div>
             )}
-            {top.length > 0 && (
+            {formulaParts.length > 0 && (
               <div
                 className="ks-formula japanese-text"
-                aria-label={`${char} gồm ${top.map(componentLabel).join(', ')}`}
+                aria-label={`${char} gồm ${formulaParts.join(', ')}`}
               >
-                <span className="ks-formula-char">{char}</span>
+                <button
+                  type="button"
+                  className="ks-formula-char"
+                  title="Nghe chữ này"
+                  onClick={() => speakComponent(char, lookup)}
+                >
+                  {char}
+                </button>
                 <span className="ks-formula-op">=</span>
-                {top.map((n, i) => (
-                  <span key={n.id} className="ks-formula-item">
+                {formulaParts.map((part, i) => (
+                  <span key={`${part}-${i}`} className="ks-formula-item">
                     {i > 0 && <span className="ks-formula-op">+</span>}
                     <button
                       type="button"
                       className={`ks-formula-part ks-c${colorIndex(i)}${
-                        focus && containsId(n, focus.id) ? ' is-active' : ''
+                        focus && top[i] && containsId(top[i], focus.id) ? ' is-active' : ''
                       }`}
-                      title="Xem các chữ khác có thành phần này"
-                      {...focusHandlers(n, setFocus)}
-                      onClick={() => handleBrowse(componentKey(n))}
+                      title="Nghe và xem các chữ khác có thành phần này"
+                      {...(top[i] ? focusHandlers(top[i], setFocus) : {})}
+                      onClick={() => {
+                        speakComponent(part, lookup);
+                        handleBrowse(part);
+                      }}
                     >
-                      {componentLabel(n)}
+                      {part}
                     </button>
                   </span>
                 ))}
@@ -609,7 +703,7 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
                     key={n.id}
                     node={n}
                     color={Math.max(colorIndex(i), 0)}
-                    entries={entries}
+                    lookup={lookup}
                     focusId={focus?.id ?? null}
                     onFocus={setFocus}
                     onBrowse={handleBrowse}

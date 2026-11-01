@@ -1,0 +1,19 @@
+/* Bảng chọn bài kanji: dùng chung lưới của bảng chọn bài từ vựng, thêm dòng chữ xem trước */
+.kanji-lesson-picker__card {
+  gap: 0.35rem;
+}
+
+.kanji-lesson-picker__preview {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanji-lesson-picker__card:hover .kanji-lesson-picker__preview {
+  color: var(--primary-color);
+}
