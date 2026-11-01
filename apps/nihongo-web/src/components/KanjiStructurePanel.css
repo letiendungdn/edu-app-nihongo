@@ -1136,3 +1136,31 @@ body.ks-modal-open .tc-stroke-modal-backdrop {
 [data-theme="light"] .ks-modal-foot .ks-link-btn {
   color: #0e7f86;
 }
+
+/* Nét KanjiVG không thuộc bộ nào (vd 2 nét dưới của 方) */
+.ks-comp--rest {
+  --ks-ink: var(--text-secondary);
+  border-style: dashed;
+}
+
+.ks-comp--rest.is-active {
+  border-color: var(--text-secondary);
+}
+
+.ks-formula-rest {
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.6rem;
+  border: 1.5px dashed color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, inherit);
+  font-size: 0.55em;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.ks-formula-rest.is-active,
+.ks-formula-rest:focus-visible {
+  outline: none;
+  border-style: solid;
+  color: var(--text-primary);
+}

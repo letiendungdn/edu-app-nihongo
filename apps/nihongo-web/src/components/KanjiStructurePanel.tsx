@@ -22,6 +22,7 @@ import {
   displayElement,
   meaningfulChildren,
   parseKanjiVgTree,
+  unlabeledStrokes,
   type KanjiComponentIndex,
   type KanjiNode,
 } from '../utils/kanji-structure';
@@ -232,7 +233,8 @@ function findRadical(root: KanjiNode): KanjiNode | null {
     n.c?.forEach(walk);
   };
   root.c?.forEach(walk);
-  return best;
+  // Chữ tự nó là bộ thủ (方, 木, 口…): KanjiVG đánh dấu ở gốc
+  return best ?? (root.r ? root : null);
 }
 
 function findPhonetic(root: KanjiNode): KanjiNode | null {
@@ -556,6 +558,9 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
   const mainEntry = entries[char];
   const focusIds = focus ? focusGroupIds(tree, focus) : null;
   const radicalInfo = radical ? describeNode(radical, lookup) : null;
+  const radicalLabel = radical === tree ? char : radical ? componentLabel(radical) : '';
+  const rest = top.length > 0 ? unlabeledStrokes(tree) : { strokes: 0, groups: [] };
+  const restFocus = rest.groups.length === 1 ? rest.groups[0] : null;
 
   // Mỗi thành phần cấp 1 một màu; chữ đơn thì để nét màu chữ thường.
   const topGroups = top.length > 1 ? top.map((n) => new Set(focusGroupIds(tree, n))) : [];
@@ -610,8 +615,9 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
                 <div>
                   <dt>Bộ thủ</dt>
                   <dd>
-                    <span className="japanese-text">{componentLabel(radical)}</span>
+                    <span className="japanese-text">{radicalLabel}</span>
                     {radicalInfo && ` ${radicalInfo.title.replace(/^Bộ /, '')}`}
+                    {radical === tree && ' · chính nó'}
                   </dd>
                 </div>
               )}
@@ -670,6 +676,18 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
                     </button>
                   </span>
                 ))}
+                {rest.strokes > 0 && !formulaOverrides[char] && (
+                  <span className="ks-formula-item">
+                    <span className="ks-formula-op">+</span>
+                    <span
+                      className={`ks-formula-rest${restFocus && focus?.id === restFocus.id ? ' is-active' : ''}`}
+                      tabIndex={restFocus ? 0 : undefined}
+                      {...(restFocus ? focusHandlers(restFocus, setFocus) : {})}
+                    >
+                      {rest.strokes} nét
+                    </span>
+                  </span>
+                )}
               </div>
             )}
             {phonetic && radical && componentKey(phonetic) !== componentKey(radical) && (
@@ -710,6 +728,29 @@ export default function KanjiStructurePanel({ char, onPickChar }: KanjiStructure
                     browsing={browse}
                   />
                 ))}
+                {rest.strokes > 0 && (
+                  <article className={`ks-comp ks-comp--rest${restFocus && focus?.id === restFocus.id ? ' is-active' : ''}`}>
+                    <div
+                      className="ks-comp-head"
+                      tabIndex={restFocus ? 0 : undefined}
+                      {...(restFocus ? focusHandlers(restFocus, setFocus) : {})}
+                    >
+                      <div className="ks-comp-tile">
+                        <span className="ks-node-char">+</span>
+                      </div>
+                      <div className="ks-comp-title-wrap">
+                        <h4 className="ks-comp-title">Nét còn lại</h4>
+                        <p className="ks-comp-meaning">
+                          {rest.strokes} nét không thuộc bộ nào — phần vẽ riêng của chữ{' '}
+                          <span className="japanese-text">{char}</span>, không mang nghĩa riêng.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="ks-tags">
+                      <span className="ks-tag ks-tag--plain">{rest.strokes} nét</span>
+                    </div>
+                  </article>
+                )}
               </div>
             ) : (
               <p className="ks-empty glass-panel">

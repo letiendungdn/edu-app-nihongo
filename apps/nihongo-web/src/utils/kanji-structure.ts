@@ -152,6 +152,24 @@ export function meaningfulChildren(node: KanjiNode): KanjiNode[] {
   return out;
 }
 
+/**
+ * Nét KanjiVG không gán vào thành phần nào (vd 2 nét dưới của 方, 2 nét của 万).
+ * `groups` là các nhóm không tên chứa những nét đó — dùng để tô sáng khi rê chuột.
+ */
+export function unlabeledStrokes(root: KanjiNode): { strokes: number; groups: KanjiNode[] } {
+  const labeled = meaningfulChildren(root).reduce((sum, n) => sum + n.n, 0);
+  const groups: KanjiNode[] = [];
+  const walk = (node: KanjiNode) => {
+    for (const child of node.c ?? []) {
+      if (child.e) continue;
+      if (meaningfulChildren(child).length === 0) groups.push(child);
+      else walk(child);
+    }
+  };
+  walk(root);
+  return { strokes: Math.max(root.n - labeled, 0), groups };
+}
+
 export interface KanjiLayout {
   symbol: string;
   label: string;
