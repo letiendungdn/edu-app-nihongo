@@ -23,6 +23,72 @@ function omFlag(code: string) {
 }
 
 export const PICTURE_IMAGES = {
+  teacherPerson: om('1F9D1-200D-1F3EB'),
+  officeWorker: om('1F9D1-200D-1F4BC'),
+  fuji: om('1F5FB'),
+  violin: om('1F3BB'),
+  sax: om('1F3B7'),
+  juice: om('1F9C3'),
+  lemon: om('1F34B'),
+  newyearDeco: om('1F38D'),
+  button: om('1F518'),
+  bathtub: om('1F6C1'),
+  briefs: om('1FA72'),
+  coin: om('1FA99'),
+  tower: om('1F5FC'),
+  fireworks: om('1F386'),
+  toolbox: om('1F9F0'),
+  branch: om('1F33F'),
+  vase: om('1F3FA'),
+  drawer: om('1F5C4'),
+  bandage: om('1FA79'),
+  mask: om('1F637'),
+  compass: om('1F9ED'),
+  tap: om('1F6B0'),
+  couple: om('1F491'),
+  brown: om('1F7E4'),
+  hiking: om('1F97E'),
+  thread: om('1F9F5'),
+  fencing: om('1F93A'),
+  steamtrain: om('1F682'),
+  oil: om('1F6E2'),
+  thief: om('1F9B9'),
+  mouseAnimal: om('1F42D'),
+  computerMouse: om('1F5B1'),
+  beachUmbrella: om('1F3D6'),
+  typhoon: om('1F300'),
+  sweat: om('1F4A6'),
+  bomb: om('1F4A3'),
+  motorbike: om('1F3CD'),
+  redEnvelope: om('1F9E7'),
+  teddy: om('1F9F8'),
+  gloves: om('1F9E4'),
+  turtle: om('1F422'),
+  princess: om('1F478'),
+  smoke: om('1F4A8'),
+  screwdriver: om('1FA9B'),
+  law: om('2696'),
+  abacus: om('1F9EE'),
+  rose: om('1F339'),
+  cry: om('1F622'),
+  dvd: om('1F4C0'),
+  syringe: om('1F489'),
+  bell: om('1F514'),
+  testtube: om('1F9EA'),
+  policecar: om('1F693'),
+  lipstick: om('1F484'),
+  brain: om('1F9E0'),
+  circus: om('1F3AA'),
+  busstop: om('1F68F'),
+  giraffe: om('1F992'),
+  pencil: om('270F'),
+  writing: om('270D'),
+  eyes: om('1F440'),
+  sneeze: om('1F927'),
+  socks: om('1F9E6'),
+  pants: om('1F456'),
+  ambulance: om('1F691'),
+  hair: om('1F487'),
   apple: om('1F34E'),
   banana: om('1F34C'),
   orange: om('1F34A'),
@@ -911,19 +977,235 @@ function expandTextKeys(text: string | null | undefined): string[] {
   return [...new Set([raw, ...parts])];
 }
 
-function viPhraseMatches(meaning: string, phrase: string): boolean {
-  const m = meaning.toLowerCase();
-  const p = phrase.toLowerCase();
-  let idx = m.indexOf(p);
-  while (idx !== -1) {
-    const beforeOk = idx === 0 || /[\s,;.(]/.test(m[idx - 1]!);
-    const afterIdx = idx + p.length;
-    const afterOk = afterIdx >= m.length || /[\s,;.)]/.test(m[afterIdx]!);
-    if (beforeOk && afterOk) return true;
-    idx = m.indexOf(p, idx + 1);
-  }
-  return false;
+/** Chữ chỉ loại đứng đầu nghĩa tiếng Việt (cái bàn → bàn, quả táo → táo). */
+const VI_CLASSIFIER = /^(cái|con|quả|tờ|chiếc|cuốn|quyển|bức|đôi|ngôi|tấm|cây|bông|lá|hộp|bộ)\s+/;
+
+/** Các ý trong phần nghĩa: tách theo , ; / và ngoặc, bỏ chữ chỉ loại đứng đầu. */
+export function viMeaningSegments(meaning: string): string[] {
+  return meaning
+    .toLowerCase()
+    // ghi chú trong ngoặc chỉ là phạm vi dùng ("(thể thao)", "(tuyết)") — không phải nghĩa chính
+    .replace(/[(（][^)）]*[)）]/g, ' ')
+    .split(/[,;/、]/)
+    .map((seg) => seg.trim().replace(/[.。!！?？]+$/, ''))
+    .filter(Boolean)
+    .flatMap((seg) => [seg, seg.replace(VI_CLASSIFIER, '')]);
 }
+
+/**
+ * Cụm nghĩa phải khớp TRỌN một ý của từ — tránh "nước" khớp "đất nước", "kính" khớp
+ * "kính ngữ", "pháp" khớp "phương pháp" (tiếng Việt ghép từ bằng dấu cách).
+ */
+export function viPhraseMatches(meaning: string, phrase: string): boolean {
+  const p = phrase.toLowerCase().trim();
+  return viMeaningSegments(meaning).some((seg) => seg === p);
+}
+
+const hasKanji = (text: string | null | undefined) => !!text && /[\u4e00-\u9fff々]/.test(text);
+
+/**
+ * Ảnh chọn tay cho từng từ (kanji hoặc kana), ưu tiên hơn mọi phép đoán. null = không có
+ * hình phù hợp — để trống còn hơn hiện sai (動きます, 置きます, 机…).
+ */
+const WORD_OVERRIDES: Record<string, PictureImageKey | null> = {
+  // sửa ảnh đoán sai
+  鉛筆: 'pencil', 書きます: 'writing', 作家: 'writing', 見ます: 'eyes', '見ます、診ます': 'eyes',
+  聞きます: 'ear', 買います: 'supermarket', かぜ: 'sneeze', 風邪: 'sneeze',
+  橋: 'bridge', 鼻: 'nose', 髪: 'hair', 鳥: 'bird', 飼います: 'paw', 世界: 'globe', 地球: 'globe',
+  日: 'calendar', カーテン: 'window', ズボン: 'pants', 靴下: 'socks',
+  入口: 'door', 出口: 'door', ドア: 'door', '１１０番': 'police', '１１９番': 'ambulance',
+  // bổ sung danh từ cụ thể trong Minna
+  '先生': 'teacherPerson',
+  '教師': 'teacherPerson',
+  '講師': 'teacherPerson',
+  '社員': 'officeWorker',
+  '会社員': 'officeWorker',
+  'サラリーマン': 'officeWorker',
+  'シャープペンシル': 'pencil',
+  'パソコン': 'computer',
+  'プレゼント': 'gift',
+  'お土産': 'gift',
+  '贈り物': 'gift',
+  'お祝い': 'gift',
+  '［お］祝い': 'gift',
+  '富士山': 'fuji',
+  '音楽': 'music',
+  '歌': 'music',
+  '曲': 'music',
+  'コンサート': 'music',
+  '音楽家': 'music',
+  'クラシック': 'violin',
+  'ジャズ': 'sax',
+  '男の子': 'boy',
+  '女の子': 'girl',
+  '棚': 'study',
+  '本棚': 'study',
+  '本屋': 'book',
+  '絵本': 'book',
+  '両親': 'family',
+  '留学生': 'student',
+  '大学生': 'student',
+  '小学生': 'student',
+  '刺身': 'sushi',
+  '豚肉': 'meat',
+  '牛肉': 'meat',
+  'とり肉': 'meat',
+  'すき焼き': 'food',
+  '紅茶': 'coffee',
+  '牛乳': 'milk',
+  'ジュース': 'juice',
+  '朝ごはん': 'rice',
+  '昼ごはん': 'rice',
+  '晩ごはん': 'rice',
+  '定食': 'bento',
+  '牛どん': 'rice',
+  '親子どんぶり': 'rice',
+  '［お］弁当': 'bento',
+  '米': 'rice',
+  'レモン': 'lemon',
+  '釣り': 'fishing',
+  '［お］正月': 'newyearDeco',
+  'プール': 'swimming',
+  '水泳': 'swimming',
+  'ボタン': 'button',
+  'キャッシュカード': 'card',
+  '［お］ふろ': 'bathtub',
+  '下着': 'briefs',
+  '現金': 'money',
+  'お釣り': 'coin',
+  '細かい お金': 'coin',
+  '牧場': 'cow',
+  '東京スカイツリー': 'tower',
+  '交差点': 'traffic',
+  '［お］菓子': 'candy',
+  'ガム': 'candy',
+  '花火': 'fireworks',
+  '道具': 'toolbox',
+  'ゲーム': 'game',
+  '枝': 'branch',
+  '交番': 'police',
+  '花瓶': 'vase',
+  '引き出し': 'drawer',
+  '玄関': 'door',
+  '映画館': 'movie',
+  '自然': 'park',
+  'けが': 'bandage',
+  'せき': 'mask',
+  'インフルエンザ': 'mask',
+  '東': 'compass',
+  '西': 'compass',
+  '南': 'compass',
+  '北': 'compass',
+  '水道': 'tap',
+  '恋人': 'couple',
+  '石': 'rock',
+  'オリンピック': 'medal',
+  'ノーベル賞': 'medal',
+  '黒': 'black',
+  '白': 'white',
+  '青': 'blue',
+  '紺': 'blue',
+  '緑': 'green',
+  '黄色': 'yellow',
+  '茶色': 'brown',
+  '金色': 'yellow',
+  '山登り': 'mountain',
+  'ハイキング': 'hiking',
+  'ひも': 'thread',
+  'スキー場': 'skiing',
+  '剣道': 'fencing',
+  '汽車': 'steamtrain',
+  '汽船': 'ship',
+  '工場': 'factory',
+  '麦': 'farm',
+  '石油': 'oil',
+  'ガソリン': 'fuel',
+  '泥棒': 'thief',
+  '犯人': 'thief',
+  'ねずみ': 'mouseAnimal',
+  'マウス': 'computerMouse',
+  '小学校': 'school',
+  '中学校': 'school',
+  '幼稚園': 'school',
+  '海岸': 'beachUmbrella',
+  '指輪': 'ring',
+  '津波': 'sea',
+  '台風': 'typhoon',
+  '火事': 'fire',
+  '洋服': 'shirt',
+  '汗': 'sweat',
+  'トラック': 'delivery',
+  '宅配便': 'delivery',
+  '爆弾': 'bomb',
+  'オートバイ': 'motorbike',
+  'マラソン': 'running',
+  'お年玉': 'redEnvelope',
+  'おもちゃ': 'teddy',
+  '絵はがき': 'letter',
+  '手袋': 'gloves',
+  '体温計': 'hot',
+  '温度': 'hot',
+  '祖父': 'oldman',
+  '祖母': 'oldwoman',
+  '孫': 'child',
+  'お孫さん': 'child',
+  'かめ': 'turtle',
+  'お姫様': 'princess',
+  '煙': 'smoke',
+  'ドライバー': 'screwdriver',
+  '弁護士': 'law',
+  '法律': 'law',
+  '缶詰': 'can',
+  'そろばん': 'abacus',
+  'カップめん': 'ramen',
+  'カップラーメン': 'ramen',
+  'インスタントラーメン': 'ramen',
+  'チキンラーメン': 'ramen',
+  'ばら': 'rose',
+  '涙': 'cry',
+  '洗濯物': 'washing',
+  'DVD': 'dvd',
+  '目覚まし［時計］': 'clock',
+  '目覚まし時計': 'clock',
+  '［－円］札': 'yen',
+  'キャンプ': 'camping',
+  '注射': 'syringe',
+  'ベル': 'bell',
+  '実験': 'testtube',
+  '科学': 'testtube',
+  '救急車': 'ambulance',
+  'パトカー': 'policecar',
+  '化粧品': 'lipstick',
+  '化粧': 'lipstick',
+  '脳': 'brain',
+  '心': 'heart',
+  'サーカス': 'circus',
+  '旅館': 'hotel',
+  'バス停': 'busstop',
+  '夜行バス': 'bus',
+  '灰皿': 'cigarette',
+  'きりん': 'giraffe',
+  'アルバム': 'photo',
+  '毎朝': 'morning',
+  '毎晩': 'evening',
+  '今夜': 'evening',
+  'ゆうべ': 'evening',
+  '夕方': 'evening',
+  '［お］花見': 'cherry',
+  '生け花': 'flower',
+  '雪祭り': 'snow',
+  '祇園祭': 'festival',
+  '天神祭': 'festival',
+  '七夕祭り': 'festival',
+  '試合': 'sport',
+  '研究室': 'microscope',
+  'フロント': 'reception',
+  '映画': 'movie',
+  // không có hình phù hợp
+  机: null, テーブル: null, 消しゴム: null, 消しゴマ: null, 引きます: null, 置きます: null,
+  動きます: null, 動かします: null, 汚れます: null, 折れます: null, 破れます: null, 付けます: null,
+  バン: 'wagon', 女: 'woman', 女子: 'girl', 男子: 'boy', 伜: 'boy', 雌: null, えっ: null, '［－］便': null, 仙台: null, 量: null, 厚い: null, 寄ります: null,
+};
 
 export function isPictureEligible(input: {
   kana?: string | null;
@@ -969,15 +1251,27 @@ export function resolveVocabImage(input: {
   const word = input.word?.trim().toLowerCase();
   if (word && EN_WORD_MAP[word]) return PICTURE_IMAGES[EN_WORD_MAP[word]];
 
-  const romajiKey = normalizeRomaji(input.word ?? '');
-  if (romajiKey && ROMAJI_MAP[romajiKey]) return PICTURE_IMAGES[ROMAJI_MAP[romajiKey]];
-
-  for (const kanaKey of expandTextKeys(input.kana)) {
-    if (KANA_MAP[kanaKey]) return PICTURE_IMAGES[KANA_MAP[kanaKey]];
+  for (const key of [...expandTextKeys(input.kanji), ...expandTextKeys(input.kana)]) {
+    if (key in WORD_OVERRIDES) {
+      const override = WORD_OVERRIDES[key];
+      return override ? PICTURE_IMAGES[override] : null;
+    }
   }
+
+  // Từ viết bằng kanji: chỉ đoán theo kanji và nghĩa — cách đọc trùng rất nhiều
+  // (きのう 昨日/機能, こうえん 公園/公演, ふく 服/往復…).
+  const writtenWithKanji = hasKanji(input.kanji);
+  const romajiKey = normalizeRomaji(input.word ?? '');
+  if (romajiKey && !writtenWithKanji && ROMAJI_MAP[romajiKey]) return PICTURE_IMAGES[ROMAJI_MAP[romajiKey]];
 
   for (const kanjiKey of expandTextKeys(input.kanji)) {
     if (KANA_MAP[kanjiKey]) return PICTURE_IMAGES[KANA_MAP[kanjiKey]];
+  }
+
+  if (!writtenWithKanji) {
+    for (const kanaKey of expandTextKeys(input.kana)) {
+      if (KANA_MAP[kanaKey]) return PICTURE_IMAGES[KANA_MAP[kanaKey]];
+    }
   }
 
   const meaning = input.meaning ?? '';

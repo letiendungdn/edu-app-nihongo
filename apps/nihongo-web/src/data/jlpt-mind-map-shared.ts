@@ -82,8 +82,10 @@ export function branchPosition(
     };
   }
   const angle = (-90 + (360 / Math.max(count, 1)) * index) * (Math.PI / 180);
+  // Nhiều nhánh: xếp so le vòng ngoài / vòng trong để hai nhánh cạnh nhau không đè lên nhau
+  const r = count > 8 ? (index % 2 === 0 ? radius + 4 : radius - 18) : radius;
   return {
-    x: 50 + radius * Math.cos(angle),
-    y: 50 + radius * Math.sin(angle),
+    x: Math.min(90, Math.max(10, 50 + r * Math.cos(angle))),
+    y: Math.min(92, Math.max(8, 50 + r * Math.sin(angle))),
   };
 }
