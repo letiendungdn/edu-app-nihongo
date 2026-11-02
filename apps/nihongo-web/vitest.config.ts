@@ -23,6 +23,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@edu/vocab-images': path.resolve(__dirname, '../../packages/vocab-images/src/index.ts'),
       react: path.resolve(appNodeModules, 'react'),
       'react-dom': path.resolve(appNodeModules, 'react-dom'),
       'react/jsx-runtime': path.resolve(appNodeModules, 'react/jsx-runtime'),
