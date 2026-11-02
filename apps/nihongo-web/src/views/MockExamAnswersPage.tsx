@@ -6,11 +6,13 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   clearMockExamResult,
   loadMockExamResult,
+  pictureOption,
   type MockExamResult,
   type MockExamReviewItem,
 } from '../utils/mockExam';
 import { importWrongItemsFromReview } from '../utils/mistakeVocab';
 import ListeningPlayer from '../components/ListeningPlayer';
+import MockExamQuestionText from '../components/MockExamQuestionText';
 import './MockExam.css';
 
 type ReviewFilter = 'all' | 'wrong' | 'correct';
@@ -137,7 +139,7 @@ export default function MockExamAnswersPage() {
               </span>
             </div>
 
-            <p className="answer-question">{item.question}</p>
+            <MockExamQuestionText question={item.question} as="p" className="answer-question" />
             {item.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageUrl} alt="" className="mock-exam-question-image" />
@@ -173,7 +175,7 @@ export default function MockExamAnswersPage() {
                         />
                       ) : null}
                       <span>
-                        {opt.text}
+                        {pictureOption(opt.text).label}
                         {isCorrect && ' ✓'}
                         {isUser && !item.isCorrect && ' (bạn chọn)'}
                       </span>
@@ -187,10 +189,10 @@ export default function MockExamAnswersPage() {
               <div className="answer-fill-review">
                 <p>
                   Bạn trả lời:{' '}
-                  <strong>{item.userAnswer || '(bỏ trống)'}</strong>
+                  <strong>{item.userAnswer ? pictureOption(item.userAnswer).label : '(bỏ trống)'}</strong>
                 </p>
                 <p>
-                  Đáp án đúng: <strong className="text-correct">{item.correctAnswer}</strong>
+                  Đáp án đúng: <strong className="text-correct">{pictureOption(item.correctAnswer).label}</strong>
                 </p>
               </div>
             )}

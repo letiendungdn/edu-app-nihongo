@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dK1zqTDrGsfw3yPgDQ9Lqk4IzFPpmk7JgpDI5bl49JkGdBCAI1Mq5TCk3XgjK96
+\restrict VuZeGRaJnxSUzHjKs9DqeObwYw8oe1G9oQCMV2w7rSAUb6brTAlLaOJ4DPGcrvN
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -1861,6 +1861,20 @@ CREATE TABLE public."Grammar" (
 ALTER TABLE public."Grammar" OWNER TO nihongo;
 
 --
+-- Name: GrammarUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."GrammarUnique" AS
+ SELECT regexp_replace(regexp_replace(pattern, '[（(][ぁ-んァ-ンー・、 ]+[）)]'::text, ''::text, 'g'::text), '[[:space:]～〜~＋+・/／]'::text, ''::text, 'g'::text) AS pattern,
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."Grammar"
+  GROUP BY (regexp_replace(regexp_replace(pattern, '[（(][ぁ-んァ-ンー・、 ]+[）)]'::text, ''::text, 'g'::text), '[[:space:]～〜~＋+・/／]'::text, ''::text, 'g'::text));
+
+
+ALTER VIEW public."GrammarUnique" OWNER TO nihongo;
+
+--
 -- Name: Grammar_id_seq; Type: SEQUENCE; Schema: public; Owner: nihongo
 --
 
@@ -1972,7 +1986,8 @@ CREATE TABLE public."HomeStat" (
     suffix text DEFAULT ''::text NOT NULL,
     "sortOrder" integer DEFAULT 0 NOT NULL,
     "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp(3) without time zone NOT NULL
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    metric text
 );
 
 
@@ -2635,6 +2650,20 @@ ALTER SEQUENCE public."KanjiLesson_id_seq" OWNER TO nihongo;
 
 ALTER SEQUENCE public."KanjiLesson_id_seq" OWNED BY public."KanjiLesson".id;
 
+
+--
+-- Name: KanjiUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."KanjiUnique" AS
+ SELECT "character",
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."KanjiEntry"
+  GROUP BY "character";
+
+
+ALTER VIEW public."KanjiUnique" OWNER TO nihongo;
 
 --
 -- Name: KanjiVocab; Type: TABLE; Schema: public; Owner: nihongo
@@ -4511,6 +4540,21 @@ ALTER SEQUENCE public."VocabularyKanjiLink_id_seq" OWNER TO nihongo;
 
 ALTER SEQUENCE public."VocabularyKanjiLink_id_seq" OWNED BY public."VocabularyKanjiLink".id;
 
+
+--
+-- Name: VocabularyUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."VocabularyUnique" AS
+ SELECT regexp_replace(COALESCE(NULLIF(btrim(kanji), ''::text), kana), '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text) AS word,
+    regexp_replace(kana, '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text) AS reading,
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."Vocabulary"
+  GROUP BY (regexp_replace(COALESCE(NULLIF(btrim(kanji), ''::text), kana), '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text)), (regexp_replace(kana, '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text));
+
+
+ALTER VIEW public."VocabularyUnique" OWNER TO nihongo;
 
 --
 -- Name: Vocabulary_id_seq; Type: SEQUENCE; Schema: public; Owner: nihongo
@@ -8075,5 +8119,5 @@ ALTER TABLE ONLY public."Vocabulary"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dK1zqTDrGsfw3yPgDQ9Lqk4IzFPpmk7JgpDI5bl49JkGdBCAI1Mq5TCk3XgjK96
+\unrestrict VuZeGRaJnxSUzHjKs9DqeObwYw8oe1G9oQCMV2w7rSAUb6brTAlLaOJ4DPGcrvN
 

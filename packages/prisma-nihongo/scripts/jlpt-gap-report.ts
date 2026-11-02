@@ -34,56 +34,40 @@ function printLevelTable(
 async function main() {
   const prisma = new PrismaClient();
 
-  const vocabByLevel = await prisma.vocabulary.groupBy({
-    by: ['jlptLevel'],
-    _count: { _all: true },
-    where: { jlptLevel: { not: null } },
-  });
-
-  const kanjiByLevel = await prisma.kanjiEntry.groupBy({
-    by: ['jlptLevel'],
-    _count: { _all: true },
-    where: { jlptLevel: { not: null } },
-  });
-
-  const grammarByLevel = await prisma.grammar.groupBy({
-    by: ['jlptLevel'],
-    _count: { _all: true },
-    where: { jlptLevel: { not: null } },
-  });
-
-  const untaggedVocab = await prisma.vocabulary.count({ where: { jlptLevel: null } });
-  const untaggedGrammar = await prisma.grammar.count({ where: { jlptLevel: null } });
-  const totalVocab = await prisma.vocabulary.count();
-  const totalKanji = await prisma.kanjiEntry.count();
-  const totalGrammar = await prisma.grammar.count();
-
-  const vocabMap = new Map<JlptLevel, number>();
-  for (const row of vocabByLevel) {
-    if (row.jlptLevel) vocabMap.set(row.jlptLevel, row._count._all);
-  }
-
-  const kanjiMap = new Map<JlptLevel, number>();
-  for (const row of kanjiByLevel) {
-    if (row.jlptLevel) kanjiMap.set(row.jlptLevel, row._count._all);
-  }
-
-  const grammarMap = new Map<JlptLevel, number>();
-  for (const row of grammarByLevel) {
-    if (row.jlptLevel) grammarMap.set(row.jlptLevel, row._count._all);
-  }
+  // Đếm theo view *Unique: cùng một từ / kanji / mẫu ở nhiều sách chỉ tính một lần (cấp dễ nhất).
+  type LevelRow = { jlptLevel: JlptLevel | null; n: number };
+  const byLevel = (rows: LevelRow[]) => {
+    const map = new Map<JlptLevel, number>();
+    for (const row of rows) if (row.jlptLevel) map.set(row.jlptLevel, row.n);
+    return map;
+  };
+  const [vocabRows, kanjiRows, grammarRows] = await Promise.all([
+    prisma.$queryRaw<LevelRow[]>`SELECT "jlptLevel", count(*)::int AS n FROM "VocabularyUnique" GROUP BY 1`,
+    prisma.$queryRaw<LevelRow[]>`SELECT "jlptLevel", count(*)::int AS n FROM "KanjiUnique" GROUP BY 1`,
+    prisma.$queryRaw<LevelRow[]>`SELECT "jlptLevel", count(*)::int AS n FROM "GrammarUnique" GROUP BY 1`,
+  ]);
+  const vocabMap = byLevel(vocabRows);
+  const kanjiMap = byLevel(kanjiRows);
+  const grammarMap = byLevel(grammarRows);
+  const sum = (rows: LevelRow[]) => rows.reduce((a, r) => a + r.n, 0);
+  const untagged = (rows: LevelRow[]) => rows.find((r) => !r.jlptLevel)?.n ?? 0;
+  const [rawVocab, rawKanji, rawGrammar] = await Promise.all([
+    prisma.vocabulary.count(),
+    prisma.kanjiEntry.count(),
+    prisma.grammar.count(),
+  ]);
 
   console.log('\n=== JLPT GAP REPORT (tham khảo) ===\n');
-  console.log(`Tổng từ vựng:  ${totalVocab} (${untaggedVocab} chưa gắn JLPT)`);
-  console.log(`Tổng kanji:    ${totalKanji}`);
-  console.log(`Tổng ngữ pháp: ${totalGrammar} (${untaggedGrammar} chưa gắn JLPT)`);
+  console.log(`Từ vựng:  ${sum(vocabRows)} từ khác nhau (${rawVocab} dòng, ${untagged(vocabRows)} chưa gắn JLPT)`);
+  console.log(`Kanji:    ${sum(kanjiRows)} chữ khác nhau (${rawKanji} dòng)`);
+  console.log(`Ngữ pháp: ${sum(grammarRows)} mẫu khác nhau (${rawGrammar} dòng, ${untagged(grammarRows)} chưa gắn JLPT)`);
 
   printLevelTable('Từ vựng theo cấp', vocabMap, JLPT_VOCAB_CUMULATIVE);
   printLevelTable('Kanji theo cấp', kanjiMap, JLPT_KANJI_CUMULATIVE);
   printLevelTable('Ngữ pháp theo cấp', grammarMap, JLPT_GRAMMAR_CUMULATIVE);
 
   console.log('\nGhi chú:');
-  console.log('- Minna bài 1–50 ≈ N5→N2; JLPT seed (bài 301+) ≈ N3/N2/N1 bổ sung.');
+  console.log('- Số đã gộp trùng giữa các sách (view VocabularyUnique / KanjiUnique / GrammarUnique), cấp = cấp dễ nhất.\n- Minna bài 1–25 ≈ N5, 26–50 ≈ N4; Sou Matome / Shinkanzen / TRY! / KLL bổ sung N3–N1.');
   console.log('- Mục tiêu là ước lượng ôn thi, không phải list chính thức JLPT.');
   console.log('- Chạy seed:jlpt-tags để gắn nhãn Minna; thêm nội dung N2/N1 vào DB rồi npm run db:export-content.\n');
 

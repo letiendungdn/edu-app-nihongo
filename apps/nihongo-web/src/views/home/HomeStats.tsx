@@ -11,6 +11,7 @@ const STAT_ICONS: Record<string, string> = {
   'Bài học': '課',
   'Từ vựng': '単',
   Kanji: '字',
+  'Mẫu ngữ pháp': '文',
   JLPT: '↗',
 };
 

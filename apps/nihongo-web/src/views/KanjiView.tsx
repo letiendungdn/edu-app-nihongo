@@ -463,7 +463,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                     <span className="kanji-ll__hanviet">{currentKanji.hanViet.toUpperCase()}</span>
                   ) : null}
                   <KanjiStructureButton text={currentKanji.character} withLabel />
-                  <AlsoInBooks books={currentKanji.alsoInTextbooks} />
+                  <AlsoInBooks books={currentKanji.alsoInTextbooks} kind="kanji" />
                 </div>
               </section>
 

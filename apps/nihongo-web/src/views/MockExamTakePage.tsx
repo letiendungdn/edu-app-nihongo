@@ -10,8 +10,10 @@ import {
   saveMockExamResult,
   type MockExamQuestion,
   type MockExamSession,
+  pictureOption,
 } from '../utils/mockExam';
 import ListeningPlayer from '../components/ListeningPlayer';
+import MockExamQuestionText from '../components/MockExamQuestionText';
 import './MockExam.css';
 import './QuizView.css';
 
@@ -190,7 +192,7 @@ export default function MockExamTakePage() {
               />
             )}
 
-            <h3 className="quiz-question">{current.question}</h3>
+            <MockExamQuestionText question={current.question} className="quiz-question" />
             {current.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -201,8 +203,12 @@ export default function MockExamTakePage() {
             ) : null}
 
             {current.type === 'multiple_choice' || current.type === 'listening' ? (
-              <div className="quiz-options">
-                {(current.options ?? []).map((option) => (
+              <div
+                className={`quiz-options${
+                  (current.options ?? []).every((option) => option.imageUrl) ? ' quiz-options--pictures' : ''
+                }`}
+              >
+                {(current.options ?? []).map((option, optionIndex) => (
                   <button
                     key={option.text}
                     type="button"
@@ -215,11 +221,11 @@ export default function MockExamTakePage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={option.imageUrl}
-                        alt=""
+                        alt={`Tranh ${optionIndex + 1}`}
                         className="mock-exam-option-image"
                       />
                     ) : null}
-                    <span>{option.text}</span>
+                    {pictureOption(option.text).pictureOnly ? null : <span>{option.text}</span>}
                   </button>
                 ))}
               </div>
@@ -234,6 +240,17 @@ export default function MockExamTakePage() {
                 />
               </div>
             )}
+
+            {(current.imageUrl || (current.options ?? []).some((option) => option.imageUrl)) &&
+              (current.imageUrl ?? current.options?.find((option) => option.imageUrl)?.imageUrl ?? '').startsWith('/media/exam/') && (
+                <p className="mock-exam-credit">
+                  Tranh minh họa ghép từ{' '}
+                  <a href="https://openmoji.org" target="_blank" rel="noreferrer">
+                    OpenMoji
+                  </a>{' '}
+                  (CC BY-SA 4.0)
+                </p>
+              )}
 
             <div className="mock-exam-nav">
               <button

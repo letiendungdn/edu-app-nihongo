@@ -512,18 +512,33 @@ export class ReferenceService {
     };
   }
 
+  /** Số mục nội dung đã gộp trùng giữa các sách (view *Unique trong DB). */
+  private async uniqueContentCounts(): Promise<Record<string, number>> {
+    const [row] = await this.prisma.$queryRaw<
+      { vocab: number; kanji: number; grammar: number }[]
+    >`SELECT
+        (SELECT count(*) FROM "VocabularyUnique")::int AS vocab,
+        (SELECT count(*) FROM "KanjiUnique")::int AS kanji,
+        (SELECT count(*) FROM "GrammarUnique")::int AS grammar`;
+    return row ?? {};
+  }
+
   private async getHomePage() {
-    const [stats, sections] = await Promise.all([
+    const [stats, sections, counts] = await Promise.all([
       this.prisma.homeStat.findMany({ orderBy: { sortOrder: "asc" } }),
       this.prisma.homeFeatureSection.findMany({
         include: { items: { orderBy: { sortOrder: "asc" } } },
         orderBy: { sortOrder: "asc" },
       }),
+      this.uniqueContentCounts(),
     ]);
 
     return {
       stats: stats.map((stat) => ({
-        value: stat.value,
+        value:
+          stat.metric && counts[stat.metric] != null
+            ? counts[stat.metric].toLocaleString("vi-VN")
+            : stat.value,
         label: stat.label,
         suffix: stat.suffix,
       })),

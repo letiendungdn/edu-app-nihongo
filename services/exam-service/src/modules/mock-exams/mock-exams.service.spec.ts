@@ -131,6 +131,36 @@ describe("MockExamsService", () => {
       });
     });
 
+    it("scores the reading section and leaves out sections with no questions", async () => {
+      cacheStore.set("mock-exam:exam-1", {
+        ...baseSession,
+        questions: [
+          ...baseSession.questions,
+          {
+            id: "q3",
+            sectionId: "reading",
+            sectionName: "Đọc hiểu",
+            type: "multiple_choice",
+            question: "【文章】…",
+            options: [{ text: "C" }, { text: "D" }],
+          },
+        ],
+        answerKey: { ...baseSession.answerKey, q3: "C" },
+      });
+      const result = await service.submit("exam-1", { q1: "A", q2: "B", q3: "C" });
+      expect(result.sectionScores.map((s) => s.sectionId)).toEqual([
+        "vocab",
+        "grammar",
+        "reading",
+      ]);
+      expect(result.sectionScores.find((s) => s.sectionId === "reading")).toEqual({
+        sectionId: "reading",
+        sectionName: "Đọc hiểu",
+        correct: 1,
+        total: 1,
+      });
+    });
+
     it("marks exam as passed when percent >= threshold", async () => {
       const result = await service.submit("exam-1", { q1: "A", q2: "B" });
       expect(result.passThreshold).toBe(60);

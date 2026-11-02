@@ -788,7 +788,7 @@ export default function GrammarView({
                   <h3 className="grammar-pattern japanese-text">
                     {renderSegments(highlightKeys(grammar.pattern, patternKeys), 'pat')}
                   </h3>
-                  <AlsoInBooks books={grammar.alsoInTextbooks} />
+                  <AlsoInBooks books={grammar.alsoInTextbooks} kind="grammar" />
                   {grammar.id != null && (
                     <button
                       type="button"

@@ -91,7 +91,7 @@ export class GrammarsService {
       lessonId = lesson.id;
       lessonTextbook = lesson.textbook;
 
-      const cacheKey = `${CacheKeys.grammarByLesson(lessonId)}:books`;
+      const cacheKey = `${CacheKeys.grammarByLesson(lessonId)}:places`;
       const cached = await this.cacheManager.get<{
         data: unknown[];
         total: number;
@@ -121,7 +121,7 @@ export class GrammarsService {
     const result = { data: dataWithBooks, total, page, limit };
     if (lessonId) {
       await this.cacheManager.set(
-        `${CacheKeys.grammarByLesson(lessonId)}:books`,
+        `${CacheKeys.grammarByLesson(lessonId)}:places`,
         result,
         CacheTTL.medium * 1000,
       );

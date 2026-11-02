@@ -277,7 +277,7 @@ export class VocabulariesService {
       lessonId = lesson.id;
       lessonTextbook = lesson.textbook;
 
-      const cacheKey = `${CacheKeys.vocabByLesson(lessonId)}:books`;
+      const cacheKey = `${CacheKeys.vocabByLesson(lessonId)}:places`;
       const cached = await this.cacheManager.get<{
         data: unknown[];
         total: number;
@@ -308,7 +308,7 @@ export class VocabulariesService {
     const result = { data, total, page, limit };
     if (lessonId) {
       await this.cacheManager.set(
-        `${CacheKeys.vocabByLesson(lessonId)}:books`,
+        `${CacheKeys.vocabByLesson(lessonId)}:places`,
         result,
         CacheTTL.medium * 1000,
       );

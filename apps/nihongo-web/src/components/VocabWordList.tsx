@@ -15,6 +15,7 @@ import type { Vocabulary } from '../types/api';
 import { uploadContentImage } from '../utils/vocabImageUpload';
 import ImageLightbox from './ImageLightbox';
 import KanjiStructureButton from './KanjiStructureButton';
+import { alsoInSummary } from './AlsoInBooks';
 
 type Draft = {
   kanji: string;
@@ -499,7 +500,7 @@ export default function VocabWordList({
           </span>
           <span className="vocab-word-list-meaning">{vocab.meaning}</span>
           {vocab.alsoInTextbooks?.length ? (
-            <span className="vocab-word-list-also-in" title={`Trùng với ${vocab.alsoInTextbooks.join(', ')}`}>
+            <span className="vocab-word-list-also-in" title={alsoInSummary(vocab.alsoInTextbooks)}>
               ⧉
             </span>
           ) : null}

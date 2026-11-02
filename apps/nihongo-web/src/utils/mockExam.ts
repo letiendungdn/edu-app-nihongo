@@ -76,3 +76,44 @@ export function formatTimer(seconds: number): string {
   const s = seconds % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
+
+/**
+ * Câu đọc hiểu soạn dạng 「【文章】…\n\n質問：…」 → tách bài đọc và câu hỏi để hiện bài đọc
+ * trong khung riêng. Câu khác giữ nguyên (prompt = cả câu).
+ */
+export function splitReadingQuestion(question: string): { passage?: string; prompt: string } {
+  const head = '【文章】';
+  const marker = '\n\n質問：';
+  if (!question.startsWith(head)) return { prompt: question };
+  const at = question.indexOf(marker);
+  if (at < 0) return { prompt: question };
+  return {
+    passage: question.slice(head.length, at).replace(/^\n+/, ''),
+    prompt: question.slice(at + 2),
+  };
+}
+
+const SPEAKER_LABEL = /^[^\s：:「」。、]{1,6}[：:]\s*/;
+
+/**
+ * Nội dung nghe nhiều dòng (hội thoại) → từng câu để đọc nối tiếp, bỏ nhãn người nói
+ * (男：, 女1：, 部下A：…) vì đề thật không đọc nhãn.
+ */
+export function listeningLines(audioText: string): string[] {
+  return audioText
+    .split(/\n+/)
+    .map((line) => line.replace(SPEAKER_LABEL, '').trim())
+    .filter(Boolean);
+}
+
+const PICTURE_MARK = '［図］';
+
+/**
+ * Phương án chỉ có tranh được lưu dạng 「［図］パンとたまご」: khi làm bài chỉ hiện tranh
+ * (hiện chữ thì thành câu đọc), khi xem đáp án hiện chữ sau dấu ［図］.
+ */
+export function pictureOption(text: string): { pictureOnly: boolean; label: string } {
+  return text.startsWith(PICTURE_MARK)
+    ? { pictureOnly: true, label: text.slice(PICTURE_MARK.length).trim() }
+    : { pictureOnly: false, label: text };
+}

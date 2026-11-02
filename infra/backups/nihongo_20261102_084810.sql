@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xO6SBcZ8D3DUmSdvgFO7S37hlWyQjXYOvCvE0bYyj28Ypl2bKnvXYGdEY5vMqZP
+\restrict pbcmbCImrtTH0xJJQGgtbKGfvCMqkmV0HeGQJsDVfge4wEaapeSOa2nxpIzseiL
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -1861,6 +1861,20 @@ CREATE TABLE public."Grammar" (
 ALTER TABLE public."Grammar" OWNER TO nihongo;
 
 --
+-- Name: GrammarUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."GrammarUnique" AS
+ SELECT regexp_replace(regexp_replace(pattern, '[（(][ぁ-んァ-ンー・、 ]+[）)]'::text, ''::text, 'g'::text), '[[:space:]～〜~＋+・/／]'::text, ''::text, 'g'::text) AS pattern,
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."Grammar"
+  GROUP BY (regexp_replace(regexp_replace(pattern, '[（(][ぁ-んァ-ンー・、 ]+[）)]'::text, ''::text, 'g'::text), '[[:space:]～〜~＋+・/／]'::text, ''::text, 'g'::text));
+
+
+ALTER VIEW public."GrammarUnique" OWNER TO nihongo;
+
+--
 -- Name: Grammar_id_seq; Type: SEQUENCE; Schema: public; Owner: nihongo
 --
 
@@ -1972,7 +1986,8 @@ CREATE TABLE public."HomeStat" (
     suffix text DEFAULT ''::text NOT NULL,
     "sortOrder" integer DEFAULT 0 NOT NULL,
     "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "updatedAt" timestamp(3) without time zone NOT NULL
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    metric text
 );
 
 
@@ -2635,6 +2650,20 @@ ALTER SEQUENCE public."KanjiLesson_id_seq" OWNER TO nihongo;
 
 ALTER SEQUENCE public."KanjiLesson_id_seq" OWNED BY public."KanjiLesson".id;
 
+
+--
+-- Name: KanjiUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."KanjiUnique" AS
+ SELECT "character",
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."KanjiEntry"
+  GROUP BY "character";
+
+
+ALTER VIEW public."KanjiUnique" OWNER TO nihongo;
 
 --
 -- Name: KanjiVocab; Type: TABLE; Schema: public; Owner: nihongo
@@ -4513,6 +4542,21 @@ ALTER SEQUENCE public."VocabularyKanjiLink_id_seq" OWNED BY public."VocabularyKa
 
 
 --
+-- Name: VocabularyUnique; Type: VIEW; Schema: public; Owner: nihongo
+--
+
+CREATE VIEW public."VocabularyUnique" AS
+ SELECT regexp_replace(COALESCE(NULLIF(btrim(kanji), ''::text), kana), '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text) AS word,
+    regexp_replace(kana, '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text) AS reading,
+    min("jlptLevel") AS "jlptLevel",
+    (count(*))::integer AS "rowCount"
+   FROM public."Vocabulary"
+  GROUP BY (regexp_replace(COALESCE(NULLIF(btrim(kanji), ''::text), kana), '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text)), (regexp_replace(kana, '[[:space:]～〜~（）()]'::text, ''::text, 'g'::text));
+
+
+ALTER VIEW public."VocabularyUnique" OWNER TO nihongo;
+
+--
 -- Name: Vocabulary_id_seq; Type: SEQUENCE; Schema: public; Owner: nihongo
 --
 
@@ -6051,7 +6095,8 @@ COPY public."DailyActivity" (id, "userId", date, kind, count, "updatedAt") FROM 
 145	1	2026-10-30	vocab	7	2026-10-30 12:56:55.122
 156	1	2026-10-31	kanji	2	2026-10-31 12:38:55.061
 152	1	2026-10-31	vocab	18	2026-10-31 15:35:37.229
-172	1	2026-11-01	vocab	3	2026-11-01 13:43:32.06
+172	1	2026-11-01	vocab	4	2026-11-01 14:02:37.036
+176	1	2026-11-02	vocab	1	2026-11-02 00:16:02.412
 \.
 
 
@@ -26212,6 +26257,683 @@ COPY public."Exercise" (id, question, answer, "lessonId", "createdAt", "updatedA
 26781	Câu 「二人には共通の趣味がある。」 có nghĩa là gì?	Hai người có chung sở thích.	603	2026-10-27 02:48:27.823	2026-10-27 02:48:27.823	MULTIPLE_CHOICE	\N	\N	3	23
 26782	Câu 「台風のため、出発の延期を余儀なくされた。」 có nghĩa là gì?	Vì bão nên buộc phải hoãn khởi hành.	604	2026-10-27 02:48:28.049	2026-10-27 02:48:28.049	MULTIPLE_CHOICE	\N	\N	4	30
 26783	Câu 「そんなに働いては、体を壊しますよ。」 có nghĩa là gì?	Làm việc kiểu đó thì sẽ hỏng người đấy.	717	2026-10-27 02:48:28.059	2026-10-27 02:48:28.059	MULTIPLE_CHOICE	\N	\N	4	9
+26784	「暗黙（あんもく）」 nghĩa là gì?	ngầm, không nói ra	17002	2026-11-02 01:06:45.859	2026-11-02 01:06:45.859	MULTIPLE_CHOICE	\N	\N	4	0
+26785	「意気込み（いきごみ）」 nghĩa là gì?	sự hăng hái, quyết tâm	17002	2026-11-02 01:06:45.877	2026-11-02 01:06:45.877	MULTIPLE_CHOICE	\N	\N	4	1
+26786	「畏敬（いけい）」 nghĩa là gì?	kính sợ, kính nể	17002	2026-11-02 01:06:45.884	2026-11-02 01:06:45.884	MULTIPLE_CHOICE	\N	\N	4	2
+26787	「遺憾（いかん）」 nghĩa là gì?	đáng tiếc (trang trọng)	17002	2026-11-02 01:06:45.89	2026-11-02 01:06:45.89	MULTIPLE_CHOICE	\N	\N	4	3
+26788	「意図（いと）」 nghĩa là gì?	ý đồ, chủ ý	17002	2026-11-02 01:06:45.896	2026-11-02 01:06:45.896	MULTIPLE_CHOICE	\N	\N	4	4
+26789	「憂い（うれい）」 nghĩa là gì?	nỗi lo, nỗi buồn	17002	2026-11-02 01:06:45.9	2026-11-02 01:06:45.9	MULTIPLE_CHOICE	\N	\N	4	5
+26790	「栄誉（えいよ）」 nghĩa là gì?	vinh dự, vinh quang	17002	2026-11-02 01:06:45.905	2026-11-02 01:06:45.905	MULTIPLE_CHOICE	\N	\N	4	6
+26791	「回顧（かいこ）」 nghĩa là gì?	hồi tưởng, nhìn lại	17002	2026-11-02 01:06:45.908	2026-11-02 01:06:45.908	MULTIPLE_CHOICE	\N	\N	4	7
+26792	「乖離（かいり）」 nghĩa là gì?	sự cách biệt, xa rời	17002	2026-11-02 01:06:45.911	2026-11-02 01:06:45.911	MULTIPLE_CHOICE	\N	\N	4	8
+26793	「画一（かくいつ）」 nghĩa là gì?	đồng loạt, rập khuôn	17002	2026-11-02 01:06:45.914	2026-11-02 01:06:45.914	MULTIPLE_CHOICE	\N	\N	4	9
+26794	「甘受（かんじゅ）」 nghĩa là gì?	cam chịu, chấp nhận	17002	2026-11-02 01:06:45.918	2026-11-02 01:06:45.918	MULTIPLE_CHOICE	\N	\N	4	10
+26795	「基調（きちょう）」 nghĩa là gì?	tông chủ đạo, nền tảng	17002	2026-11-02 01:06:45.923	2026-11-02 01:06:45.923	MULTIPLE_CHOICE	\N	\N	4	11
+26796	「拮抗（きっこう）」 nghĩa là gì?	ngang ngửa, giằng co	17002	2026-11-02 01:06:45.928	2026-11-02 01:06:45.928	MULTIPLE_CHOICE	\N	\N	4	12
+26797	「機微（きび）」 nghĩa là gì?	sự tinh tế, uẩn khúc	17002	2026-11-02 01:06:45.933	2026-11-02 01:06:45.933	MULTIPLE_CHOICE	\N	\N	4	13
+26798	「欺瞞（ぎまん）」 nghĩa là gì?	lừa dối, giả dối	17002	2026-11-02 01:06:45.937	2026-11-02 01:06:45.937	MULTIPLE_CHOICE	\N	\N	4	14
+26799	「享受（きょうじゅ）」 nghĩa là gì?	hưởng thụ, được hưởng	17002	2026-11-02 01:06:45.941	2026-11-02 01:06:45.941	MULTIPLE_CHOICE	\N	\N	4	15
+26800	「苦渋（くじゅう）」 nghĩa là gì?	cay đắng, khổ tâm	17002	2026-11-02 01:06:45.947	2026-11-02 01:06:45.947	MULTIPLE_CHOICE	\N	\N	4	16
+26801	「形成（けいせい）」 nghĩa là gì?	hình thành	17002	2026-11-02 01:06:45.951	2026-11-02 01:06:45.951	MULTIPLE_CHOICE	\N	\N	4	17
+26802	「互角（ごかく）」 nghĩa là gì?	ngang tài ngang sức	17002	2026-11-02 01:06:45.955	2026-11-02 01:06:45.955	MULTIPLE_CHOICE	\N	\N	4	18
+26803	「誇示（こじ）」 nghĩa là gì?	phô trương, khoe khoang	17002	2026-11-02 01:06:45.959	2026-11-02 01:06:45.959	MULTIPLE_CHOICE	\N	\N	4	19
+26804	「誤算（ごさん）」 nghĩa là gì?	tính sai, tính nhầm	17002	2026-11-02 01:06:45.963	2026-11-02 01:06:45.963	MULTIPLE_CHOICE	\N	\N	4	20
+26805	「困惑（こんわく）」 nghĩa là gì?	bối rối, lúng túng	17002	2026-11-02 01:06:45.969	2026-11-02 01:06:45.969	MULTIPLE_CHOICE	\N	\N	4	21
+26806	「災い（わざわい）」 nghĩa là gì?	tai họa, tai ương	17002	2026-11-02 01:06:45.975	2026-11-02 01:06:45.975	MULTIPLE_CHOICE	\N	\N	4	22
+26807	「資質（ししつ）」 nghĩa là gì?	tố chất, phẩm chất	17002	2026-11-02 01:06:45.98	2026-11-02 01:06:45.98	MULTIPLE_CHOICE	\N	\N	4	23
+26808	「支障（ししょう）」 nghĩa là gì?	trở ngại, cản trở	17002	2026-11-02 01:06:45.986	2026-11-02 01:06:45.986	MULTIPLE_CHOICE	\N	\N	4	24
+26809	「自負（じふ）」 nghĩa là gì?	tự hào, tự tin vào bản thân	17002	2026-11-02 01:06:45.991	2026-11-02 01:06:45.991	MULTIPLE_CHOICE	\N	\N	4	25
+26810	「執念（しゅうねん）」 nghĩa là gì?	lòng quyết tâm dai dẳng, chấp niệm	17002	2026-11-02 01:06:45.996	2026-11-02 01:06:45.996	MULTIPLE_CHOICE	\N	\N	4	26
+26811	「熟知（じゅくち）」 nghĩa là gì?	hiểu rõ, am tường	17002	2026-11-02 01:06:46.002	2026-11-02 01:06:46.002	MULTIPLE_CHOICE	\N	\N	4	27
+26812	「憔悴（しょうすい）」 nghĩa là gì?	tiều tụy, kiệt quệ	17002	2026-11-02 01:06:46.007	2026-11-02 01:06:46.007	MULTIPLE_CHOICE	\N	\N	4	28
+26813	「思索（しさく）」 nghĩa là gì?	suy tư, trầm tư	17002	2026-11-02 01:06:46.011	2026-11-02 01:06:46.011	MULTIPLE_CHOICE	\N	\N	4	29
+26814	「信憑性（しんぴょうせい）」 nghĩa là gì?	độ tin cậy	17002	2026-11-02 01:06:46.015	2026-11-02 01:06:46.015	MULTIPLE_CHOICE	\N	\N	4	30
+26815	「摂取（せっしゅ）」 nghĩa là gì?	hấp thụ, tiếp thu	17002	2026-11-02 01:06:46.022	2026-11-02 01:06:46.022	MULTIPLE_CHOICE	\N	\N	4	31
+26816	「専念（せんねん）」 nghĩa là gì?	chuyên tâm	17002	2026-11-02 01:06:46.029	2026-11-02 01:06:46.029	MULTIPLE_CHOICE	\N	\N	4	32
+26817	「羨望（せんぼう）」 nghĩa là gì?	ghen tị, ngưỡng mộ	17002	2026-11-02 01:06:46.035	2026-11-02 01:06:46.035	MULTIPLE_CHOICE	\N	\N	4	33
+26818	「喪失（そうしつ）」 nghĩa là gì?	mất mát, đánh mất	17002	2026-11-02 01:06:46.039	2026-11-02 01:06:46.039	MULTIPLE_CHOICE	\N	\N	4	34
+26819	「素養（そよう）」 nghĩa là gì?	kiến thức nền, tu dưỡng	17002	2026-11-02 01:06:46.044	2026-11-02 01:06:46.044	MULTIPLE_CHOICE	\N	\N	4	35
+26820	「脱却（だっきゃく）」 nghĩa là gì?	thoát khỏi	17002	2026-11-02 01:06:46.048	2026-11-02 01:06:46.048	MULTIPLE_CHOICE	\N	\N	4	36
+26821	「探求（たんきゅう）」 nghĩa là gì?	tìm kiếm, theo đuổi	17002	2026-11-02 01:06:46.055	2026-11-02 01:06:46.055	MULTIPLE_CHOICE	\N	\N	4	37
+26822	「沈静（ちんせい）」 nghĩa là gì?	lắng xuống, yên ắng	17002	2026-11-02 01:06:46.06	2026-11-02 01:06:46.06	MULTIPLE_CHOICE	\N	\N	4	38
+26823	「転嫁（てんか）」 nghĩa là gì?	đổ (trách nhiệm), chuyển sang	17002	2026-11-02 01:06:46.064	2026-11-02 01:06:46.064	MULTIPLE_CHOICE	\N	\N	4	39
+26824	「認知（にんち）」 nghĩa là gì?	nhận thức, công nhận	17003	2026-11-02 01:06:46.355	2026-11-02 01:06:46.355	MULTIPLE_CHOICE	\N	\N	4	0
+26825	「念頭（ねんとう）」 nghĩa là gì?	trong đầu, tâm niệm	17003	2026-11-02 01:06:46.361	2026-11-02 01:06:46.361	MULTIPLE_CHOICE	\N	\N	4	1
+26826	「波紋（はもん）」 nghĩa là gì?	gợn sóng; ảnh hưởng lan rộng	17003	2026-11-02 01:06:46.366	2026-11-02 01:06:46.366	MULTIPLE_CHOICE	\N	\N	4	2
+26827	「反映（はんえい）」 nghĩa là gì?	phản ánh	17003	2026-11-02 01:06:46.371	2026-11-02 01:06:46.371	MULTIPLE_CHOICE	\N	\N	4	3
+26828	「披露（ひろう）」 nghĩa là gì?	công bố, trình diễn ra mắt	17003	2026-11-02 01:06:46.375	2026-11-02 01:06:46.375	MULTIPLE_CHOICE	\N	\N	4	4
+26829	「包括（ほうかつ）」 nghĩa là gì?	bao quát, toàn diện	17003	2026-11-02 01:06:46.378	2026-11-02 01:06:46.378	MULTIPLE_CHOICE	\N	\N	4	5
+26830	「未然（みぜん）」 nghĩa là gì?	trước khi xảy ra	17003	2026-11-02 01:06:46.382	2026-11-02 01:06:46.382	MULTIPLE_CHOICE	\N	\N	4	6
+26831	「目途（めど）」 nghĩa là gì?	triển vọng, dự tính	17003	2026-11-02 01:06:46.385	2026-11-02 01:06:46.385	MULTIPLE_CHOICE	\N	\N	4	7
+26832	「落胆（らくたん）」 nghĩa là gì?	thất vọng, chán nản	17003	2026-11-02 01:06:46.389	2026-11-02 01:06:46.389	MULTIPLE_CHOICE	\N	\N	4	8
+26833	「相槌（あいづち）」 nghĩa là gì?	lời đệm, gật gù hưởng ứng	17003	2026-11-02 01:06:46.394	2026-11-02 01:06:46.394	MULTIPLE_CHOICE	\N	\N	4	9
+26834	「足取り（あしどり）」 nghĩa là gì?	bước chân; dấu vết hành tung	17003	2026-11-02 01:06:46.401	2026-11-02 01:06:46.401	MULTIPLE_CHOICE	\N	\N	4	10
+26835	「当て（あて）」 nghĩa là gì?	mục đích, chỗ trông cậy	17003	2026-11-02 01:06:46.413	2026-11-02 01:06:46.413	MULTIPLE_CHOICE	\N	\N	4	11
+26836	「言い分（いいぶん）」 nghĩa là gì?	lời lẽ, ý kiến (của một bên)	17003	2026-11-02 01:06:46.42	2026-11-02 01:06:46.42	MULTIPLE_CHOICE	\N	\N	4	12
+26837	「生き甲斐（いきがい）」 nghĩa là gì?	lẽ sống, ý nghĩa cuộc đời	17003	2026-11-02 01:06:46.426	2026-11-02 01:06:46.426	MULTIPLE_CHOICE	\N	\N	4	13
+26838	「意気地（いくじ）」 nghĩa là gì?	chí khí, can đảm	17003	2026-11-02 01:06:46.43	2026-11-02 01:06:46.43	MULTIPLE_CHOICE	\N	\N	4	14
+26839	「異色（いしょく）」 nghĩa là gì?	khác biệt, độc đáo	17003	2026-11-02 01:06:46.433	2026-11-02 01:06:46.433	MULTIPLE_CHOICE	\N	\N	4	15
+26840	「一存（いちぞん）」 nghĩa là gì?	ý kiến riêng (tự quyết)	17003	2026-11-02 01:06:46.437	2026-11-02 01:06:46.437	MULTIPLE_CHOICE	\N	\N	4	16
+26841	「戒め（いましめ）」 nghĩa là gì?	lời răn, bài học	17003	2026-11-02 01:06:46.44	2026-11-02 01:06:46.44	MULTIPLE_CHOICE	\N	\N	4	17
+26842	「色合い（いろあい）」 nghĩa là gì?	sắc độ; tính chất	17003	2026-11-02 01:06:46.443	2026-11-02 01:06:46.443	MULTIPLE_CHOICE	\N	\N	4	18
+26843	「内輪（うちわ）」 nghĩa là gì?	nội bộ	17003	2026-11-02 01:06:46.447	2026-11-02 01:06:46.447	MULTIPLE_CHOICE	\N	\N	4	19
+26844	「裏付け（うらづけ）」 nghĩa là gì?	cơ sở chứng minh, bằng chứng hậu thuẫn	17003	2026-11-02 01:06:46.452	2026-11-02 01:06:46.452	MULTIPLE_CHOICE	\N	\N	4	20
+26845	「上辺（うわべ）」 nghĩa là gì?	bề ngoài	17003	2026-11-02 01:06:46.456	2026-11-02 01:06:46.456	MULTIPLE_CHOICE	\N	\N	4	21
+26846	「縁起（えんぎ）」 nghĩa là gì?	điềm (lành, gở)	17003	2026-11-02 01:06:46.46	2026-11-02 01:06:46.46	MULTIPLE_CHOICE	\N	\N	4	22
+26847	「会釈（えしゃく）」 nghĩa là gì?	cúi chào nhẹ	17003	2026-11-02 01:06:46.463	2026-11-02 01:06:46.463	MULTIPLE_CHOICE	\N	\N	4	23
+26848	「皆無（かいむ）」 nghĩa là gì?	hoàn toàn không có	17003	2026-11-02 01:06:46.467	2026-11-02 01:06:46.467	MULTIPLE_CHOICE	\N	\N	4	24
+26849	「陰口（かげぐち）」 nghĩa là gì?	nói xấu sau lưng	17003	2026-11-02 01:06:46.47	2026-11-02 01:06:46.47	MULTIPLE_CHOICE	\N	\N	4	25
+26850	「肩書き（かたがき）」 nghĩa là gì?	chức danh	17003	2026-11-02 01:06:46.473	2026-11-02 01:06:46.473	MULTIPLE_CHOICE	\N	\N	4	26
+26851	「片手間（かたてま）」 nghĩa là gì?	việc tay trái, làm thêm lúc rảnh	17003	2026-11-02 01:06:46.477	2026-11-02 01:06:46.477	MULTIPLE_CHOICE	\N	\N	4	27
+26852	「加味（かみ）」 nghĩa là gì?	tính thêm vào, xem xét thêm	17003	2026-11-02 01:06:46.48	2026-11-02 01:06:46.48	MULTIPLE_CHOICE	\N	\N	4	28
+26853	「脚光（きゃっこう）」 nghĩa là gì?	ánh đèn sân khấu, sự chú ý	17003	2026-11-02 01:06:46.484	2026-11-02 01:06:46.484	MULTIPLE_CHOICE	\N	\N	4	29
+26854	「窮地（きゅうち）」 nghĩa là gì?	tình thế khốn cùng	17003	2026-11-02 01:06:46.487	2026-11-02 01:06:46.487	MULTIPLE_CHOICE	\N	\N	4	30
+26855	「虚栄（きょえい）」 nghĩa là gì?	hư vinh, sĩ diện	17003	2026-11-02 01:06:46.491	2026-11-02 01:06:46.491	MULTIPLE_CHOICE	\N	\N	4	31
+26856	「口出し（くちだし）」 nghĩa là gì?	xen vào, can thiệp bằng lời	17003	2026-11-02 01:06:46.495	2026-11-02 01:06:46.495	MULTIPLE_CHOICE	\N	\N	4	32
+26857	「口癖（くちぐせ）」 nghĩa là gì?	câu cửa miệng	17003	2026-11-02 01:06:46.498	2026-11-02 01:06:46.498	MULTIPLE_CHOICE	\N	\N	4	33
+26858	「苦笑（くしょう）」 nghĩa là gì?	cười gượng, cười khổ	17003	2026-11-02 01:06:46.502	2026-11-02 01:06:46.502	MULTIPLE_CHOICE	\N	\N	4	34
+26859	「形相（ぎょうそう）」 nghĩa là gì?	vẻ mặt (dữ dằn)	17003	2026-11-02 01:06:46.505	2026-11-02 01:06:46.505	MULTIPLE_CHOICE	\N	\N	4	35
+26860	「健在（けんざい）」 nghĩa là gì?	khỏe mạnh, vẫn còn tốt	17003	2026-11-02 01:06:46.509	2026-11-02 01:06:46.509	MULTIPLE_CHOICE	\N	\N	4	36
+26861	「原点（げんてん）」 nghĩa là gì?	điểm xuất phát, cội nguồn	17003	2026-11-02 01:06:46.513	2026-11-02 01:06:46.513	MULTIPLE_CHOICE	\N	\N	4	37
+26862	「公言（こうげん）」 nghĩa là gì?	tuyên bố công khai	17003	2026-11-02 01:06:46.517	2026-11-02 01:06:46.517	MULTIPLE_CHOICE	\N	\N	4	38
+26863	「心遣い（こころづかい）」 nghĩa là gì?	sự quan tâm, chu đáo	17003	2026-11-02 01:06:46.521	2026-11-02 01:06:46.521	MULTIPLE_CHOICE	\N	\N	4	39
+26864	「沙汰（さた）」 nghĩa là gì?	chuyện, vụ việc; tin tức	17004	2026-11-02 01:06:46.526	2026-11-02 01:06:46.526	MULTIPLE_CHOICE	\N	\N	4	0
+26865	「雑踏（ざっとう）」 nghĩa là gì?	cảnh chen chúc, đám đông	17004	2026-11-02 01:06:46.53	2026-11-02 01:06:46.53	MULTIPLE_CHOICE	\N	\N	4	1
+26866	「里帰り（さとがえり）」 nghĩa là gì?	về thăm quê	17004	2026-11-02 01:06:46.535	2026-11-02 01:06:46.535	MULTIPLE_CHOICE	\N	\N	4	2
+26867	「仕草（しぐさ）」 nghĩa là gì?	cử chỉ, điệu bộ	17004	2026-11-02 01:06:46.539	2026-11-02 01:06:46.539	MULTIPLE_CHOICE	\N	\N	4	3
+26868	「しがらみ」 nghĩa là gì?	ràng buộc, vướng víu	17004	2026-11-02 01:06:46.543	2026-11-02 01:06:46.543	MULTIPLE_CHOICE	\N	\N	4	4
+26869	「時宜（じぎ）」 nghĩa là gì?	đúng thời điểm	17004	2026-11-02 01:06:46.549	2026-11-02 01:06:46.549	MULTIPLE_CHOICE	\N	\N	4	5
+26870	「主眼（しゅがん）」 nghĩa là gì?	trọng tâm, điểm chính	17004	2026-11-02 01:06:46.554	2026-11-02 01:06:46.554	MULTIPLE_CHOICE	\N	\N	4	6
+26871	「手腕（しゅわん）」 nghĩa là gì?	tài cán, năng lực	17004	2026-11-02 01:06:46.559	2026-11-02 01:06:46.559	MULTIPLE_CHOICE	\N	\N	4	7
+26872	「処世術（しょせいじゅつ）」 nghĩa là gì?	thuật xử thế	17004	2026-11-02 01:06:46.563	2026-11-02 01:06:46.563	MULTIPLE_CHOICE	\N	\N	4	8
+26873	「真価（しんか）」 nghĩa là gì?	giá trị thực	17004	2026-11-02 01:06:46.567	2026-11-02 01:06:46.567	MULTIPLE_CHOICE	\N	\N	4	9
+26874	「筋合い（すじあい）」 nghĩa là gì?	lý do chính đáng, tư cách	17004	2026-11-02 01:06:46.571	2026-11-02 01:06:46.571	MULTIPLE_CHOICE	\N	\N	4	10
+26875	「素性（すじょう）」 nghĩa là gì?	lai lịch, thân thế	17004	2026-11-02 01:06:46.575	2026-11-02 01:06:46.575	MULTIPLE_CHOICE	\N	\N	4	11
+26876	「誠意（せいい）」 nghĩa là gì?	thành ý	17004	2026-11-02 01:06:46.58	2026-11-02 01:06:46.58	MULTIPLE_CHOICE	\N	\N	4	12
+26877	「節度（せつど）」 nghĩa là gì?	chừng mực	17004	2026-11-02 01:06:46.584	2026-11-02 01:06:46.584	MULTIPLE_CHOICE	\N	\N	4	13
+26878	「先見（せんけん）」 nghĩa là gì?	nhìn xa trông rộng	17004	2026-11-02 01:06:46.588	2026-11-02 01:06:46.588	MULTIPLE_CHOICE	\N	\N	4	14
+26879	「大義（たいぎ）」 nghĩa là gì?	đại nghĩa, chính nghĩa	17004	2026-11-02 01:06:46.592	2026-11-02 01:06:46.592	MULTIPLE_CHOICE	\N	\N	4	15
+26880	「打算（ださん）」 nghĩa là gì?	tính toán vụ lợi	17004	2026-11-02 01:06:46.596	2026-11-02 01:06:46.596	MULTIPLE_CHOICE	\N	\N	4	16
+26881	「力量（りきりょう）」 nghĩa là gì?	năng lực, tài sức	17004	2026-11-02 01:06:46.601	2026-11-02 01:06:46.601	MULTIPLE_CHOICE	\N	\N	4	17
+26882	「手立て（てだて）」 nghĩa là gì?	cách, phương sách	17004	2026-11-02 01:06:46.605	2026-11-02 01:06:46.605	MULTIPLE_CHOICE	\N	\N	4	18
+26883	「当惑（とうわく）」 nghĩa là gì?	bối rối, lúng túng	17004	2026-11-02 01:06:46.609	2026-11-02 01:06:46.609	MULTIPLE_CHOICE	\N	\N	4	19
+26884	「度胸（どきょう）」 nghĩa là gì?	gan dạ, can đảm	17004	2026-11-02 01:06:46.615	2026-11-02 01:06:46.615	MULTIPLE_CHOICE	\N	\N	4	20
+26885	「得策（とくさく）」 nghĩa là gì?	thượng sách, cách có lợi	17004	2026-11-02 01:06:46.621	2026-11-02 01:06:46.621	MULTIPLE_CHOICE	\N	\N	4	21
+26886	「馴染み（なじみ）」 nghĩa là gì?	quen thuộc, thân quen	17004	2026-11-02 01:06:46.628	2026-11-02 01:06:46.628	MULTIPLE_CHOICE	\N	\N	4	22
+26887	「難点（なんてん）」 nghĩa là gì?	nhược điểm, điểm khó	17004	2026-11-02 01:06:46.634	2026-11-02 01:06:46.634	MULTIPLE_CHOICE	\N	\N	4	23
+26888	「念願（ねんがん）」 nghĩa là gì?	tâm nguyện	17004	2026-11-02 01:06:46.641	2026-11-02 01:06:46.641	MULTIPLE_CHOICE	\N	\N	4	24
+26889	「破格（はかく）」 nghĩa là gì?	phá lệ, ngoại lệ (rẻ, cao bất thường)	17004	2026-11-02 01:06:46.648	2026-11-02 01:06:46.648	MULTIPLE_CHOICE	\N	\N	4	25
+26890	「歯止め（はどめ）」 nghĩa là gì?	sự kìm hãm, phanh hãm	17004	2026-11-02 01:06:46.658	2026-11-02 01:06:46.658	MULTIPLE_CHOICE	\N	\N	4	26
+26891	「腹いせ（はらいせ）」 nghĩa là gì?	trút giận, trả đũa	17004	2026-11-02 01:06:46.666	2026-11-02 01:06:46.666	MULTIPLE_CHOICE	\N	\N	4	27
+26892	「引け目（ひけめ）」 nghĩa là gì?	mặc cảm, tự ti	17004	2026-11-02 01:06:46.679	2026-11-02 01:06:46.679	MULTIPLE_CHOICE	\N	\N	4	28
+26893	「秘訣（ひけつ）」 nghĩa là gì?	bí quyết	17004	2026-11-02 01:06:46.695	2026-11-02 01:06:46.695	MULTIPLE_CHOICE	\N	\N	4	29
+26894	「不手際（ふてぎわ）」 nghĩa là gì?	sơ suất, vụng về	17004	2026-11-02 01:06:46.706	2026-11-02 01:06:46.706	MULTIPLE_CHOICE	\N	\N	4	30
+26895	「懐（ふところ）」 nghĩa là gì?	lòng ngực; túi tiền	17004	2026-11-02 01:06:46.728	2026-11-02 01:06:46.728	MULTIPLE_CHOICE	\N	\N	4	31
+26896	「身の上（みのうえ）」 nghĩa là gì?	hoàn cảnh bản thân, thân phận	17004	2026-11-02 01:06:46.741	2026-11-02 01:06:46.741	MULTIPLE_CHOICE	\N	\N	4	32
+26897	「見栄（みえ）」 nghĩa là gì?	thể diện, sĩ diện	17004	2026-11-02 01:06:46.759	2026-11-02 01:06:46.759	MULTIPLE_CHOICE	\N	\N	4	33
+26898	「物腰（ものごし）」 nghĩa là gì?	phong thái, cử chỉ	17004	2026-11-02 01:06:46.782	2026-11-02 01:06:46.782	MULTIPLE_CHOICE	\N	\N	4	34
+26899	「由緒（ゆいしょ）」 nghĩa là gì?	lai lịch, nguồn gốc lâu đời	17004	2026-11-02 01:06:46.806	2026-11-02 01:06:46.806	MULTIPLE_CHOICE	\N	\N	4	35
+26900	「話術（わじゅつ）」 nghĩa là gì?	tài ăn nói	17004	2026-11-02 01:06:46.825	2026-11-02 01:06:46.825	MULTIPLE_CHOICE	\N	\N	4	36
+26901	「圧倒（あっとう）」 nghĩa là gì?	áp đảo	17004	2026-11-02 01:06:46.839	2026-11-02 01:06:46.839	MULTIPLE_CHOICE	\N	\N	4	37
+26902	「解消（かいしょう）」 nghĩa là gì?	giải tỏa, xóa bỏ	17004	2026-11-02 01:06:46.852	2026-11-02 01:06:46.852	MULTIPLE_CHOICE	\N	\N	4	38
+26903	「確信（かくしん）」 nghĩa là gì?	tin chắc	17004	2026-11-02 01:06:46.869	2026-11-02 01:06:46.869	MULTIPLE_CHOICE	\N	\N	4	39
+26904	「凝視（ぎょうし）」 nghĩa là gì?	nhìn chằm chằm	17021	2026-11-02 01:06:46.885	2026-11-02 01:06:46.885	MULTIPLE_CHOICE	\N	\N	4	0
+26905	「空白（くうはく）」 nghĩa là gì?	chỗ trống, khoảng trống	17021	2026-11-02 01:06:46.899	2026-11-02 01:06:46.899	MULTIPLE_CHOICE	\N	\N	4	1
+26906	「屈辱（くつじょく）」 nghĩa là gì?	nhục nhã	17021	2026-11-02 01:06:46.917	2026-11-02 01:06:46.917	MULTIPLE_CHOICE	\N	\N	4	2
+26907	「欠如（けつじょ）」 nghĩa là gì?	thiếu hụt	17021	2026-11-02 01:06:46.934	2026-11-02 01:06:46.934	MULTIPLE_CHOICE	\N	\N	4	3
+26908	「酷使（こくし）」 nghĩa là gì?	sử dụng quá mức, bóc lột sức	17021	2026-11-02 01:06:46.951	2026-11-02 01:06:46.951	MULTIPLE_CHOICE	\N	\N	4	4
+26909	「挫折（ざせつ）」 nghĩa là gì?	thất bại, vấp ngã	17021	2026-11-02 01:06:46.964	2026-11-02 01:06:46.964	MULTIPLE_CHOICE	\N	\N	4	5
+26910	「成就（じょうじゅ）」 nghĩa là gì?	thành tựu, thành hiện thực	17021	2026-11-02 01:06:46.976	2026-11-02 01:06:46.976	MULTIPLE_CHOICE	\N	\N	4	6
+26911	「保留（ほりゅう）」 nghĩa là gì?	bảo lưu, tạm hoãn	17021	2026-11-02 01:06:46.988	2026-11-02 01:06:46.988	MULTIPLE_CHOICE	\N	\N	4	7
+26912	「本腰（ほんごし）」 nghĩa là gì?	dốc sức thật sự	17021	2026-11-02 01:06:47.008	2026-11-02 01:06:47.008	MULTIPLE_CHOICE	\N	\N	4	8
+26913	「満喫（まんきつ）」 nghĩa là gì?	tận hưởng trọn vẹn	17021	2026-11-02 01:06:47.094	2026-11-02 01:06:47.094	MULTIPLE_CHOICE	\N	\N	4	9
+26914	「逸材（いつざい）」 nghĩa là gì?	nhân tài kiệt xuất	17021	2026-11-02 01:06:47.108	2026-11-02 01:06:47.108	MULTIPLE_CHOICE	\N	\N	4	10
+26915	「真髄（しんずい）」 nghĩa là gì?	tinh túy, cốt lõi	17021	2026-11-02 01:06:47.116	2026-11-02 01:06:47.116	MULTIPLE_CHOICE	\N	\N	4	11
+26916	「取り沙汰（とりざた）」 nghĩa là gì?	lời đồn đại	17021	2026-11-02 01:06:47.124	2026-11-02 01:06:47.124	MULTIPLE_CHOICE	\N	\N	4	12
+26917	「走り書き（はしりがき）」 nghĩa là gì?	viết vội	17021	2026-11-02 01:06:47.132	2026-11-02 01:06:47.132	MULTIPLE_CHOICE	\N	\N	4	13
+26918	「意地（いじ）」 nghĩa là gì?	sự bướng bỉnh; khí khái	17021	2026-11-02 01:06:47.138	2026-11-02 01:06:47.138	MULTIPLE_CHOICE	\N	\N	4	14
+26919	「裏腹（うらはら）」 nghĩa là gì?	trái ngược	17021	2026-11-02 01:06:47.147	2026-11-02 01:06:47.147	MULTIPLE_CHOICE	\N	\N	4	15
+26920	「負い目（おいめ）」 nghĩa là gì?	món nợ ân tình, mặc cảm có lỗi	17021	2026-11-02 01:06:47.155	2026-11-02 01:06:47.155	MULTIPLE_CHOICE	\N	\N	4	16
+26921	「大詰め（おおづめ）」 nghĩa là gì?	giai đoạn cuối	17021	2026-11-02 01:06:47.163	2026-11-02 01:06:47.163	MULTIPLE_CHOICE	\N	\N	4	17
+26922	「衰え（おとろえ）」 nghĩa là gì?	sự suy giảm	17021	2026-11-02 01:06:47.17	2026-11-02 01:06:47.17	MULTIPLE_CHOICE	\N	\N	4	18
+26923	「固唾（かたず）」 nghĩa là gì?	nín thở (chờ đợi)	17021	2026-11-02 01:06:47.178	2026-11-02 01:06:47.178	MULTIPLE_CHOICE	\N	\N	4	19
+26924	「空回り（からまわり）」 nghĩa là gì?	chạy không tải, nỗ lực vô ích	17021	2026-11-02 01:06:47.186	2026-11-02 01:06:47.186	MULTIPLE_CHOICE	\N	\N	4	20
+26925	「気がかり（きがかり）」 nghĩa là gì?	điều lo lắng	17021	2026-11-02 01:06:47.193	2026-11-02 01:06:47.193	MULTIPLE_CHOICE	\N	\N	4	21
+26926	「けじめ」 nghĩa là gì?	ranh giới, sự phân minh	17021	2026-11-02 01:06:47.201	2026-11-02 01:06:47.201	MULTIPLE_CHOICE	\N	\N	4	22
+26927	「仕業（しわざ）」 nghĩa là gì?	việc làm (xấu), trò	17021	2026-11-02 01:06:47.209	2026-11-02 01:06:47.209	MULTIPLE_CHOICE	\N	\N	4	23
+26928	「尻込み（しりごみ）」 nghĩa là gì?	chùn bước, ngần ngại	17021	2026-11-02 01:06:47.217	2026-11-02 01:06:47.217	MULTIPLE_CHOICE	\N	\N	4	24
+26929	「筋書き（すじがき）」 nghĩa là gì?	kịch bản, cốt truyện	17021	2026-11-02 01:06:47.225	2026-11-02 01:06:47.225	MULTIPLE_CHOICE	\N	\N	4	25
+26930	「手探り（てさぐり）」 nghĩa là gì?	mò mẫm	17021	2026-11-02 01:06:47.231	2026-11-02 01:06:47.231	MULTIPLE_CHOICE	\N	\N	4	26
+26931	「手詰まり（てづまり）」 nghĩa là gì?	bế tắc, hết cách	17021	2026-11-02 01:06:47.239	2026-11-02 01:06:47.239	MULTIPLE_CHOICE	\N	\N	4	27
+26932	「ばらつき」 nghĩa là gì?	sự chênh lệch, không đồng đều	17021	2026-11-02 01:06:47.246	2026-11-02 01:06:47.246	MULTIPLE_CHOICE	\N	\N	4	28
+26933	「ひずみ」 nghĩa là gì?	sự méo mó, lệch lạc	17021	2026-11-02 01:06:47.254	2026-11-02 01:06:47.254	MULTIPLE_CHOICE	\N	\N	4	29
+26934	「不意打ち（ふいうち）」 nghĩa là gì?	đánh úp, bất ngờ	17021	2026-11-02 01:06:47.262	2026-11-02 01:06:47.262	MULTIPLE_CHOICE	\N	\N	4	30
+26935	「吹聴（ふいちょう）」 nghĩa là gì?	rêu rao	17021	2026-11-02 01:06:47.27	2026-11-02 01:06:47.27	MULTIPLE_CHOICE	\N	\N	4	31
+26936	「見せしめ（みせしめ）」 nghĩa là gì?	răn đe làm gương	17021	2026-11-02 01:06:47.275	2026-11-02 01:06:47.275	MULTIPLE_CHOICE	\N	\N	4	32
+26937	「目の当たり（まのあたり）」 nghĩa là gì?	tận mắt	17021	2026-11-02 01:06:47.283	2026-11-02 01:06:47.283	MULTIPLE_CHOICE	\N	\N	4	33
+26938	「物怖じ（ものおじ）」 nghĩa là gì?	rụt rè, sợ sệt	17021	2026-11-02 01:06:47.29	2026-11-02 01:06:47.29	MULTIPLE_CHOICE	\N	\N	4	34
+26939	「矢面（やおもて）」 nghĩa là gì?	đầu sóng ngọn gió	17021	2026-11-02 01:06:47.295	2026-11-02 01:06:47.295	MULTIPLE_CHOICE	\N	\N	4	35
+26940	「躍起（やっき）」 nghĩa là gì?	hăng máu, cuống cuồng	17021	2026-11-02 01:06:47.301	2026-11-02 01:06:47.301	MULTIPLE_CHOICE	\N	\N	4	36
+26941	「やりくり」 nghĩa là gì?	xoay xở (chi tiêu)	17021	2026-11-02 01:06:47.309	2026-11-02 01:06:47.309	MULTIPLE_CHOICE	\N	\N	4	37
+26942	「よりどころ」 nghĩa là gì?	chỗ dựa	17021	2026-11-02 01:06:47.317	2026-11-02 01:06:47.317	MULTIPLE_CHOICE	\N	\N	4	38
+26943	「わだかまり」 nghĩa là gì?	khúc mắc, hiềm khích	17021	2026-11-02 01:06:47.325	2026-11-02 01:06:47.325	MULTIPLE_CHOICE	\N	\N	4	39
+26944	「旺盛（おうせい）」 nghĩa là gì?	dồi dào, mạnh mẽ	17005	2026-11-02 01:06:47.334	2026-11-02 01:06:47.334	MULTIPLE_CHOICE	\N	\N	4	0
+26945	「穏便（おんびん）」 nghĩa là gì?	ôn hòa, êm thấm	17005	2026-11-02 01:06:47.341	2026-11-02 01:06:47.341	MULTIPLE_CHOICE	\N	\N	4	1
+26946	「希薄（きはく）」 nghĩa là gì?	loãng, mờ nhạt	17005	2026-11-02 01:06:47.349	2026-11-02 01:06:47.349	MULTIPLE_CHOICE	\N	\N	4	2
+26947	「険悪（けんあく）」 nghĩa là gì?	căng thẳng, xấu đi (bầu không khí)	17005	2026-11-02 01:06:47.357	2026-11-02 01:06:47.357	MULTIPLE_CHOICE	\N	\N	4	3
+26948	「恣意的（しいてき）」 nghĩa là gì?	tùy tiện, độc đoán	17005	2026-11-02 01:06:47.363	2026-11-02 01:06:47.363	MULTIPLE_CHOICE	\N	\N	4	4
+26949	「繊細（せんさい）」 nghĩa là gì?	tinh tế, nhạy cảm	17005	2026-11-02 01:06:47.37	2026-11-02 01:06:47.37	MULTIPLE_CHOICE	\N	\N	4	5
+26950	「煩雑（はんざつ）」 nghĩa là gì?	phức tạp, rườm rà	17005	2026-11-02 01:06:47.375	2026-11-02 01:06:47.375	MULTIPLE_CHOICE	\N	\N	4	6
+26951	「無謀（むぼう）」 nghĩa là gì?	liều lĩnh, thiếu suy nghĩ	17005	2026-11-02 01:06:47.38	2026-11-02 01:06:47.38	MULTIPLE_CHOICE	\N	\N	4	7
+26952	「余儀ない（よぎない）」 nghĩa là gì?	bất đắc dĩ, không còn cách nào khác	17005	2026-11-02 01:06:47.386	2026-11-02 01:06:47.386	MULTIPLE_CHOICE	\N	\N	4	8
+26953	「大まか（おおまか）」 nghĩa là gì?	đại khái, sơ lược	17005	2026-11-02 01:06:47.392	2026-11-02 01:06:47.392	MULTIPLE_CHOICE	\N	\N	4	9
+26954	「恩着せがましい（おんきせがましい）」 nghĩa là gì?	kể ơn, làm như ban ơn	17005	2026-11-02 01:06:47.398	2026-11-02 01:06:47.398	MULTIPLE_CHOICE	\N	\N	4	10
+26955	「些細（ささい）」 nghĩa là gì?	nhỏ nhặt, vụn vặt	17005	2026-11-02 01:06:47.405	2026-11-02 01:06:47.405	MULTIPLE_CHOICE	\N	\N	4	11
+26956	「相容れない（あいいれない）」 nghĩa là gì?	không thể dung hòa	17005	2026-11-02 01:06:47.414	2026-11-02 01:06:47.414	MULTIPLE_CHOICE	\N	\N	4	12
+26957	「いたたまれない」 nghĩa là gì?	không thể chịu nổi (ngượng, khó xử)	17005	2026-11-02 01:06:47.421	2026-11-02 01:06:47.421	MULTIPLE_CHOICE	\N	\N	4	13
+26958	「うさんくさい」 nghĩa là gì?	đáng ngờ, mờ ám	17005	2026-11-02 01:06:47.429	2026-11-02 01:06:47.429	MULTIPLE_CHOICE	\N	\N	4	14
+26959	「疎い（うとい）」 nghĩa là gì?	mù tịt, không rành	17005	2026-11-02 01:06:47.438	2026-11-02 01:06:47.438	MULTIPLE_CHOICE	\N	\N	4	15
+26960	「うやうやしい」 nghĩa là gì?	cung kính	17005	2026-11-02 01:06:47.446	2026-11-02 01:06:47.446	MULTIPLE_CHOICE	\N	\N	4	16
+26961	「おぼつかない」 nghĩa là gì?	không chắc chắn, chập chững	17005	2026-11-02 01:06:47.452	2026-11-02 01:06:47.452	MULTIPLE_CHOICE	\N	\N	4	17
+26962	「思わしい（おもわしい）」 nghĩa là gì?	như mong muốn (thường dùng phủ định)	17005	2026-11-02 01:06:47.458	2026-11-02 01:06:47.458	MULTIPLE_CHOICE	\N	\N	4	18
+26963	「かけがえのない」 nghĩa là gì?	không gì thay thế được	17005	2026-11-02 01:06:47.464	2026-11-02 01:06:47.464	MULTIPLE_CHOICE	\N	\N	4	19
+26964	「仰々しい（ぎょうぎょうしい）」 nghĩa là gì?	phô trương, khoa trương	17005	2026-11-02 01:06:47.47	2026-11-02 01:06:47.47	MULTIPLE_CHOICE	\N	\N	4	20
+26965	「際どい（きわどい）」 nghĩa là gì?	sát nút, mấp mé	17005	2026-11-02 01:06:47.476	2026-11-02 01:06:47.476	MULTIPLE_CHOICE	\N	\N	4	21
+26966	「屈強（くっきょう）」 nghĩa là gì?	lực lưỡng, vạm vỡ	17005	2026-11-02 01:06:47.481	2026-11-02 01:06:47.481	MULTIPLE_CHOICE	\N	\N	4	22
+26967	「けたたましい」 nghĩa là gì?	inh ỏi, chói tai	17005	2026-11-02 01:06:47.486	2026-11-02 01:06:47.486	MULTIPLE_CHOICE	\N	\N	4	23
+26968	「心許ない（こころもとない）」 nghĩa là gì?	bất an, không yên tâm	17005	2026-11-02 01:06:47.491	2026-11-02 01:06:47.491	MULTIPLE_CHOICE	\N	\N	4	24
+26969	「小賢しい（こざかしい）」 nghĩa là gì?	láu cá, khôn vặt	17005	2026-11-02 01:06:47.496	2026-11-02 01:06:47.496	MULTIPLE_CHOICE	\N	\N	4	25
+26970	「さりげない」 nghĩa là gì?	tự nhiên, không phô trương	17005	2026-11-02 01:06:47.501	2026-11-02 01:06:47.501	MULTIPLE_CHOICE	\N	\N	4	26
+26971	「淑やか（しとやか）」 nghĩa là gì?	duyên dáng, thùy mị	17005	2026-11-02 01:06:47.506	2026-11-02 01:06:47.506	MULTIPLE_CHOICE	\N	\N	4	27
+26972	「せわしい」 nghĩa là gì?	bận rộn, tất bật	17005	2026-11-02 01:06:47.512	2026-11-02 01:06:47.512	MULTIPLE_CHOICE	\N	\N	4	28
+26973	「そつがない」 nghĩa là gì?	không sơ hở, chu toàn	17005	2026-11-02 01:06:47.518	2026-11-02 01:06:47.518	MULTIPLE_CHOICE	\N	\N	4	29
+26974	「たどたどしい」 nghĩa là gì?	ấp úng, vấp váp	17005	2026-11-02 01:06:47.524	2026-11-02 01:06:47.524	MULTIPLE_CHOICE	\N	\N	4	30
+26975	「手厚い（てあつい）」 nghĩa là gì?	chu đáo, tận tình	17005	2026-11-02 01:06:47.53	2026-11-02 01:06:47.53	MULTIPLE_CHOICE	\N	\N	4	31
+26976	「手ごわい（てごわい）」 nghĩa là gì?	khó nhằn, đáng gờm	17005	2026-11-02 01:06:47.536	2026-11-02 01:06:47.536	MULTIPLE_CHOICE	\N	\N	4	32
+26977	「とめどない」 nghĩa là gì?	không ngừng, tuôn trào	17006	2026-11-02 01:06:47.542	2026-11-02 01:06:47.542	MULTIPLE_CHOICE	\N	\N	4	0
+26978	「苦々しい（にがにがしい）」 nghĩa là gì?	khó chịu, cay đắng	17006	2026-11-02 01:06:47.55	2026-11-02 01:06:47.55	MULTIPLE_CHOICE	\N	\N	4	1
+26979	「ねたましい」 nghĩa là gì?	đố kỵ, ghen ghét	17006	2026-11-02 01:06:47.556	2026-11-02 01:06:47.556	MULTIPLE_CHOICE	\N	\N	4	2
+26980	「ひたむき」 nghĩa là gì?	hết lòng, chuyên tâm	17006	2026-11-02 01:06:47.566	2026-11-02 01:06:47.566	MULTIPLE_CHOICE	\N	\N	4	3
+26981	「不躾（ぶしつけ）」 nghĩa là gì?	thất lễ, sỗ sàng	17006	2026-11-02 01:06:47.58	2026-11-02 01:06:47.58	MULTIPLE_CHOICE	\N	\N	4	4
+26982	「まばゆい」 nghĩa là gì?	chói lóa	17006	2026-11-02 01:06:47.593	2026-11-02 01:06:47.593	MULTIPLE_CHOICE	\N	\N	4	5
+26983	「まめ」 nghĩa là gì?	siêng năng, chu đáo	17006	2026-11-02 01:06:47.604	2026-11-02 01:06:47.604	MULTIPLE_CHOICE	\N	\N	4	6
+26984	「みずみずしい」 nghĩa là gì?	tươi mọng, tươi tắn	17006	2026-11-02 01:06:47.611	2026-11-02 01:06:47.611	MULTIPLE_CHOICE	\N	\N	4	7
+26985	「目ざとい（めざとい）」 nghĩa là gì?	tinh mắt	17006	2026-11-02 01:06:47.619	2026-11-02 01:06:47.619	MULTIPLE_CHOICE	\N	\N	4	8
+26986	「よそよそしい」 nghĩa là gì?	xa cách, lạnh nhạt	17006	2026-11-02 01:06:47.623	2026-11-02 01:06:47.623	MULTIPLE_CHOICE	\N	\N	4	9
+26987	「弱々しい（よわよわしい）」 nghĩa là gì?	yếu ớt	17006	2026-11-02 01:06:47.628	2026-11-02 01:06:47.628	MULTIPLE_CHOICE	\N	\N	4	10
+26988	「頑な（かたくな）」 nghĩa là gì?	cố chấp, ương bướng	17006	2026-11-02 01:06:47.634	2026-11-02 01:06:47.634	MULTIPLE_CHOICE	\N	\N	4	11
+26989	「気丈（きじょう）」 nghĩa là gì?	cứng cỏi, vững vàng	17006	2026-11-02 01:06:47.638	2026-11-02 01:06:47.638	MULTIPLE_CHOICE	\N	\N	4	12
+26990	「強靭（きょうじん）」 nghĩa là gì?	bền bỉ, dẻo dai	17006	2026-11-02 01:06:47.643	2026-11-02 01:06:47.643	MULTIPLE_CHOICE	\N	\N	4	13
+26991	「軽薄（けいはく）」 nghĩa là gì?	nông nổi, hời hợt	17006	2026-11-02 01:06:47.648	2026-11-02 01:06:47.648	MULTIPLE_CHOICE	\N	\N	4	14
+26992	「高尚（こうしょう）」 nghĩa là gì?	cao thượng, thanh cao	17006	2026-11-02 01:06:47.653	2026-11-02 01:06:47.653	MULTIPLE_CHOICE	\N	\N	4	15
+26993	「細心（さいしん）」 nghĩa là gì?	tỉ mỉ, cẩn trọng	17006	2026-11-02 01:06:47.659	2026-11-02 01:06:47.659	MULTIPLE_CHOICE	\N	\N	4	16
+26994	「淡白（たんぱく）」 nghĩa là gì?	thanh đạm; thờ ơ	17006	2026-11-02 01:06:47.663	2026-11-02 01:06:47.663	MULTIPLE_CHOICE	\N	\N	4	17
+26995	「丁重（ていちょう）」 nghĩa là gì?	lịch sự, trọng thị	17006	2026-11-02 01:06:47.667	2026-11-02 01:06:47.667	MULTIPLE_CHOICE	\N	\N	4	18
+26996	「貪欲（どんよく）」 nghĩa là gì?	tham lam; ham học hỏi	17006	2026-11-02 01:06:47.671	2026-11-02 01:06:47.671	MULTIPLE_CHOICE	\N	\N	4	19
+26997	「薄情（はくじょう）」 nghĩa là gì?	bạc tình, vô tâm	17006	2026-11-02 01:06:47.676	2026-11-02 01:06:47.676	MULTIPLE_CHOICE	\N	\N	4	20
+26998	「不審（ふしん）」 nghĩa là gì?	đáng ngờ	17006	2026-11-02 01:06:47.682	2026-11-02 01:06:47.682	MULTIPLE_CHOICE	\N	\N	4	21
+26999	「無粋（ぶすい）」 nghĩa là gì?	vô duyên, thiếu tế nhị	17006	2026-11-02 01:06:47.688	2026-11-02 01:06:47.688	MULTIPLE_CHOICE	\N	\N	4	22
+27000	「凡庸（ぼんよう）」 nghĩa là gì?	tầm thường	17006	2026-11-02 01:06:47.693	2026-11-02 01:06:47.693	MULTIPLE_CHOICE	\N	\N	4	23
+27001	「冷徹（れいてつ）」 nghĩa là gì?	lạnh lùng sắc bén	17006	2026-11-02 01:06:47.699	2026-11-02 01:06:47.699	MULTIPLE_CHOICE	\N	\N	4	24
+27002	「老練（ろうれん）」 nghĩa là gì?	lão luyện	17006	2026-11-02 01:06:47.705	2026-11-02 01:06:47.705	MULTIPLE_CHOICE	\N	\N	4	25
+27003	「いびつ」 nghĩa là gì?	méo mó, lệch lạc	17006	2026-11-02 01:06:47.71	2026-11-02 01:06:47.71	MULTIPLE_CHOICE	\N	\N	4	26
+27004	「かなわない」 nghĩa là gì?	không chịu nổi; không địch nổi	17006	2026-11-02 01:06:47.717	2026-11-02 01:06:47.717	MULTIPLE_CHOICE	\N	\N	4	27
+27005	「地道（じみち）」 nghĩa là gì?	bền bỉ, chắc chắn	17006	2026-11-02 01:06:47.723	2026-11-02 01:06:47.723	MULTIPLE_CHOICE	\N	\N	4	28
+27006	「手痛い（ていたい）」 nghĩa là gì?	nặng nề, đau đớn	17006	2026-11-02 01:06:47.729	2026-11-02 01:06:47.729	MULTIPLE_CHOICE	\N	\N	4	29
+27007	「なおざり」 nghĩa là gì?	qua loa, lơ là	17006	2026-11-02 01:06:47.735	2026-11-02 01:06:47.735	MULTIPLE_CHOICE	\N	\N	4	30
+27008	「根強い（ねづよい）」 nghĩa là gì?	ăn sâu, bám rễ	17006	2026-11-02 01:06:47.746	2026-11-02 01:06:47.746	MULTIPLE_CHOICE	\N	\N	4	31
+27009	「もってのほか」 nghĩa là gì?	không thể tha thứ, quá đáng	17006	2026-11-02 01:06:47.754	2026-11-02 01:06:47.754	MULTIPLE_CHOICE	\N	\N	4	32
+27010	「逐一（ちくいち）」 nghĩa là gì?	từng cái một, chi tiết	17007	2026-11-02 01:06:47.761	2026-11-02 01:06:47.761	MULTIPLE_CHOICE	\N	\N	4	0
+27011	「あわよくば」 nghĩa là gì?	nếu may mắn thì, biết đâu	17007	2026-11-02 01:06:47.766	2026-11-02 01:06:47.766	MULTIPLE_CHOICE	\N	\N	4	1
+27012	「いささか」 nghĩa là gì?	hơi, một chút	17007	2026-11-02 01:06:47.771	2026-11-02 01:06:47.771	MULTIPLE_CHOICE	\N	\N	4	2
+27013	「一向に（いっこうに）」 nghĩa là gì?	hoàn toàn (không)	17007	2026-11-02 01:06:47.778	2026-11-02 01:06:47.778	MULTIPLE_CHOICE	\N	\N	4	3
+27014	「未だに（いまだに）」 nghĩa là gì?	đến giờ vẫn	17007	2026-11-02 01:06:47.785	2026-11-02 01:06:47.785	MULTIPLE_CHOICE	\N	\N	4	4
+27015	「否応なしに（いやおうなしに）」 nghĩa là gì?	bất kể muốn hay không	17007	2026-11-02 01:06:47.791	2026-11-02 01:06:47.791	MULTIPLE_CHOICE	\N	\N	4	5
+27016	「おおむね」 nghĩa là gì?	đại khái, nhìn chung	17007	2026-11-02 01:06:47.796	2026-11-02 01:06:47.796	MULTIPLE_CHOICE	\N	\N	4	6
+27017	「思いのほか（おもいのほか）」 nghĩa là gì?	ngoài dự đoán	17007	2026-11-02 01:06:47.8	2026-11-02 01:06:47.8	MULTIPLE_CHOICE	\N	\N	4	7
+27018	「仮に（かりに）」 nghĩa là gì?	giả sử	17007	2026-11-02 01:06:47.805	2026-11-02 01:06:47.805	MULTIPLE_CHOICE	\N	\N	4	8
+27019	「極力（きょくりょく）」 nghĩa là gì?	hết sức, tối đa	17007	2026-11-02 01:06:47.809	2026-11-02 01:06:47.809	MULTIPLE_CHOICE	\N	\N	4	9
+27020	「くまなく」 nghĩa là gì?	khắp mọi nơi, không sót chỗ nào	17007	2026-11-02 01:06:47.814	2026-11-02 01:06:47.814	MULTIPLE_CHOICE	\N	\N	4	10
+27021	「殊更（ことさら）」 nghĩa là gì?	cố ý; đặc biệt	17007	2026-11-02 01:06:47.82	2026-11-02 01:06:47.82	MULTIPLE_CHOICE	\N	\N	4	11
+27022	「さぞ」 nghĩa là gì?	chắc hẳn là	17007	2026-11-02 01:06:47.826	2026-11-02 01:06:47.826	MULTIPLE_CHOICE	\N	\N	4	12
+27023	「所詮（しょせん）」 nghĩa là gì?	rốt cuộc thì, dù sao thì	17007	2026-11-02 01:06:47.83	2026-11-02 01:06:47.83	MULTIPLE_CHOICE	\N	\N	4	13
+27024	「すかさず」 nghĩa là gì?	ngay lập tức, không chần chừ	17007	2026-11-02 01:06:47.833	2026-11-02 01:06:47.833	MULTIPLE_CHOICE	\N	\N	4	14
+27025	「総じて（そうじて）」 nghĩa là gì?	nói chung, tổng thể	17007	2026-11-02 01:06:47.837	2026-11-02 01:06:47.837	MULTIPLE_CHOICE	\N	\N	4	15
+27026	「そもそも」 nghĩa là gì?	vốn dĩ, ngay từ đầu	17007	2026-11-02 01:06:47.842	2026-11-02 01:06:47.842	MULTIPLE_CHOICE	\N	\N	4	16
+27027	「断じて（だんじて）」 nghĩa là gì?	tuyệt đối (không)	17007	2026-11-02 01:06:47.847	2026-11-02 01:06:47.847	MULTIPLE_CHOICE	\N	\N	4	17
+27028	「着々と（ちゃくちゃくと）」 nghĩa là gì?	đều đặn, từng bước vững chắc	17007	2026-11-02 01:06:47.855	2026-11-02 01:06:47.855	MULTIPLE_CHOICE	\N	\N	4	18
+27029	「とっさに」 nghĩa là gì?	theo phản xạ, trong tích tắc	17007	2026-11-02 01:06:47.861	2026-11-02 01:06:47.861	MULTIPLE_CHOICE	\N	\N	4	19
+27030	「なにとぞ」 nghĩa là gì?	kính mong, xin hãy (trang trọng)	17007	2026-11-02 01:06:47.869	2026-11-02 01:06:47.869	MULTIPLE_CHOICE	\N	\N	4	20
+27031	「ひとえに」 nghĩa là gì?	hoàn toàn là nhờ, chỉ vì	17007	2026-11-02 01:06:47.877	2026-11-02 01:06:47.877	MULTIPLE_CHOICE	\N	\N	4	21
+27032	「ひょっとして」 nghĩa là gì?	biết đâu, có lẽ	17007	2026-11-02 01:06:47.885	2026-11-02 01:06:47.885	MULTIPLE_CHOICE	\N	\N	4	22
+27033	「不意に（ふいに）」 nghĩa là gì?	bất thình lình	17007	2026-11-02 01:06:47.891	2026-11-02 01:06:47.891	MULTIPLE_CHOICE	\N	\N	4	23
+27034	「ふんだんに」 nghĩa là gì?	dồi dào, thoải mái	17007	2026-11-02 01:06:47.898	2026-11-02 01:06:47.898	MULTIPLE_CHOICE	\N	\N	4	24
+27035	「まるきり」 nghĩa là gì?	hoàn toàn	17007	2026-11-02 01:06:47.904	2026-11-02 01:06:47.904	MULTIPLE_CHOICE	\N	\N	4	25
+27036	「やけに」 nghĩa là gì?	quá, cực kỳ (khác thường)	17007	2026-11-02 01:06:47.91	2026-11-02 01:06:47.91	MULTIPLE_CHOICE	\N	\N	4	26
+27037	「やむを得ず（やむをえず）」 nghĩa là gì?	bất đắc dĩ, đành phải	17007	2026-11-02 01:06:47.916	2026-11-02 01:06:47.916	MULTIPLE_CHOICE	\N	\N	4	27
+27038	「ゆくゆく」 nghĩa là gì?	về sau, trong tương lai	17007	2026-11-02 01:06:47.921	2026-11-02 01:06:47.921	MULTIPLE_CHOICE	\N	\N	4	28
+27039	「よほど」 nghĩa là gì?	khá là, hẳn là rất	17007	2026-11-02 01:06:47.927	2026-11-02 01:06:47.927	MULTIPLE_CHOICE	\N	\N	4	29
+27040	「たかが」 nghĩa là gì?	chỉ là, cùng lắm là	17007	2026-11-02 01:06:47.933	2026-11-02 01:06:47.933	MULTIPLE_CHOICE	\N	\N	4	30
+27041	「十人十色（じゅうにんといろ）」 nghĩa là gì?	mỗi người một vẻ	17008	2026-11-02 01:06:47.939	2026-11-02 01:06:47.939	MULTIPLE_CHOICE	\N	\N	4	0
+27042	「一石二鳥（いっせきにちょう）」 nghĩa là gì?	một mũi tên trúng hai đích	17008	2026-11-02 01:06:47.944	2026-11-02 01:06:47.944	MULTIPLE_CHOICE	\N	\N	4	1
+27043	「一朝一夕（いっちょういっせき）」 nghĩa là gì?	một sớm một chiều	17008	2026-11-02 01:06:47.949	2026-11-02 01:06:47.949	MULTIPLE_CHOICE	\N	\N	4	2
+27044	「一長一短（いっちょういったん）」 nghĩa là gì?	có ưu có nhược	17008	2026-11-02 01:06:47.953	2026-11-02 01:06:47.953	MULTIPLE_CHOICE	\N	\N	4	3
+27045	「一喜一憂（いっきいちゆう）」 nghĩa là gì?	lúc mừng lúc lo (theo từng biến động)	17008	2026-11-02 01:06:47.959	2026-11-02 01:06:47.959	MULTIPLE_CHOICE	\N	\N	4	4
+27046	「異口同音（いくどうおん）」 nghĩa là gì?	đồng thanh, cùng một ý	17008	2026-11-02 01:06:47.964	2026-11-02 01:06:47.964	MULTIPLE_CHOICE	\N	\N	4	5
+27047	「以心伝心（いしんでんしん）」 nghĩa là gì?	tâm đầu ý hợp, hiểu ý không cần nói	17008	2026-11-02 01:06:47.969	2026-11-02 01:06:47.969	MULTIPLE_CHOICE	\N	\N	4	6
+27048	「右往左往（うおうさおう）」 nghĩa là gì?	chạy loạn xạ, cuống cuồng	17008	2026-11-02 01:06:47.973	2026-11-02 01:06:47.973	MULTIPLE_CHOICE	\N	\N	4	7
+27049	「紆余曲折（うよきょくせつ）」 nghĩa là gì?	quanh co khúc khuỷu, trắc trở	17008	2026-11-02 01:06:47.977	2026-11-02 01:06:47.977	MULTIPLE_CHOICE	\N	\N	4	8
+27050	「温故知新（おんこちしん）」 nghĩa là gì?	ôn cũ biết mới	17008	2026-11-02 01:06:47.981	2026-11-02 01:06:47.981	MULTIPLE_CHOICE	\N	\N	4	9
+27051	「画竜点睛（がりょうてんせい）」 nghĩa là gì?	nét chấm phá hoàn thiện (vẽ rồng điểm mắt)	17008	2026-11-02 01:06:47.987	2026-11-02 01:06:47.987	MULTIPLE_CHOICE	\N	\N	4	10
+27052	「危機一髪（ききいっぱつ）」 nghĩa là gì?	nghìn cân treo sợi tóc	17008	2026-11-02 01:06:47.992	2026-11-02 01:06:47.992	MULTIPLE_CHOICE	\N	\N	4	11
+27053	「起死回生（きしかいせい）」 nghĩa là gì?	cải tử hoàn sinh, lội ngược dòng	17008	2026-11-02 01:06:47.996	2026-11-02 01:06:47.996	MULTIPLE_CHOICE	\N	\N	4	12
+27054	「喜怒哀楽（きどあいらく）」 nghĩa là gì?	hỉ nộ ái lạc	17008	2026-11-02 01:06:48.001	2026-11-02 01:06:48.001	MULTIPLE_CHOICE	\N	\N	4	13
+27055	「疑心暗鬼（ぎしんあんき）」 nghĩa là gì?	nghi thần nghi quỷ	17008	2026-11-02 01:06:48.007	2026-11-02 01:06:48.007	MULTIPLE_CHOICE	\N	\N	4	14
+27056	「言語道断（ごんごどうだん）」 nghĩa là gì?	không thể chấp nhận, quá đáng	17008	2026-11-02 01:06:48.014	2026-11-02 01:06:48.014	MULTIPLE_CHOICE	\N	\N	4	15
+27057	「自業自得（じごうじとく）」 nghĩa là gì?	gieo gió gặt bão	17008	2026-11-02 01:06:48.02	2026-11-02 01:06:48.02	MULTIPLE_CHOICE	\N	\N	4	16
+27058	「自画自賛（じがじさん）」 nghĩa là gì?	tự khen mình	17008	2026-11-02 01:06:48.026	2026-11-02 01:06:48.026	MULTIPLE_CHOICE	\N	\N	4	17
+27059	「四苦八苦（しくはっく）」 nghĩa là gì?	vô cùng vất vả	17008	2026-11-02 01:06:48.033	2026-11-02 01:06:48.033	MULTIPLE_CHOICE	\N	\N	4	18
+27060	「弱肉強食（じゃくにくきょうしょく）」 nghĩa là gì?	cá lớn nuốt cá bé	17008	2026-11-02 01:06:48.04	2026-11-02 01:06:48.04	MULTIPLE_CHOICE	\N	\N	4	19
+27061	「取捨選択（しゅしゃせんたく）」 nghĩa là gì?	chọn lọc	17008	2026-11-02 01:06:48.05	2026-11-02 01:06:48.05	MULTIPLE_CHOICE	\N	\N	4	20
+27062	「千差万別（せんさばんべつ）」 nghĩa là gì?	muôn hình vạn trạng	17008	2026-11-02 01:06:48.058	2026-11-02 01:06:48.058	MULTIPLE_CHOICE	\N	\N	4	21
+27063	「前代未聞（ぜんだいみもん）」 nghĩa là gì?	chưa từng có tiền lệ	17008	2026-11-02 01:06:48.067	2026-11-02 01:06:48.067	MULTIPLE_CHOICE	\N	\N	4	22
+27064	「大同小異（だいどうしょうい）」 nghĩa là gì?	đại đồng tiểu dị	17008	2026-11-02 01:06:48.076	2026-11-02 01:06:48.076	MULTIPLE_CHOICE	\N	\N	4	23
+27065	「単刀直入（たんとうちょくにゅう）」 nghĩa là gì?	đi thẳng vào vấn đề	17008	2026-11-02 01:06:48.085	2026-11-02 01:06:48.085	MULTIPLE_CHOICE	\N	\N	4	24
+27066	「適材適所（てきざいてきしょ）」 nghĩa là gì?	đúng người đúng việc	17008	2026-11-02 01:06:48.094	2026-11-02 01:06:48.094	MULTIPLE_CHOICE	\N	\N	4	25
+27067	「東奔西走（とうほんせいそう）」 nghĩa là gì?	chạy ngược chạy xuôi	17008	2026-11-02 01:06:48.104	2026-11-02 01:06:48.104	MULTIPLE_CHOICE	\N	\N	4	26
+27068	「二者択一（にしゃたくいつ）」 nghĩa là gì?	chọn một trong hai	17008	2026-11-02 01:06:48.113	2026-11-02 01:06:48.113	MULTIPLE_CHOICE	\N	\N	4	27
+27069	「半信半疑（はんしんはんぎ）」 nghĩa là gì?	nửa tin nửa ngờ	17008	2026-11-02 01:06:48.121	2026-11-02 01:06:48.121	MULTIPLE_CHOICE	\N	\N	4	28
+27070	「付和雷同（ふわらいどう）」 nghĩa là gì?	a dua theo người khác	17008	2026-11-02 01:06:48.128	2026-11-02 01:06:48.128	MULTIPLE_CHOICE	\N	\N	4	29
+27071	「本末転倒（ほんまつてんとう）」 nghĩa là gì?	đầu đuôi lộn ngược, bỏ gốc lấy ngọn	17008	2026-11-02 01:06:48.134	2026-11-02 01:06:48.134	MULTIPLE_CHOICE	\N	\N	4	30
+27072	「無我夢中（むがむちゅう）」 nghĩa là gì?	say mê quên mình	17008	2026-11-02 01:06:48.139	2026-11-02 01:06:48.139	MULTIPLE_CHOICE	\N	\N	4	31
+27073	「油断大敵（ゆだんたいてき）」 nghĩa là gì?	chủ quan là kẻ thù lớn	17008	2026-11-02 01:06:48.146	2026-11-02 01:06:48.146	MULTIPLE_CHOICE	\N	\N	4	32
+27074	「アポイント」 nghĩa là gì?	cuộc hẹn (công việc)	17009	2026-11-02 01:06:48.155	2026-11-02 01:06:48.155	MULTIPLE_CHOICE	\N	\N	4	0
+27075	「アメニティ」 nghĩa là gì?	tiện nghi, đồ dùng (khách sạn)	17009	2026-11-02 01:06:48.164	2026-11-02 01:06:48.164	MULTIPLE_CHOICE	\N	\N	4	1
+27076	「イノベーション」 nghĩa là gì?	đổi mới sáng tạo	17009	2026-11-02 01:06:48.171	2026-11-02 01:06:48.171	MULTIPLE_CHOICE	\N	\N	4	2
+27077	「インフラ」 nghĩa là gì?	cơ sở hạ tầng	17009	2026-11-02 01:06:48.177	2026-11-02 01:06:48.177	MULTIPLE_CHOICE	\N	\N	4	3
+27078	「エビデンス」 nghĩa là gì?	bằng chứng (khoa học)	17009	2026-11-02 01:06:48.182	2026-11-02 01:06:48.182	MULTIPLE_CHOICE	\N	\N	4	4
+27079	「オーソドックス」 nghĩa là gì?	chính thống, truyền thống	17009	2026-11-02 01:06:48.188	2026-11-02 01:06:48.188	MULTIPLE_CHOICE	\N	\N	4	5
+27080	「ガイドライン」 nghĩa là gì?	hướng dẫn, chỉ dẫn	17009	2026-11-02 01:06:48.194	2026-11-02 01:06:48.194	MULTIPLE_CHOICE	\N	\N	4	6
+27081	「キャパシティ」 nghĩa là gì?	sức chứa, năng lực	17009	2026-11-02 01:06:48.2	2026-11-02 01:06:48.2	MULTIPLE_CHOICE	\N	\N	4	7
+27082	「コンセンサス」 nghĩa là gì?	sự đồng thuận	17009	2026-11-02 01:06:48.205	2026-11-02 01:06:48.205	MULTIPLE_CHOICE	\N	\N	4	8
+27083	「コンプライアンス」 nghĩa là gì?	tuân thủ pháp luật	17009	2026-11-02 01:06:48.211	2026-11-02 01:06:48.211	MULTIPLE_CHOICE	\N	\N	4	9
+27084	「ジレンマ」 nghĩa là gì?	tình thế tiến thoái lưỡng nan	17009	2026-11-02 01:06:48.217	2026-11-02 01:06:48.217	MULTIPLE_CHOICE	\N	\N	4	10
+27085	「スキーム」 nghĩa là gì?	cơ chế, kế hoạch (khung)	17009	2026-11-02 01:06:48.222	2026-11-02 01:06:48.222	MULTIPLE_CHOICE	\N	\N	4	11
+27086	「ステレオタイプ」 nghĩa là gì?	định kiến rập khuôn	17009	2026-11-02 01:06:48.228	2026-11-02 01:06:48.228	MULTIPLE_CHOICE	\N	\N	4	12
+27087	「ノウハウ」 nghĩa là gì?	bí quyết, kinh nghiệm thực tế	17009	2026-11-02 01:06:48.234	2026-11-02 01:06:48.234	MULTIPLE_CHOICE	\N	\N	4	13
+27088	「バイアス」 nghĩa là gì?	thiên kiến, sai lệch	17009	2026-11-02 01:06:48.24	2026-11-02 01:06:48.24	MULTIPLE_CHOICE	\N	\N	4	14
+27089	「パラドックス」 nghĩa là gì?	nghịch lý	17009	2026-11-02 01:06:48.246	2026-11-02 01:06:48.246	MULTIPLE_CHOICE	\N	\N	4	15
+27090	「ビジョン」 nghĩa là gì?	tầm nhìn	17009	2026-11-02 01:06:48.252	2026-11-02 01:06:48.252	MULTIPLE_CHOICE	\N	\N	4	16
+27091	「フィードバック」 nghĩa là gì?	phản hồi	17009	2026-11-02 01:06:48.258	2026-11-02 01:06:48.258	MULTIPLE_CHOICE	\N	\N	4	17
+27092	「プロセス」 nghĩa là gì?	quá trình, quy trình	17009	2026-11-02 01:06:48.262	2026-11-02 01:06:48.262	MULTIPLE_CHOICE	\N	\N	4	18
+27093	「ポテンシャル」 nghĩa là gì?	tiềm năng	17009	2026-11-02 01:06:48.267	2026-11-02 01:06:48.267	MULTIPLE_CHOICE	\N	\N	4	19
+27094	「マニフェスト」 nghĩa là gì?	cương lĩnh tranh cử	17009	2026-11-02 01:06:48.271	2026-11-02 01:06:48.271	MULTIPLE_CHOICE	\N	\N	4	20
+27095	「メカニズム」 nghĩa là gì?	cơ chế	17009	2026-11-02 01:06:48.276	2026-11-02 01:06:48.276	MULTIPLE_CHOICE	\N	\N	4	21
+27096	「モチベーション」 nghĩa là gì?	động lực	17009	2026-11-02 01:06:48.28	2026-11-02 01:06:48.28	MULTIPLE_CHOICE	\N	\N	4	22
+27097	「リテラシー」 nghĩa là gì?	năng lực hiểu biết (sử dụng)	17009	2026-11-02 01:06:48.285	2026-11-02 01:06:48.285	MULTIPLE_CHOICE	\N	\N	4	23
+27098	「レトリック」 nghĩa là gì?	tu từ, thuật hùng biện	17009	2026-11-02 01:06:48.29	2026-11-02 01:06:48.29	MULTIPLE_CHOICE	\N	\N	4	24
+27099	「修飾（しゅうしょく）」 nghĩa là gì?	bổ nghĩa; trang trí	17010	2026-11-02 01:06:48.295	2026-11-02 01:06:48.295	MULTIPLE_CHOICE	\N	\N	4	0
+27100	「著作（ちょさく）」 nghĩa là gì?	tác phẩm, trước tác	17010	2026-11-02 01:06:48.299	2026-11-02 01:06:48.299	MULTIPLE_CHOICE	\N	\N	4	1
+27101	「論拠（ろんきょ）」 nghĩa là gì?	luận cứ	17010	2026-11-02 01:06:48.303	2026-11-02 01:06:48.303	MULTIPLE_CHOICE	\N	\N	4	2
+27102	「韻（いん）」 nghĩa là gì?	vần	17010	2026-11-02 01:06:48.309	2026-11-02 01:06:48.309	MULTIPLE_CHOICE	\N	\N	4	3
+27103	「押韻（おういん）」 nghĩa là gì?	gieo vần	17010	2026-11-02 01:06:48.313	2026-11-02 01:06:48.313	MULTIPLE_CHOICE	\N	\N	4	4
+27104	「寓話（ぐうわ）」 nghĩa là gì?	truyện ngụ ngôn	17010	2026-11-02 01:06:48.318	2026-11-02 01:06:48.318	MULTIPLE_CHOICE	\N	\N	4	5
+27105	「叙述（じょじゅつ）」 nghĩa là gì?	tự thuật, mô tả	17010	2026-11-02 01:06:48.322	2026-11-02 01:06:48.322	MULTIPLE_CHOICE	\N	\N	4	6
+27106	「抒情（じょじょう）」 nghĩa là gì?	trữ tình	17010	2026-11-02 01:06:48.327	2026-11-02 01:06:48.327	MULTIPLE_CHOICE	\N	\N	4	7
+27107	「読解（どっかい）」 nghĩa là gì?	đọc hiểu	17010	2026-11-02 01:06:48.332	2026-11-02 01:06:48.332	MULTIPLE_CHOICE	\N	\N	4	8
+27108	「翻案（ほんあん）」 nghĩa là gì?	phóng tác, chuyển thể	17010	2026-11-02 01:06:48.336	2026-11-02 01:06:48.336	MULTIPLE_CHOICE	\N	\N	4	9
+27109	「命題（めいだい）」 nghĩa là gì?	mệnh đề; vấn đề đặt ra	17010	2026-11-02 01:06:48.341	2026-11-02 01:06:48.341	MULTIPLE_CHOICE	\N	\N	4	10
+27110	「余韻（よいん）」 nghĩa là gì?	dư âm	17010	2026-11-02 01:06:48.344	2026-11-02 01:06:48.344	MULTIPLE_CHOICE	\N	\N	4	11
+27111	「論旨（ろんし）」 nghĩa là gì?	luận điểm chính	17010	2026-11-02 01:06:48.348	2026-11-02 01:06:48.348	MULTIPLE_CHOICE	\N	\N	4	12
+27112	「論破（ろんぱ）」 nghĩa là gì?	bác bỏ (bằng lý lẽ)	17010	2026-11-02 01:06:48.352	2026-11-02 01:06:48.352	MULTIPLE_CHOICE	\N	\N	4	13
+27113	「軋轢（あつれき）」 nghĩa là gì?	xích mích, va chạm (quan hệ)	17011	2026-11-02 01:06:48.358	2026-11-02 01:06:48.358	MULTIPLE_CHOICE	\N	\N	4	0
+27114	「異議（いぎ）」 nghĩa là gì?	ý kiến phản đối, phản đối	17011	2026-11-02 01:06:48.362	2026-11-02 01:06:48.362	MULTIPLE_CHOICE	\N	\N	4	1
+27115	「意向（いこう）」 nghĩa là gì?	ý định, ý hướng	17011	2026-11-02 01:06:48.366	2026-11-02 01:06:48.366	MULTIPLE_CHOICE	\N	\N	4	2
+27116	「一掃（いっそう）」 nghĩa là gì?	quét sạch, loại bỏ hoàn toàn	17011	2026-11-02 01:06:48.37	2026-11-02 01:06:48.37	MULTIPLE_CHOICE	\N	\N	4	3
+27117	「一翼（いちよく）」 nghĩa là gì?	một phần (vai trò), một cánh	17011	2026-11-02 01:06:48.374	2026-11-02 01:06:48.374	MULTIPLE_CHOICE	\N	\N	4	4
+27118	「沿革（えんかく）」 nghĩa là gì?	lịch sử phát triển (tổ chức)	17011	2026-11-02 01:06:48.379	2026-11-02 01:06:48.379	MULTIPLE_CHOICE	\N	\N	4	5
+27119	「稼働（かどう）」 nghĩa là gì?	vận hành (máy móc, nhà máy)	17011	2026-11-02 01:06:48.383	2026-11-02 01:06:48.383	MULTIPLE_CHOICE	\N	\N	4	6
+27120	「勧告（かんこく）」 nghĩa là gì?	khuyến cáo, khuyến nghị	17011	2026-11-02 01:06:48.388	2026-11-02 01:06:48.388	MULTIPLE_CHOICE	\N	\N	4	7
+27121	「慣行（かんこう）」 nghĩa là gì?	tập quán, thông lệ	17011	2026-11-02 01:06:48.392	2026-11-02 01:06:48.392	MULTIPLE_CHOICE	\N	\N	4	8
+27122	「監修（かんしゅう）」 nghĩa là gì?	giám tu, biên tập chỉ đạo	17011	2026-11-02 01:06:48.396	2026-11-02 01:06:48.396	MULTIPLE_CHOICE	\N	\N	4	9
+27123	「帰属（きぞく）」 nghĩa là gì?	thuộc về, quy thuộc	17011	2026-11-02 01:06:48.401	2026-11-02 01:06:48.401	MULTIPLE_CHOICE	\N	\N	4	10
+27124	「糾弾（きゅうだん）」 nghĩa là gì?	lên án, chỉ trích gay gắt	17011	2026-11-02 01:06:48.405	2026-11-02 01:06:48.405	MULTIPLE_CHOICE	\N	\N	4	11
+27125	「脅威（きょうい）」 nghĩa là gì?	mối đe dọa	17011	2026-11-02 01:06:48.41	2026-11-02 01:06:48.41	MULTIPLE_CHOICE	\N	\N	4	12
+27126	「駆使（くし）」 nghĩa là gì?	sử dụng thành thạo, tận dụng	17011	2026-11-02 01:06:48.416	2026-11-02 01:06:48.416	MULTIPLE_CHOICE	\N	\N	4	13
+27127	「工面（くめん）」 nghĩa là gì?	xoay xở (tiền bạc)	17011	2026-11-02 01:06:48.421	2026-11-02 01:06:48.421	MULTIPLE_CHOICE	\N	\N	4	14
+27128	「啓発（けいはつ）」 nghĩa là gì?	khai sáng, nâng cao nhận thức	17011	2026-11-02 01:06:48.426	2026-11-02 01:06:48.426	MULTIPLE_CHOICE	\N	\N	4	15
+27129	「故意（こい）」 nghĩa là gì?	cố ý	17011	2026-11-02 01:06:48.431	2026-11-02 01:06:48.431	MULTIPLE_CHOICE	\N	\N	4	16
+27130	「高騰（こうとう）」 nghĩa là gì?	tăng vọt (giá)	17011	2026-11-02 01:06:48.436	2026-11-02 01:06:48.436	MULTIPLE_CHOICE	\N	\N	4	17
+27131	「購読（こうどく）」 nghĩa là gì?	đặt mua (báo, tạp chí)	17011	2026-11-02 01:06:48.441	2026-11-02 01:06:48.441	MULTIPLE_CHOICE	\N	\N	4	18
+27132	「懇談（こんだん）」 nghĩa là gì?	trò chuyện thân mật, tọa đàm	17011	2026-11-02 01:06:48.447	2026-11-02 01:06:48.447	MULTIPLE_CHOICE	\N	\N	4	19
+27133	「裁量（さいりょう）」 nghĩa là gì?	quyền tự quyết, tùy ý quyết định	17011	2026-11-02 01:06:48.454	2026-11-02 01:06:48.454	MULTIPLE_CHOICE	\N	\N	4	20
+27134	「査定（さてい）」 nghĩa là gì?	thẩm định, đánh giá	17011	2026-11-02 01:06:48.461	2026-11-02 01:06:48.461	MULTIPLE_CHOICE	\N	\N	4	21
+27135	「参与（さんよ）」 nghĩa là gì?	tham dự, tham gia (cố vấn)	17011	2026-11-02 01:06:48.468	2026-11-02 01:06:48.468	MULTIPLE_CHOICE	\N	\N	4	22
+27136	「自粛（じしゅく）」 nghĩa là gì?	tự kiềm chế, tự hạn chế	17011	2026-11-02 01:06:48.474	2026-11-02 01:06:48.474	MULTIPLE_CHOICE	\N	\N	4	23
+27137	「慈善（じぜん）」 nghĩa là gì?	từ thiện	17011	2026-11-02 01:06:48.48	2026-11-02 01:06:48.48	MULTIPLE_CHOICE	\N	\N	4	24
+27138	「諮問（しもん）」 nghĩa là gì?	trưng cầu ý kiến (cơ quan)	17011	2026-11-02 01:06:48.488	2026-11-02 01:06:48.488	MULTIPLE_CHOICE	\N	\N	4	25
+27139	「斜陽（しゃよう）」 nghĩa là gì?	xế chiều, suy tàn	17011	2026-11-02 01:06:48.493	2026-11-02 01:06:48.493	MULTIPLE_CHOICE	\N	\N	4	26
+27140	「収拾（しゅうしゅう）」 nghĩa là gì?	dàn xếp, kiểm soát (tình hình)	17011	2026-11-02 01:06:48.5	2026-11-02 01:06:48.5	MULTIPLE_CHOICE	\N	\N	4	27
+27141	「遵守（じゅんしゅ）」 nghĩa là gì?	tuân thủ	17011	2026-11-02 01:06:48.505	2026-11-02 01:06:48.505	MULTIPLE_CHOICE	\N	\N	4	28
+27142	「照会（しょうかい）」 nghĩa là gì?	hỏi thông tin, tra cứu	17011	2026-11-02 01:06:48.51	2026-11-02 01:06:48.51	MULTIPLE_CHOICE	\N	\N	4	29
+27143	「所轄（しょかつ）」 nghĩa là gì?	thẩm quyền quản lý, sở tại	17011	2026-11-02 01:06:48.519	2026-11-02 01:06:48.519	MULTIPLE_CHOICE	\N	\N	4	30
+27144	「助長（じょちょう）」 nghĩa là gì?	tiếp tay, làm gia tăng (điều xấu)	17011	2026-11-02 01:06:48.526	2026-11-02 01:06:48.526	MULTIPLE_CHOICE	\N	\N	4	31
+27145	「相殺（そうさい）」 nghĩa là gì?	bù trừ, triệt tiêu	17011	2026-11-02 01:06:48.533	2026-11-02 01:06:48.533	MULTIPLE_CHOICE	\N	\N	4	32
+27146	「嘆願（たんがん）」 nghĩa là gì?	thỉnh cầu, khẩn cầu	17011	2026-11-02 01:06:48.539	2026-11-02 01:06:48.539	MULTIPLE_CHOICE	\N	\N	4	33
+27147	「懲戒（ちょうかい）」 nghĩa là gì?	kỷ luật, trừng phạt	17011	2026-11-02 01:06:48.545	2026-11-02 01:06:48.545	MULTIPLE_CHOICE	\N	\N	4	34
+27148	「追随（ついずい）」 nghĩa là gì?	đi theo, bắt chước	17011	2026-11-02 01:06:48.551	2026-11-02 01:06:48.551	MULTIPLE_CHOICE	\N	\N	4	35
+27149	「抵触（ていしょく）」 nghĩa là gì?	vi phạm, xung đột (luật)	17011	2026-11-02 01:06:48.558	2026-11-02 01:06:48.558	MULTIPLE_CHOICE	\N	\N	4	36
+27150	「撤回（てっかい）」 nghĩa là gì?	rút lại (phát ngôn, quyết định)	17011	2026-11-02 01:06:48.564	2026-11-02 01:06:48.564	MULTIPLE_CHOICE	\N	\N	4	37
+27151	「添付（てんぷ）」 nghĩa là gì?	đính kèm	17011	2026-11-02 01:06:48.572	2026-11-02 01:06:48.572	MULTIPLE_CHOICE	\N	\N	4	38
+27152	「統括（とうかつ）」 nghĩa là gì?	thống quản, quản lý chung	17011	2026-11-02 01:06:48.576	2026-11-02 01:06:48.576	MULTIPLE_CHOICE	\N	\N	4	39
+27153	「淘汰（とうた）」 nghĩa là gì?	đào thải, sàng lọc	17011	2026-11-02 01:06:48.582	2026-11-02 01:06:48.582	MULTIPLE_CHOICE	\N	\N	4	40
+27154	「督促（とくそく）」 nghĩa là gì?	đôn đốc, thúc giục (thanh toán)	17011	2026-11-02 01:06:48.588	2026-11-02 01:06:48.588	MULTIPLE_CHOICE	\N	\N	4	41
+27155	「内需（ないじゅ）」 nghĩa là gì?	nhu cầu nội địa	17012	2026-11-02 01:06:48.594	2026-11-02 01:06:48.594	MULTIPLE_CHOICE	\N	\N	4	0
+27156	「難航（なんこう）」 nghĩa là gì?	gặp khó khăn, bế tắc (đàm phán)	17012	2026-11-02 01:06:48.601	2026-11-02 01:06:48.601	MULTIPLE_CHOICE	\N	\N	4	1
+27157	「氾濫（はんらん）」 nghĩa là gì?	lũ tràn; tràn lan	17012	2026-11-02 01:06:48.607	2026-11-02 01:06:48.607	MULTIPLE_CHOICE	\N	\N	4	2
+27158	「誹謗（ひぼう）」 nghĩa là gì?	phỉ báng, nói xấu	17012	2026-11-02 01:06:48.614	2026-11-02 01:06:48.614	MULTIPLE_CHOICE	\N	\N	4	3
+27159	「不振（ふしん）」 nghĩa là gì?	trì trệ, sa sút	17012	2026-11-02 01:06:48.621	2026-11-02 01:06:48.621	MULTIPLE_CHOICE	\N	\N	4	4
+27160	「付与（ふよ）」 nghĩa là gì?	cấp cho, trao cho	17012	2026-11-02 01:06:48.629	2026-11-02 01:06:48.629	MULTIPLE_CHOICE	\N	\N	4	5
+27161	「放棄（ほうき）」 nghĩa là gì?	từ bỏ	17012	2026-11-02 01:06:48.633	2026-11-02 01:06:48.633	MULTIPLE_CHOICE	\N	\N	4	6
+27162	「抹消（まっしょう）」 nghĩa là gì?	xóa bỏ (đăng ký, dữ liệu)	17012	2026-11-02 01:06:48.638	2026-11-02 01:06:48.638	MULTIPLE_CHOICE	\N	\N	4	7
+27163	「蔓延（まんえん）」 nghĩa là gì?	lan tràn, lây lan	17012	2026-11-02 01:06:48.644	2026-11-02 01:06:48.644	MULTIPLE_CHOICE	\N	\N	4	8
+27164	「猶予（ゆうよ）」 nghĩa là gì?	hoãn, gia hạn	17012	2026-11-02 01:06:48.65	2026-11-02 01:06:48.65	MULTIPLE_CHOICE	\N	\N	4	9
+27165	「誘致（ゆうち）」 nghĩa là gì?	thu hút (đầu tư, sự kiện)	17012	2026-11-02 01:06:48.654	2026-11-02 01:06:48.654	MULTIPLE_CHOICE	\N	\N	4	10
+27166	「擁護（ようご）」 nghĩa là gì?	bảo vệ, bênh vực	17012	2026-11-02 01:06:48.658	2026-11-02 01:06:48.658	MULTIPLE_CHOICE	\N	\N	4	11
+27167	「履行（りこう）」 nghĩa là gì?	thực hiện (nghĩa vụ, hợp đồng)	17012	2026-11-02 01:06:48.662	2026-11-02 01:06:48.662	MULTIPLE_CHOICE	\N	\N	4	12
+27168	「廉価（れんか）」 nghĩa là gì?	giá rẻ	17012	2026-11-02 01:06:48.667	2026-11-02 01:06:48.667	MULTIPLE_CHOICE	\N	\N	4	13
+27169	「商い（あきない）」 nghĩa là gì?	việc buôn bán	17012	2026-11-02 01:06:48.671	2026-11-02 01:06:48.671	MULTIPLE_CHOICE	\N	\N	4	14
+27170	「機運（きうん）」 nghĩa là gì?	thời cơ, xu thế	17012	2026-11-02 01:06:48.676	2026-11-02 01:06:48.676	MULTIPLE_CHOICE	\N	\N	4	15
+27171	「延滞（えんたい）」 nghĩa là gì?	quá hạn (trả)	17012	2026-11-02 01:06:48.68	2026-11-02 01:06:48.68	MULTIPLE_CHOICE	\N	\N	4	16
+27172	「概算（がいさん）」 nghĩa là gì?	ước tính sơ bộ	17012	2026-11-02 01:06:48.685	2026-11-02 01:06:48.685	MULTIPLE_CHOICE	\N	\N	4	17
+27173	「画策（かくさく）」 nghĩa là gì?	mưu đồ, lên kế hoạch ngầm	17012	2026-11-02 01:06:48.69	2026-11-02 01:06:48.69	MULTIPLE_CHOICE	\N	\N	4	18
+27174	「棄権（きけん）」 nghĩa là gì?	bỏ quyền, bỏ cuộc	17012	2026-11-02 01:06:48.695	2026-11-02 01:06:48.695	MULTIPLE_CHOICE	\N	\N	4	19
+27175	「起訴（きそ）」 nghĩa là gì?	khởi tố	17012	2026-11-02 01:06:48.7	2026-11-02 01:06:48.7	MULTIPLE_CHOICE	\N	\N	4	20
+27176	「拠点（きょてん）」 nghĩa là gì?	cứ điểm, cơ sở	17012	2026-11-02 01:06:48.704	2026-11-02 01:06:48.704	MULTIPLE_CHOICE	\N	\N	4	21
+27177	「控訴（こうそ）」 nghĩa là gì?	kháng cáo	17012	2026-11-02 01:06:48.709	2026-11-02 01:06:48.709	MULTIPLE_CHOICE	\N	\N	4	22
+27178	「抗争（こうそう）」 nghĩa là gì?	đấu đá, tranh chấp	17012	2026-11-02 01:06:48.714	2026-11-02 01:06:48.714	MULTIPLE_CHOICE	\N	\N	4	23
+27179	「拘束（こうそく）」 nghĩa là gì?	câu thúc, ràng buộc	17012	2026-11-02 01:06:48.72	2026-11-02 01:06:48.72	MULTIPLE_CHOICE	\N	\N	4	24
+27180	「根絶（こんぜつ）」 nghĩa là gì?	diệt tận gốc	17012	2026-11-02 01:06:48.724	2026-11-02 01:06:48.724	MULTIPLE_CHOICE	\N	\N	4	25
+27181	「搾取（さくしゅ）」 nghĩa là gì?	bóc lột	17012	2026-11-02 01:06:48.73	2026-11-02 01:06:48.73	MULTIPLE_CHOICE	\N	\N	4	26
+27182	「失墜（しっつい）」 nghĩa là gì?	mất (uy tín)	17012	2026-11-02 01:06:48.734	2026-11-02 01:06:48.734	MULTIPLE_CHOICE	\N	\N	4	27
+27183	「辞退（じたい）」 nghĩa là gì?	từ chối, khước từ	17012	2026-11-02 01:06:48.738	2026-11-02 01:06:48.738	MULTIPLE_CHOICE	\N	\N	4	28
+27184	「指標（しひょう）」 nghĩa là gì?	chỉ số, chỉ tiêu	17012	2026-11-02 01:06:48.744	2026-11-02 01:06:48.744	MULTIPLE_CHOICE	\N	\N	4	29
+27185	「侵害（しんがい）」 nghĩa là gì?	xâm phạm	17012	2026-11-02 01:06:48.749	2026-11-02 01:06:48.749	MULTIPLE_CHOICE	\N	\N	4	30
+27186	「申告（しんこく）」 nghĩa là gì?	khai báo	17012	2026-11-02 01:06:48.753	2026-11-02 01:06:48.753	MULTIPLE_CHOICE	\N	\N	4	31
+27187	「親睦（しんぼく）」 nghĩa là gì?	thân thiện, giao lưu	17012	2026-11-02 01:06:48.757	2026-11-02 01:06:48.757	MULTIPLE_CHOICE	\N	\N	4	32
+27188	「単身赴任（たんしんふにん）」 nghĩa là gì?	đi công tác xa nhà một mình	17012	2026-11-02 01:06:48.763	2026-11-02 01:06:48.763	MULTIPLE_CHOICE	\N	\N	4	33
+27189	「調達（ちょうたつ）」 nghĩa là gì?	huy động, thu mua	17012	2026-11-02 01:06:48.768	2026-11-02 01:06:48.768	MULTIPLE_CHOICE	\N	\N	4	34
+27190	「陳述（ちんじゅつ）」 nghĩa là gì?	trình bày, khai (trước tòa)	17012	2026-11-02 01:06:48.772	2026-11-02 01:06:48.772	MULTIPLE_CHOICE	\N	\N	4	35
+27191	「天災（てんさい）」 nghĩa là gì?	thiên tai	17012	2026-11-02 01:06:48.778	2026-11-02 01:06:48.778	MULTIPLE_CHOICE	\N	\N	4	36
+27192	「内定（ないてい）」 nghĩa là gì?	quyết định tuyển dụng (sơ bộ)	17012	2026-11-02 01:06:48.783	2026-11-02 01:06:48.783	MULTIPLE_CHOICE	\N	\N	4	37
+27193	「否認（ひにん）」 nghĩa là gì?	phủ nhận	17012	2026-11-02 01:06:48.788	2026-11-02 01:06:48.788	MULTIPLE_CHOICE	\N	\N	4	38
+27194	「備蓄（びちく）」 nghĩa là gì?	dự trữ	17012	2026-11-02 01:06:48.793	2026-11-02 01:06:48.793	MULTIPLE_CHOICE	\N	\N	4	39
+27195	「名義（めいぎ）」 nghĩa là gì?	danh nghĩa, đứng tên	17012	2026-11-02 01:06:48.798	2026-11-02 01:06:48.798	MULTIPLE_CHOICE	\N	\N	4	40
+27196	「有償（ゆうしょう）」 nghĩa là gì?	có trả phí	17012	2026-11-02 01:06:48.804	2026-11-02 01:06:48.804	MULTIPLE_CHOICE	\N	\N	4	41
+27197	「容認（ようにん）」 nghĩa là gì?	chấp nhận, dung thứ	17013	2026-11-02 01:06:48.811	2026-11-02 01:06:48.811	MULTIPLE_CHOICE	\N	\N	4	0
+27198	「暗礁（あんしょう）」 nghĩa là gì?	đá ngầm; bế tắc	17013	2026-11-02 01:06:48.819	2026-11-02 01:06:48.819	MULTIPLE_CHOICE	\N	\N	4	1
+27199	「遺産（いさん）」 nghĩa là gì?	di sản	17013	2026-11-02 01:06:48.826	2026-11-02 01:06:48.826	MULTIPLE_CHOICE	\N	\N	4	2
+27200	「陰謀（いんぼう）」 nghĩa là gì?	âm mưu	17013	2026-11-02 01:06:48.833	2026-11-02 01:06:48.833	MULTIPLE_CHOICE	\N	\N	4	3
+27201	「渦中（かちゅう）」 nghĩa là gì?	giữa tâm điểm (sự việc)	17013	2026-11-02 01:06:48.84	2026-11-02 01:06:48.84	MULTIPLE_CHOICE	\N	\N	4	4
+27202	「格付け（かくづけ）」 nghĩa là gì?	xếp hạng, đánh giá xếp loại	17013	2026-11-02 01:06:48.847	2026-11-02 01:06:48.847	MULTIPLE_CHOICE	\N	\N	4	5
+27203	「寡占（かせん）」 nghĩa là gì?	độc quyền nhóm	17013	2026-11-02 01:06:48.854	2026-11-02 01:06:48.854	MULTIPLE_CHOICE	\N	\N	4	6
+27204	「株価（かぶか）」 nghĩa là gì?	giá cổ phiếu	17013	2026-11-02 01:06:48.859	2026-11-02 01:06:48.859	MULTIPLE_CHOICE	\N	\N	4	7
+27205	「起業（きぎょう）」 nghĩa là gì?	khởi nghiệp	17013	2026-11-02 01:06:48.865	2026-11-02 01:06:48.865	MULTIPLE_CHOICE	\N	\N	4	8
+27206	「基金（ききん）」 nghĩa là gì?	quỹ	17013	2026-11-02 01:06:48.872	2026-11-02 01:06:48.872	MULTIPLE_CHOICE	\N	\N	4	9
+27207	「帰化（きか）」 nghĩa là gì?	nhập quốc tịch	17013	2026-11-02 01:06:48.877	2026-11-02 01:06:48.877	MULTIPLE_CHOICE	\N	\N	4	10
+27208	「供述（きょうじゅつ）」 nghĩa là gì?	lời khai	17013	2026-11-02 01:06:48.883	2026-11-02 01:06:48.883	MULTIPLE_CHOICE	\N	\N	4	11
+27209	「拠出（きょしゅつ）」 nghĩa là gì?	đóng góp (quỹ)	17013	2026-11-02 01:06:48.888	2026-11-02 01:06:48.888	MULTIPLE_CHOICE	\N	\N	4	12
+27210	「禁錮（きんこ）」 nghĩa là gì?	tù giam (không lao động)	17013	2026-11-02 01:06:48.892	2026-11-02 01:06:48.892	MULTIPLE_CHOICE	\N	\N	4	13
+27211	「検察（けんさつ）」 nghĩa là gì?	viện kiểm sát	17013	2026-11-02 01:06:48.896	2026-11-02 01:06:48.896	MULTIPLE_CHOICE	\N	\N	4	14
+27212	「原告（げんこく）」 nghĩa là gì?	nguyên đơn	17013	2026-11-02 01:06:48.901	2026-11-02 01:06:48.901	MULTIPLE_CHOICE	\N	\N	4	15
+27213	「公約（こうやく）」 nghĩa là gì?	cam kết (tranh cử)	17013	2026-11-02 01:06:48.905	2026-11-02 01:06:48.905	MULTIPLE_CHOICE	\N	\N	4	16
+27214	「国債（こくさい）」 nghĩa là gì?	trái phiếu chính phủ	17013	2026-11-02 01:06:48.909	2026-11-02 01:06:48.909	MULTIPLE_CHOICE	\N	\N	4	17
+27215	「裁判官（さいばんかん）」 nghĩa là gì?	thẩm phán	17013	2026-11-02 01:06:48.913	2026-11-02 01:06:48.913	MULTIPLE_CHOICE	\N	\N	4	18
+27216	「債務（さいむ）」 nghĩa là gì?	khoản nợ	17013	2026-11-02 01:06:48.917	2026-11-02 01:06:48.917	MULTIPLE_CHOICE	\N	\N	4	19
+27217	「失業率（しつぎょうりつ）」 nghĩa là gì?	tỷ lệ thất nghiệp	17013	2026-11-02 01:06:48.922	2026-11-02 01:06:48.922	MULTIPLE_CHOICE	\N	\N	4	20
+27218	「上場（じょうじょう）」 nghĩa là gì?	niêm yết (cổ phiếu)	17013	2026-11-02 01:06:48.925	2026-11-02 01:06:48.925	MULTIPLE_CHOICE	\N	\N	4	21
+27219	「職権（しょっけん）」 nghĩa là gì?	quyền hạn chức vụ	17013	2026-11-02 01:06:48.929	2026-11-02 01:06:48.929	MULTIPLE_CHOICE	\N	\N	4	22
+27220	「声明（せいめい）」 nghĩa là gì?	tuyên bố (chính thức)	17013	2026-11-02 01:06:48.934	2026-11-02 01:06:48.934	MULTIPLE_CHOICE	\N	\N	4	23
+27221	「選挙区（せんきょく）」 nghĩa là gì?	khu vực bầu cử	17013	2026-11-02 01:06:48.938	2026-11-02 01:06:48.938	MULTIPLE_CHOICE	\N	\N	4	24
+27222	「租税（そぜい）」 nghĩa là gì?	thuế khóa	17013	2026-11-02 01:06:48.942	2026-11-02 01:06:48.942	MULTIPLE_CHOICE	\N	\N	4	25
+27223	「弾劾（だんがい）」 nghĩa là gì?	luận tội, buộc tội	17013	2026-11-02 01:06:48.948	2026-11-02 01:06:48.948	MULTIPLE_CHOICE	\N	\N	4	26
+27224	「陳情（ちんじょう）」 nghĩa là gì?	kiến nghị, thỉnh nguyện	17013	2026-11-02 01:06:48.953	2026-11-02 01:06:48.953	MULTIPLE_CHOICE	\N	\N	4	27
+27225	「抵当（ていとう）」 nghĩa là gì?	thế chấp	17013	2026-11-02 01:06:48.961	2026-11-02 01:06:48.961	MULTIPLE_CHOICE	\N	\N	4	28
+27226	「天下り（あまくだり）」 nghĩa là gì?	quan chức về làm ở doanh nghiệp liên quan	17013	2026-11-02 01:06:48.966	2026-11-02 01:06:48.966	MULTIPLE_CHOICE	\N	\N	4	29
+27227	「党首（とうしゅ）」 nghĩa là gì?	chủ tịch đảng	17013	2026-11-02 01:06:48.972	2026-11-02 01:06:48.972	MULTIPLE_CHOICE	\N	\N	4	30
+27228	「特派員（とくはいん）」 nghĩa là gì?	phóng viên thường trú	17013	2026-11-02 01:06:48.977	2026-11-02 01:06:48.977	MULTIPLE_CHOICE	\N	\N	4	31
+27229	「任期（にんき）」 nghĩa là gì?	nhiệm kỳ	17013	2026-11-02 01:06:48.981	2026-11-02 01:06:48.981	MULTIPLE_CHOICE	\N	\N	4	32
+27230	「被告（ひこく）」 nghĩa là gì?	bị cáo	17013	2026-11-02 01:06:48.987	2026-11-02 01:06:48.987	MULTIPLE_CHOICE	\N	\N	4	33
+27231	「被災（ひさい）」 nghĩa là gì?	bị thiên tai	17013	2026-11-02 01:06:48.993	2026-11-02 01:06:48.993	MULTIPLE_CHOICE	\N	\N	4	34
+27232	「批准（ひじゅん）」 nghĩa là gì?	phê chuẩn	17013	2026-11-02 01:06:49	2026-11-02 01:06:49	MULTIPLE_CHOICE	\N	\N	4	35
+27233	「補正（ほせい）」 nghĩa là gì?	hiệu chỉnh, bổ sung (ngân sách)	17013	2026-11-02 01:06:49.006	2026-11-02 01:06:49.006	MULTIPLE_CHOICE	\N	\N	4	36
+27234	「連立（れんりつ）」 nghĩa là gì?	liên minh, liên hiệp	17013	2026-11-02 01:06:49.014	2026-11-02 01:06:49.014	MULTIPLE_CHOICE	\N	\N	4	37
+27235	「概況（がいきょう）」 nghĩa là gì?	tình hình chung	17013	2026-11-02 01:06:49.021	2026-11-02 01:06:49.021	MULTIPLE_CHOICE	\N	\N	4	38
+27236	「底上げ（そこあげ）」 nghĩa là gì?	nâng mặt bằng chung	17013	2026-11-02 01:06:49.029	2026-11-02 01:06:49.029	MULTIPLE_CHOICE	\N	\N	4	39
+27237	「引き合い（ひきあい）」 nghĩa là gì?	dẫn chứng; hỏi mua	17013	2026-11-02 01:06:49.034	2026-11-02 01:06:49.034	MULTIPLE_CHOICE	\N	\N	4	40
+27238	「骨抜き（ほねぬき）」 nghĩa là gì?	bị làm mất hiệu lực	17013	2026-11-02 01:06:49.039	2026-11-02 01:06:49.039	MULTIPLE_CHOICE	\N	\N	4	41
+27239	「営む（いとなむ）」 nghĩa là gì?	kinh doanh, điều hành; sinh sống	17014	2026-11-02 01:06:49.046	2026-11-02 01:06:49.046	MULTIPLE_CHOICE	\N	\N	4	0
+27240	「挑む（いどむ）」 nghĩa là gì?	thử thách, đương đầu	17014	2026-11-02 01:06:49.052	2026-11-02 01:06:49.052	MULTIPLE_CHOICE	\N	\N	4	1
+27241	「否む（いなむ）」 nghĩa là gì?	phủ nhận, từ chối	17014	2026-11-02 01:06:49.059	2026-11-02 01:06:49.059	MULTIPLE_CHOICE	\N	\N	4	2
+27242	「戒める（いましめる）」 nghĩa là gì?	răn đe, khuyên răn	17014	2026-11-02 01:06:49.064	2026-11-02 01:06:49.064	MULTIPLE_CHOICE	\N	\N	4	3
+27243	「潤う（うるおう）」 nghĩa là gì?	được thấm ẩm; trở nên sung túc	17014	2026-11-02 01:06:49.072	2026-11-02 01:06:49.072	MULTIPLE_CHOICE	\N	\N	4	4
+27244	「怠る（おこたる）」 nghĩa là gì?	lơ là, sao nhãng	17014	2026-11-02 01:06:49.08	2026-11-02 01:06:49.08	MULTIPLE_CHOICE	\N	\N	4	5
+27245	「赴く（おもむく）」 nghĩa là gì?	đi đến, hướng tới (trang trọng)	17014	2026-11-02 01:06:49.089	2026-11-02 01:06:49.089	MULTIPLE_CHOICE	\N	\N	4	6
+27246	「害する（がいする）」 nghĩa là gì?	làm tổn hại, làm hỏng	17014	2026-11-02 01:06:49.097	2026-11-02 01:06:49.097	MULTIPLE_CHOICE	\N	\N	4	7
+27247	「偏る（かたよる）」 nghĩa là gì?	thiên lệch, lệch về một phía	17014	2026-11-02 01:06:49.105	2026-11-02 01:06:49.105	MULTIPLE_CHOICE	\N	\N	4	8
+27248	「極める（きわめる）」 nghĩa là gì?	đạt tới cực điểm, tinh thông	17014	2026-11-02 01:06:49.114	2026-11-02 01:06:49.114	MULTIPLE_CHOICE	\N	\N	4	9
+27249	「企てる（くわだてる）」 nghĩa là gì?	mưu tính, âm mưu	17014	2026-11-02 01:06:49.127	2026-11-02 01:06:49.127	MULTIPLE_CHOICE	\N	\N	4	10
+27250	「拒む（こばむ）」 nghĩa là gì?	từ chối, cự tuyệt	17014	2026-11-02 01:06:49.144	2026-11-02 01:06:49.144	MULTIPLE_CHOICE	\N	\N	4	11
+27251	「遮る（さえぎる）」 nghĩa là gì?	chặn, ngắt lời, che khuất	17014	2026-11-02 01:06:49.161	2026-11-02 01:06:49.161	MULTIPLE_CHOICE	\N	\N	4	12
+27252	「察する（さっする）」 nghĩa là gì?	đoán biết, thấu hiểu	17014	2026-11-02 01:06:49.176	2026-11-02 01:06:49.176	MULTIPLE_CHOICE	\N	\N	4	13
+27253	「諭す（さとす）」 nghĩa là gì?	khuyên bảo, dạy dỗ	17014	2026-11-02 01:06:49.201	2026-11-02 01:06:49.201	MULTIPLE_CHOICE	\N	\N	4	14
+27254	「据える（すえる）」 nghĩa là gì?	đặt, kê; bổ nhiệm	17014	2026-11-02 01:06:49.214	2026-11-02 01:06:49.214	MULTIPLE_CHOICE	\N	\N	4	15
+27255	「弛む（たるむ）」 nghĩa là gì?	chùng, lơi lỏng	17014	2026-11-02 01:06:49.236	2026-11-02 01:06:49.236	MULTIPLE_CHOICE	\N	\N	4	16
+27256	「費やす（ついやす）」 nghĩa là gì?	tiêu tốn, dành (thời gian, tiền)	17014	2026-11-02 01:06:49.248	2026-11-02 01:06:49.248	MULTIPLE_CHOICE	\N	\N	4	17
+27257	「貫く（つらぬく）」 nghĩa là gì?	xuyên qua; giữ vững đến cùng	17014	2026-11-02 01:06:49.26	2026-11-02 01:06:49.26	MULTIPLE_CHOICE	\N	\N	4	18
+27258	「途絶える（とだえる）」 nghĩa là gì?	bị gián đoạn, đứt quãng	17014	2026-11-02 01:06:49.267	2026-11-02 01:06:49.267	MULTIPLE_CHOICE	\N	\N	4	19
+27259	「滞る（とどこおる）」 nghĩa là gì?	bị đình trệ, chậm trễ	17014	2026-11-02 01:06:49.274	2026-11-02 01:06:49.274	MULTIPLE_CHOICE	\N	\N	4	20
+27260	「阻む（はばむ）」 nghĩa là gì?	ngăn cản, cản trở	17014	2026-11-02 01:06:49.282	2026-11-02 01:06:49.282	MULTIPLE_CHOICE	\N	\N	4	21
+27261	「紡ぐ（つむぐ）」 nghĩa là gì?	xe sợi; dệt nên (câu chuyện)	17014	2026-11-02 01:06:49.289	2026-11-02 01:06:49.289	MULTIPLE_CHOICE	\N	\N	4	22
+27262	「仰ぐ（あおぐ）」 nghĩa là gì?	ngước nhìn; xin (chỉ thị, ý kiến)	17014	2026-11-02 01:06:49.295	2026-11-02 01:06:49.295	MULTIPLE_CHOICE	\N	\N	4	23
+27263	「欺く（あざむく）」 nghĩa là gì?	lừa gạt	17014	2026-11-02 01:06:49.301	2026-11-02 01:06:49.301	MULTIPLE_CHOICE	\N	\N	4	24
+27264	「誂える（あつらえる）」 nghĩa là gì?	đặt làm riêng	17014	2026-11-02 01:06:49.306	2026-11-02 01:06:49.306	MULTIPLE_CHOICE	\N	\N	4	25
+27265	「侮る（あなどる）」 nghĩa là gì?	coi thường, khinh thường	17014	2026-11-02 01:06:49.311	2026-11-02 01:06:49.311	MULTIPLE_CHOICE	\N	\N	4	26
+27266	「操る（あやつる）」 nghĩa là gì?	điều khiển, sử dụng thành thạo	17014	2026-11-02 01:06:49.317	2026-11-02 01:06:49.317	MULTIPLE_CHOICE	\N	\N	4	27
+27267	「危ぶむ（あやぶむ）」 nghĩa là gì?	lo ngại, nghi ngại	17014	2026-11-02 01:06:49.329	2026-11-02 01:06:49.329	MULTIPLE_CHOICE	\N	\N	4	28
+27268	「歩む（あゆむ）」 nghĩa là gì?	bước đi (trên con đường đời)	17014	2026-11-02 01:06:49.357	2026-11-02 01:06:49.357	MULTIPLE_CHOICE	\N	\N	4	29
+27269	「案じる（あんじる）」 nghĩa là gì?	lo lắng; nghĩ ra	17014	2026-11-02 01:06:49.367	2026-11-02 01:06:49.367	MULTIPLE_CHOICE	\N	\N	4	30
+27270	「訝る（いぶかる）」 nghĩa là gì?	nghi ngờ, lấy làm lạ	17014	2026-11-02 01:06:49.382	2026-11-02 01:06:49.382	MULTIPLE_CHOICE	\N	\N	4	31
+27271	「うつむく」 nghĩa là gì?	cúi gằm mặt	17014	2026-11-02 01:06:49.389	2026-11-02 01:06:49.389	MULTIPLE_CHOICE	\N	\N	4	32
+27272	「埋め合わせる（うめあわせる）」 nghĩa là gì?	bù đắp	17014	2026-11-02 01:06:49.394	2026-11-02 01:06:49.394	MULTIPLE_CHOICE	\N	\N	4	33
+27273	「敬う（うやまう）」 nghĩa là gì?	kính trọng	17014	2026-11-02 01:06:49.4	2026-11-02 01:06:49.4	MULTIPLE_CHOICE	\N	\N	4	34
+27274	「潤す（うるおす）」 nghĩa là gì?	làm ẩm; làm sung túc	17014	2026-11-02 01:06:49.405	2026-11-02 01:06:49.405	MULTIPLE_CHOICE	\N	\N	4	35
+27275	「帯びる（おびる）」 nghĩa là gì?	mang, chứa (tính chất)	17014	2026-11-02 01:06:49.411	2026-11-02 01:06:49.411	MULTIPLE_CHOICE	\N	\N	4	36
+27276	「及ぶ（およぶ）」 nghĩa là gì?	lan đến, đạt tới	17014	2026-11-02 01:06:49.415	2026-11-02 01:06:49.415	MULTIPLE_CHOICE	\N	\N	4	37
+27277	「掲げる（かかげる）」 nghĩa là gì?	giương cao; nêu ra (mục tiêu)	17014	2026-11-02 01:06:49.42	2026-11-02 01:06:49.42	MULTIPLE_CHOICE	\N	\N	4	38
+27278	「嵩む（かさむ）」 nghĩa là gì?	tăng lên, phình ra (chi phí)	17014	2026-11-02 01:06:49.425	2026-11-02 01:06:49.425	MULTIPLE_CHOICE	\N	\N	4	39
+27279	「かさばる」 nghĩa là gì?	cồng kềnh	17014	2026-11-02 01:06:49.432	2026-11-02 01:06:49.432	MULTIPLE_CHOICE	\N	\N	4	40
+27280	「霞む（かすむ）」 nghĩa là gì?	mờ đi, mờ sương	17014	2026-11-02 01:06:49.439	2026-11-02 01:06:49.439	MULTIPLE_CHOICE	\N	\N	4	41
+27281	「叶う（かなう）」 nghĩa là gì?	thành hiện thực (ước mơ)	17014	2026-11-02 01:06:49.452	2026-11-02 01:06:49.452	MULTIPLE_CHOICE	\N	\N	4	42
+27282	「兼ねる（かねる）」 nghĩa là gì?	kiêm; khó mà (〜かねる)	17014	2026-11-02 01:06:49.458	2026-11-02 01:06:49.458	MULTIPLE_CHOICE	\N	\N	4	43
+27283	「絡む（からむ）」 nghĩa là gì?	quấn vào; dính líu	17015	2026-11-02 01:06:49.47	2026-11-02 01:06:49.47	MULTIPLE_CHOICE	\N	\N	4	0
+27284	「きしむ」 nghĩa là gì?	kêu cót két	17015	2026-11-02 01:06:49.476	2026-11-02 01:06:49.476	MULTIPLE_CHOICE	\N	\N	4	1
+27285	「築く（きずく）」 nghĩa là gì?	xây dựng (quan hệ, nền tảng)	17015	2026-11-02 01:06:49.481	2026-11-02 01:06:49.481	MULTIPLE_CHOICE	\N	\N	4	2
+27286	「鍛える（きたえる）」 nghĩa là gì?	rèn luyện	17015	2026-11-02 01:06:49.486	2026-11-02 01:06:49.486	MULTIPLE_CHOICE	\N	\N	4	3
+27287	「朽ちる（くちる）」 nghĩa là gì?	mục nát	17015	2026-11-02 01:06:49.492	2026-11-02 01:06:49.492	MULTIPLE_CHOICE	\N	\N	4	4
+27288	「覆る（くつがえる）」 nghĩa là gì?	bị lật đổ, bị đảo ngược	17015	2026-11-02 01:06:49.502	2026-11-02 01:06:49.502	MULTIPLE_CHOICE	\N	\N	4	5
+27289	「汲む（くむ）」 nghĩa là gì?	múc; thấu hiểu (tâm tư)	17015	2026-11-02 01:06:49.546	2026-11-02 01:06:49.546	MULTIPLE_CHOICE	\N	\N	4	6
+27290	「こじれる」 nghĩa là gì?	trở nên rắc rối, xấu đi	17015	2026-11-02 01:06:49.573	2026-11-02 01:06:49.573	MULTIPLE_CHOICE	\N	\N	4	7
+27291	「こだわる」 nghĩa là gì?	câu nệ; kỹ tính, chăm chút	17015	2026-11-02 01:06:49.583	2026-11-02 01:06:49.583	MULTIPLE_CHOICE	\N	\N	4	8
+27292	「凝らす（こらす）」 nghĩa là gì?	tập trung, dồn (tâm sức)	17015	2026-11-02 01:06:49.598	2026-11-02 01:06:49.598	MULTIPLE_CHOICE	\N	\N	4	9
+27293	「凝る（こる）」 nghĩa là gì?	say mê; bị mỏi cứng	17015	2026-11-02 01:06:49.61	2026-11-02 01:06:49.61	MULTIPLE_CHOICE	\N	\N	4	10
+27294	「裂く（さく）」 nghĩa là gì?	xé, chia cắt	17015	2026-11-02 01:06:49.621	2026-11-02 01:06:49.621	MULTIPLE_CHOICE	\N	\N	4	11
+27295	「捧げる（ささげる）」 nghĩa là gì?	dâng hiến	17015	2026-11-02 01:06:49.629	2026-11-02 01:06:49.629	MULTIPLE_CHOICE	\N	\N	4	12
+27296	「授ける（さずける）」 nghĩa là gì?	ban cho, truyền dạy	17015	2026-11-02 01:06:49.636	2026-11-02 01:06:49.636	MULTIPLE_CHOICE	\N	\N	4	13
+27297	「冷める（さめる）」 nghĩa là gì?	nguội; nguội lạnh (tình cảm)	17015	2026-11-02 01:06:49.642	2026-11-02 01:06:49.642	MULTIPLE_CHOICE	\N	\N	4	14
+27298	「強いる（しいる）」 nghĩa là gì?	ép buộc	17015	2026-11-02 01:06:49.647	2026-11-02 01:06:49.647	MULTIPLE_CHOICE	\N	\N	4	15
+27299	「しくじる」 nghĩa là gì?	làm hỏng, thất bại	17015	2026-11-02 01:06:49.653	2026-11-02 01:06:49.653	MULTIPLE_CHOICE	\N	\N	4	16
+27300	「しのぐ」 nghĩa là gì?	vượt qua (khó khăn); vượt trội	17015	2026-11-02 01:06:49.658	2026-11-02 01:06:49.658	MULTIPLE_CHOICE	\N	\N	4	17
+27301	「渋る（しぶる）」 nghĩa là gì?	ngần ngại, chần chừ	17015	2026-11-02 01:06:49.663	2026-11-02 01:06:49.663	MULTIPLE_CHOICE	\N	\N	4	18
+27302	「退く（しりぞく）」 nghĩa là gì?	lùi lại; rút lui	17015	2026-11-02 01:06:49.683	2026-11-02 01:06:49.683	MULTIPLE_CHOICE	\N	\N	4	19
+27303	「すすぐ」 nghĩa là gì?	súc, xả nước	17015	2026-11-02 01:06:49.698	2026-11-02 01:06:49.698	MULTIPLE_CHOICE	\N	\N	4	20
+27304	「澄ます（すます）」 nghĩa là gì?	làm trong; lắng (tai)	17015	2026-11-02 01:06:49.705	2026-11-02 01:06:49.705	MULTIPLE_CHOICE	\N	\N	4	21
+27305	「急かす（せかす）」 nghĩa là gì?	hối thúc	17015	2026-11-02 01:06:49.71	2026-11-02 01:06:49.71	MULTIPLE_CHOICE	\N	\N	4	22
+27306	「添える（そえる）」 nghĩa là gì?	đính kèm, thêm vào	17015	2026-11-02 01:06:49.715	2026-11-02 01:06:49.715	MULTIPLE_CHOICE	\N	\N	4	23
+27307	「背く（そむく）」 nghĩa là gì?	làm trái, phản bội	17015	2026-11-02 01:06:49.721	2026-11-02 01:06:49.721	MULTIPLE_CHOICE	\N	\N	4	24
+27308	「絶える（たえる）」 nghĩa là gì?	dứt, tuyệt	17015	2026-11-02 01:06:49.727	2026-11-02 01:06:49.727	MULTIPLE_CHOICE	\N	\N	4	25
+27309	「たしなむ」 nghĩa là gì?	có thú (thưởng thức) ở mức vừa phải	17015	2026-11-02 01:06:49.734	2026-11-02 01:06:49.734	MULTIPLE_CHOICE	\N	\N	4	26
+27310	「携える（たずさえる）」 nghĩa là gì?	mang theo; chung tay	17015	2026-11-02 01:06:49.74	2026-11-02 01:06:49.74	MULTIPLE_CHOICE	\N	\N	4	27
+27311	「称える（たたえる）」 nghĩa là gì?	ca ngợi	17015	2026-11-02 01:06:49.746	2026-11-02 01:06:49.746	MULTIPLE_CHOICE	\N	\N	4	28
+27312	「漂う（ただよう）」 nghĩa là gì?	trôi dạt; lan tỏa (bầu không khí)	17015	2026-11-02 01:06:49.751	2026-11-02 01:06:49.751	MULTIPLE_CHOICE	\N	\N	4	29
+27313	「立て替える（たてかえる）」 nghĩa là gì?	trả trước hộ	17015	2026-11-02 01:06:49.757	2026-11-02 01:06:49.757	MULTIPLE_CHOICE	\N	\N	4	30
+27314	「潰える（ついえる）」 nghĩa là gì?	tan biến, sụp đổ (hy vọng)	17015	2026-11-02 01:06:49.765	2026-11-02 01:06:49.765	MULTIPLE_CHOICE	\N	\N	4	31
+27315	「司る（つかさどる）」 nghĩa là gì?	quản lý, cai quản	17015	2026-11-02 01:06:49.774	2026-11-02 01:06:49.774	MULTIPLE_CHOICE	\N	\N	4	32
+27316	「償う（つぐなう）」 nghĩa là gì?	đền bù, chuộc lỗi	17015	2026-11-02 01:06:49.779	2026-11-02 01:06:49.779	MULTIPLE_CHOICE	\N	\N	4	33
+27317	「慎む（つつしむ）」 nghĩa là gì?	thận trọng, kiềm chế	17015	2026-11-02 01:06:49.785	2026-11-02 01:06:49.785	MULTIPLE_CHOICE	\N	\N	4	34
+27318	「募る（つのる）」 nghĩa là gì?	chiêu mộ, quyên góp; tăng lên	17015	2026-11-02 01:06:49.792	2026-11-02 01:06:49.792	MULTIPLE_CHOICE	\N	\N	4	35
+27319	「とがめる」 nghĩa là gì?	trách móc; cắn rứt	17015	2026-11-02 01:06:49.801	2026-11-02 01:06:49.801	MULTIPLE_CHOICE	\N	\N	4	36
+27320	「途切れる（とぎれる）」 nghĩa là gì?	đứt quãng, gián đoạn	17015	2026-11-02 01:06:49.812	2026-11-02 01:06:49.812	MULTIPLE_CHOICE	\N	\N	4	37
+27321	「研ぐ（とぐ）」 nghĩa là gì?	mài; vo (gạo)	17015	2026-11-02 01:06:49.819	2026-11-02 01:06:49.819	MULTIPLE_CHOICE	\N	\N	4	38
+27322	「遂げる（とげる）」 nghĩa là gì?	hoàn thành, đạt được	17015	2026-11-02 01:06:49.827	2026-11-02 01:06:49.827	MULTIPLE_CHOICE	\N	\N	4	39
+27323	「取り繕う（とりつくろう）」 nghĩa là gì?	che đậy, chữa thẹn	17015	2026-11-02 01:06:49.833	2026-11-02 01:06:49.833	MULTIPLE_CHOICE	\N	\N	4	40
+27324	「詰る（なじる）」 nghĩa là gì?	trách móc, chỉ trích	17015	2026-11-02 01:06:49.84	2026-11-02 01:06:49.84	MULTIPLE_CHOICE	\N	\N	4	41
+27325	「倣う（ならう）」 nghĩa là gì?	noi theo, bắt chước	17015	2026-11-02 01:06:49.846	2026-11-02 01:06:49.846	MULTIPLE_CHOICE	\N	\N	4	42
+27326	「ねだる」 nghĩa là gì?	vòi vĩnh, nài nỉ	17015	2026-11-02 01:06:49.854	2026-11-02 01:06:49.854	MULTIPLE_CHOICE	\N	\N	4	43
+27327	「練る（ねる）」 nghĩa là gì?	nhào; trau chuốt (kế hoạch)	17015	2026-11-02 01:06:49.861	2026-11-02 01:06:49.861	MULTIPLE_CHOICE	\N	\N	4	44
+27328	「臨む（のぞむ）」 nghĩa là gì?	đối diện; tham dự	17016	2026-11-02 01:06:49.869	2026-11-02 01:06:49.869	MULTIPLE_CHOICE	\N	\N	4	0
+27329	「罵る（ののしる）」 nghĩa là gì?	chửi rủa	17016	2026-11-02 01:06:49.875	2026-11-02 01:06:49.875	MULTIPLE_CHOICE	\N	\N	4	1
+27330	「図る（はかる）」 nghĩa là gì?	lập kế hoạch, nhằm mục đích	17016	2026-11-02 01:06:49.881	2026-11-02 01:06:49.881	MULTIPLE_CHOICE	\N	\N	4	2
+27331	「諮る（はかる）」 nghĩa là gì?	hỏi ý kiến (hội đồng)	17016	2026-11-02 01:06:49.886	2026-11-02 01:06:49.886	MULTIPLE_CHOICE	\N	\N	4	3
+27332	「励む（はげむ）」 nghĩa là gì?	nỗ lực, chăm chỉ	17016	2026-11-02 01:06:49.893	2026-11-02 01:06:49.893	MULTIPLE_CHOICE	\N	\N	4	4
+27333	「秘める（ひめる）」 nghĩa là gì?	ẩn chứa	17016	2026-11-02 01:06:49.9	2026-11-02 01:06:49.9	MULTIPLE_CHOICE	\N	\N	4	5
+27334	「ひるむ」 nghĩa là gì?	chùn bước, nao núng	17016	2026-11-02 01:06:49.905	2026-11-02 01:06:49.905	MULTIPLE_CHOICE	\N	\N	4	6
+27335	「耽る（ふける）」 nghĩa là gì?	say mê, đắm chìm	17016	2026-11-02 01:06:49.91	2026-11-02 01:06:49.91	MULTIPLE_CHOICE	\N	\N	4	7
+27336	「隔てる（へだてる）」 nghĩa là gì?	ngăn cách	17016	2026-11-02 01:06:49.915	2026-11-02 01:06:49.915	MULTIPLE_CHOICE	\N	\N	4	8
+27337	「報いる（むくいる）」 nghĩa là gì?	đền đáp	17016	2026-11-02 01:06:49.92	2026-11-02 01:06:49.92	MULTIPLE_CHOICE	\N	\N	4	9
+27338	「蒸す（むす）」 nghĩa là gì?	hấp; oi bức	17016	2026-11-02 01:06:49.926	2026-11-02 01:06:49.926	MULTIPLE_CHOICE	\N	\N	4	10
+27339	「群がる（むらがる）」 nghĩa là gì?	tụ tập thành đám	17016	2026-11-02 01:06:49.931	2026-11-02 01:06:49.931	MULTIPLE_CHOICE	\N	\N	4	11
+27340	「紛れる（まぎれる）」 nghĩa là gì?	lẫn vào; khuây khỏa	17016	2026-11-02 01:06:49.937	2026-11-02 01:06:49.937	MULTIPLE_CHOICE	\N	\N	4	12
+27341	「勝る（まさる）」 nghĩa là gì?	vượt trội, hơn	17016	2026-11-02 01:06:49.942	2026-11-02 01:06:49.942	MULTIPLE_CHOICE	\N	\N	4	13
+27342	「まごつく」 nghĩa là gì?	lúng túng, bối rối	17016	2026-11-02 01:06:49.948	2026-11-02 01:06:49.948	MULTIPLE_CHOICE	\N	\N	4	14
+27343	「見計らう（みはからう）」 nghĩa là gì?	canh chừng (thời điểm)	17016	2026-11-02 01:06:49.954	2026-11-02 01:06:49.954	MULTIPLE_CHOICE	\N	\N	4	15
+27344	「設ける（もうける）」 nghĩa là gì?	thiết lập, tạo ra	17016	2026-11-02 01:06:49.961	2026-11-02 01:06:49.961	MULTIPLE_CHOICE	\N	\N	4	16
+27345	「目論む（もくろむ）」 nghĩa là gì?	mưu tính	17016	2026-11-02 01:06:49.967	2026-11-02 01:06:49.967	MULTIPLE_CHOICE	\N	\N	4	17
+27346	「もたらす」 nghĩa là gì?	mang lại, gây ra	17016	2026-11-02 01:06:49.976	2026-11-02 01:06:49.976	MULTIPLE_CHOICE	\N	\N	4	18
+27347	「弄ぶ（もてあそぶ）」 nghĩa là gì?	đùa giỡn, chơi đùa	17016	2026-11-02 01:06:49.982	2026-11-02 01:06:49.982	MULTIPLE_CHOICE	\N	\N	4	19
+27348	「催す（もよおす）」 nghĩa là gì?	tổ chức; cảm thấy (buồn ngủ…)	17016	2026-11-02 01:06:49.988	2026-11-02 01:06:49.988	MULTIPLE_CHOICE	\N	\N	4	20
+27349	「漏らす（もらす）」 nghĩa là gì?	làm rò rỉ; buột miệng	17016	2026-11-02 01:06:49.995	2026-11-02 01:06:49.995	MULTIPLE_CHOICE	\N	\N	4	21
+27350	「和らげる（やわらげる）」 nghĩa là gì?	làm dịu đi	17016	2026-11-02 01:06:50.002	2026-11-02 01:06:50.002	MULTIPLE_CHOICE	\N	\N	4	22
+27351	「委ねる（ゆだねる）」 nghĩa là gì?	giao phó	17016	2026-11-02 01:06:50.014	2026-11-02 01:06:50.014	MULTIPLE_CHOICE	\N	\N	4	23
+27352	「蘇る（よみがえる）」 nghĩa là gì?	hồi sinh, sống lại	17016	2026-11-02 01:06:50.021	2026-11-02 01:06:50.021	MULTIPLE_CHOICE	\N	\N	4	24
+27353	「煩う（わずらう）」 nghĩa là gì?	lo phiền, đau ốm	17016	2026-11-02 01:06:50.028	2026-11-02 01:06:50.028	MULTIPLE_CHOICE	\N	\N	4	25
+27354	「詫びる（わびる）」 nghĩa là gì?	xin lỗi, tạ lỗi	17016	2026-11-02 01:06:50.032	2026-11-02 01:06:50.032	MULTIPLE_CHOICE	\N	\N	4	26
+27355	「うろたえる」 nghĩa là gì?	hoảng hốt, cuống quýt	17016	2026-11-02 01:06:50.037	2026-11-02 01:06:50.037	MULTIPLE_CHOICE	\N	\N	4	27
+27356	「おじけづく」 nghĩa là gì?	nhụt chí, sợ hãi	17016	2026-11-02 01:06:50.043	2026-11-02 01:06:50.043	MULTIPLE_CHOICE	\N	\N	4	28
+27357	「おどける」 nghĩa là gì?	pha trò, làm trò hề	17016	2026-11-02 01:06:50.063	2026-11-02 01:06:50.063	MULTIPLE_CHOICE	\N	\N	4	29
+27358	「おののく」 nghĩa là gì?	run sợ	17016	2026-11-02 01:06:50.076	2026-11-02 01:06:50.076	MULTIPLE_CHOICE	\N	\N	4	30
+27359	「かこつける」 nghĩa là gì?	lấy cớ	17016	2026-11-02 01:06:50.081	2026-11-02 01:06:50.081	MULTIPLE_CHOICE	\N	\N	4	31
+27360	「かじる」 nghĩa là gì?	gặm; biết sơ qua	17016	2026-11-02 01:06:50.086	2026-11-02 01:06:50.086	MULTIPLE_CHOICE	\N	\N	4	32
+27361	「かばう」 nghĩa là gì?	che chở, bênh vực	17016	2026-11-02 01:06:50.091	2026-11-02 01:06:50.091	MULTIPLE_CHOICE	\N	\N	4	33
+27362	「くすぐる」 nghĩa là gì?	cù; kích thích (lòng tự ái…)	17016	2026-11-02 01:06:50.096	2026-11-02 01:06:50.096	MULTIPLE_CHOICE	\N	\N	4	34
+27363	「くつろぐ」 nghĩa là gì?	thư giãn	17016	2026-11-02 01:06:50.103	2026-11-02 01:06:50.103	MULTIPLE_CHOICE	\N	\N	4	35
+27364	「けなす」 nghĩa là gì?	chê bai	17016	2026-11-02 01:06:50.109	2026-11-02 01:06:50.109	MULTIPLE_CHOICE	\N	\N	4	36
+27365	「こきつかう」 nghĩa là gì?	sai khiến, bắt làm như nô lệ	17016	2026-11-02 01:06:50.118	2026-11-02 01:06:50.118	MULTIPLE_CHOICE	\N	\N	4	37
+27366	「ごまかす」 nghĩa là gì?	lừa, che giấu, lấp liếm	17016	2026-11-02 01:06:50.124	2026-11-02 01:06:50.124	MULTIPLE_CHOICE	\N	\N	4	38
+27367	「さえずる」 nghĩa là gì?	(chim) hót líu lo	17016	2026-11-02 01:06:50.131	2026-11-02 01:06:50.131	MULTIPLE_CHOICE	\N	\N	4	39
+27368	「さすらう」 nghĩa là gì?	lang thang, phiêu bạt	17016	2026-11-02 01:06:50.137	2026-11-02 01:06:50.137	MULTIPLE_CHOICE	\N	\N	4	40
+27369	「しおれる」 nghĩa là gì?	héo rũ; ủ rũ	17016	2026-11-02 01:06:50.148	2026-11-02 01:06:50.148	MULTIPLE_CHOICE	\N	\N	4	41
+27370	「しつける」 nghĩa là gì?	dạy dỗ (nề nếp)	17016	2026-11-02 01:06:50.153	2026-11-02 01:06:50.153	MULTIPLE_CHOICE	\N	\N	4	42
+27371	「すねる」 nghĩa là gì?	dỗi, hờn	17016	2026-11-02 01:06:50.161	2026-11-02 01:06:50.161	MULTIPLE_CHOICE	\N	\N	4	43
+27372	「せびる」 nghĩa là gì?	vòi tiền, nài xin	17017	2026-11-02 01:06:50.172	2026-11-02 01:06:50.172	MULTIPLE_CHOICE	\N	\N	4	0
+27373	「そそのかす」 nghĩa là gì?	xúi giục	17017	2026-11-02 01:06:50.178	2026-11-02 01:06:50.178	MULTIPLE_CHOICE	\N	\N	4	1
+27374	「たじろぐ」 nghĩa là gì?	chùn lại, lùi bước	17017	2026-11-02 01:06:50.186	2026-11-02 01:06:50.186	MULTIPLE_CHOICE	\N	\N	4	2
+27375	「たたずむ」 nghĩa là gì?	đứng lặng	17017	2026-11-02 01:06:50.19	2026-11-02 01:06:50.19	MULTIPLE_CHOICE	\N	\N	4	3
+27376	「ちらつく」 nghĩa là gì?	lấp ló, chập chờn	17017	2026-11-02 01:06:50.195	2026-11-02 01:06:50.195	MULTIPLE_CHOICE	\N	\N	4	4
+27377	「つまずく」 nghĩa là gì?	vấp ngã; vấp váp	17017	2026-11-02 01:06:50.2	2026-11-02 01:06:50.2	MULTIPLE_CHOICE	\N	\N	4	5
+27378	「とろける」 nghĩa là gì?	tan chảy	17017	2026-11-02 01:06:50.205	2026-11-02 01:06:50.205	MULTIPLE_CHOICE	\N	\N	4	6
+27379	「なだめる」 nghĩa là gì?	dỗ dành, xoa dịu	17017	2026-11-02 01:06:50.21	2026-11-02 01:06:50.21	MULTIPLE_CHOICE	\N	\N	4	7
+27380	「にじむ」 nghĩa là gì?	thấm, nhòe	17017	2026-11-02 01:06:50.214	2026-11-02 01:06:50.214	MULTIPLE_CHOICE	\N	\N	4	8
+27381	「ぬかるむ」 nghĩa là gì?	lầy lội	17017	2026-11-02 01:06:50.218	2026-11-02 01:06:50.218	MULTIPLE_CHOICE	\N	\N	4	9
+27382	「はしゃぐ」 nghĩa là gì?	vui đùa ầm ĩ	17017	2026-11-02 01:06:50.223	2026-11-02 01:06:50.223	MULTIPLE_CHOICE	\N	\N	4	10
+27383	「ばてる」 nghĩa là gì?	kiệt sức, mệt lả	17017	2026-11-02 01:06:50.229	2026-11-02 01:06:50.229	MULTIPLE_CHOICE	\N	\N	4	11
+27384	「ひけらかす」 nghĩa là gì?	khoe khoang	17017	2026-11-02 01:06:50.234	2026-11-02 01:06:50.234	MULTIPLE_CHOICE	\N	\N	4	12
+27385	「ぼやく」 nghĩa là gì?	càu nhàu	17017	2026-11-02 01:06:50.239	2026-11-02 01:06:50.239	MULTIPLE_CHOICE	\N	\N	4	13
+27386	「まくしたてる」 nghĩa là gì?	nói tuôn xối xả	17017	2026-11-02 01:06:50.246	2026-11-02 01:06:50.246	MULTIPLE_CHOICE	\N	\N	4	14
+27387	「むせる」 nghĩa là gì?	bị sặc	17017	2026-11-02 01:06:50.252	2026-11-02 01:06:50.252	MULTIPLE_CHOICE	\N	\N	4	15
+27388	「もがく」 nghĩa là gì?	giãy giụa, vùng vẫy	17017	2026-11-02 01:06:50.257	2026-11-02 01:06:50.257	MULTIPLE_CHOICE	\N	\N	4	16
+27389	「もつれる」 nghĩa là gì?	rối; lằng nhằng	17017	2026-11-02 01:06:50.261	2026-11-02 01:06:50.261	MULTIPLE_CHOICE	\N	\N	4	17
+27390	「ゆすぐ」 nghĩa là gì?	súc, tráng	17017	2026-11-02 01:06:50.265	2026-11-02 01:06:50.265	MULTIPLE_CHOICE	\N	\N	4	18
+27391	「よろめく」 nghĩa là gì?	loạng choạng	17017	2026-11-02 01:06:50.269	2026-11-02 01:06:50.269	MULTIPLE_CHOICE	\N	\N	4	19
+27392	「言い張る（いいはる）」 nghĩa là gì?	khăng khăng	17017	2026-11-02 01:06:50.273	2026-11-02 01:06:50.273	MULTIPLE_CHOICE	\N	\N	4	20
+27393	「打ち込む（うちこむ）」 nghĩa là gì?	đóng vào; dốc sức	17017	2026-11-02 01:06:50.277	2026-11-02 01:06:50.277	MULTIPLE_CHOICE	\N	\N	4	21
+27394	「売り込む（うりこむ）」 nghĩa là gì?	chào hàng, quảng bá bản thân	17017	2026-11-02 01:06:50.282	2026-11-02 01:06:50.282	MULTIPLE_CHOICE	\N	\N	4	22
+27395	「押し切る（おしきる）」 nghĩa là gì?	bất chấp phản đối mà làm	17017	2026-11-02 01:06:50.287	2026-11-02 01:06:50.287	MULTIPLE_CHOICE	\N	\N	4	23
+27396	「思い立つ（おもいたつ）」 nghĩa là gì?	chợt nảy ý định	17017	2026-11-02 01:06:50.292	2026-11-02 01:06:50.292	MULTIPLE_CHOICE	\N	\N	4	24
+27397	「切り詰める（きりつめる）」 nghĩa là gì?	cắt giảm, thắt chặt	17017	2026-11-02 01:06:50.296	2026-11-02 01:06:50.296	MULTIPLE_CHOICE	\N	\N	4	25
+27398	「切り出す（きりだす）」 nghĩa là gì?	mở lời; đốn (gỗ)	17017	2026-11-02 01:06:50.3	2026-11-02 01:06:50.3	MULTIPLE_CHOICE	\N	\N	4	26
+27399	「繰り越す（くりこす）」 nghĩa là gì?	chuyển sang (kỳ sau)	17017	2026-11-02 01:06:50.304	2026-11-02 01:06:50.304	MULTIPLE_CHOICE	\N	\N	4	27
+27400	「込み上げる（こみあげる）」 nghĩa là gì?	trào dâng (cảm xúc)	17017	2026-11-02 01:06:50.309	2026-11-02 01:06:50.309	MULTIPLE_CHOICE	\N	\N	4	28
+27401	「差し支える（さしつかえる）」 nghĩa là gì?	gây trở ngại	17017	2026-11-02 01:06:50.314	2026-11-02 01:06:50.314	MULTIPLE_CHOICE	\N	\N	4	29
+27402	「立ち直る（たちなおる）」 nghĩa là gì?	vực dậy, hồi phục	17017	2026-11-02 01:06:50.319	2026-11-02 01:06:50.319	MULTIPLE_CHOICE	\N	\N	4	30
+27403	「立て込む（たてこむ）」 nghĩa là gì?	bận dồn dập	17017	2026-11-02 01:06:50.323	2026-11-02 01:06:50.323	MULTIPLE_CHOICE	\N	\N	4	31
+27404	「突き止める（つきとめる）」 nghĩa là gì?	truy ra, xác định	17017	2026-11-02 01:06:50.329	2026-11-02 01:06:50.329	MULTIPLE_CHOICE	\N	\N	4	32
+27405	「取り締まる（とりしまる）」 nghĩa là gì?	kiểm soát, trấn áp	17017	2026-11-02 01:06:50.335	2026-11-02 01:06:50.335	MULTIPLE_CHOICE	\N	\N	4	33
+27406	「成り立つ（なりたつ）」 nghĩa là gì?	được hình thành, đứng vững	17017	2026-11-02 01:06:50.341	2026-11-02 01:06:50.341	MULTIPLE_CHOICE	\N	\N	4	34
+27407	「練り直す（ねりなおす）」 nghĩa là gì?	soạn lại, xem xét lại	17017	2026-11-02 01:06:50.347	2026-11-02 01:06:50.347	MULTIPLE_CHOICE	\N	\N	4	35
+27408	「乗り出す（のりだす）」 nghĩa là gì?	bắt tay vào; nhoài người	17017	2026-11-02 01:06:50.353	2026-11-02 01:06:50.353	MULTIPLE_CHOICE	\N	\N	4	36
+27409	「張り合う（はりあう）」 nghĩa là gì?	ganh đua	17017	2026-11-02 01:06:50.363	2026-11-02 01:06:50.363	MULTIPLE_CHOICE	\N	\N	4	37
+27410	「引き下げる（ひきさげる）」 nghĩa là gì?	hạ xuống, giảm	17017	2026-11-02 01:06:50.369	2026-11-02 01:06:50.369	MULTIPLE_CHOICE	\N	\N	4	38
+27411	「引きずる（ひきずる）」 nghĩa là gì?	kéo lê; vương vấn	17017	2026-11-02 01:06:50.373	2026-11-02 01:06:50.373	MULTIPLE_CHOICE	\N	\N	4	39
+27412	「踏み切る（ふみきる）」 nghĩa là gì?	quyết định dứt khoát	17017	2026-11-02 01:06:50.377	2026-11-02 01:06:50.377	MULTIPLE_CHOICE	\N	\N	4	40
+27413	「見合う（みあう）」 nghĩa là gì?	tương xứng	17017	2026-11-02 01:06:50.381	2026-11-02 01:06:50.381	MULTIPLE_CHOICE	\N	\N	4	41
+27414	「見せびらかす（みせびらかす）」 nghĩa là gì?	khoe khoang	17017	2026-11-02 01:06:50.385	2026-11-02 01:06:50.385	MULTIPLE_CHOICE	\N	\N	4	42
+27415	「持ち越す（もちこす）」 nghĩa là gì?	chuyển sang (lần sau)	17017	2026-11-02 01:06:50.389	2026-11-02 01:06:50.389	MULTIPLE_CHOICE	\N	\N	4	43
+27416	「持ちこたえる（もちこたえる）」 nghĩa là gì?	trụ vững	17017	2026-11-02 01:06:50.393	2026-11-02 01:06:50.393	MULTIPLE_CHOICE	\N	\N	4	44
+27417	「割り込む（わりこむ）」 nghĩa là gì?	chen ngang	17035	2026-11-02 01:06:50.398	2026-11-02 01:06:50.398	MULTIPLE_CHOICE	\N	\N	4	0
+27418	「相次ぐ（あいつぐ）」 nghĩa là gì?	liên tiếp xảy ra	17035	2026-11-02 01:06:50.402	2026-11-02 01:06:50.402	MULTIPLE_CHOICE	\N	\N	4	1
+27419	「あおる」 nghĩa là gì?	kích động, thổi bùng	17035	2026-11-02 01:06:50.406	2026-11-02 01:06:50.406	MULTIPLE_CHOICE	\N	\N	4	2
+27420	「明かす（あかす）」 nghĩa là gì?	tiết lộ; thức trắng (đêm)	17035	2026-11-02 01:06:50.411	2026-11-02 01:06:50.411	MULTIPLE_CHOICE	\N	\N	4	3
+27421	「あざける」 nghĩa là gì?	chế nhạo	17035	2026-11-02 01:06:50.415	2026-11-02 01:06:50.415	MULTIPLE_CHOICE	\N	\N	4	4
+27422	「値する（あたいする）」 nghĩa là gì?	xứng đáng	17035	2026-11-02 01:06:50.419	2026-11-02 01:06:50.419	MULTIPLE_CHOICE	\N	\N	4	5
+27423	「誤る（あやまる）」 nghĩa là gì?	sai lầm, nhầm	17035	2026-11-02 01:06:50.423	2026-11-02 01:06:50.423	MULTIPLE_CHOICE	\N	\N	4	6
+27424	「歩み寄る（あゆみよる）」 nghĩa là gì?	nhượng bộ lẫn nhau	17035	2026-11-02 01:06:50.427	2026-11-02 01:06:50.427	MULTIPLE_CHOICE	\N	\N	4	7
+27425	「言い渡す（いいわたす）」 nghĩa là gì?	tuyên (án), thông báo chính thức	17035	2026-11-02 01:06:50.432	2026-11-02 01:06:50.432	MULTIPLE_CHOICE	\N	\N	4	8
+27426	「居直る（いなおる）」 nghĩa là gì?	trở mặt, quay ra lấn lướt	17035	2026-11-02 01:06:50.436	2026-11-02 01:06:50.436	MULTIPLE_CHOICE	\N	\N	4	9
+27427	「入り組む（いりくむ）」 nghĩa là gì?	phức tạp, chằng chịt	17035	2026-11-02 01:06:50.44	2026-11-02 01:06:50.44	MULTIPLE_CHOICE	\N	\N	4	10
+27428	「打ち消す（うちけす）」 nghĩa là gì?	phủ nhận, xóa bỏ	17035	2026-11-02 01:06:50.445	2026-11-02 01:06:50.445	MULTIPLE_CHOICE	\N	\N	4	11
+27429	「うぬぼれる」 nghĩa là gì?	tự phụ, tự mãn	17035	2026-11-02 01:06:50.45	2026-11-02 01:06:50.45	MULTIPLE_CHOICE	\N	\N	4	12
+27430	「上回る（うわまわる）」 nghĩa là gì?	vượt quá	17035	2026-11-02 01:06:50.456	2026-11-02 01:06:50.456	MULTIPLE_CHOICE	\N	\N	4	13
+27431	「追い込む（おいこむ）」 nghĩa là gì?	dồn vào	17035	2026-11-02 01:06:50.461	2026-11-02 01:06:50.461	MULTIPLE_CHOICE	\N	\N	4	14
+27432	「臆する（おくする）」 nghĩa là gì?	e sợ, rụt rè	17035	2026-11-02 01:06:50.465	2026-11-02 01:06:50.465	MULTIPLE_CHOICE	\N	\N	4	15
+27433	「押し付ける（おしつける）」 nghĩa là gì?	ép buộc, đùn đẩy	17035	2026-11-02 01:06:50.469	2026-11-02 01:06:50.469	MULTIPLE_CHOICE	\N	\N	4	16
+27434	「かいつまむ」 nghĩa là gì?	tóm tắt	17035	2026-11-02 01:06:50.474	2026-11-02 01:06:50.474	MULTIPLE_CHOICE	\N	\N	4	17
+27435	「食い違う（くいちがう）」 nghĩa là gì?	mâu thuẫn, không khớp	17035	2026-11-02 01:06:50.478	2026-11-02 01:06:50.478	MULTIPLE_CHOICE	\N	\N	4	18
+27436	「くじける」 nghĩa là gì?	nản lòng	17035	2026-11-02 01:06:50.482	2026-11-02 01:06:50.482	MULTIPLE_CHOICE	\N	\N	4	19
+27437	「口ずさむ（くちずさむ）」 nghĩa là gì?	ngân nga	17035	2026-11-02 01:06:50.487	2026-11-02 01:06:50.487	MULTIPLE_CHOICE	\N	\N	4	20
+27438	「苦にする（くにする）」 nghĩa là gì?	lo phiền, bận tâm	17035	2026-11-02 01:06:50.492	2026-11-02 01:06:50.492	MULTIPLE_CHOICE	\N	\N	4	21
+27439	「こじらせる」 nghĩa là gì?	làm trầm trọng thêm	17035	2026-11-02 01:06:50.497	2026-11-02 01:06:50.497	MULTIPLE_CHOICE	\N	\N	4	22
+27440	「小耳にはさむ（こみみにはさむ）」 nghĩa là gì?	nghe lỏm	17035	2026-11-02 01:06:50.501	2026-11-02 01:06:50.501	MULTIPLE_CHOICE	\N	\N	4	23
+27441	「さじを投げる（さじをなげる）」 nghĩa là gì?	bó tay, buông xuôi	17035	2026-11-02 01:06:50.505	2026-11-02 01:06:50.505	MULTIPLE_CHOICE	\N	\N	4	24
+27442	「差し掛かる（さしかかる）」 nghĩa là gì?	đi tới, bước vào (giai đoạn)	17035	2026-11-02 01:06:50.509	2026-11-02 01:06:50.509	MULTIPLE_CHOICE	\N	\N	4	25
+27443	「締めくくる（しめくくる）」 nghĩa là gì?	kết thúc, tổng kết	17035	2026-11-02 01:06:50.513	2026-11-02 01:06:50.513	MULTIPLE_CHOICE	\N	\N	4	26
+27444	「擦り減る（すりへる）」 nghĩa là gì?	mòn đi	17035	2026-11-02 01:06:50.517	2026-11-02 01:06:50.517	MULTIPLE_CHOICE	\N	\N	4	27
+27445	「せめぎ合う（せめぎあう）」 nghĩa là gì?	giằng co, tranh chấp	17035	2026-11-02 01:06:50.521	2026-11-02 01:06:50.521	MULTIPLE_CHOICE	\N	\N	4	28
+27446	「そらす」 nghĩa là gì?	lảng tránh, quay đi	17035	2026-11-02 01:06:50.526	2026-11-02 01:06:50.526	MULTIPLE_CHOICE	\N	\N	4	29
+27447	「絶やす（たやす）」 nghĩa là gì?	làm tắt, để mất (lửa, nụ cười)	17035	2026-11-02 01:06:50.53	2026-11-02 01:06:50.53	MULTIPLE_CHOICE	\N	\N	4	30
+27448	「問い詰める（といつめる）」 nghĩa là gì?	chất vấn dồn dập	17035	2026-11-02 01:06:50.534	2026-11-02 01:06:50.534	MULTIPLE_CHOICE	\N	\N	4	31
+27449	「とどめる」 nghĩa là gì?	giữ lại, giới hạn	17035	2026-11-02 01:06:50.539	2026-11-02 01:06:50.539	MULTIPLE_CHOICE	\N	\N	4	32
+27450	「取り留める（とりとめる）」 nghĩa là gì?	giữ được (mạng sống)	17035	2026-11-02 01:06:50.544	2026-11-02 01:06:50.544	MULTIPLE_CHOICE	\N	\N	4	33
+27451	「名乗り出る（なのりでる）」 nghĩa là gì?	tự đứng ra nhận	17035	2026-11-02 01:06:50.548	2026-11-02 01:06:50.548	MULTIPLE_CHOICE	\N	\N	4	34
+27452	「のさばる」 nghĩa là gì?	hoành hành	17035	2026-11-02 01:06:50.552	2026-11-02 01:06:50.552	MULTIPLE_CHOICE	\N	\N	4	35
+27453	「はかどる」 nghĩa là gì?	tiến triển thuận lợi	17035	2026-11-02 01:06:50.558	2026-11-02 01:06:50.558	MULTIPLE_CHOICE	\N	\N	4	36
+27454	「踏みにじる（ふみにじる）」 nghĩa là gì?	chà đạp	17035	2026-11-02 01:06:50.562	2026-11-02 01:06:50.562	MULTIPLE_CHOICE	\N	\N	4	37
+27455	「振るう（ふるう）」 nghĩa là gì?	vung; phát huy	17035	2026-11-02 01:06:50.567	2026-11-02 01:06:50.567	MULTIPLE_CHOICE	\N	\N	4	38
+27456	「へりくだる」 nghĩa là gì?	khiêm nhường hạ mình	17035	2026-11-02 01:06:50.571	2026-11-02 01:06:50.571	MULTIPLE_CHOICE	\N	\N	4	39
+27457	「見かねる（みかねる）」 nghĩa là gì?	không thể đứng nhìn	17035	2026-11-02 01:06:50.575	2026-11-02 01:06:50.575	MULTIPLE_CHOICE	\N	\N	4	40
+27458	「見くびる（みくびる）」 nghĩa là gì?	xem thường	17035	2026-11-02 01:06:50.579	2026-11-02 01:06:50.579	MULTIPLE_CHOICE	\N	\N	4	41
+27459	「むしばむ」 nghĩa là gì?	gặm nhấm, ăn mòn	17035	2026-11-02 01:06:50.583	2026-11-02 01:06:50.583	MULTIPLE_CHOICE	\N	\N	4	42
+27460	「もみ消す（もみけす）」 nghĩa là gì?	ém nhẹm	17035	2026-11-02 01:06:50.587	2026-11-02 01:06:50.587	MULTIPLE_CHOICE	\N	\N	4	43
 \.
 
 
@@ -90540,6 +91262,2714 @@ COPY public."ExerciseOption" (id, "exerciseId", text, "sortOrder", "isCorrect") 
 66130	26783	Đó là một vấn đề không hề đơn giản.	1	f
 66131	26783	Làm việc kiểu đó thì sẽ hỏng người đấy.	2	t
 66132	26783	Trong hoàn cảnh khó khăn, anh ấy vẫn bình tĩnh.	3	f
+66133	26784	ngầm, không nói ra	0	t
+66134	26784	khéo léo, tinh xảo	1	f
+66135	26784	sự bỏ mặc, để yên	2	f
+66136	26784	xây dựng, gây dựng	3	f
+66137	26785	phần trên, phía thượng nguồn; khéo léo hơn	0	f
+66138	26785	dịu lại, thư thái	1	f
+66139	26785	sự hăng hái, quyết tâm	2	t
+66140	26785	được vun đắp	3	f
+66141	26786	kính sợ, kính nể	0	t
+66142	26786	lễ nghi, thể thức	1	f
+66143	26786	quốc hội	2	f
+66144	26786	đầy triển vọng	3	f
+66145	26787	thông lệ	0	f
+66146	26787	chiến thắng	1	f
+66147	26787	đáng tiếc (trang trọng)	2	t
+66148	26787	tiếng thét, tiếng kêu la	3	f
+66149	26788	ý đồ, chủ ý	0	t
+66150	26788	má (cách nói thân mật)	1	f
+66151	26788	sự chạy xe, hành trình	2	f
+66152	26788	trợ động từ	3	f
+66153	26789	nỗi lo, nỗi buồn	0	t
+66154	26789	nhanh chóng, thoáng qua	1	f
+66155	26789	gót chân	2	f
+66156	26789	chấn chỉnh	3	f
+66157	26790	vinh dự, vinh quang	0	t
+66158	26790	sự nghiệp, kinh nghiệm nghề nghiệp	1	f
+66159	26790	sách nguyên bản (chưa dịch)	2	f
+66160	26790	coi như, xem là	3	f
+66161	26791	hồi tưởng, nhìn lại	0	t
+66162	26791	trước hết, tạm thời	1	f
+66163	26791	bận dồn dập	2	f
+66164	26791	số mệnh	3	f
+66165	26792	sự cách biệt, xa rời	0	t
+66166	26792	ngân nga	1	f
+66167	26792	sự thoát nước	2	f
+66168	26792	chỗ trống, khoảng trống	3	f
+66169	26793	tính toán ra	0	f
+66170	26793	ngăn lại, giữ ở mức	1	f
+66171	26793	thách thức, khiêu chiến	2	f
+66172	26793	đồng loạt, rập khuôn	3	t
+66173	26794	sắp đến gần, sắp tới	0	f
+66174	26794	cam chịu, chấp nhận	1	t
+66175	26794	súng, nòng súng	2	f
+66176	26794	nghiêm khắc, khắt khe	3	f
+66177	26795	rắc rối, sự cố	0	f
+66178	26795	sự cưỡng chế, bắt buộc	1	f
+66179	26795	khắp mọi nơi, không sót chỗ nào	2	f
+66180	26795	tông chủ đạo, nền tảng	3	t
+66181	26796	ngang ngửa, giằng co	0	t
+66182	26796	yêu đơn phương	1	f
+66183	26796	nghệ thuật biểu diễn	2	f
+66184	26796	tập tục, thông lệ	3	f
+66185	26797	vách đá	0	f
+66186	26797	sự tinh tế, uẩn khúc	1	t
+66187	26797	bảo lưu, tạm hoãn	2	f
+66188	26797	giòn, dễ vỡ; yếu đuối	3	f
+66189	26798	lo ngại, nghi ngờ	0	f
+66190	26798	mùa màng thất bát	1	f
+66191	26798	lừa dối, giả dối	2	t
+66192	26798	con mồi, chiến lợi phẩm	3	f
+66193	26799	hư hỏng, kém chất lượng	0	f
+66194	26799	điềm báo trước	1	f
+66195	26799	sự tặng, quyên góp	2	f
+66419	26855	súc, xả nước	2	f
+66196	26799	hưởng thụ, được hưởng	3	t
+66197	26800	gắn bó, quyến luyến	0	f
+66198	26800	cay đắng, khổ tâm	1	t
+66199	26800	tình hình, cục diện	2	f
+66200	26800	thiên kiến, sai lệch	3	f
+66201	26801	hình thành	0	t
+66202	26801	muôn hình vạn trạng	1	f
+66203	26801	hoảng hốt, cuống quýt	2	f
+66204	26801	cảnh chen chúc, đám đông	3	f
+66205	26802	ngang tài ngang sức	0	t
+66206	26802	học sinh mới, tân sinh viên	1	f
+66207	26802	chất lượng tốt	2	f
+66208	26802	tươi mọng, tươi tắn	3	f
+66209	26803	thể loại	0	f
+66210	26803	phô trương, khoe khoang	1	t
+66211	26803	sự trình bày, đưa ra	2	f
+66212	26803	trên đường, giữa chừng	3	f
+66213	26804	nắng chiều (hướng tây)	0	f
+66214	26804	tính sai, tính nhầm	1	t
+66215	26804	tiền lẻ	2	f
+66216	26804	quan chức về làm ở doanh nghiệp liên quan	3	f
+66217	26805	bản nhạc	0	f
+66218	26805	phòng thu, studio	1	f
+66219	26805	làm sai, làm khác đi	2	f
+66220	26805	bối rối, lúng túng	3	t
+66221	26806	tai họa, tai ương	0	t
+66222	26806	sự đến thăm (khiêm nhường)	1	f
+66223	26806	sự lưu tâm, chủ tâm	2	f
+66224	26806	bị đau, đau nhức	3	f
+66225	26807	bí quyết, mẹo	0	f
+66226	26807	pháp chế	1	f
+66227	26807	tố chất, phẩm chất	2	t
+66228	26807	đền thờ Thần đạo	3	f
+66229	26808	tiêu đề	0	f
+66230	26808	trở ngại, cản trở	1	t
+66231	26808	tinh vi, tỉ mỉ	2	f
+66232	26808	tươi mọng, tươi tắn	3	f
+66233	26809	suy tính, cân nhắc	0	f
+66234	26809	tự hào, tự tin vào bản thân	1	t
+66235	26809	lượng rất nhỏ	2	f
+66236	26809	nắm bắt	3	f
+66237	26810	khảo sát, suy xét	0	f
+66238	26810	văn viết cổ	1	f
+66239	26810	hoàn hảo	2	f
+66240	26810	lòng quyết tâm dai dẳng, chấp niệm	3	t
+66241	26811	hiểu rõ, am tường	0	t
+66242	26811	sự chỉ huy, thống lĩnh	1	f
+66243	26811	tùy tiện, không cầu kỳ	2	f
+66244	26811	chất đạm, protein	3	f
+66245	26812	thân cây, cuống	0	f
+66246	26812	đặc quyền	1	f
+66247	26812	tiều tụy, kiệt quệ	2	t
+66248	26812	điều tra làm rõ	3	f
+66249	26813	mâu thuẫn	0	f
+66250	26813	sự gia nhập, tham gia	1	f
+66251	26813	sự trục xuất, lưu đày	2	f
+66252	26813	suy tư, trầm tư	3	t
+66253	26814	mở cửa đất nước	0	f
+66254	26814	tầm nhìn, quang cảnh	1	f
+66255	26814	sự đồng cảm, cùng quan điểm	2	f
+66256	26814	độ tin cậy	3	t
+66257	26815	liên quan mật thiết	0	f
+66258	26815	a dua theo người khác	1	f
+66259	26815	vận tải đường biển	2	f
+66260	26815	hấp thụ, tiếp thu	3	t
+66261	26816	sự khuyến khích	0	f
+66262	26816	chuyên tâm	1	t
+66263	26816	tôn kính, coi trọng	2	f
+66264	26816	diện mạo, cách ăn mặc	3	f
+66265	26817	ghen tị, ngưỡng mộ	0	t
+66266	26817	tình thế tiến thoái lưỡng nan	1	f
+66267	26817	con trai (cách nói trang trọng)	2	f
+66268	26817	lãnh đạm, thờ ơ	3	f
+66269	26818	lập kế hoạch, nhằm mục đích	0	f
+66270	26818	phê chuẩn	1	f
+66271	26818	mất mát, đánh mất	2	t
+66272	26818	xử lý, kinh doanh (mặt hàng)	3	f
+66273	26819	kiến thức nền, tu dưỡng	0	t
+66274	26819	tiến hóa	1	f
+66275	26819	sự chôn giấu, trữ lượng (khoáng sản)	2	f
+66276	26819	liên tục, không dứt	3	f
+66277	26820	khô ráo; thực dụng, lạnh lùng	0	f
+66278	26820	thoát khỏi	1	t
+66279	26820	thô sơ, cẩu thả	2	f
+66280	26820	hoành hành	3	f
+66281	26821	tìm kiếm, theo đuổi	0	t
+66282	26821	hãy xem đi, hãy thử xem	1	f
+66283	26821	kết luận, hệ quả	2	f
+66284	26821	dấu hiệu, triệu chứng	3	f
+66285	26822	dầu thô	0	f
+66286	26822	cộng hòa	1	f
+66287	26822	lắng xuống, yên ắng	2	t
+66288	26822	như thế nào, dù thế nào	3	f
+66289	26823	đổ (trách nhiệm), chuyển sang	0	t
+66290	26823	kế sinh nhai	1	f
+66291	26823	sự thua trận	2	f
+66292	26823	vung; phát huy	3	f
+66293	26824	tiếng vang, phản ứng dư luận	0	f
+66294	26824	diễn (vai), thể hiện	1	f
+66295	26824	chuyển sang (lần sau)	2	f
+66296	26824	nhận thức, công nhận	3	t
+66297	26825	trong đầu, tâm niệm	0	t
+66298	26825	sự tín nhiệm	1	f
+66299	26825	quen thuộc, thân quen	2	f
+66300	26825	loại trừ	3	f
+66301	26826	gợn sóng; ảnh hưởng lan rộng	0	t
+66302	26826	giòn, dễ vỡ; yếu đuối	1	f
+66303	26826	bắt đầu làm, gài bẫy	2	f
+66304	26826	tạm dừng; tư thế tạo dáng	3	f
+66305	26827	tuyển dụng, việc làm	0	f
+66306	26827	khoảng trống, phòng cho thuê	1	f
+66307	26827	phản ánh	2	t
+66308	26827	mang tính đột phá thời đại	3	f
+66309	26828	công bố, trình diễn ra mắt	0	t
+66310	26828	riêng lẻ, cá biệt	1	f
+66311	26828	tổ chức (sự kiện); cảm thấy (buồn ngủ...)	2	f
+66312	26828	tăng cường	3	f
+66313	26829	bao quát, toàn diện	0	t
+66314	26829	phức tạp, rườm rà	1	f
+66315	26829	nguồn nước, đầu nguồn	2	f
+66316	26829	mầm mống	3	f
+66317	26830	khẩu hiệu	0	f
+66318	26830	trước khi xảy ra	1	t
+66319	26830	bỏ chạy, trốn thoát	2	f
+66320	26830	thể loại	3	f
+66321	26831	thứ hạng cao, cấp trên	0	f
+66322	26831	triển vọng, dự tính	1	t
+66323	26831	quấn quýt, gắn bó (với ai)	2	f
+66324	26831	khảo cổ học	3	f
+66325	26832	cấp cứu, khẩn cấp	0	f
+66326	26832	bệnh lao	1	f
+66327	26832	khiêm nhường hạ mình	2	f
+66328	26832	thất vọng, chán nản	3	t
+66329	26833	sành điệu, tinh tế	0	f
+66330	26833	vạn năng, toàn năng	1	f
+66331	26833	đại hội toàn thể	2	f
+66332	26833	lời đệm, gật gù hưởng ứng	3	t
+66333	26834	làm thỏa mãn, lấp đầy	0	f
+66334	26834	bước chân; dấu vết hành tung	1	t
+66335	26834	quan hệ ngoại giao	2	f
+66336	26834	sự bất bình, không phục	3	f
+66337	26835	cơ thể sống, xác thịt	0	f
+66338	26835	sự quen thuộc, kinh nghiệm	1	f
+66339	26835	mục đích, chỗ trông cậy	2	t
+66340	26835	tay nghề, năng lực	3	f
+66341	26836	thám hiểm, nghiên cứu	0	f
+66342	26836	sự nuôi dưỡng, trưởng thành	1	f
+66343	26836	lời lẽ, ý kiến (của một bên)	2	t
+66344	26836	nhụt chí, sợ hãi	3	f
+66345	26837	cơ cấu, cấu trúc	0	f
+66346	26837	vô cùng, cực kỳ	1	f
+66347	26837	ngay lập tức, không chần chừ	2	f
+66348	26837	lẽ sống, ý nghĩa cuộc đời	3	t
+66349	26838	chí khí, can đảm	0	t
+66350	26838	đồng điệu	1	f
+66351	26838	ăn sâu, bám rễ	2	f
+66352	26838	khoản nợ	3	f
+66353	26839	khác biệt, độc đáo	0	t
+66354	26839	Thượng viện (Nhật Bản)	1	f
+66355	26839	sự nắm giữ; độ bền	2	f
+66356	26839	sự cử phái, biệt phái	3	f
+66357	26840	ý kiến riêng (tự quyết)	0	t
+66358	26840	tiết lộ; thức trắng (đêm)	1	f
+66359	26840	học thuật và nghệ thuật	2	f
+66360	26840	né tránh	3	f
+66361	26841	thượng sách, cách có lợi	0	f
+66362	26841	tĩnh, tĩnh tại	1	f
+66363	26841	hòa thuận, viên mãn	2	f
+66364	26841	lời răn, bài học	3	t
+66365	26842	sắc độ; tính chất	0	t
+66366	26842	vật trưng bày, sản phẩm dự thi	1	f
+66367	26842	hỏi ý kiến (hội đồng)	2	f
+66368	26842	chơi chữ, ăn diện	3	f
+66369	26843	nội bộ	0	t
+66370	26843	tao nhã	1	f
+66371	26843	sự lắng đọng, kết tủa	2	f
+66372	26843	riêng lẻ, cá biệt	3	f
+66373	26844	sự đến trường	0	f
+66374	26844	cơ sở chứng minh, bằng chứng hậu thuẫn	1	t
+66375	26844	kế hoạch, dự án	2	f
+66376	26844	kiểm soát, trấn áp	3	f
+66377	26845	chủ nghĩa lý tưởng	0	f
+66378	26845	sự quan tâm, chu đáo	1	f
+66379	26845	bề ngoài	2	t
+66380	26845	sự tao nhã, thanh lịch	3	f
+66381	26846	điềm (lành, gở)	0	t
+66382	26846	làm sớm hơn, đẩy nhanh	1	f
+66383	26846	quanh đó, khoảng chừng	2	f
+66384	26846	nuông chiều, xu nịnh	3	f
+66385	26847	sự tham chiếu	0	f
+66386	26847	sự tương tự	1	f
+66387	26847	nắng chiều (hướng tây)	2	f
+66388	26847	cúi chào nhẹ	3	t
+66389	26848	hoàn toàn không có	0	t
+66390	26848	chăn đệm, đồ ngủ	1	f
+66391	26848	hoàng cung	2	f
+66392	26848	ý niệm, sự chú tâm	3	f
+66393	26849	nói xấu sau lưng	0	t
+66394	26849	đỉnh cao	1	f
+66395	26849	một mặt, trang nhất (báo)	2	f
+66396	26849	chí khí, can đảm	3	f
+66397	26850	hữu ích, có lợi	0	f
+66398	26850	tượng Phật	1	f
+66399	26850	chức danh	2	t
+66400	26850	nơi làm việc	3	f
+66401	26851	sự bi quan	0	f
+66402	26851	câu trả lời	1	f
+66403	26851	việc tay trái, làm thêm lúc rảnh	2	t
+66404	26851	ghen tị	3	f
+66405	26852	tính thêm vào, xem xét thêm	0	t
+66406	26852	dựa trên, căn cứ vào	1	f
+66407	26852	bị sặc	2	f
+66408	26852	trí tuệ	3	f
+66409	26853	lồng vào, tích hợp	0	f
+66410	26853	ánh đèn sân khấu, sự chú ý	1	t
+66411	26853	tầm nhìn, triển vọng	2	f
+66412	26853	rụt rè, sợ sệt	3	f
+66413	26854	u uất	0	f
+66414	26854	sự già yếu	1	f
+66415	26854	dễ chịu, thoải mái	2	f
+66416	26854	tình thế khốn cùng	3	t
+66417	26855	có vẻ như thật, ra chiều	0	f
+66418	26855	hư vinh, sĩ diện	1	t
+66420	26855	đồng nhất, giống nhau	3	f
+66421	26856	lần đầu tiên, mới	0	f
+66422	26856	xen vào, can thiệp bằng lời	1	t
+66423	26856	quán bar	2	f
+66424	26856	hỉ nộ ái lạc	3	f
+66425	26857	yêu mến, nhớ nhung	0	f
+66426	26857	tài liệu giảng dạy	1	f
+66427	26857	câu cửa miệng	2	t
+66428	26857	cục, sở (cơ quan chính phủ)	3	f
+66429	26858	cười gượng, cười khổ	0	t
+66430	26858	tổ chức; cảm thấy (buồn ngủ…)	1	f
+66431	26858	ngành kỹ thuật	2	f
+66432	26858	che khuất, ngắt lời	3	f
+66433	26859	bị dị ứng da; bị ảnh hưởng (tư tưởng)	0	f
+66434	26859	suốt cả ngày	1	f
+66435	26859	hấp thụ, tiếp thu	2	f
+66436	26859	vẻ mặt (dữ dằn)	3	t
+66437	26860	ánh mắt, cái nhìn	0	f
+66438	26860	cười nhạo, chế giễu	1	f
+66439	26860	khỏe mạnh, vẫn còn tốt	2	t
+66440	26860	thúc giục, giục giã	3	f
+66441	26861	điểm xuất phát, cội nguồn	0	t
+66442	26861	giải thích để làm rõ hiểu lầm	1	f
+66443	26861	kích động, thổi bùng	2	f
+66444	26861	tranh sơn dầu	3	f
+66445	26862	thà rằng, thà là	0	f
+66446	26862	mờ đi, mờ sương	1	f
+66447	26862	tuyên bố công khai	2	t
+66448	26862	hội trường tổ chức lễ	3	f
+66449	26863	chiều cao, chiều dài	0	f
+66450	26863	vòng luẩn quẩn	1	f
+66451	26863	người đánh máy	2	f
+66452	26863	sự quan tâm, chu đáo	3	t
+66453	26864	chuyện, vụ việc; tin tức	0	t
+66454	26864	say mê, tâm huyết với	1	f
+66455	26864	sự dư dả, khoảng trống	2	f
+66456	26864	(chim) hót líu lo	3	f
+66457	26865	phương thức	0	f
+66458	26865	dàn xếp, kiểm soát (tình hình)	1	f
+66459	26865	cảnh chen chúc, đám đông	2	t
+66460	26865	quân vua (cờ tướng Nhật)	3	f
+66461	26866	về thăm quê	0	t
+66462	26866	sự căm ghét	1	f
+66463	26866	hình thức bên ngoài, thể diện	2	f
+66464	26866	sự lưu thông (hàng hóa, tiền tệ)	3	f
+66465	26867	sự ngoại tình, lăng nhăng	0	f
+66466	26867	run sợ	1	f
+66467	26867	cử chỉ, điệu bộ	2	t
+66468	26867	ngây thơ, hồn nhiên	3	f
+66469	26868	ràng buộc, vướng víu	0	t
+66470	26868	ganh đua	1	f
+66471	26868	sáo rỗng, cũ kỹ	2	f
+66472	26868	điềm (lành, gở)	3	f
+66473	26869	súc, xả nước	0	f
+66474	26869	đặc sản nổi tiếng	1	f
+66475	26869	ngừng xuất bản, hết hàng (sách)	2	f
+66476	26869	đúng thời điểm	3	t
+66477	26870	nỗ lực, cố gắng	0	f
+66478	26870	bất chấp phản đối mà làm	1	f
+66479	26870	trọng tâm, điểm chính	2	t
+66480	26870	điểm mâu thuẫn	3	f
+66481	26871	đợt giảm giá bán	0	f
+66482	26871	e sợ, rụt rè	1	f
+66483	26871	sự đọc diễn cảm	2	f
+66484	26871	tài cán, năng lực	3	t
+66485	26872	sự tăng cường	0	f
+66486	26872	khoa mắt (nhãn khoa)	1	f
+66487	26872	thuật xử thế	2	t
+66488	26872	mưu tính	3	f
+66489	26873	bị rò rỉ, lọt ra	0	f
+66490	26873	độ bóng, độ sáng	1	f
+66491	26873	giá trị thực	2	t
+66492	26873	suôn sẻ, thon thả	3	f
+66493	26874	lụi tàn, hạ nhiệt	0	f
+66494	26874	lý do chính đáng, tư cách	1	t
+66495	26874	vòng tuổi cây (vân gỗ)	2	f
+66496	26874	giá trị, giá cả	3	f
+66497	26875	lai lịch, thân thế	0	t
+66498	26875	sơ suất, vụng về	1	f
+66499	26875	quán ven đường cho xe hơi ghé	2	f
+66500	26875	Thượng viện (Nhật Bản)	3	f
+66501	26876	thành ý	0	t
+66502	26876	xa xôi, xa xăm	1	f
+66503	26876	chứng suy nhược thần kinh	2	f
+66504	26876	nhãn dán	3	f
+66505	26877	một mặt, trang nhất (báo)	0	f
+66506	26877	vật thể	1	f
+66507	26877	xen vào giữa, tồn tại xen kẽ	2	f
+66508	26877	chừng mực	3	t
+66509	26878	kiềm chế, tạm hoãn	0	f
+66510	26878	sự phù hợp, trùng khớp	1	f
+66511	26878	chữ kanji dùng theo âm (ateji)	2	f
+66512	26878	nhìn xa trông rộng	3	t
+66513	26879	trái ngược	0	f
+66514	26879	bữa trưa (cách nói trang trọng)	1	f
+66515	26879	các, nhiều (tiền tố)	2	f
+66516	26879	đại nghĩa, chính nghĩa	3	t
+66517	26880	sắc thái ý nghĩa	0	f
+66518	26880	trưng cầu ý kiến (cơ quan)	1	f
+66519	26880	tính toán vụ lợi	2	t
+66520	26880	bất đắc dĩ, không còn cách nào khác	3	f
+66521	26881	năng lực, tài sức	0	t
+66522	26881	ý nghĩa (giá trị)	1	f
+66523	26881	truyền thừa	2	f
+66524	26881	nhiệt lượng	3	f
+66525	26882	hòa giải	0	f
+66526	26882	một tá (12 cái)	1	f
+66527	26882	cách, phương sách	2	t
+66528	26882	say mê quên mình	3	f
+66529	26883	hộ gia đình	0	f
+66530	26883	bối rối, lúng túng	1	t
+66531	26883	bồn rửa	2	f
+66532	26883	cọ xát, trầy xước; từng trải	3	f
+66533	26884	giai đoạn cuối	0	f
+66534	26884	gan dạ, can đảm	1	t
+66535	26884	múc; thấu hiểu (tâm tư)	2	f
+66536	26884	quấn quýt, gắn bó (với ai)	3	f
+66537	26885	thượng sách, cách có lợi	0	t
+66538	26885	đưa vào áp dụng	1	f
+66539	26885	vô tình, tự nhiên (không cố ý)	2	f
+66540	26885	hồn ma, bóng ma	3	f
+66541	26886	quen thuộc, thân quen	0	t
+66542	26886	nhãn dán	1	f
+66543	26886	vi phạm, xung đột (luật)	2	f
+66544	26886	công khai, chính thức	3	f
+66545	26887	đúng người đúng việc	0	f
+66546	26887	lời bình luận	1	f
+66547	26887	mỏ (chim)	2	f
+66548	26887	nhược điểm, điểm khó	3	t
+66549	26888	tâm nguyện	0	t
+66550	26888	thơ ca	1	f
+66551	26888	tham gia, đảm nhận (công việc)	2	f
+66552	26888	mỉa mai	3	f
+66553	26889	diệt vong	0	f
+66554	26889	trở nên cùn, kém đi	1	f
+66555	26889	tham ô (tiền)	2	f
+66556	26889	phá lệ, ngoại lệ (rẻ, cao bất thường)	3	t
+66557	26890	bề ngoài	0	f
+66558	26890	khởi nghiệp	1	f
+66559	26890	sự kìm hãm, phanh hãm	2	t
+66560	26890	tính tỉ mỉ (danh từ hóa)	3	f
+66561	26891	phòng sinh hoạt chung kiểu Nhật	0	f
+66562	26891	trận đấu ban đêm (thể thao)	1	f
+66563	26891	thuật xử thế	2	f
+66564	26891	trút giận, trả đũa	3	t
+66565	26892	mặc cảm, tự ti	0	t
+66566	26892	động sát, thấu hiểu	1	f
+66567	26892	kiệt sức, đuối sức	2	f
+66568	26892	lĩnh hội	3	f
+66569	26893	sự phù hợp, trùng khớp	0	f
+66570	26893	quốc tịch	1	f
+66571	26893	bí quyết	2	t
+66572	26893	tự đứng ra nhận	3	f
+66573	26894	khá là, hẳn là rất	0	f
+66574	26894	sơ suất, vụng về	1	t
+66575	26894	quý bà	2	f
+66576	26894	đúng như thực tế, thẳng thắn	3	f
+66577	26895	lời phát biểu	0	f
+66578	26895	cuộc đối thoại, trò chuyện	1	f
+66579	26895	sơ suất, vụng về	2	f
+66580	26895	lòng ngực; túi tiền	3	t
+66581	26896	lẻn ra, trốn ra ngoài	0	f
+66582	26896	hoàn cảnh bản thân, thân phận	1	t
+66583	26896	khai sáng, nâng cao nhận thức	2	f
+66584	26896	múc; thấu hiểu (tâm tư)	3	f
+66585	26897	trật tự	0	f
+66586	26897	thể diện, sĩ diện	1	t
+66587	26897	tiếng xấu, không được ưa chuộng	2	f
+66588	26897	điều kỳ diệu, kinh ngạc	3	f
+66589	26898	sự sinh đẻ	0	f
+66590	26898	phong thái, cử chỉ	1	t
+66591	26898	nghề tay trái, kiêm nghiệp	2	f
+66592	26898	tấn công, ập đến	3	f
+66593	26899	khấu trừ, trừ đi	0	f
+66594	26899	năm Mùi (12 con giáp)	1	f
+66595	26899	sự mang thai	2	f
+66596	26899	lai lịch, nguồn gốc lâu đời	3	t
+66597	26900	qua loa, lơ là	0	f
+66598	26900	khai sáng, nâng cao nhận thức	1	f
+66599	26900	áp lực	2	f
+66600	26900	tài ăn nói	3	t
+66601	26901	chen vào, ngắt lời	0	f
+66602	26901	áp đảo	1	t
+66603	26901	vị thế ưu thế	2	f
+66604	26901	nhà kho	3	f
+66605	26902	rắc rối, sự cố	0	f
+66606	26902	chắc chắn là (nhưng hóa ra không phải)	1	f
+66607	26902	giải tỏa, xóa bỏ	2	t
+66608	26902	nhân hậu, giàu lòng trắc ẩn	3	f
+66609	26903	kẻ tôi tớ, đầy tớ	0	f
+66610	26903	tin chắc	1	t
+66611	26903	quê hương	2	f
+66612	26903	sự chú ý tới	3	f
+66613	26904	không thể chấp nhận, quá đáng	0	f
+66614	26904	quét sạch, loại bỏ hoàn toàn	1	f
+66615	26904	nhìn chằm chằm	2	t
+66616	26904	mẫu số	3	f
+66617	26905	làm chìm xuống	0	f
+66618	26905	chỗ trống, khoảng trống	1	t
+66619	26905	tiêu tốn, dành (thời gian, tiền)	2	f
+66620	26905	cố gắng hết sức	3	f
+66621	26906	quả cam, màu cam	0	f
+66622	26906	nhục nhã	1	t
+66623	26906	đạo đức, luân lý	2	f
+66624	26906	hài hòa	3	f
+66625	26907	sự từ chối (khéo léo)	0	f
+66626	26907	thiếu hụt	1	t
+66627	26907	hai cực (địa lý, điện)	2	f
+66628	26907	sự chuẩn bị, thu xếp	3	f
+66629	26908	quản lý, kiểm soát	0	f
+66630	26908	phù du, ngắn ngủi	1	f
+66631	26908	hơi ẩm, độ ẩm	2	f
+66632	26908	sử dụng quá mức, bóc lột sức	3	t
+66633	26909	xứng đáng, đáng giá	0	f
+66634	26909	cách mạng	1	f
+66635	26909	thất bại, vấp ngã	2	t
+66636	26909	đồng loạt, cào bằng	3	f
+66637	26910	Ả Rập	0	f
+66638	26910	quốc hữu, thuộc sở hữu nhà nước	1	f
+66639	26910	bông lúa	2	f
+66640	26910	thành tựu, thành hiện thực	3	t
+66641	26911	luyện sắt, sản xuất thép	0	f
+66642	26911	bảo lưu, tạm hoãn	1	t
+66643	26911	kỹ lưỡng, thong thả	2	f
+66644	26911	sáng rực rỡ	3	f
+66645	26912	sắt thép	0	f
+66646	26912	cao nguyên	1	f
+66647	26912	dốc sức thật sự	2	t
+66648	26912	động cơ, lý do thúc đẩy	3	f
+66649	26913	phong tục	0	f
+66650	26913	phức hợp hóa	1	f
+66651	26913	tận hưởng trọn vẹn	2	t
+66652	26913	sườn núi	3	f
+66653	26914	ước tính sơ bộ	0	f
+66654	26914	duyên dáng, thùy mị	1	f
+66655	26914	niên hiệu	2	f
+66656	26914	nhân tài kiệt xuất	3	t
+66657	26915	bình phương, vuông (đơn vị đo)	0	f
+66658	26915	tinh túy, cốt lõi	1	t
+66659	26915	việc cấp bách	2	f
+66660	26915	sự chậm trễ	3	f
+66661	26916	lời khuyên can	0	f
+66662	26916	lời đồn đại	1	t
+66663	26916	xoa dịu, chữa lành	2	f
+66664	26916	sự phấn khích, kích động	3	f
+66665	26917	nguyên liệu, chất liệu	0	f
+66666	26917	quấn vào, dính líu tới	1	f
+66667	26917	sự phù hợp, trùng khớp	2	f
+66668	26917	viết vội	3	t
+66669	26918	sự bướng bỉnh; khí khái	0	t
+66670	26918	trỗi dậy	1	f
+66671	26918	đáng khinh, hèn hạ	2	f
+66672	26918	tự hào về	3	f
+66673	26919	sự trục xuất, lưu đày	0	f
+66674	26919	sự truyền đạt	1	f
+66675	26919	suy đoán	2	f
+66676	26919	trái ngược	3	t
+66677	26920	mặc dù vậy, tuy nhiên	0	f
+66678	26920	sự phân công	1	f
+66679	26920	thoát khỏi	2	f
+66680	26920	món nợ ân tình, mặc cảm có lỗi	3	t
+66681	26921	từ xa	0	f
+66682	26921	sự giới hạn	1	f
+66683	26921	có lý phần nào	2	f
+66684	26921	giai đoạn cuối	3	t
+66685	26922	cải cách	0	f
+66686	26922	sự suy giảm	1	t
+66687	26922	móc vào, khoác lên; lừa gạt	2	f
+66688	26922	ước tính sơ bộ	3	f
+66689	26923	trong sạch, thanh khiết	0	f
+66690	26923	tư pháp	1	f
+66691	26923	nín thở (chờ đợi)	2	t
+66692	26923	khai báo	3	f
+66693	26924	chạy không tải, nỗ lực vô ích	0	t
+66694	26924	quyền hạn chức vụ	1	f
+66695	26924	đỉnh (núi, đầu)	2	f
+66696	26924	thời cổ đại	3	f
+66697	26925	đúng như thực tế, thẳng thắn	0	f
+66698	26925	điều lo lắng	1	t
+66699	26925	vần	2	f
+66700	26925	giá rẻ	3	f
+66701	26926	rực rỡ, huy hoàng	0	f
+66702	26926	lý do chính đáng, tư cách	1	f
+66703	26926	ranh giới, sự phân minh	2	t
+66704	26926	vô nghĩa, phi lý	3	f
+66705	26927	sâu xa	0	f
+66706	26927	chưa khai hóa, hoang sơ	1	f
+66707	26927	việc làm (xấu), trò	2	t
+66708	26927	kế sinh nhai	3	f
+66709	26928	sự thoát nước	0	f
+66710	26928	chùn bước, ngần ngại	1	t
+66711	26928	nghỉ thai sản	2	f
+66712	26928	sự nuôi dạy trẻ	3	f
+66713	26929	thể diện, danh dự	0	f
+66714	26929	vòi vĩnh, nài nỉ	1	f
+66715	26929	kịch bản, cốt truyện	2	t
+66716	26929	quá rộng, lùng bùng	3	f
+66717	26930	hàng, dòng (chữ)	0	f
+66718	26930	thu chi	1	f
+66719	26930	mò mẫm	2	t
+66720	26930	sự hộ tống, bảo vệ	3	f
+66721	26931	ngoài dự đoán	0	f
+66722	26931	bế tắc, hết cách	1	t
+66723	26931	bị đau, đau nhức	2	f
+66724	26931	điểm số đạt được	3	f
+66725	26932	chân trần	0	f
+66726	26932	để lộ, làm rò rỉ	1	f
+66727	26932	rụt rè	2	f
+66728	26932	sự chênh lệch, không đồng đều	3	t
+66729	26933	sự méo mó, lệch lạc	0	t
+66730	26933	thẳng thắn, đúng ngay chóc	1	f
+66731	26933	bỏ sót	2	f
+66732	26933	không khí, tâm trạng chung	3	f
+66733	26934	hài kịch	0	f
+66734	26934	mở lời; đốn (gỗ)	1	f
+66735	26934	nghệ thuật	2	f
+66736	26934	đánh úp, bất ngờ	3	t
+66737	26935	rêu rao	0	t
+66738	26935	tôn chỉ, ý chính	1	f
+66739	26935	cáng cứu thương	2	f
+66740	26935	giám tu, biên tập chỉ đạo	3	f
+66741	26936	sự chùng, chảy xệ	0	f
+66742	26936	thẩm quyền quản lý, sở tại	1	f
+66743	26936	răn đe làm gương	2	t
+66744	26936	điểm mấu chốt, điểm số	3	f
+66745	26937	và, cùng với	0	f
+66746	26937	tận mắt	1	t
+66747	26937	sự bắt đầu làm việc	2	f
+66748	26937	sự tách rời, phân ly	3	f
+66749	26938	đàn shamisen ba dây	0	f
+66750	26938	cuộc đối thoại	1	f
+66751	26938	đứt quãng, gián đoạn	2	f
+66752	26938	rụt rè, sợ sệt	3	t
+66753	26939	bước đi (trên con đường đời)	0	f
+66754	26939	chậm hiểu, kém nhạy cảm	1	f
+66755	26939	đầu sóng ngọn gió	2	t
+66756	26939	triển vọng, dự đoán	3	f
+66757	26940	đồng bọn, nhóm người	0	f
+66758	26940	dã thú	1	f
+66759	26940	hăng máu, cuống cuồng	2	t
+66760	26940	sự linh hoạt, xoay xở	3	f
+66761	26941	hậu tố kính ngữ; hình dáng, vẻ	0	f
+66762	26941	mềm mại, uyển chuyển	1	f
+66763	26941	yên tâm, vững lòng	2	f
+66764	26941	xoay xở (chi tiêu)	3	t
+66765	26942	sự hư hỏng	0	f
+66766	26942	hào hứng, hăng hái	1	f
+66767	26942	chỗ dựa	2	t
+66768	26942	biện pháp chấn chỉnh	3	f
+66769	26943	dấu hiệu, điềm báo	0	f
+66770	26943	khúc mắc, hiềm khích	1	t
+66771	26943	bước chân; dấu vết hành tung	2	f
+66772	26943	nghìn cân treo sợi tóc	3	f
+66773	26944	tâm đầu ý hợp, hiểu ý không cần nói	0	f
+66774	26944	dồi dào, mạnh mẽ	1	t
+66775	26944	sự khai thác (mỏ)	2	f
+66776	26944	sự chìm đắm	3	f
+66777	26945	ôn hòa, êm thấm	0	t
+66778	26945	nhân tố chính	1	f
+66779	26945	chính thống, truyền thống	2	f
+66780	26945	lừa dối, đánh lừa	3	f
+66781	26946	phủ định	0	f
+66782	26946	loãng, mờ nhạt	1	t
+66783	26946	coi trọng	2	f
+66784	26946	sự thổi kèn (nhạc cụ hơi)	3	f
+66785	26947	căng thẳng, xấu đi (bầu không khí)	0	t
+66786	26947	lý tưởng, triết lý	1	f
+66787	26947	vần	2	f
+66788	26947	cảm thấy xấu hổ	3	f
+66789	26948	tùy tiện, độc đoán	0	t
+66790	26948	bão lớn	1	f
+66791	26948	chói lóa	2	f
+66792	26948	sự lơ là, cẩu thả	3	f
+66793	26949	tinh tế, nhạy cảm	0	t
+66794	26949	lời dạy, giáo lý	1	f
+66795	26949	vừa khít, lọt vào; mê mẩn	2	f
+66796	26949	lãnh thổ quốc gia	3	f
+66797	26950	lượng rất nhỏ	0	f
+66798	26950	sự bị thương	1	f
+66799	26950	phức tạp, rườm rà	2	t
+66800	26950	xế chiều, suy tàn	3	f
+66801	26951	độc tài	0	f
+66802	26951	liều lĩnh, thiếu suy nghĩ	1	t
+66803	26951	truyền thông, phương tiện	2	f
+66804	26951	cỏ, bãi cỏ	3	f
+66805	26952	bất đắc dĩ, không còn cách nào khác	0	t
+66806	26952	nơi làm việc	1	f
+66807	26952	sự đoạt giải	2	f
+66808	26952	cacbon	3	f
+66809	26953	sự biểu quyết	0	f
+66810	26953	đại khái, sơ lược	1	t
+66811	26953	dựa trên	2	f
+66812	26953	cúi gằm mặt	3	f
+66813	26954	sự phân công lao động	0	f
+66814	26954	kể ơn, làm như ban ơn	1	t
+66815	26954	hộ chiếu	2	f
+66816	26954	quý báu, cao quý	3	f
+66817	26955	thẩm quyền quản lý, sở tại	0	f
+66818	26955	nhỏ nhặt, vụn vặt	1	t
+66819	26955	tiềm ẩn	2	f
+66820	26955	sự lưu luyến, day dứt	3	f
+66821	26956	thức giấc, tỉnh ngộ	0	f
+66822	26956	cay khói; khó xử, ngại ngùng	1	f
+66823	26956	sự phát sinh, xảy ra	2	f
+66824	26956	không thể dung hòa	3	t
+66825	26957	một phần (của chuỗi)	0	f
+66826	26957	lý lịch, lịch sử làm việc	1	f
+66827	26957	không thể chịu nổi (ngượng, khó xử)	2	t
+66828	26957	sự chuyển thể kịch bản	3	f
+66829	26958	tôn chỉ, ý chính	0	f
+66830	26958	đáng ngờ, mờ ám	1	t
+66831	26958	gieo gió gặt bão	2	f
+66832	26958	thiên tai	3	f
+66833	26959	mù tịt, không rành	0	t
+66834	26959	thuế khóa	1	f
+66835	26959	tính phổ quát	2	f
+66836	26959	sự tuyên bố (chính thức)	3	f
+66837	26960	nguyên tử	0	f
+66838	26960	cung kính	1	t
+66839	26960	linh động, năng động	2	f
+66840	26960	sự dung hòa, thỏa hiệp	3	f
+66841	26961	nâng lên, cải thiện	0	f
+66842	26961	lời cầu nguyện	1	f
+66843	26961	giờ đây đã (không còn)	2	f
+66844	26961	không chắc chắn, chập chững	3	t
+66845	26962	ống hút	0	f
+66846	26962	như mong muốn (thường dùng phủ định)	1	t
+66847	26962	phòng sinh hoạt chung kiểu Nhật	2	f
+66848	26962	đặt may, đặt làm riêng	3	f
+66849	26963	dứt khoát, quân tử	0	f
+66850	26963	không gì thay thế được	1	t
+66851	26963	quỹ	2	f
+66852	26963	đã lâu, lâu dài	3	f
+66853	26964	yêu cầu hát/diễn thêm (encore)	0	f
+66854	26964	đáp án đúng	1	f
+66855	26964	mẫu vật	2	f
+66856	26964	phô trương, khoa trương	3	t
+66857	26965	chính xác, đúng giờ	0	f
+66858	26965	sát nút, mấp mé	1	t
+66859	26965	độc giả	2	f
+66860	26965	kêu cọt kẹt	3	f
+66861	26966	lực lưỡng, vạm vỡ	0	t
+66862	26966	khiêm nhường hạ mình	1	f
+66863	26966	trang phục	2	f
+66864	26966	thoát khỏi, ra khỏi	3	f
+66865	26967	thế hệ	0	f
+66866	26967	quá tỉ mỉ	1	f
+66867	26967	đặt mua (báo, tạp chí)	2	f
+66868	26967	inh ỏi, chói tai	3	t
+66869	26968	bất an, không yên tâm	0	t
+66870	26968	Pháp (nước Pháp, ateji)	1	f
+66871	26968	nuông chiều, xu nịnh	2	f
+66872	26968	xe sợi; dệt nên (câu chuyện)	3	f
+66873	26969	nghĩa trang	0	f
+66874	26969	láu cá, khôn vặt	1	t
+66875	26969	điểm xuất phát, cội nguồn	2	f
+66876	26969	vượt quá, vượt trội	3	f
+66877	26970	cứ điểm, cơ sở	0	f
+66878	26970	suy tính, cân nhắc	1	f
+66879	26970	tự nhiên, không phô trương	2	t
+66880	26970	dãy núi	3	f
+66881	26971	tiếp tục, liên tục	0	f
+66882	26971	lễ nghi, thể thức	1	f
+66883	26971	sự chiếu phim	2	f
+66884	26971	duyên dáng, thùy mị	3	t
+66885	26972	bận rộn, tất bật	0	t
+66886	26972	kêu cót két	1	f
+66887	26972	linh hoạt	2	f
+66888	26972	trong tay, bên cạnh	3	f
+66889	26973	ráng chiều	0	f
+66890	26973	không sơ hở, chu toàn	1	t
+66891	26973	điều cấm kỵ	2	f
+66892	26973	câu nệ, khắt khe về (điều gì)	3	f
+66893	26974	đặt tên cho	0	f
+66894	26974	ấp úng, vấp váp	1	t
+66895	26974	mơ hồ	2	f
+66896	26974	cá lớn nuốt cá bé	3	f
+66897	26975	lẻn ra, trốn ra ngoài	0	f
+66898	26975	quan hệ ngoại giao	1	f
+66899	26975	làm giả	2	f
+66900	26975	chu đáo, tận tình	3	t
+66901	26976	ngoài dự đoán	0	f
+66902	26976	cảnh sát trưởng khu vực	1	f
+66903	26976	sự chỉ ra, chỉ trích	2	f
+66904	26976	khó nhằn, đáng gờm	3	t
+66905	26977	mới cưới	0	f
+66906	26977	không ngừng, tuôn trào	1	t
+66907	26977	luyện sắt, sản xuất thép	2	f
+66908	26977	chống lại, làm trái	3	f
+66909	26978	khó chịu, cay đắng	0	t
+66910	26978	văn viết cổ	1	f
+66911	26978	dễ nhầm lẫn	2	f
+66912	26978	độc lập, riêng	3	f
+66913	26979	đố kỵ, ghen ghét	0	t
+66914	26979	sự biến động	1	f
+66915	26979	thử thách, đương đầu	2	f
+66916	26979	bờ biển	3	f
+66917	26980	hết lòng, chuyên tâm	0	t
+66918	26980	sự đến tham dự	1	f
+66919	26980	chủng loại, giống loài	2	f
+66920	26980	lớn tuổi hơn	3	f
+66921	26981	chuyển sang (kỳ sau)	0	f
+66922	26981	thanh lịch, sang trọng	1	f
+66923	26981	đá ngầm; bế tắc	2	f
+66924	26981	thất lễ, sỗ sàng	3	t
+66925	26982	đẩy lùi, xua đuổi	0	f
+66926	26982	cửa hàng bán buôn	1	f
+66927	26982	điềm, dấu hiệu manh nha	2	f
+66928	26982	chói lóa	3	t
+66929	26983	gần gũi, quen thuộc	0	f
+66930	26983	không chịu nổi; không địch nổi	1	f
+66931	26983	sự đồng thuận	2	f
+66932	26983	siêng năng, chu đáo	3	t
+66933	26984	năng lực hiểu biết (sử dụng)	0	f
+66934	26984	tươi mọng, tươi tắn	1	t
+66935	26984	khổ nỗi, ngặt nỗi	2	f
+66936	26984	cuộc hẹn (công việc)	3	f
+66937	26985	sự thấu hiểu	0	f
+66938	26985	hậu tố kính ngữ; hình dáng, vẻ	1	f
+66939	26985	trong khoảnh khắc, tức thì	2	f
+66940	26985	tinh mắt	3	t
+66941	26986	tôi luyện, rèn luyện	0	f
+66942	26986	tính cách tỉ mỉ	1	f
+66943	26986	tấm lòng chân thành	2	f
+66944	26986	xa cách, lạnh nhạt	3	t
+66945	26987	yếu ớt	0	t
+66946	26987	tấm séc	1	f
+66947	26987	thăm dò dư luận	2	f
+66948	26987	sự nợ đọng, chậm nộp	3	f
+66949	26988	sóng ngắn	0	f
+66950	26988	giáng chức	1	f
+66951	26988	cố chấp, ương bướng	2	t
+66952	26988	suy yếu, lúng túng	3	f
+66953	26989	khoa mắt (nhãn khoa)	0	f
+66954	26989	cứng cỏi, vững vàng	1	t
+66955	26989	công lý, chính nghĩa	2	f
+66956	26989	sự quyết tâm, sẵn sàng đón nhận	3	f
+66957	26990	bền bỉ, dẻo dai	0	t
+66958	26990	lộ liễu, thẳng thừng	1	f
+66959	26990	nền tảng, căn cứ	2	f
+66960	26990	cá thể hóa, riêng biệt hóa	3	f
+66961	26991	vòng luẩn quẩn	0	f
+66962	26991	vụ tự sát tập thể (vì tình)	1	f
+66963	26991	khôi phục	2	f
+66964	26991	nông nổi, hời hợt	3	t
+66965	26992	nhắm mắt lại	0	f
+66966	26992	màu vàng	1	f
+66967	26992	cao thượng, thanh cao	2	t
+66968	26992	dâng trào, sôi động lên	3	f
+66969	26993	đùn đẩy trách nhiệm	0	f
+66970	26993	tạm thời, lâm thời	1	f
+66971	26993	sự thích ứng	2	f
+66972	26993	tỉ mỉ, cẩn trọng	3	t
+66973	26994	thanh đạm; thờ ơ	0	t
+66974	26994	điểm số đạt được	1	f
+66975	26994	vòng cổ (cho thú cưng)	2	f
+66976	26994	đồng nhất hóa, rập khuôn hóa	3	f
+66977	26995	lịch sự, trọng thị	0	t
+66978	26995	khuôn khổ	1	f
+66979	26995	luân phiên, xen kẽ	2	f
+66980	26995	sự chăm sóc bảo vệ	3	f
+66981	26996	sự thoát ra	0	f
+66982	26996	đi đến, hướng tới (trang trọng)	1	f
+66983	26996	héo úa, teo tóp	2	f
+66984	26996	tham lam; ham học hỏi	3	t
+66985	26997	quan điểm, góc nhìn	0	f
+66986	26997	sự chiếu phim	1	f
+66987	26997	bạc tình, vô tâm	2	t
+66988	26997	âm thầm, bí mật	3	f
+66989	26998	bịa đặt, ngụy tạo	0	f
+66990	26998	nắng chiều (hướng tây)	1	f
+66991	26998	đáng ngờ	2	t
+66992	26998	thuần khiết	3	f
+66993	26999	đề xướng	0	f
+66994	26999	hoàng hôn	1	f
+66995	26999	triển vọng, dự đoán	2	f
+66996	26999	vô duyên, thiếu tế nhị	3	t
+66997	27000	sai lầm, nhầm	0	f
+66998	27000	quá rộng, lùng bùng	1	f
+66999	27000	tầm thường	2	t
+67000	27000	cứ điểm, cơ sở	3	f
+67001	27001	phủ nhận, xóa bỏ	0	f
+67002	27001	khống chế, kiểm soát	1	f
+67003	27001	lạnh lùng sắc bén	2	t
+67004	27001	dễ nhầm lẫn	3	f
+67005	27002	luôn luôn, suốt ngày	0	f
+67006	27002	trách nhiệm nặng nề; giám đốc	1	f
+67007	27002	lão luyện	2	t
+67008	27002	trò chuyện thân mật, tọa đàm	3	f
+67009	27003	người am hiểu, sành sỏi	0	f
+67010	27003	méo mó, lệch lạc	1	t
+67011	27003	lượng rất nhỏ	2	f
+67012	27003	sự đốt cháy	3	f
+67013	27004	không chịu nổi; không địch nổi	0	t
+67014	27004	chính người đó	1	f
+67015	27004	tuyên bố công khai	2	f
+67016	27004	ngọn cây	3	f
+67017	27005	phân nhỏ chi tiết	0	f
+67018	27005	tốt xấu, ưu khuyết điểm	1	f
+67019	27005	có vẻ như thật, ra chiều	2	f
+67020	27005	bền bỉ, chắc chắn	3	t
+67021	27006	dòng máu, gia đình	0	f
+67022	27006	công trình xây dựng dân dụng	1	f
+67023	27006	bình phong (cổ, hiếm dùng độc lập)	2	f
+67024	27006	nặng nề, đau đớn	3	t
+67025	27007	qua loa, lơ là	0	t
+67026	27007	sự nghèo túng	1	f
+67027	27007	tấm, tờ; ghế ngồi	2	f
+67028	27007	sự hạ cánh	3	f
+67029	27008	tranh sơn dầu	0	f
+67030	27008	thâu tóm, mua lại	1	f
+67031	27008	ăn sâu, bám rễ	2	t
+67032	27008	sự cứu giúp	3	f
+67033	27009	được trang bị, vốn có	0	f
+67034	27009	kinh doanh, quản lý	1	f
+67035	27009	tiếp nhận (hồ sơ, đơn)	2	f
+67036	27009	không thể tha thứ, quá đáng	3	t
+67037	27010	từng cái một, chi tiết	0	t
+67038	27010	mờ đi, có sương mù	1	f
+67039	27010	sự khóa cửa cẩn thận	2	f
+67040	27010	nghi thần nghi quỷ	3	f
+67041	27011	nếu may mắn thì, biết đâu	0	t
+67042	27011	né tránh	1	f
+67043	27011	sự thân thiện, lịch thiệp	2	f
+67044	27011	mức độ lớn	3	f
+67045	27012	giòn, dễ vỡ; yếu đuối	0	f
+67046	27012	hơi, một chút	1	t
+67047	27012	hấp; oi bức	2	f
+67048	27012	sự luyến tiếc	3	f
+67049	27013	hoàn toàn (không)	0	t
+67050	27013	sự suy giảm	1	f
+67051	27013	lịch sử phát triển (tổ chức)	2	f
+67052	27013	đạt đến, lan tới	3	f
+67053	27014	lũ tràn; tràn lan	0	f
+67054	27014	dự trữ	1	f
+67055	27014	đến giờ vẫn	2	t
+67056	27014	niêm yết (cổ phiếu)	3	f
+67057	27015	thực sự, quả thật	0	f
+67058	27015	sự trục xuất, lưu đày	1	f
+67059	27015	bất kể muốn hay không	2	t
+67060	27015	bóc lột	3	f
+67061	27016	sự ngủ đông	0	f
+67062	27016	đại khái, nhìn chung	1	t
+67063	27016	bạo động	2	f
+67064	27016	đồng hồ hẹn giờ	3	f
+67065	27017	nông trại	0	f
+67066	27017	sự chăn nuôi	1	f
+67067	27017	sự lạc quan	2	f
+67068	27017	ngoài dự đoán	3	t
+67069	27018	eo biển	0	f
+67070	27018	sự chậm trễ	1	f
+67071	27018	giả sử	2	t
+67072	27018	dũng cảm	3	f
+67073	27019	đúng thời điểm	0	f
+67074	27019	sự chuyển tiền	1	f
+67075	27019	hết sức, tối đa	2	t
+67076	27019	đền thờ Thần đạo	3	f
+67077	27020	bộ, cặp đồng bộ	0	f
+67078	27020	khắp mọi nơi, không sót chỗ nào	1	t
+67079	27020	giờ đây đã (không còn)	2	f
+67080	27020	cú sốc	3	f
+67081	27021	tình thế, cục diện	0	f
+67082	27021	cố ý; đặc biệt	1	t
+67083	27021	chừng mực	2	f
+67084	27021	thỉnh thoảng	3	f
+67085	27022	trở nên cùn, kém đi	0	f
+67086	27022	chắc hẳn là	1	t
+67087	27022	dựa theo, phù hợp với	2	f
+67088	27022	dây thừng	3	f
+67089	27023	chu đáo, tình cảm sâu sắc	0	f
+67090	27023	lực lưỡng, vạm vỡ	1	f
+67091	27023	giỏi, khỏe mạnh	2	f
+67092	27023	rốt cuộc thì, dù sao thì	3	t
+67093	27024	ngay lập tức, không chần chừ	0	t
+67094	27024	mạch (đập)	1	f
+67095	27024	chi phí điện nước, ga	2	f
+67096	27024	duyên hải, ven bờ	3	f
+67097	27025	nói chung, tổng thể	0	t
+67098	27025	dựa trên, căn cứ vào	1	f
+67099	27025	nơi chính gốc, xuất xứ đích thực	2	f
+67100	27025	sự nghiệp, dự án kinh doanh	3	f
+67101	27026	ý tưởng	0	f
+67102	27026	vốn dĩ, ngay từ đầu	1	t
+67103	27026	làm chậm trễ, hoãn lại	2	f
+67104	27026	im lặng không nói	3	f
+67105	27027	tuyệt đối (không)	0	t
+67106	27027	quan niệm	1	f
+67107	27027	sự đánh bom, cho nổ	2	f
+67108	27027	đồng loạt	3	f
+67109	27028	bảy ngày, ngày mùng bảy	0	f
+67110	27028	phẩm giá, tôn nghiêm	1	f
+67111	27028	đều đặn, từng bước vững chắc	2	t
+67112	27028	điểm mấu chốt, điểm số	3	f
+67113	27029	người (hậu tố chỉ người)	0	f
+67114	27029	một phần (vai trò), một cánh	1	f
+67115	27029	sự rung động	2	f
+67116	27029	theo phản xạ, trong tích tắc	3	t
+67117	27030	truyền thông đại chúng	0	f
+67118	27030	kìm hãm, ức chế	1	f
+67119	27030	dồi dào, phong phú	2	f
+67120	27030	kính mong, xin hãy (trang trọng)	3	t
+67121	27031	tư pháp	0	f
+67122	27031	tính tình, tính nết	1	f
+67123	27031	kiềm (hóa học)	2	f
+67124	27031	hoàn toàn là nhờ, chỉ vì	3	t
+67125	27032	mục nát	0	f
+67126	27032	biết đâu, có lẽ	1	t
+67127	27032	lối thoát đột phá	2	f
+67128	27032	âm mưu	3	f
+67129	27033	bất thình lình	0	t
+67130	27033	đi đến, hướng tới (trang trọng)	1	f
+67131	27033	sự khám và điều trị	2	f
+67132	27033	ngang tài ngang sức	3	f
+67133	27034	tổ chức; cảm thấy (buồn ngủ…)	0	f
+67134	27034	dồi dào, thoải mái	1	t
+67135	27034	khẳng định	2	f
+67136	27034	và do đó, hơn nữa là	3	f
+67137	27035	kỹ thuật, thủ thuật	0	f
+67138	27035	hoàn toàn	1	t
+67139	27035	cứng rắn, kiên quyết	2	f
+67140	27035	cho nghỉ ngơi, tạm dừng	3	f
+67141	27036	quá, cực kỳ (khác thường)	0	t
+67142	27036	làm sâu sắc thêm	1	f
+67143	27036	chỗ ngắt, khe hở	2	f
+67144	27036	suy thoái	3	f
+67145	27037	vừa khít, lọt vào; mê mẩn	0	f
+67146	27037	bất đắc dĩ, đành phải	1	t
+67147	27037	xếp thành hàng dài	2	f
+67148	27037	nhu cầu nội địa	3	f
+67149	27038	lời nhắn, tin đồn	0	f
+67150	27038	sắt thép	1	f
+67151	27038	mơ muối	2	f
+67152	27038	về sau, trong tương lai	3	t
+67153	27039	sự xem, tham quan	0	f
+67154	27039	u uất	1	f
+67155	27039	khá là, hẳn là rất	2	t
+67156	27039	vốn dĩ, ngay từ đầu	3	f
+67157	27040	coi như, xem là	0	f
+67158	27040	dũng cảm	1	f
+67159	27040	bị thương, bị tổn thương	2	f
+67160	27040	chỉ là, cùng lắm là	3	t
+67161	27041	gấp lại, quay đầu lại	0	f
+67162	27041	mỗi người một vẻ	1	t
+67163	27041	lai lịch, thân thế	2	f
+67164	27041	đồng nhất, giống nhau	3	f
+67165	27042	về sau, trong tương lai	0	f
+67166	27042	mâu thuẫn, không khớp	1	f
+67167	27042	sự rơi, rớt (máy bay)	2	f
+67168	27042	một mũi tên trúng hai đích	3	t
+67169	27043	sự thích ứng	0	f
+67170	27043	bền bỉ, chắc chắn	1	f
+67171	27043	thấm thía	2	f
+67172	27043	một sớm một chiều	3	t
+67173	27044	cay khói; khó xử, ngại ngùng	0	f
+67174	27044	dồi dào, phong phú	1	f
+67175	27044	có ưu có nhược	2	t
+67176	27044	sự đồng cảm, cùng quan điểm	3	f
+67177	27045	ngược đãi	0	f
+67178	27045	nghĩ quẩn	1	f
+67179	27045	hoàn tất, giải quyết xong	2	f
+67180	27045	lúc mừng lúc lo (theo từng biến động)	3	t
+67181	27046	đồng thanh, cùng một ý	0	t
+67182	27046	rực rỡ, hào nhoáng	1	f
+67183	27046	lời thú nhận, tỏ tình	2	f
+67184	27046	trồng cây chuối (thể dục)	3	f
+67185	27047	tâm đầu ý hợp, hiểu ý không cần nói	0	t
+67186	27047	giới thiệu, thu xếp	1	f
+67187	27047	chim non, gà con	2	f
+67188	27047	quét sạch, loại bỏ hoàn toàn	3	f
+67189	27048	tầm thường	0	f
+67190	27048	đại nghĩa, chính nghĩa	1	f
+67191	27048	chạy loạn xạ, cuống cuồng	2	t
+67192	27048	đồng phục	3	f
+67193	27049	kháng cáo	0	f
+67194	27049	bàn bạc, thống nhất trước	1	f
+67195	27049	quanh co khúc khuỷu, trắc trở	2	t
+67196	27049	trên đường, giữa chừng	3	f
+67197	27050	ngoài dự đoán	0	f
+67198	27050	ôn cũ biết mới	1	t
+67199	27050	hãy xem đi, hãy thử xem	2	f
+67200	27050	quan hệ nhân quả	3	f
+67201	27051	dần dần, lác đác	0	f
+67202	27051	việc sai bảo, sứ mệnh	1	f
+67203	27051	nét chấm phá hoàn thiện (vẽ rồng điểm mắt)	2	t
+67204	27051	sự nói thay, thanh toán thay	3	f
+67205	27052	nghìn cân treo sợi tóc	0	t
+67206	27052	phá vỡ bế tắc	1	f
+67207	27052	ám chỉ	2	f
+67208	27052	sự nhút nhát, hèn nhát	3	f
+67209	27053	sự thiếu hiểu biết	0	f
+67210	27053	điểm mấu chốt, điểm số	1	f
+67211	27053	vỏ sò	2	f
+67212	27053	cải tử hoàn sinh, lội ngược dòng	3	t
+67213	27054	hối thúc	0	f
+67214	27054	súng, nòng súng	1	f
+67215	27054	hỉ nộ ái lạc	2	t
+67216	27054	chỉ số, chỉ tiêu	3	f
+67217	27055	tham vọng	0	f
+67218	27055	nghi thần nghi quỷ	1	t
+67219	27055	vô nghĩa, phi lý	2	f
+67220	27055	trẻ chờ vào nhà trẻ	3	f
+67221	27056	nâng mặt bằng chung	0	f
+67222	27056	thuộc diện, tương ứng	1	f
+67223	27056	không thể chấp nhận, quá đáng	2	t
+67224	27056	đá, nham thạch	3	f
+67225	27057	thể diện, danh dự	0	f
+67226	27057	sự chỉ trích, bàn tán của công chúng	1	f
+67227	27057	gieo gió gặt bão	2	t
+67228	27057	đi kèm, kéo theo	3	f
+67229	27058	sự thối rữa, thối nát (đạo đức)	0	f
+67230	27058	dựa theo, phù hợp với	1	f
+67231	27058	trang bị sẵn, lắp đặt sẵn	2	f
+67232	27058	tự khen mình	3	t
+67233	27059	tục ngữ	0	f
+67234	27059	một cách chung chung, khái quát	1	f
+67235	27059	vô cùng vất vả	2	t
+67236	27059	hoàng hôn	3	f
+67237	27060	sự trở về Tokyo	0	f
+67238	27060	lo lắng khổ sở	1	f
+67239	27060	cá lớn nuốt cá bé	2	t
+67240	27060	mang, chứa (tính chất)	3	f
+67241	27061	trốn tránh	0	f
+67242	27061	nảy lên, hào hứng lên	1	f
+67243	27061	tính khách quan	2	f
+67244	27061	chọn lọc	3	t
+67245	27062	sự đoạt giải	0	f
+67246	27062	Ông già Noel	1	f
+67247	27062	chính thức, thường xuyên	2	f
+67248	27062	muôn hình vạn trạng	3	t
+67249	27063	thơ ca	0	f
+67250	27063	hẹp hòi (lòng dạ)	1	f
+67251	27063	chưa từng có tiền lệ	2	t
+67252	27063	loãng, mờ nhạt	3	f
+67253	27064	giao hàng	0	f
+67254	27064	nội dung chính (văn bản)	1	f
+67255	27064	không thể dung hòa	2	f
+67256	27064	đại đồng tiểu dị	3	t
+67257	27065	đi thẳng vào vấn đề	0	t
+67258	27065	quyết ý	1	f
+67259	27065	đối diện; tham dự	2	f
+67260	27065	phương pháp chế tạo	3	f
+67261	27066	buồn ngủ	0	f
+67262	27066	hoàn thiện, hoàn tất	1	f
+67263	27066	đúng người đúng việc	2	t
+67264	27066	nhiệm vụ	3	f
+67265	27067	chạy ngược chạy xuôi	0	t
+67266	27067	tính thêm vào, xem xét thêm	1	f
+67267	27067	tệ hại, tác hại	2	f
+67268	27067	xem xét kỹ lưỡng	3	f
+67269	27068	sự xâm lược	0	f
+67270	27068	chọn một trong hai	1	t
+67271	27068	trùng lặp, bị đúp	2	f
+67272	27068	một người	3	f
+67273	27069	nửa tin nửa ngờ	0	t
+67274	27069	cúi gằm mặt	1	f
+67275	27069	phá lệ, ngoại lệ (rẻ, cao bất thường)	2	f
+67276	27069	căn bản	3	f
+67277	27070	nhập hàng, tích trữ	0	f
+67278	27070	thiên đường	1	f
+67279	27070	a dua theo người khác	2	t
+67280	27070	quanh co khúc khuỷu, trắc trở	3	f
+67281	27071	đầu đuôi lộn ngược, bỏ gốc lấy ngọn	0	t
+67282	27071	phụ lục	1	f
+67283	27071	tươi mọng, tươi tắn	2	f
+67284	27071	hiểu biết, phát hiện	3	f
+67285	27072	quả cam, màu cam	0	f
+67286	27072	kế hoạch, dự án	1	f
+67287	27072	mùa màng thất bát	2	f
+67288	27072	say mê quên mình	3	t
+67289	27073	chủ quan là kẻ thù lớn	0	t
+67290	27073	cười gượng, cười khổ	1	f
+67291	27073	thịnh vượng	2	f
+67292	27073	loại, kiểu tương tự	3	f
+67293	27074	thực sự, quả thật	0	f
+67294	27074	cuộc hẹn (công việc)	1	t
+67295	27074	sự phun trào	2	f
+67296	27074	tinh túy, cốt lõi	3	f
+67297	27075	sự tiếp nhận	0	f
+67298	27075	cống hiến, hết lòng vì	1	f
+67299	27075	ứng phó	2	f
+67300	27075	tiện nghi, đồ dùng (khách sạn)	3	t
+67301	27076	sự thu hồi	0	f
+67302	27076	nước sôi	1	f
+67303	27076	đổi mới sáng tạo	2	t
+67304	27076	sự tương tự	3	f
+67305	27077	sao nhãng, cẩu thả	0	f
+67306	27077	sự bức xạ	1	f
+67307	27077	luật học	2	f
+67308	27077	cơ sở hạ tầng	3	t
+67309	27078	cây cung	0	f
+67310	27078	bằng chứng (khoa học)	1	t
+67311	27078	bị đau, đau nhức	2	f
+67312	27078	tùy theo tình huống, có lẽ	3	f
+67313	27079	quan chức về làm ở doanh nghiệp liên quan	0	f
+67314	27079	chính thống, truyền thống	1	t
+67315	27079	sự hăng hái, quyết tâm	2	f
+67316	27079	răn đe làm gương	3	f
+67317	27080	hướng dẫn, chỉ dẫn	0	t
+67318	27080	thỉnh thoảng, thường xuyên	1	f
+67319	27080	tính khí thất thường	2	f
+67320	27080	gánh vác, đảm nhận	3	f
+67321	27081	sự thu hồi	0	f
+67322	27081	kích động, thổi bùng	1	f
+67323	27081	loại bỏ, tháo bỏ	2	f
+67324	27081	sức chứa, năng lực	3	t
+67325	27082	bông lúa	0	f
+67326	27082	ngọc trai	1	f
+67327	27082	sự đồng thuận	2	t
+67328	27082	phân tử	3	f
+67329	27083	đánh úp, bất ngờ	0	f
+67330	27083	tuân thủ pháp luật	1	t
+67331	27083	học sinh mới, tân sinh viên	2	f
+67332	27083	nhượng bộ	3	f
+67333	27084	tình thế tiến thoái lưỡng nan	0	t
+67334	27084	từ xa	1	f
+67335	27084	các, nhiều (tiền tố)	2	f
+67336	27084	suy thoái kinh tế	3	f
+67337	27085	hệ thống hóa	0	f
+67338	27085	hợp lý hóa, tinh giản	1	f
+67339	27085	cơ chế, kế hoạch (khung)	2	t
+67340	27085	biến thiên	3	f
+67341	27086	định kiến rập khuôn	0	t
+67342	27086	sự nghi ngờ, hoài nghi	1	f
+67343	27086	sự tham chiếu	2	f
+67344	27086	nghèo túng	3	f
+67345	27087	bí quyết, kinh nghiệm thực tế	0	t
+67346	27087	Hạ viện (Nhật Bản)	1	f
+67347	27087	tập trung (chú ý), dồn hết tâm trí	2	f
+67348	27087	bẩm sinh, tiên thiên	3	f
+67349	27088	tự do, tùy ý	0	f
+67350	27088	thiên kiến, sai lệch	1	t
+67351	27088	ý tưởng	2	f
+67352	27088	sự khám và điều trị	3	f
+67353	27089	dứt khoát, quân tử	0	f
+67354	27089	vai chính (phim, kịch)	1	f
+67355	27089	quy ước, điều lệ	2	f
+67356	27089	nghịch lý	3	t
+67357	27090	xúi giục	0	f
+67358	27090	tầm nhìn	1	t
+67359	27090	quân phục	2	f
+67360	27090	súc, xả nước	3	f
+67361	27091	phản hồi	0	t
+67362	27091	được yêu thích, được ưa chuộng	1	f
+67363	27091	cậu ấm (con trai nhà người khác)	2	f
+67364	27091	bù đắp	3	f
+67365	27092	diệu kế, ý hay	0	f
+67366	27092	phú hào, triệu phú	1	f
+67367	27092	sự điều tra sơ bộ, chuẩn bị trước	2	f
+67368	27092	quá trình, quy trình	3	t
+67369	27093	quản lý, cai quản	0	f
+67370	27093	danh sách tên	1	f
+67371	27093	tiềm năng	2	t
+67372	27093	sự nghỉ ngơi tĩnh dưỡng	3	f
+67373	27094	dứt, tuyệt	0	f
+67374	27094	số tiền còn lại	1	f
+67375	27094	cương lĩnh tranh cử	2	t
+67376	27094	lần đầu tiên, mới	3	f
+67377	27095	sự độc quyền	0	f
+67378	27095	khi thời khắc quan trọng đến	1	f
+67379	27095	triển vọng, dự tính	2	f
+67380	27095	cơ chế	3	t
+67381	27096	quá, cực kỳ (khác thường)	0	f
+67382	27096	động lực	1	t
+67383	27096	sự thống nhất, gọn gàng	2	f
+67384	27096	hùng vĩ, hoành tráng	3	f
+67385	27097	trọng lực	0	f
+67386	27097	vô lý, quá đáng	1	f
+67387	27097	đặt tên cho	2	f
+67388	27097	năng lực hiểu biết (sử dụng)	3	t
+67389	27098	tiếng ngáy	0	f
+67390	27098	thuận tay trái	1	f
+67391	27098	thính giác	2	f
+67392	27098	tu từ, thuật hùng biện	3	t
+67393	27099	hư hỏng, kém chất lượng	0	f
+67394	27099	náo loạn	1	f
+67395	27099	bổ nghĩa; trang trí	2	t
+67396	27099	kênh truyền hình	3	f
+67397	27100	căn cứ	0	f
+67398	27100	trăng tròn	1	f
+67399	27100	hòa tan	2	f
+67400	27100	tác phẩm, trước tác	3	t
+67401	27101	độc giả	0	f
+67402	27101	trang phục	1	f
+67403	27101	thành tích kinh doanh	2	f
+67404	27101	luận cứ	3	t
+67405	27102	vần	0	t
+67406	27102	đều đặn, từng bước vững chắc	1	f
+67407	27102	phong thái uy nghi, khí chất	2	f
+67408	27102	độc quyền nhóm	3	f
+67409	27103	minh mẫn, sáng suốt; lạnh giá	0	f
+67410	27103	thành tích kinh doanh	1	f
+67411	27103	gieo vần	2	t
+67412	27103	đầy triển vọng	3	f
+67413	27104	bản thể, phần chính (máy móc)	0	f
+67414	27104	độ cao so với mực nước biển	1	f
+67415	27104	bằng, với; vì lẽ đó	2	f
+67416	27104	truyện ngụ ngôn	3	t
+67417	27105	hài hòa	0	f
+67418	27105	tự thuật, mô tả	1	t
+67419	27105	gia súc	2	f
+67420	27105	kêu cót két	3	f
+67421	27106	định kiến cố hữu	0	f
+67422	27106	chỉ là, một chút	1	f
+67423	27106	ít nói, kiệm lời	2	f
+67424	27106	trữ tình	3	t
+67425	27107	tự xét lại	0	f
+67426	27107	diệt vong, sụp đổ	1	f
+67427	27107	đọc hiểu	2	t
+67428	27107	ngụ ý, gợi ý	3	f
+67429	27108	eo biển	0	f
+67430	27108	từ viết tắt	1	f
+67431	27108	liên tiếp xảy ra	2	f
+67432	27108	phóng tác, chuyển thể	3	t
+67433	27109	sa thải	0	f
+67434	27109	thanh lịch, sành điệu	1	f
+67435	27109	sâu sắc, thâm thúy	2	f
+67436	27109	mệnh đề; vấn đề đặt ra	3	t
+67437	27110	dứt, tuyệt	0	f
+67438	27110	dư âm	1	t
+67439	27110	vỡ vụn thành mảnh nhỏ	2	f
+67440	27110	hợp tác, phối hợp	3	f
+67441	27111	sự trục xuất, lưu đày	0	f
+67442	27111	ùa tới, tràn tới	1	f
+67443	27111	đáng khen	2	f
+67444	27111	luận điểm chính	3	t
+67445	27112	bác bỏ (bằng lý lẽ)	0	t
+67446	27112	mâu thuẫn, không khớp	1	f
+67447	27112	núi non	2	f
+67448	27112	tự do hóa	3	f
+67449	27113	xích mích, va chạm (quan hệ)	0	t
+67450	27113	ngay bên dưới	1	f
+67451	27113	cuộc tranh chấp	2	f
+67452	27113	bài phê bình sách	3	f
+67453	27114	vật trưng bày, sản phẩm dự thi	0	f
+67454	27114	nguyên lý	1	f
+67455	27114	hỏi ý kiến (hội đồng)	2	f
+67456	27114	ý kiến phản đối, phản đối	3	t
+67457	27115	ý định, ý hướng	0	t
+67458	27115	đại khái, xuề xòa	1	f
+67459	27115	điểm xuất phát, cội nguồn	2	f
+67460	27115	sự trục xuất, lưu đày	3	f
+67461	27116	quét sạch, loại bỏ hoàn toàn	0	t
+67462	27116	đau lòng, quặn thắt	1	f
+67463	27116	ý niệm, sự chú tâm	2	f
+67464	27116	khấu trừ, trừ đi	3	f
+67465	27117	một phần (vai trò), một cánh	0	t
+67466	27117	khu vực, lô đất	1	f
+67467	27117	sự đồng ý, chấp thuận	2	f
+67468	27117	thử làm	3	f
+67469	27118	sự sắp xếp, bố trí; truy nã	0	f
+67470	27118	bị ẩm, ỉu (bánh)	1	f
+67471	27118	căn cứ	2	f
+67472	27118	lịch sử phát triển (tổ chức)	3	t
+67473	27119	trực thuộc, phụ thuộc	0	f
+67474	27119	bồn hoa	1	f
+67475	27119	bước đi, tiến trình	2	f
+67476	27119	vận hành (máy móc, nhà máy)	3	t
+67477	27120	sự biến thiên, thay đổi qua thời gian	0	f
+67478	27120	rõ nét, nổi bật	1	f
+67479	27120	khuyến cáo, khuyến nghị	2	t
+67480	27120	vũ lực	3	f
+67481	27121	cương lĩnh tranh cử	0	f
+67482	27121	tập quán, thông lệ	1	t
+67483	27121	mức độ lớn	2	f
+67484	27121	hô vang, tụng niệm; đề xướng	3	f
+67485	27122	giám tu, biên tập chỉ đạo	0	t
+67486	27122	đi thẳng vào vấn đề	1	f
+67487	27122	bề ngoài	2	f
+67488	27122	tòa nhà chính	3	f
+67489	27123	thuộc về, quy thuộc	0	t
+67490	27123	muôn hình vạn trạng	1	f
+67491	27123	(chim) hót líu lo	2	f
+67492	27123	sự đối mặt trực tiếp	3	f
+67493	27124	ôn cũ biết mới	0	f
+67494	27124	lên án, chỉ trích gay gắt	1	t
+67495	27124	công đoàn, tổ chức công	2	f
+67496	27124	cân bằng	3	f
+67497	27125	uy lực, sức mạnh	0	f
+67498	27125	mối đe dọa	1	t
+67499	27125	cách xử lý, cách đối xử	2	f
+67500	27125	người đánh máy	3	f
+67501	27126	sử dụng thành thạo, tận dụng	0	t
+67502	27126	sự trùng lặp	1	f
+67503	27126	công khai, chính thức	2	f
+67504	27126	kinh doanh, tiến hành (công việc)	3	f
+67505	27127	vòi vĩnh, nài nỉ	0	f
+67506	27127	sự tiến vào, mở rộng	1	f
+67507	27127	mưu tính	2	f
+67508	27127	xoay xở (tiền bạc)	3	t
+67509	27128	sự đào tẩu	0	f
+67510	27128	quá tỉ mỉ	1	f
+67511	27128	sự tồn vong	2	f
+67512	27128	khai sáng, nâng cao nhận thức	3	t
+67513	27129	cố ý	0	t
+67514	27129	báo cho biết, thông báo	1	f
+67515	27129	một mực, chuyên tâm	2	f
+67516	27129	sự sôi trào	3	f
+67517	27130	sự có được, thu được	0	f
+67518	27130	tăng vọt (giá)	1	t
+67519	27130	độc quyền nhóm	2	f
+67520	27130	ngu ngốc, dại dột	3	f
+67521	27131	đặt mua (báo, tạp chí)	0	t
+67522	27131	ngăn lại, giữ ở mức	1	f
+67523	27131	tăng cao, dâng lên	2	f
+67524	27131	sự thẩm định, xét duyệt	3	f
+67525	27132	trò chuyện thân mật, tọa đàm	0	t
+67526	27132	xem xét kỹ lưỡng	1	f
+67527	27132	rơi vào, buồn chán	2	f
+67528	27132	phong thổ, khí hậu địa phương	3	f
+67529	27133	quyền tự quyết, tùy ý quyết định	0	t
+67530	27133	nước sôi	1	f
+67531	27133	mật ong	2	f
+67532	27133	vòi vĩnh, đòi hỏi	3	f
+67533	27134	công việc hành chính chung	0	f
+67534	27134	sự ngồi vào chỗ	1	f
+67535	27134	tuyên (án), thông báo chính thức	2	f
+67536	27134	thẩm định, đánh giá	3	t
+67537	27135	sự tiêu diệt, trừ khử	0	f
+67538	27135	lắng xuống, yên ắng	1	f
+67539	27135	tham dự, tham gia (cố vấn)	2	t
+67540	27135	từng cái một, chi tiết	3	f
+67541	27136	khu phố, khu đô thị	0	f
+67542	27136	di sản	1	f
+67543	27136	tự kiềm chế, tự hạn chế	2	t
+67544	27136	tỷ trọng	3	f
+67545	27137	từ thiện	0	t
+67546	27137	sinh con, sản sinh	1	f
+67547	27137	trưng cầu ý kiến (cơ quan)	2	f
+67548	27137	quý bà	3	f
+67549	27138	trưng cầu ý kiến (cơ quan)	0	t
+67550	27138	sự thưa dân, giảm dân số	1	f
+67551	27138	sự bốc thăm	2	f
+67552	27138	kế tiếp, sau đó	3	f
+67553	27139	xế chiều, suy tàn	0	t
+67554	27139	khăn ăn	1	f
+67555	27139	thành hiện thực (ước mơ)	2	f
+67556	27139	đặt mua (báo, tạp chí)	3	f
+67557	27140	sự xác định, quyết định chắc chắn	0	f
+67558	27140	dàn xếp, kiểm soát (tình hình)	1	t
+67559	27140	manh mối	2	f
+67560	27140	chất phóng xạ	3	f
+67561	27141	tan chảy, mê mẩn	0	f
+67562	27141	luôn lưu tâm, cố gắng làm	1	f
+67563	27141	tuân thủ	2	t
+67564	27141	manh mối, khởi đầu	3	f
+67565	27142	cận đại	0	f
+67566	27142	bệnh lao	1	f
+67567	27142	hỏi thông tin, tra cứu	2	t
+67568	27142	dành cho, hướng đến	3	f
+67569	27143	nhục nhã	0	f
+67570	27143	mơ hồ, lờ mờ	1	f
+67571	27143	thẩm quyền quản lý, sở tại	2	t
+67572	27143	lời tuyên bố	3	f
+67573	27144	dỗ dành, xoa dịu	0	f
+67574	27144	sự bỏ nhà ra đi	1	f
+67575	27144	trùng lặp, bị đúp	2	f
+67576	27144	tiếp tay, làm gia tăng (điều xấu)	3	t
+67577	27145	bù trừ, triệt tiêu	0	t
+67578	27145	mâu thuẫn	1	f
+67579	27145	ý tưởng	2	f
+67580	27145	trống rỗng, hõm sâu	3	f
+67581	27146	kế sinh nhai	0	f
+67582	27146	nhìn chằm chằm	1	f
+67583	27146	ân huệ	2	f
+67584	27146	thỉnh cầu, khẩn cầu	3	t
+67585	27147	kỷ luật, trừng phạt	0	t
+67586	27147	biện pháp phá thế bế tắc	1	f
+67587	27147	không khí, tâm trạng chung	2	f
+67588	27147	kế sinh nhai	3	f
+67589	27148	yếu ớt	0	f
+67590	27148	cung kính	1	f
+67591	27148	đi theo, bắt chước	2	t
+67592	27148	thử và sai	3	f
+67593	27149	diệu kế, ý hay	0	f
+67594	27149	thách thức, khiêu chiến	1	f
+67595	27149	con lai, hỗn huyết	2	f
+67596	27149	vi phạm, xung đột (luật)	3	t
+67597	27150	khoa mắt (nhãn khoa)	0	f
+67598	27150	đợt giảm giá	1	f
+67599	27150	rút lại (phát ngôn, quyết định)	2	t
+67600	27150	cảm giác tội lỗi	3	f
+67601	27151	đính kèm	0	t
+67602	27151	sự thám hiểm	1	f
+67603	27151	trôi nổi, lơ lửng	2	f
+67604	27151	sự mua sắm	3	f
+67605	27152	thống quản, quản lý chung	0	t
+67606	27152	sự phòng thủ	1	f
+67607	27152	giữ được (mạng sống)	2	f
+67608	27152	sự mát-xa	3	f
+67609	27153	kéo lê; vương vấn	0	f
+67610	27153	đào thải, sàng lọc	1	t
+67611	27153	đoán biết, cảm thông	2	f
+67612	27153	trang nghiêm, uy nghi	3	f
+67613	27154	sự giao tiếp	0	f
+67614	27154	đôn đốc, thúc giục (thanh toán)	1	t
+67615	27154	sự trúng cử, trúng thưởng	2	f
+67616	27154	lãnh chúa phong kiến	3	f
+67617	27155	phần lớn, đại khái	0	f
+67618	27155	hợp tác liên kết	1	f
+67619	27155	nhu cầu nội địa	2	t
+67620	27155	tòa án	3	f
+67621	27156	thế tập	0	f
+67622	27156	cống hiến, hết lòng vì	1	f
+67623	27156	kỳ hạn, ngày quy định	2	f
+67624	27156	gặp khó khăn, bế tắc (đàm phán)	3	t
+67625	27157	sự chiếu phim	0	f
+67626	27157	ký ức	1	f
+67627	27157	bác bỏ (bằng lý lẽ)	2	f
+67628	27157	lũ tràn; tràn lan	3	t
+67629	27158	tập quán	0	f
+67630	27158	làm thỏa mãn, lấp đầy	1	f
+67631	27158	phỉ báng, nói xấu	2	t
+67632	27158	tiện nghi, đồ dùng (khách sạn)	3	f
+67633	27159	trì trệ, sa sút	0	t
+67634	27159	quốc hữu, thuộc sở hữu nhà nước	1	f
+67635	27159	chát; giản dị mà lịch lãm; cau có	2	f
+67636	27159	hơi nước, lò sưởi hơi nước	3	f
+67637	27160	vén lên, xắn lên (tay áo)	0	f
+67638	27160	cấp cho, trao cho	1	t
+67639	27160	truyền thuyết	2	f
+67640	27160	mụn nhọt, khối u	3	f
+67641	27161	lành mạnh, khỏe mạnh	0	f
+67642	27161	từ bỏ	1	t
+67643	27161	bóng tối; chợ đen	2	f
+67644	27161	đồ dùng cá nhân	3	f
+67645	27162	phản ứng	0	f
+67646	27162	trước khi, sự chuẩn bị trước	1	f
+67647	27162	tính khí, khí chất (đặc trưng nghề nghiệp)	2	f
+67648	27162	xóa bỏ (đăng ký, dữ liệu)	3	t
+67649	27163	hợp nhất	0	f
+67650	27163	người đứng đầu, lãnh đạo cấp cao	1	f
+67651	27163	đợt giảm giá	2	f
+67652	27163	lan tràn, lây lan	3	t
+67653	27164	lắng xuống, yên ắng	0	f
+67654	27164	hoãn, gia hạn	1	t
+67655	27164	điều cấm kỵ	2	f
+67656	27164	nơi xa xôi	3	f
+67657	27165	thu hút (đầu tư, sự kiện)	0	t
+67658	27165	sự trở lại (sau vắng bóng)	1	f
+67659	27165	sự hỗ trợ, trợ giúp	2	f
+67660	27165	cơn co giật, cơn phát bệnh	3	f
+67661	27166	nguyên tử	0	f
+67662	27166	bảo vệ, bênh vực	1	t
+67663	27166	điều kỳ diệu, kinh ngạc	2	f
+67664	27166	sự thử nghiệm	3	f
+68121	27281	sợ hãi, kinh hoàng	0	f
+67665	27167	thực hiện (nghĩa vụ, hợp đồng)	0	t
+67666	27167	sự chủ đạo, dẫn dắt	1	f
+67667	27167	đi kèm, kéo theo	2	f
+67668	27167	loại bỏ, tháo bỏ	3	f
+67669	27168	tử số; phân tử	0	f
+67670	27168	được quyết định, ổn định	1	f
+67671	27168	giá rẻ	2	t
+67672	27168	sự thích ứng	3	f
+67673	27169	việc buôn bán	0	t
+67674	27169	ngôn ngữ chuẩn	1	f
+67675	27169	cuộc phản công	2	f
+67676	27169	ẩn dụ	3	f
+67677	27170	dỗi, hờn	0	f
+67678	27170	chim non, gà con	1	f
+67679	27170	thời cơ, xu thế	2	t
+67680	27170	sụp đổ	3	f
+67681	27171	sự vận chuyển	0	f
+67682	27171	quá hạn (trả)	1	t
+67683	27171	rực rỡ, hào nhoáng	2	f
+67684	27171	chấm dứt, ngừng lại	3	f
+67685	27172	khổ não	0	f
+67686	27172	hiên nhà kiểu Nhật	1	f
+67687	27172	sự bố trí, sắp xếp	2	f
+67688	27172	ước tính sơ bộ	3	t
+67689	27173	điểm mâu thuẫn	0	f
+67690	27173	tăng cao, dâng lên	1	f
+67691	27173	mưu đồ, lên kế hoạch ngầm	2	t
+67692	27173	ánh mắt, cái nhìn	3	f
+67693	27174	bỏ quyền, bỏ cuộc	0	t
+67694	27174	vị ngọt; lời nịnh	1	f
+67695	27174	nghiêm túc thái quá	2	f
+67696	27174	ngoài đối tượng	3	f
+67697	27175	hành vi, hành động	0	f
+67698	27175	bàn bạc, thống nhất trước	1	f
+67699	27175	chuyển lời, làm trung gian	2	f
+67700	27175	khởi tố	3	t
+67701	27176	cứ điểm, cơ sở	0	t
+67702	27176	nguyên tử	1	f
+67703	27176	giải thích để làm rõ hiểu lầm	2	f
+67704	27176	giới thiệu, thu xếp	3	f
+67705	27177	sao mà, thật là (cảm thán)	0	f
+67706	27177	tự do hóa	1	f
+67707	27177	kháng cáo	2	t
+67708	27177	doanh nhân, nhà công nghiệp	3	f
+67709	27178	duyên hải, ven bờ	0	f
+67710	27178	sự mất tư cách, bị loại	1	f
+67711	27178	sự nuôi dưỡng, cấp dưỡng	2	f
+67712	27178	đấu đá, tranh chấp	3	t
+67713	27179	câu thúc, ràng buộc	0	t
+67714	27179	văn ngôn, ngôn ngữ viết cổ	1	f
+67715	27179	chữ cái tiếng Anh	2	f
+67716	27179	đồ dùng cá nhân	3	f
+67717	27180	sự tiêu diệt, trừ khử	0	f
+67718	27180	diệt tận gốc	1	t
+67719	27180	phần tăng thêm; tốt hơn	2	f
+67720	27180	hàng xóm, lân cận	3	f
+67721	27181	bóc lột	0	t
+67722	27181	ánh đèn	1	f
+67723	27181	sự thoát nước	2	f
+67724	27181	vụ tự sát tập thể (vì tình)	3	f
+67725	27182	cách xử lý, cách đối xử	0	f
+67726	27182	mất (uy tín)	1	t
+67727	27182	sự chuyển thể kịch bản	2	f
+67728	27182	chế nhạo	3	f
+67729	27183	từ chối, khước từ	0	t
+67730	27183	báo cho biết, thông báo	1	f
+67731	27183	trống rỗng, hõm sâu	2	f
+67732	27183	tư liệu, tài liệu tham khảo	3	f
+67733	27184	lòe loẹt quá mức; độc ác, thâm hiểm	0	f
+67734	27184	chỉ số, chỉ tiêu	1	t
+67735	27184	sự tráng phim	2	f
+67736	27184	từ viết tắt	3	f
+67737	27185	đặt may, đặt làm riêng	0	f
+67738	27185	xâm phạm	1	t
+67739	27185	tín điều	2	f
+67740	27185	câu lạc bộ	3	f
+67741	27186	khai báo	0	t
+67742	27186	trường phái	1	f
+67743	27186	mang theo; chung tay	2	f
+67744	27186	sự dọn dẹp	3	f
+67745	27187	ngụy trang, giả mạo	0	f
+67746	27187	thân thiện, giao lưu	1	t
+67747	27187	quá tỉ mỉ	2	f
+67748	27187	trong khoảnh khắc, tức thì	3	f
+67749	27188	đi công tác xa nhà một mình	0	t
+67750	27188	nhỏ nhắn (vóc dáng)	1	f
+67751	27188	uyển chuyển, nói tránh	2	f
+67752	27188	ma sát, xích mích	3	f
+67753	27189	cảnh sát trưởng khu vực	0	f
+67754	27189	huy động, thu mua	1	t
+67755	27189	phục hưng, tái thiết	2	f
+67756	27189	rộng thùng thình	3	f
+67757	27190	trình bày, khai (trước tòa)	0	t
+67758	27190	sở hữu, có (trang trọng)	1	f
+67759	27190	sự chuyển động, xu hướng	2	f
+67760	27190	được truyền lại, du nhập từ xưa	3	f
+67761	27191	luận tội, buộc tội	0	f
+67762	27191	căn cứ	1	f
+67763	27191	khuynh hướng	2	f
+67764	27191	thiên tai	3	t
+67765	27192	truyền thuyết	0	f
+67766	27192	sự trùng lặp	1	f
+67767	27192	quyết định tuyển dụng (sơ bộ)	2	t
+67768	27192	đồng nhất, giống nhau	3	f
+67769	27193	từ trước, đã từ lâu	0	f
+67770	27193	bằng cách nào đó	1	f
+67771	27193	phủ nhận	2	t
+67772	27193	liều lĩnh, thiếu suy nghĩ	3	f
+67773	27194	thành viên nội các	0	f
+67774	27194	màn độc tấu, solo	1	f
+67775	27194	dự trữ	2	t
+67776	27194	sự độc quyền	3	f
+67777	27195	xem xét	0	f
+67778	27195	ẩn chứa	1	f
+67779	27195	trong sáng, thuần khiết	2	f
+67780	27195	danh nghĩa, đứng tên	3	t
+67781	27196	đạo đức giả	0	f
+67782	27196	có trả phí	1	t
+67783	27196	nắm bắt	2	f
+67784	27196	tố giác	3	f
+67785	27197	bổ nghĩa; trang trí	0	f
+67786	27197	gieo vần	1	f
+67787	27197	làm ẩm; làm sung túc	2	f
+67788	27197	chấp nhận, dung thứ	3	t
+67789	27198	sự ra đề (thi)	0	f
+67790	27198	đá ngầm; bế tắc	1	t
+67791	27198	trở nên thân thiết	2	f
+67792	27198	sự nuôi dưỡng, trưởng thành	3	f
+67793	27199	nhận thức, công nhận	0	f
+67794	27199	miễn cưỡng	1	f
+67795	27199	di sản	2	t
+67796	27199	khác biệt về bản chất	3	f
+67797	27200	rập khuôn	0	f
+67798	27200	đọc to lên	1	f
+67799	27200	âm mưu	2	t
+67800	27200	thống trị	3	f
+67801	27201	thanh lịch, sang trọng	0	f
+67802	27201	bao quát, gồm hết	1	f
+67803	27201	giữa tâm điểm (sự việc)	2	t
+67804	27201	sự phân tán	3	f
+67805	27202	trật tự an ninh	0	f
+67806	27202	xếp hạng, đánh giá xếp loại	1	t
+67807	27202	chăn nuôi gia súc	2	f
+67808	27202	đồ gốm sứ	3	f
+67809	27203	ngữ cảnh	0	f
+67810	27203	thúc giục, giục giã	1	f
+67811	27203	độc quyền nhóm	2	t
+67812	27203	bị làm mất hiệu lực	3	f
+67813	27204	đặt hàng từ xa	0	f
+67814	27204	giá cổ phiếu	1	t
+67815	27204	cuộc thi chạy	2	f
+67816	27204	thể chế hóa	3	f
+67817	27205	sự động viên, huy động	0	f
+67818	27205	nhút nhát	1	f
+67819	27205	xuyên qua, giữ vững (lập trường)	2	f
+67820	27205	khởi nghiệp	3	t
+67821	27206	dứt khoát, quân tử	0	f
+67822	27206	quỹ	1	t
+67823	27206	bạo động	2	f
+67824	27206	rụt rè	3	f
+67825	27207	say mê, tâm huyết với	0	f
+67826	27207	nhập quốc tịch	1	t
+67827	27207	tương xứng	2	f
+67828	27207	đe dọa, uy hiếp	3	f
+67829	27208	chỉ số, chỉ tiêu	0	f
+67830	27208	tình thế khốn cùng	1	f
+67831	27208	lời khai	2	t
+67832	27208	buồn ngủ	3	f
+67833	27209	đóng góp (quỹ)	0	t
+67834	27209	thám hiểm, nghiên cứu	1	f
+67835	27209	phép cộng	2	f
+67836	27209	đưa tin, báo cáo	3	f
+67837	27210	sự quy đổi	0	f
+67838	27210	sự bắt, nắm bắt	1	f
+67839	27210	ghép lại, làm cho khớp nhau	2	f
+67840	27210	tù giam (không lao động)	3	t
+67841	27211	thoát khỏi, ra khỏi	0	f
+67842	27211	chân trần	1	f
+67843	27211	nhân dân	2	f
+67844	27211	viện kiểm sát	3	t
+67845	27212	ôn hòa, êm thấm	0	f
+67846	27212	nguyên đơn	1	t
+67847	27212	vách đá	2	f
+67848	27212	đầy rẫy, ngập tràn (mang sắc thái tiêu cực)	3	f
+67849	27213	cam kết (tranh cử)	0	t
+67850	27213	sự hủy bỏ (hợp đồng)	1	f
+67851	27213	mỹ học	2	f
+67852	27213	căn bản	3	f
+67853	27214	nhận thức, công nhận	0	f
+67854	27214	tù giam (không lao động)	1	f
+67855	27214	chôn sâu, nhúng vào	2	f
+67856	27214	trái phiếu chính phủ	3	t
+67857	27215	thuận tay trái	0	f
+67858	27215	chấp nhận, dung thứ	1	f
+67859	27215	thẩm phán	2	t
+67860	27215	thẻ tên	3	f
+67861	27216	đặt cố định, lắp đặt	0	f
+67862	27216	quốc tịch	1	f
+67863	27216	khoản nợ	2	t
+67864	27216	điểm mâu thuẫn	3	f
+67865	27217	hỏi ý kiến (hội đồng)	0	f
+67866	27217	bê bối	1	f
+67867	27217	luận tội, buộc tội	2	f
+67868	27217	tỷ lệ thất nghiệp	3	t
+67869	27218	ghen tuông	0	f
+67870	27218	sự thôi học, bỏ học	1	f
+67871	27218	cào, gãi	2	f
+67872	27218	niêm yết (cổ phiếu)	3	t
+67873	27219	vốn, quỹ tài chính	0	f
+67874	27219	quyền hạn chức vụ	1	t
+67875	27219	từ chối, khước từ	2	f
+67876	27219	đói meo; khúm núm	3	f
+67877	27220	tuyên bố (chính thức)	0	t
+67878	27220	thơ haiku	1	f
+67879	27220	tôi (nữ giới, cách nói thân mật)	2	f
+67880	27220	nguồn trích dẫn	3	f
+67881	27221	giai đoạn cuối	0	f
+67882	27221	mỗi, cứ mỗi	1	f
+67883	27221	sự nghiệp, kinh nghiệm nghề nghiệp	2	f
+67884	27221	khu vực bầu cử	3	t
+67885	27222	sự thịnh hành, mốt	0	f
+67886	27222	thịnh suy	1	f
+67887	27222	thuế khóa	2	t
+67888	27222	tài ăn nói	3	f
+67889	27223	nhút nhát	0	f
+67890	27223	thời cổ đại	1	f
+67891	27223	sự vận chuyển	2	f
+67892	27223	luận tội, buộc tội	3	t
+67893	27224	độc đáo, có một không hai	0	f
+67894	27224	kiến nghị, thỉnh nguyện	1	t
+67895	27224	ý kiến phản đối, phản đối	2	f
+67896	27224	trưng cầu ý kiến (cơ quan)	3	f
+67897	27225	chu đáo, tình cảm sâu sắc	0	f
+67898	27225	tự do, tùy ý	1	f
+67899	27225	sự huyền bí	2	f
+67900	27225	thế chấp	3	t
+67901	27226	chủ quyền	0	f
+67902	27226	sự đối kháng	1	f
+67903	27226	quan chức về làm ở doanh nghiệp liên quan	2	t
+67904	27226	đèn flash chụp ảnh	3	f
+67905	27227	sự thấu hiểu sâu sắc	0	f
+67906	27227	chi phí điện nước, ga	1	f
+67907	27227	phụ nữ, con gái (cách nói cổ)	2	f
+67908	27227	chủ tịch đảng	3	t
+67909	27228	phóng viên thường trú	0	t
+67910	27228	hết sức, tối đa	1	f
+67911	27228	nghiên cứu thấu đáo	2	f
+67912	27228	gây trở ngại, bất tiện	3	f
+67913	27229	sự tặng, biếu	0	f
+67914	27229	loại bỏ, tháo bỏ	1	f
+67915	27229	nét chấm phá hoàn thiện (vẽ rồng điểm mắt)	2	f
+67916	27229	nhiệm kỳ	3	t
+67917	27230	thoáng qua, liếc nhìn	0	f
+67918	27230	bị cáo	1	t
+67919	27230	hỗ trợ	2	f
+67920	27230	vi phạm, xung đột (luật)	3	f
+67921	27231	lý thuyết	0	f
+67922	27231	quảng cáo (truyền hình)	1	f
+67923	27231	bị thiên tai	2	t
+67924	27231	khá là, hẳn là rất	3	f
+67925	27232	kính sợ, kính nể	0	f
+67926	27232	phê chuẩn	1	t
+67927	27232	say mê, tâm huyết với	2	f
+67928	27232	đồ ngủ pyjama	3	f
+67929	27233	hơi nước, lò sưởi hơi nước	0	f
+67930	27233	sự chủ đạo, dẫn dắt	1	f
+67931	27233	hiệu chỉnh, bổ sung (ngân sách)	2	t
+67932	27233	sát nút, mấp mé	3	f
+67933	27234	thông điệp	0	f
+67934	27234	liên minh, liên hiệp	1	t
+67935	27234	chủ quan là kẻ thù lớn	2	f
+67936	27234	kho chứa đồ	3	f
+67937	27235	tình hình chung	0	t
+67938	27235	nơi làm việc	1	f
+67939	27235	hòa thuận, viên mãn	2	f
+67940	27235	sự thăng tiến, thành đạt	3	f
+67941	27236	nâng mặt bằng chung	0	t
+67942	27236	mang tính đột phá thời đại	1	f
+67943	27236	vẻ ngoài, hình thức	2	f
+67944	27236	trí tuệ	3	f
+67945	27237	tùy theo tình huống, có lẽ	0	f
+67946	27237	dẫn chứng; hỏi mua	1	t
+67947	27237	cánh cửa	2	f
+67948	27237	sự mua sắm	3	f
+67949	27238	giao phó	0	f
+67950	27238	sự thoát nước	1	f
+67951	27238	bị làm mất hiệu lực	2	t
+67952	27238	chuyển đổi, thay đổi	3	f
+67953	27239	kinh doanh, điều hành; sinh sống	0	t
+67954	27239	ấn bản đầu tiên	1	f
+67955	27239	sự chỉ thị, ra lệnh	2	f
+67956	27239	gieo gió gặt bão	3	f
+67957	27240	thử thách, đương đầu	0	t
+67958	27240	lòng ham muốn	1	f
+67959	27240	vực dậy, xây dựng lại	2	f
+67960	27240	sự ngạt thở	3	f
+67961	27241	thanh tao, tao nhã	0	f
+67962	27241	phủ nhận, từ chối	1	t
+67963	27241	gặm nhấm, ăn mòn	2	f
+67964	27241	lý do chính đáng, tư cách	3	f
+67965	27242	răn đe, khuyên răn	0	t
+67966	27242	sự tăng cường	1	f
+67967	27242	vượt quá, vượt trội	2	f
+67968	27242	một mũi tên trúng hai đích	3	f
+67969	27243	lùi lại, rút lui	0	f
+67970	27243	được thấm ẩm; trở nên sung túc	1	t
+67971	27243	mang tính vĩnh viễn	2	f
+67972	27243	lời đồn đại	3	f
+67973	27244	quái vật	0	f
+67974	27244	âm thanh, tiếng đàn	1	f
+67975	27244	lơ là, sao nhãng	2	t
+67976	27244	quốc tịch	3	f
+67977	27245	mang tính thỏa hiệp	0	f
+67978	27245	đi đến, hướng tới (trang trọng)	1	t
+67979	27245	quan hệ nhân quả	2	f
+67980	27245	kinh doanh thua lỗ	3	f
+67981	27246	bản thể, phần chính (máy móc)	0	f
+67982	27246	lò vi sóng; phạm vi	1	f
+67983	27246	làm tổn hại, làm hỏng	2	t
+67984	27246	mỏ (chim)	3	f
+67985	27247	thiên lệch, lệch về một phía	0	t
+67986	27247	sự thống nhất, gọn gàng	1	f
+67987	27247	vận hành (máy móc, nhà máy)	2	f
+67988	27247	ngoại tệ, hàng nhập khẩu	3	f
+67989	27248	đạt tới cực điểm, tinh thông	0	t
+67990	27248	lẩm bẩm, thì thầm	1	f
+67991	27248	làm chìm xuống	2	f
+67992	27248	eo biển	3	f
+67993	27249	rêu rao	0	f
+67994	27249	dựa vào, tựa vào	1	f
+67995	27249	mưu tính, âm mưu	2	t
+67996	27249	cam kết (tranh cử)	3	f
+67997	27250	địa ngục	0	f
+67998	27250	anh hùng	1	f
+67999	27250	từ chối, cự tuyệt	2	t
+68000	27250	ngượng ngùng	3	f
+68001	27251	chặn, ngắt lời, che khuất	0	t
+68002	27251	xếp hạng, đánh giá xếp loại	1	f
+68003	27251	hưng thịnh	2	f
+68004	27251	xuyên qua, giữ vững (lập trường)	3	f
+68005	27252	nét mặt, biểu cảm	0	f
+68006	27252	sự bám víu, cố chấp	1	f
+68007	27252	đoán biết, thấu hiểu	2	t
+68008	27252	bố thí, thực hiện (biện pháp)	3	f
+68009	27253	trách móc, quở trách	0	f
+68010	27253	khuyên bảo, dạy dỗ	1	t
+68011	27253	sự phòng vệ	2	f
+68012	27253	sự nghi ngờ, hoài nghi	3	f
+68013	27254	trời đất, vũ trụ	0	f
+68014	27254	sự tuyên bố (chính thức)	1	f
+68015	27254	đặt, kê; bổ nhiệm	2	t
+68016	27254	sự nộp, cung cấp	3	f
+68017	27255	lo lắng, suy tính	0	f
+68018	27255	chùng, lơi lỏng	1	t
+68019	27255	ma sát; xích mích	2	f
+68020	27255	lo lắng; nghĩ ra	3	f
+68021	27256	lối thoát đột phá	0	f
+68022	27256	tai nạn, gặp nạn	1	f
+68023	27256	tiêu tốn, dành (thời gian, tiền)	2	t
+68024	27256	khoảng trống, phòng cho thuê	3	f
+68025	27257	tan chảy, mê mẩn	0	f
+68026	27257	giường, chỗ nằm	1	f
+68027	27257	xuyên qua; giữ vững đến cùng	2	t
+68028	27257	do đó, vì vậy	3	f
+68029	27258	bịa đặt, ngụy tạo	0	f
+68030	27258	bị gián đoạn, đứt quãng	1	t
+68031	27258	lang thang, phiêu bạt	2	f
+68032	27258	pha trộn, giao thoa	3	f
+68033	27259	bị đình trệ, chậm trễ	0	t
+68034	27259	tại chỗ, hiện trường	1	f
+68035	27259	phân bón	2	f
+68036	27259	câu lạc bộ	3	f
+68037	27260	cúi chào nhẹ	0	f
+68038	27260	hiểu rõ, am tường	1	f
+68039	27260	ngăn cản, cản trở	2	t
+68040	27260	lực nổi	3	f
+68041	27261	điểm mù, sơ hở	0	f
+68042	27261	căng thẳng, xấu đi (bầu không khí)	1	f
+68043	27261	xe sợi; dệt nên (câu chuyện)	2	t
+68044	27261	sự khôi phục	3	f
+68045	27262	ngước nhìn; xin (chỉ thị, ý kiến)	0	t
+68046	27262	đền bù, chuộc lỗi	1	f
+68047	27262	đáng kinh ngạc, nổi bật	2	f
+68048	27262	đền thờ Thần đạo	3	f
+68049	27263	lừa gạt	0	t
+68050	27263	truy ngược về	1	f
+68051	27263	canh tác nông nghiệp	2	f
+68052	27263	đảm nhận, trực tiếp phụ trách	3	f
+68053	27264	e ngại	0	f
+68054	27264	màu xám	1	f
+68055	27264	đặt làm riêng	2	t
+68056	27264	lấy cớ	3	f
+68057	27265	coi thường, khinh thường	0	t
+68058	27265	đáng khinh, hèn hạ	1	f
+68059	27265	làm mạnh thêm, nhấn mạnh	2	f
+68060	27265	sự tấn công	3	f
+68061	27266	hướng dẫn, chỉ dẫn	0	f
+68062	27266	xen vào giữa, tồn tại xen kẽ	1	f
+68063	27266	điều khiển, sử dụng thành thạo	2	t
+68064	27266	hình thái, hình dạng	3	f
+68065	27267	liên từ	0	f
+68066	27267	lo ngại, nghi ngại	1	t
+68067	27267	ép buộc, cưỡng ép	2	f
+68068	27267	yêu đơn phương	3	f
+68069	27268	ấm, bình giữ nhiệt	0	f
+68070	27268	đặc trưng riêng, vốn có	1	f
+68071	27268	sự tích lũy	2	f
+68072	27268	bước đi (trên con đường đời)	3	t
+68073	27269	lo lắng; nghĩ ra	0	t
+68074	27269	võ sĩ samurai	1	f
+68075	27269	lời nói khách sáo bề ngoài	2	f
+68076	27269	suy vong	3	f
+68077	27270	trữ tình	0	f
+68078	27270	sự đốt cháy, châm lửa	1	f
+68079	27270	cốt lõi	2	f
+68080	27270	nghi ngờ, lấy làm lạ	3	t
+68081	27271	cúi gằm mặt	0	t
+68082	27271	mười phút	1	f
+68083	27271	kênh truyền hình	2	f
+68084	27271	sấm sét (cách nói cổ)	3	f
+68085	27272	linh hoạt	0	f
+68086	27272	bản phác thảo	1	f
+68087	27272	bỏ chạy, trốn thoát	2	f
+68088	27272	bù đắp	3	t
+68089	27273	vô nghĩa	0	f
+68090	27273	cuộc đối đầu	1	f
+68091	27273	suy tính, cân nhắc	2	f
+68092	27273	kính trọng	3	t
+68093	27274	từng cái một, chi tiết	0	f
+68094	27274	sự tuyển mộ công khai	1	f
+68095	27274	làm ẩm; làm sung túc	2	t
+68096	27274	quan điểm, lập trường	3	f
+68097	27275	tiến bộ dần	0	f
+68098	27275	tham nhũng	1	f
+68099	27275	mang, chứa (tính chất)	2	t
+68100	27275	sự thanh cao, phong thái sang trọng	3	f
+68101	27276	lan đến, đạt tới	0	t
+68102	27276	khinh suất, hấp tấp	1	f
+68103	27276	sự đồng thuận	2	f
+68104	27276	hoàn toàn (không)	3	f
+68105	27277	giương cao; nêu ra (mục tiêu)	0	t
+68106	27277	nói tuôn xối xả	1	f
+68107	27277	nghiệp vụ, công việc	2	f
+68108	27277	trái ngược, vi phạm	3	f
+68109	27278	có vẻ như thật, ra chiều	0	f
+68110	27278	tăng lên, phình ra (chi phí)	1	t
+68111	27278	đáng sợ (cách nói thông tục)	2	f
+68112	27278	lo lắng khổ sở	3	f
+68113	27279	đọc to lên	0	f
+68114	27279	ngã tư	1	f
+68115	27279	cồng kềnh	2	t
+68116	27279	móc vào, khoác lên; lừa gạt	3	f
+68117	27280	bền bỉ, dẻo dai	0	f
+68118	27280	nhút nhát	1	f
+68119	27280	mờ đi, mờ sương	2	t
+68120	27280	một tá (12 cái)	3	f
+68122	27281	lúc mừng lúc lo (theo từng biến động)	1	f
+68123	27281	thạch (món ăn)	2	f
+68124	27281	thành hiện thực (ước mơ)	3	t
+68125	27282	đưa tin, báo cáo	0	f
+68126	27282	một mực	1	f
+68127	27282	kiêm; khó mà (〜かねる)	2	t
+68128	27282	sự tiếc nuối, hối hận	3	f
+68129	27283	quấn vào; dính líu	0	t
+68130	27283	kinh tế gia đình, chi tiêu hộ gia đình	1	f
+68131	27283	góp vốn	2	f
+68132	27283	sự ngoại tình, lăng nhăng	3	f
+68133	27284	cuộc tranh chấp	0	f
+68134	27284	ngôn luận	1	f
+68135	27284	cho nghỉ ngơi, tạm dừng	2	f
+68136	27284	kêu cót két	3	t
+68137	27285	thừa nhận, tán thành	0	f
+68138	27285	nổi lên, hiện ra trong đầu	1	f
+68139	27285	cuộc đối thoại, trò chuyện	2	f
+68140	27285	xây dựng (quan hệ, nền tảng)	3	t
+68141	27286	rèn luyện	0	t
+68142	27286	tư liệu, tài liệu tham khảo	1	f
+68143	27286	suy thoái	2	f
+68144	27286	ý đồ thầm kín	3	f
+68145	27287	mục nát	0	t
+68146	27287	Ả Rập	1	f
+68147	27287	chính thống, truyền thống	2	f
+68148	27287	ý tưởng	3	f
+68149	27288	sự phù hợp năng khiếu	0	f
+68150	27288	bị lật đổ, bị đảo ngược	1	t
+68151	27288	thẻ tên	2	f
+68152	27288	xuất sắc	3	f
+68153	27289	khổ não	0	f
+68154	27289	sâu xa	1	f
+68155	27289	múc; thấu hiểu (tâm tư)	2	t
+68156	27289	thám hiểm, nghiên cứu	3	f
+68157	27290	chủ quan	0	f
+68158	27290	việc đã nói ở trên, việc thường lệ	1	f
+68159	27290	niềm khao khát, ngưỡng mộ	2	f
+68160	27290	trở nên rắc rối, xấu đi	3	t
+68161	27291	câu nệ; kỹ tính, chăm chút	0	t
+68162	27291	biến hình, giả dạng	1	f
+68163	27291	rủ xuống, nhỏ giọt	2	f
+68164	27291	đúng người đúng việc	3	f
+68165	27292	sự ô uế, vết nhơ	0	f
+68166	27292	thời gian rảnh, sự cáo từ	1	f
+68167	27292	danh mục, mục lục	2	f
+68168	27292	tập trung, dồn (tâm sức)	3	t
+68169	27293	say mê; bị mỏi cứng	0	t
+68170	27293	giương cao; nêu ra (mục tiêu)	1	f
+68171	27293	đồng nhất, giống nhau	2	f
+68172	27293	số từ	3	f
+68173	27294	hồ sơ bệnh án	0	f
+68174	27294	thủy triều	1	f
+68175	27294	xé, chia cắt	2	t
+68176	27294	khu phố (đơn vị địa chỉ)	3	f
+68177	27295	dâng hiến	0	t
+68178	27295	mặt khác, phía khác	1	f
+68179	27295	tại chỗ, hiện trường	2	f
+68180	27295	sự gây mê	3	f
+68181	27296	ban cho, truyền dạy	0	t
+68182	27296	chặn, ngắt lời, che khuất	1	f
+68183	27296	chứng suy nhược thần kinh	2	f
+68184	27296	chủ nghĩa lý tưởng	3	f
+68185	27297	cuộc đối thoại	0	f
+68186	27297	nguội; nguội lạnh (tình cảm)	1	t
+68187	27297	từ nguyên, gốc từ	2	f
+68188	27297	triệt để, tận gốc	3	f
+68189	27298	hót líu lo (chim)	0	f
+68190	27298	lá rụng	1	f
+68191	27298	phanh phui, phát giác	2	f
+68192	27298	ép buộc	3	t
+68193	27299	má (cách nói thân mật)	0	f
+68194	27299	làm hỏng, thất bại	1	t
+68195	27299	hải lưu, dòng biển	2	f
+68196	27299	phóng tác, chuyển thể	3	f
+68197	27300	biện pháp chấn chỉnh	0	f
+68198	27300	mưu tính	1	f
+68199	27300	vượt qua (khó khăn); vượt trội	2	t
+68200	27300	bất chấp phản đối mà làm	3	f
+68201	27301	một sớm một chiều	0	f
+68202	27301	ngần ngại, chần chừ	1	t
+68203	27301	quan niệm	2	f
+68204	27301	chen ngang	3	f
+68205	27302	phần thưởng	0	f
+68206	27302	lùi lại; rút lui	1	t
+68207	27302	tự nhiên, không phô trương	2	f
+68208	27302	động sát, thấu hiểu	3	f
+68209	27303	súc, xả nước	0	t
+68210	27303	thành lập	1	f
+68211	27303	coi trọng, tôn trọng	2	f
+68212	27303	khuôn mặt (cách nói cổ)	3	f
+68213	27304	tư nhân hóa	0	f
+68214	27304	làm trong; lắng (tai)	1	t
+68215	27304	nụ hoa	2	f
+68216	27304	thời cổ đại	3	f
+68217	27305	loại bỏ	0	f
+68218	27305	sự phủ định	1	f
+68219	27305	hối thúc	2	t
+68220	27305	hệ thống	3	f
+68221	27306	quan điểm, lập trường	0	f
+68222	27306	công tố viên	1	f
+68223	27306	đính kèm, thêm vào	2	t
+68224	27306	cần đến, đòi hỏi	3	f
+68225	27307	kênh truyền hình	0	f
+68226	27307	làm trái, phản bội	1	t
+68227	27307	dựa trên	2	f
+68228	27307	sự đầu tư, đưa vào	3	f
+68229	27308	dứt, tuyệt	0	t
+68230	27308	trọng lực	1	f
+68231	27308	sự đồng ý, chấp thuận	2	f
+68232	27308	méo mó, lệch lạc	3	f
+68233	27309	tình hình bán hàng	0	f
+68234	27309	có thú (thưởng thức) ở mức vừa phải	1	t
+68235	27309	đã kết hôn	2	f
+68236	27309	chính thức, thường xuyên	3	f
+68237	27310	thiên lệch, lệch về một phía	0	f
+68238	27310	kinh nghiệm bản thân	1	f
+68239	27310	mang theo; chung tay	2	t
+68240	27310	quân chủ, vua	3	f
+68241	27311	tuyệt đối (không)	0	f
+68242	27311	ca ngợi	1	t
+68243	27311	vòi tiền, nài xin	2	f
+68244	27311	quy tắc	3	f
+68245	27312	đại chúng	0	f
+68246	27312	trôi dạt; lan tỏa (bầu không khí)	1	t
+68247	27312	mơ hồ, lờ mờ	2	f
+68248	27312	cậu ấm (con trai nhà người khác)	3	f
+68249	27313	tài sản	0	f
+68250	27313	trả trước hộ	1	t
+68251	27313	người đứng đầu, tộc trưởng	2	f
+68252	27313	logic	3	f
+68253	27314	tan biến, sụp đổ (hy vọng)	0	t
+68254	27314	khu vực, bộ phận	1	f
+68255	27314	ôn cũ biết mới	2	f
+68256	27314	đối chiếu	3	f
+68257	27315	quản lý, cai quản	0	t
+68258	27315	sự thật, chân thành	1	f
+68259	27315	chu đáo, tình cảm sâu sắc	2	f
+68260	27315	hỉ nộ ái lạc	3	f
+68261	27316	đền bù, chuộc lỗi	0	t
+68262	27316	vàng ròng	1	f
+68263	27316	ấp úng, vấp váp	2	f
+68264	27316	buồn ngủ	3	f
+68265	27317	a dua theo người khác	0	f
+68266	27317	thế lực, ảnh hưởng	1	f
+68267	27317	hồn ma, bóng ma	2	f
+68268	27317	thận trọng, kiềm chế	3	t
+68269	27318	chiêu mộ, quyên góp; tăng lên	0	t
+68270	27318	đồ ngủ pyjama	1	f
+68271	27318	làm chìm xuống	2	f
+68272	27318	chủ nghĩa thực dụng	3	f
+68273	27319	hoạt bát, năng động	0	f
+68274	27319	tính tình, tính nết	1	f
+68275	27319	trách móc; cắn rứt	2	t
+68276	27319	giờ, khung giờ (như ラッシュアワー)	3	f
+68277	27320	tuân thủ	0	f
+68278	27320	kỳ hạn, ngày quy định	1	f
+68279	27320	đứt quãng, gián đoạn	2	t
+68280	27320	chưa từng có tiền lệ	3	f
+68281	27321	phủ nhận, xóa bỏ	0	f
+68282	27321	mài; vo (gạo)	1	t
+68283	27321	kênh truyền hình	2	f
+68284	27321	sự làm mất	3	f
+68285	27322	suy luận	0	f
+68286	27322	nhân tố	1	f
+68287	27322	hoàn thành, đạt được	2	t
+68288	27322	xây dựng, gây dựng	3	f
+68289	27323	sự kiên nhẫn, chịu đựng	0	f
+68290	27323	sự tiếp tế, bổ sung	1	f
+68291	27323	cơm (kiểu Tây)	2	f
+68292	27323	che đậy, chữa thẹn	3	t
+68293	27324	xông vào, bước vào giai đoạn mới	0	f
+68294	27324	trách móc, chỉ trích	1	t
+68295	27324	cá đuối	2	f
+68296	27324	điềm xấu, gở	3	f
+68297	27325	tình cờ đi ngang qua	0	f
+68298	27325	noi theo, bắt chước	1	t
+68299	27325	chôn sâu, nhúng vào	2	f
+68300	27325	có thể nói là	3	f
+68301	27326	vòi vĩnh, nài nỉ	0	t
+68302	27326	tính thêm vào, xem xét thêm	1	f
+68303	27326	cái hót rác	2	f
+68304	27326	suy yếu, suy tàn	3	f
+68305	27327	hồi tưởng, nhìn lại	0	f
+68306	27327	lo lắng; nghĩ ra	1	f
+68307	27327	nhào; trau chuốt (kế hoạch)	2	t
+68308	27327	đạo đức (luân lý)	3	f
+68309	27328	khách quan	0	f
+68310	27328	đối diện; tham dự	1	t
+68311	27328	sự cứu giúp	2	f
+68312	27328	sự giải phẫu	3	f
+68313	27329	thiếu hụt	0	f
+68314	27329	tình trạng, thực trạng	1	f
+68315	27329	chửi rủa	2	t
+68316	27329	hiện đại	3	f
+68317	27330	trọng tài, hòa giải	0	f
+68318	27330	lập kế hoạch, nhằm mục đích	1	t
+68319	27330	doanh thu, lợi nhuận	2	f
+68320	27330	sự bi quan	3	f
+68321	27331	lịch sự, trọng thị	0	f
+68322	27331	sự che mặt, mặt nạ	1	f
+68323	27331	chiết xuất	2	f
+68324	27331	hỏi ý kiến (hội đồng)	3	t
+68325	27332	đi đến, tiến tới (nơi công tác)	0	f
+68326	27332	nỗ lực, chăm chỉ	1	t
+68327	27332	cù; kích thích (lòng tự ái…)	2	f
+68328	27332	đòn giáng, tổn thất	3	f
+68329	27333	sự xoay chuyển	0	f
+68330	27333	mạch (đập)	1	f
+68331	27333	ẩn chứa	2	t
+68332	27333	rõ rệt, đáng kể	3	f
+68333	27334	hiệu chỉnh, bổ sung (ngân sách)	0	f
+68334	27334	nghệ thuật cắm hoa	1	f
+68335	27334	tham dự, tham gia (cố vấn)	2	f
+68336	27334	chùn bước, nao núng	3	t
+68337	27335	say mê, đắm chìm	0	t
+68338	27335	kinh doanh, quản lý	1	f
+68339	27335	nhanh chóng, mau lẹ	2	f
+68340	27335	ông chủ; chồng (thân mật)	3	f
+68341	27336	khiêm nhường, hạ mình	0	f
+68342	27336	ngăn cách	1	t
+68343	27336	liên quan mật thiết	2	f
+68344	27336	tiền cứu trợ	3	f
+68345	27337	cậu ấm (con trai nhà người khác)	0	f
+68346	27337	tự động từ (nội động từ)	1	f
+68347	27337	tiết lộ; thức trắng (đêm)	2	f
+68348	27337	đền đáp	3	t
+68349	27338	lo phiền, bận tâm	0	f
+68350	27338	sự thấu hiểu sâu sắc	1	f
+68351	27338	việc tay trái, làm thêm lúc rảnh	2	f
+68352	27338	hấp; oi bức	3	t
+68353	27339	nghiêm túc thái quá	0	f
+68354	27339	tụ tập thành đám	1	t
+68355	27339	long trọng, hoành tráng	2	f
+68356	27339	một phần (của chuỗi)	3	f
+68357	27340	phản ánh	0	f
+68358	27340	nghiệp vụ, công việc	1	f
+68359	27340	lẫn vào; khuây khỏa	2	t
+68360	27340	lĩnh hội	3	f
+68361	27341	đền thờ Thần đạo	0	f
+68362	27341	lay động, làm rung chuyển	1	f
+68363	27341	sụt cân, hốc hác; chán nản	2	f
+68364	27341	vượt trội, hơn	3	t
+68365	27342	lúng túng, bối rối	0	t
+68366	27342	giàu có	1	f
+68367	27342	thẩm quyền quản lý, sở tại	2	f
+68368	27342	logic	3	f
+68369	27343	niên hiệu	0	f
+68370	27343	canh chừng (thời điểm)	1	t
+68371	27343	tận mắt	2	f
+68372	27343	hình thái, hình dạng	3	f
+68373	27344	kênh truyền hình	0	f
+68374	27344	nhiệt lượng	1	f
+68375	27344	thiết lập, tạo ra	2	t
+68376	27344	quá muộn	3	f
+68377	27345	mưu tính	0	t
+68378	27345	xem xét kỹ lưỡng	1	f
+68379	27345	mở lời; đốn (gỗ)	2	f
+68380	27345	vách đá	3	f
+68381	27346	hiệp ước	0	f
+68382	27346	phim âm bản	1	f
+68383	27346	mang lại, gây ra	2	t
+68384	27346	bề ngoài, ngoại quan	3	f
+68385	27347	sao Hỏa	0	f
+68386	27347	cẩu thả, thô lỗ	1	f
+68387	27347	sự mua vào	2	f
+68388	27347	đùa giỡn, chơi đùa	3	t
+68389	27348	tiêu diệt, hủy diệt	0	f
+68390	27348	khăng khăng	1	f
+68391	27348	lay động, làm rung chuyển	2	f
+68392	27348	tổ chức; cảm thấy (buồn ngủ…)	3	t
+68393	27349	làm rò rỉ; buột miệng	0	t
+68394	27349	gửi gắm, nạp vào	1	f
+68395	27349	hòa thuận, viên mãn	2	f
+68396	27349	sự chuyển tiếp, chuyển phát	3	f
+68397	27350	làm dịu đi	0	t
+68398	27350	tình hữu nghị	1	f
+68399	27350	căng thẳng, xấu đi (bầu không khí)	2	f
+68400	27350	sự quên nhất thời	3	f
+68401	27351	nhận thức, công nhận	0	f
+68402	27351	giao phó	1	t
+68403	27351	bằng chứng (khoa học)	2	f
+68404	27351	thông thường	3	f
+68405	27352	hồi sinh, sống lại	0	t
+68406	27352	sự nghỉ ngơi tĩnh dưỡng	1	f
+68407	27352	tiêu đề	2	f
+68408	27352	làm bộ, làm điệu	3	f
+68409	27353	lo phiền, đau ốm	0	t
+68410	27353	sự tiếc nuối, hối hận	1	f
+68411	27353	hoàn cảnh, cảnh ngộ	2	f
+68412	27353	tín đồ	3	f
+68413	27354	chân ga (xe)	0	f
+68414	27354	xin lỗi, tạ lỗi	1	t
+68415	27354	sự nói thay, thanh toán thay	2	f
+68416	27354	từ thiện	3	f
+68417	27355	hoảng hốt, cuống quýt	0	t
+68418	27355	điểm xuất phát	1	f
+68419	27355	vô cùng, hết sức	2	f
+68420	27355	tấm séc	3	f
+68421	27356	quỵ lụy, hèn nhát	0	f
+68422	27356	nhụt chí, sợ hãi	1	t
+68423	27356	nhận thức	2	f
+68424	27356	nhược điểm, điểm khó	3	f
+68425	27357	pha trò, làm trò hề	0	t
+68426	27357	trang nam nhi, người mạnh khỏe	1	f
+68427	27357	sự thức khuya	2	f
+68428	27357	ven, bên cạnh (sông, hồ)	3	f
+68429	27358	sự làm cầu nối, trung gian	0	f
+68430	27358	lông mày	1	f
+68431	27358	run sợ	2	t
+68432	27358	tiếng vang, phản ứng dư luận	3	f
+68433	27359	luật học	0	f
+68434	27359	lấy cớ	1	t
+68435	27359	tiết lộ, thức trắng (đêm)	2	f
+68436	27359	ngôn ngữ chuẩn	3	f
+68437	27360	trao tặng, truyền dạy	0	f
+68438	27360	gặm; biết sơ qua	1	t
+68439	27360	thượng sách, cách có lợi	2	f
+68440	27360	bình luận (có phân tích)	3	f
+68441	27361	tụ tập thành đám	0	f
+68442	27361	che chở, bênh vực	1	t
+68443	27361	lần đầu nghe thấy	2	f
+68444	27361	nghị quyết	3	f
+68445	27362	cù; kích thích (lòng tự ái…)	0	t
+68446	27362	nghệ thuật cắm hoa	1	f
+68447	27362	bất đắc dĩ, không còn cách nào khác	2	f
+68448	27362	coi trọng, tôn trọng	3	f
+68449	27363	mỗi người một vẻ	0	f
+68450	27363	dọc theo	1	f
+68451	27363	thư giãn	2	t
+68452	27363	quy ước, điều lệ	3	f
+68453	27364	hội trường tổ chức lễ	0	f
+68454	27364	chê bai	1	t
+68455	27364	thách thức, khiêu chiến	2	f
+68456	27364	đỉnh (núi, đầu)	3	f
+68457	27365	cơn đói	0	f
+68458	27365	sách nguyên bản (chưa dịch)	1	f
+68459	27365	lộng lẫy, chói lọi	2	f
+68460	27365	sai khiến, bắt làm như nô lệ	3	t
+68461	27366	sự bổ khuyết, phần bổ sung	0	f
+68462	27366	vòng cổ (cho thú cưng)	1	f
+68463	27366	lừa, che giấu, lấp liếm	2	t
+68464	27366	dịu dàng, nhân hậu	3	f
+68465	27367	sáng rực rỡ	0	f
+68466	27367	(chim) hót líu lo	1	t
+68467	27367	vấp ngã; vấp váp	2	f
+68468	27367	vượt quá, vượt trội	3	f
+68469	27368	lang thang, phiêu bạt	0	t
+68470	27368	nhập quốc tịch	1	f
+68471	27368	chủng loại, giống loài	2	f
+68472	27368	cơ cấu, cấu trúc	3	f
+68473	27369	đáp án đúng	0	f
+68474	27369	héo rũ; ủ rũ	1	t
+68475	27369	nguồn gốc từ	2	f
+68476	27369	sự hư hỏng	3	f
+68477	27370	phòng thu, studio	0	f
+68478	27370	cam kết (tranh cử)	1	f
+68479	27370	chỉ số, chỉ tiêu	2	f
+68480	27370	dạy dỗ (nề nếp)	3	t
+68481	27371	méo mó, lệch lạc	0	f
+68482	27371	học phí hàng tháng	1	f
+68483	27371	dỗi, hờn	2	t
+68484	27371	sử dụng quá mức, bóc lột sức	3	f
+68485	27372	khỏe mạnh, vẫn còn tốt	0	f
+68486	27372	trọng tâm, điểm chính	1	f
+68487	27372	cán bộ lãnh đạo, ban giám đốc	2	f
+68488	27372	vòi tiền, nài xin	3	t
+68489	27373	sự thật, chân thành	0	f
+68490	27373	coi trọng	1	f
+68491	27373	xúi giục	2	t
+68492	27373	tổng hợp	3	f
+68493	27374	ý kiến riêng, nhận định	0	f
+68494	27374	chưa từng có tiền lệ	1	f
+68495	27374	tự phụ, tự mãn	2	f
+68496	27374	chùn lại, lùi bước	3	t
+68497	27375	tính cách, nhân phẩm	0	f
+68498	27375	tông chủ đạo, nền tảng	1	f
+68499	27375	đứng lặng	2	t
+68500	27375	múa, bay lượn	3	f
+68501	27376	người hâm mộ	0	f
+68502	27376	lấp ló, chập chờn	1	t
+68503	27376	sự biểu quyết, nghị quyết	2	f
+68504	27376	xé, chia cắt	3	f
+68505	27377	vấp ngã; vấp váp	0	t
+68506	27377	sự thu thập	1	f
+68507	27377	sự phụ thuộc	2	f
+68508	27377	tươi sáng, rực rỡ	3	f
+68509	27378	ngăn chặn	0	f
+68510	27378	gặm; biết sơ qua	1	f
+68511	27378	tan chảy	2	t
+68512	27378	múa, bay lượn	3	f
+68513	27379	dỗ dành, xoa dịu	0	t
+68514	27379	đại nghĩa, chính nghĩa	1	f
+68515	27379	giá cổ phiếu	2	f
+68516	27379	tiếng thét, tiếng kêu la	3	f
+68517	27380	chôn sâu, nhúng vào	0	f
+68518	27380	sự phân đoạn, dấu chấm câu	1	f
+68519	27380	duyên hải, ven bờ	2	f
+68520	27380	thấm, nhòe	3	t
+68521	27381	rõ rệt	0	f
+68522	27381	cố tình, dám (làm điều khó)	1	f
+68523	27381	lầy lội	2	t
+68524	27381	mang lại, gây ra	3	f
+68525	27382	đền bù, chuộc lỗi	0	f
+68526	27382	dũng cảm	1	f
+68527	27382	thiếu nữ (cách nói văn chương)	2	f
+68528	27382	vui đùa ầm ĩ	3	t
+68529	27383	kiệt sức, mệt lả	0	t
+68530	27383	tiếp nhận, chấp nhận	1	f
+68531	27383	chuẩn mực	2	f
+68532	27383	ý tưởng	3	f
+68533	27384	khoe khoang	0	t
+68534	27384	thoái vị	1	f
+68535	27384	ân huệ, lợi ích	2	f
+68536	27384	chiều cao, chiều dài	3	f
+68537	27385	thương nhân (cách đọc cổ)	0	f
+68538	27385	tính sai, tính nhầm	1	f
+68539	27385	hàng xóm, lân cận	2	f
+68540	27385	càu nhàu	3	t
+68541	27386	ướt sũng, đẫm mồ hôi	0	f
+68542	27386	nói tuôn xối xả	1	t
+68543	27386	gấu quần/váy; chân núi	2	f
+68544	27386	tượng Phật	3	f
+68545	27387	bị sặc	0	t
+68546	27387	ngượng ngùng, xấu hổ	1	f
+68547	27387	ám chỉ	2	f
+68548	27387	đùi	3	f
+68549	27388	mụn trứng cá	0	f
+68550	27388	lên xe/tàu, tiến vào	1	f
+68551	27388	sự làm mất	2	f
+68552	27388	giãy giụa, vùng vẫy	3	t
+68553	27389	rối; lằng nhằng	0	t
+68554	27389	sự chuyển thể kịch bản	1	f
+68555	27389	áp bức, ép buộc	2	f
+68556	27389	dùng riêng, chuyên dụng	3	f
+68557	27390	súc, tráng	0	t
+68558	27390	lời phát biểu	1	f
+68559	27390	tình hữu nghị	2	f
+68560	27390	tình thế, cục diện	3	f
+68561	27391	phút	0	f
+68562	27391	bãi bỏ	1	f
+68563	27391	tiền tệ	2	f
+68564	27391	loạng choạng	3	t
+68565	27392	hoặc, từ...đến...	0	f
+68566	27392	trở nên mờ nhạt, mờ đi	1	f
+68567	27392	thiên lệch, lệch về một phía	2	f
+68568	27392	khăng khăng	3	t
+68569	27393	gây ra, dẫn đến	0	f
+68570	27393	đóng vào; dốc sức	1	t
+68571	27393	ôi chao, thật là	2	f
+68572	27393	liên quan mật thiết	3	f
+68573	27394	chủ quan	0	f
+68574	27394	chào hàng, quảng bá bản thân	1	t
+68575	27394	ngang ngửa, giằng co	2	f
+68576	27394	tai nạn, gặp nạn	3	f
+68577	27395	sự trục xuất, lưu đày	0	f
+68578	27395	bất chấp phản đối mà làm	1	t
+68579	27395	đồng ý, ổn	2	f
+68580	27395	lo phiền, đau ốm	3	f
+68581	27396	sự im lặng	0	f
+68582	27396	phục quyền	1	f
+68583	27396	sự phân đoạn, dấu chấm câu	2	f
+68584	27396	chợt nảy ý định	3	t
+68585	27397	cắt giảm, thắt chặt	0	t
+68586	27397	một lòng, chuyên tâm	1	f
+68587	27397	công việc hành chính chung	2	f
+68588	27397	lãnh thổ quốc gia	3	f
+68589	27398	chửi mắng, mắng nhiếc	0	f
+68590	27398	sự truy đuổi	1	f
+68591	27398	độ cao so với mực nước biển	2	f
+68592	27398	mở lời; đốn (gỗ)	3	t
+68593	27399	bước đi, tiến trình	0	f
+68594	27399	bảo vệ, bênh vực	1	f
+68595	27399	chu cấp, trang trải (chi phí)	2	f
+68596	27399	chuyển sang (kỳ sau)	3	t
+68597	27400	sự đến thăm (khiêm nhường)	0	f
+68598	27400	sự tiếp tế, bổ sung	1	f
+68599	27400	trào dâng (cảm xúc)	2	t
+68600	27400	điềm, dấu hiệu manh nha	3	f
+68601	27401	hoàng hôn	0	f
+68602	27401	sự phản cảm, ác cảm	1	f
+68603	27401	gây trở ngại	2	t
+68604	27401	đợt giảm giá bán	3	f
+68605	27402	vị trí cuối cùng, hạng bét	0	f
+68606	27402	vực dậy, hồi phục	1	t
+68607	27402	điểm mâu thuẫn	2	f
+68608	27402	ân huệ, phước lành	3	f
+68609	27403	phục vụ, hầu hạ	0	f
+68610	27403	quan chức về làm ở doanh nghiệp liên quan	1	f
+68611	27403	bận dồn dập	2	t
+68612	27403	hết sức, vô cùng	3	f
+68613	27404	khăng khăng	0	f
+68614	27404	say mê quên mình	1	f
+68615	27404	chọn lọc	2	f
+68616	27404	truy ra, xác định	3	t
+68617	27405	nhìn bao quát, phóng tầm mắt	0	f
+68618	27405	số từ	1	f
+68619	27405	phẫn nộ	2	f
+68620	27405	kiểm soát, trấn áp	3	t
+68621	27406	chưa kết hôn	0	f
+68622	27406	sự bác bỏ, phủ quyết	1	f
+68623	27406	bắt tay vào; nhoài người	2	f
+68624	27406	được hình thành, đứng vững	3	t
+68625	27407	sự tái hiện	0	f
+68626	27407	tác phẩm dài kỳ (tiểu thuyết, phim)	1	f
+68627	27407	soạn lại, xem xét lại	2	t
+68628	27407	dâng hiến	3	f
+68629	27408	đạt được, hoàn thành	0	f
+68630	27408	khẩn cấp, gấp rút	1	f
+68631	27408	sự chiếm đóng	2	f
+68632	27408	bắt tay vào; nhoài người	3	t
+68633	27409	cố ý	0	f
+68634	27409	ganh đua	1	t
+68635	27409	điều khiển, giật dây	2	f
+68636	27409	quyền tự quyết, tùy ý quyết định	3	f
+68637	27410	không chịu nổi, cực kỳ	0	f
+68638	27410	ngã tư	1	f
+68639	27410	hạ xuống, giảm	2	t
+68640	27410	kết luận, hệ quả	3	f
+68641	27411	kéo lê; vương vấn	0	t
+68642	27411	bàn bạc, thống nhất trước	1	f
+68643	27411	sai lầm, lỗi lầm	2	f
+68644	27411	lừa dối, đánh lừa	3	f
+68645	27412	quyết định dứt khoát	0	t
+68646	27412	nhận về, đảm nhận	1	f
+68647	27412	không mấy, không lắm (đi với phủ định)	2	f
+68648	27412	tã lót	3	f
+68649	27413	cắt giảm chi phí	0	f
+68650	27413	tương xứng	1	t
+68651	27413	án tử hình	2	f
+68652	27413	hô vang, tụng niệm; đề xướng	3	f
+68653	27414	quét sạch, loại bỏ hoàn toàn	0	f
+68654	27414	khoe khoang	1	t
+68655	27414	nhìn sót, bỏ sót	2	f
+68656	27414	hót líu lo (chim)	3	f
+68657	27415	vòi tiền, nài xin	0	f
+68658	27415	nghèo túng	1	f
+68659	27415	chuyển sang (lần sau)	2	t
+68660	27415	lồng vào, tích hợp	3	f
+68661	27416	pha trò, làm trò hề	0	f
+68662	27416	trụ vững	1	t
+68663	27416	sự áp bức, đè nén	2	f
+68664	27416	mô hình	3	f
+68665	27417	chen ngang	0	t
+68666	27417	bồn rửa	1	f
+68667	27417	thể bị động	2	f
+68668	27417	kết thúc, chấm dứt	3	f
+68669	27418	bị gián đoạn, đứt quãng	0	f
+68670	27418	liên tiếp xảy ra	1	t
+68671	27418	sự chuẩn bị tinh thần	2	f
+68672	27418	nút giao thông (đường cao tốc)	3	f
+68673	27419	tiếp tay, làm gia tăng (điều xấu)	0	f
+68674	27419	sợ hãi	1	f
+68675	27419	phồng lên, sưng lên; hờn dỗi	2	f
+68676	27419	kích động, thổi bùng	3	t
+68677	27420	tuyên bố (chính thức)	0	f
+68678	27420	chỗ ứ đọng, nơi tụ tập	1	f
+68679	27420	phong vị, nét thú vị	2	f
+68680	27420	tiết lộ; thức trắng (đêm)	3	t
+68681	27421	sự cộng hưởng, đồng tình	0	f
+68682	27421	chế nhạo	1	t
+68683	27421	tầm nhìn, quang cảnh	2	f
+68684	27421	phục quyền	3	f
+68685	27422	con dấu, dấu ấn	0	f
+68686	27422	xứng đáng	1	t
+68687	27422	nghiêm túc thái quá	2	f
+68688	27422	tốt, thuận lợi	3	f
+68689	27423	phong vị, nét thú vị	0	f
+68690	27423	đáng mong đợi, lý tưởng	1	f
+68691	27423	mức độ nghiêm trọng	2	f
+68692	27423	sai lầm, nhầm	3	t
+68693	27424	ân huệ, lợi ích	0	f
+68694	27424	nhượng bộ lẫn nhau	1	t
+68695	27424	côn trùng	2	f
+68696	27424	biểu tượng	3	f
+68697	27425	tuyên (án), thông báo chính thức	0	t
+68698	27425	quỹ đạo, đường ray	1	f
+68699	27425	dấu hiệu, triệu chứng	2	f
+68700	27425	mò mẫm	3	f
+68701	27426	ma sát, xích mích	0	f
+68702	27426	tính toán lỗ lãi	1	f
+68703	27426	trở mặt, quay ra lấn lướt	2	t
+68704	27426	liên tục nhiều ngày	3	f
+68705	27427	an toàn, không có gì đáng chê	0	f
+68706	27427	trời đất, vũ trụ	1	f
+68707	27427	tiềm ẩn	2	f
+68708	27427	phức tạp, chằng chịt	3	t
+68709	27428	phủ nhận, xóa bỏ	0	t
+68710	27428	biểu đồ	1	f
+68711	27428	diện mạo, khía cạnh	2	f
+68712	27428	kẻ hầu, gã (thân mật/khinh miệt)	3	f
+68713	27429	cấm đoán	0	f
+68714	27429	tự phụ, tự mãn	1	t
+68715	27429	sự huấn luyện, đào tạo	2	f
+68716	27429	khoa tai mũi họng	3	f
+68717	27430	vượt quá	0	t
+68718	27430	tự khen mình	1	f
+68719	27430	vừa phải	2	f
+68720	27430	đổi mới sáng tạo	3	f
+68721	27431	dồn vào	0	t
+68722	27431	ông chủ; chồng (thân mật)	1	f
+68723	27431	thương nhân (cách đọc cổ)	2	f
+68724	27431	gót chân	3	f
+68725	27432	e sợ, rụt rè	0	t
+68726	27432	giám sát	1	f
+68727	27432	tình hình thực tế	2	f
+68728	27432	khoảng giữa	3	f
+68729	27433	lời khuyên can	0	f
+68730	27433	rối; lằng nhằng	1	f
+68731	27433	sự phóng đại	2	f
+68732	27433	ép buộc, đùn đẩy	3	t
+68733	27434	tóm tắt	0	t
+68734	27434	ban phước, ban ơn	1	f
+68735	27434	sự tê liệt	2	f
+68736	27434	đại khái, nhìn chung	3	f
+68737	27435	sự ngạt thở	0	f
+68738	27435	mâu thuẫn, không khớp	1	t
+68739	27435	đáng ưa thích, dễ chịu	2	f
+68740	27435	ánh đèn sân khấu, sự chú ý	3	f
+68741	27436	nản lòng	0	t
+68742	27436	một người	1	f
+68743	27436	hiệu quả, tác dụng	2	f
+68744	27436	sự tồn vong	3	f
+68745	27437	ngân nga	0	t
+68746	27437	héo rũ; ủ rũ	1	f
+68747	27437	phú hào, triệu phú	2	f
+68748	27437	sự lựa chọn, thông qua	3	f
+68749	27438	hô vang, tụng niệm; đề xướng	0	f
+68750	27438	trấn áp	1	f
+68751	27438	vàng ròng	2	f
+68752	27438	lo phiền, bận tâm	3	t
+68753	27439	làm trầm trọng thêm	0	t
+68754	27439	ngâm nga, khe khẽ hát	1	f
+68755	27439	cung cầu	2	f
+68756	27439	cơ sở chứng minh, bằng chứng hậu thuẫn	3	f
+68757	27440	quyền tự quyết, tùy ý quyết định	0	f
+68758	27440	vỡ vụn thành mảnh nhỏ	1	f
+68759	27440	cải cách	2	f
+68760	27440	nghe lỏm	3	t
+68761	27441	khởi đầu, căn nguyên	0	f
+68762	27441	sự vượt trội	1	f
+68763	27441	dỗi, hờn	2	f
+68764	27441	bó tay, buông xuôi	3	t
+68765	27442	sự bị thương	0	f
+68766	27442	lý lịch, lịch sử làm việc	1	f
+68767	27442	bãi biển	2	f
+68768	27442	đi tới, bước vào (giai đoạn)	3	t
+68769	27443	mạch (đập)	0	f
+68770	27443	kết thúc, tổng kết	1	t
+68771	27443	một lớp, đơn giản	2	f
+68772	27443	cho nằm xuống, ủ men	3	f
+68773	27444	mòn đi	0	t
+68774	27444	dầu thô	1	f
+68775	27444	bình phương, vuông (đơn vị đo)	2	f
+68776	27444	lang thang, phiêu bạt	3	f
+68777	27445	sự hộ tống, bảo vệ	0	f
+68778	27445	giằng co, tranh chấp	1	t
+68779	27445	sợ hãi	2	f
+68780	27445	trường cao đẳng (2 năm)	3	f
+68781	27446	vật dụng, đồ dùng	0	f
+68782	27446	cơ sở hạ tầng	1	f
+68783	27446	lảng tránh, quay đi	2	t
+68784	27446	doanh nghiệp vừa và nhỏ	3	f
+68785	27447	làm tắt, để mất (lửa, nụ cười)	0	t
+68786	27447	giãy giụa, vùng vẫy	1	f
+68787	27447	họ, dòng họ	2	f
+68788	27447	vén lên, xắn lên (tay áo)	3	f
+68789	27448	nhầm lẫn, sai sót	0	f
+68790	27448	chất vấn dồn dập	1	t
+68791	27448	nông nổi, hời hợt	2	f
+68792	27448	sự xem xét kỹ lưỡng	3	f
+68793	27449	ông chủ; chồng (thân mật)	0	f
+68794	27449	sự phân đoạn, dấu chấm câu	1	f
+68795	27449	sự phòng cháy	2	f
+68796	27449	giữ lại, giới hạn	3	t
+68797	27450	nhiệm vụ, vấn đề cần giải quyết	0	f
+68798	27450	sự trở về Tokyo	1	f
+68799	27450	sự chuẩn bị, thu xếp	2	f
+68800	27450	giữ được (mạng sống)	3	t
+68801	27451	sự hạ cánh	0	f
+68802	27451	tiếng hét	1	f
+68803	27451	ngoại tệ, hàng nhập khẩu	2	f
+68804	27451	tự đứng ra nhận	3	t
+68805	27452	hoành hành	0	t
+68806	27452	che chở, bênh vực	1	f
+68807	27452	thư ký riêng	2	f
+68808	27452	khoan dung, độ lượng	3	f
+68809	27453	lá rụng	0	f
+68810	27453	tiến triển thuận lợi	1	t
+68811	27453	thử thách, đương đầu	2	f
+68812	27453	xe thể thao	3	f
+68813	27454	ngày ấn định	0	f
+68814	27454	bị vấy bẩn, ô uế	1	f
+68815	27454	rối ren	2	f
+68816	27454	chà đạp	3	t
+68817	27455	quyết định dứt khoát	0	f
+68818	27455	cắm hoa	1	f
+68819	27455	vung; phát huy	2	t
+68820	27455	nhìn sót, bỏ sót	3	f
+68821	27456	cung điện	0	f
+68822	27456	mưu đồ, lên kế hoạch ngầm	1	f
+68823	27456	khiêm nhường hạ mình	2	t
+68824	27456	trở nên thân thiết	3	f
+68825	27457	gần gũi, quen thuộc	0	f
+68826	27457	không thể đứng nhìn	1	t
+68827	27457	dài dòng, lê thê	2	f
+68828	27457	để lộ, làm rò rỉ	3	f
+68829	27458	xem thường	0	t
+68830	27458	nguồn trích dẫn	1	f
+68831	27458	dễ dàng, đơn giản	2	f
+68832	27458	bệnh ung thư	3	f
+68833	27459	lảng tránh, quay đi	0	f
+68834	27459	kế tiếp, sau đó	1	f
+68835	27459	gặm nhấm, ăn mòn	2	t
+68836	27459	sự quyết tâm, sẵn sàng đón nhận	3	f
+68837	27460	sự phù hợp, trùng khớp	0	f
+68838	27460	âm ấm; nửa vời, không kiên quyết	1	f
+68839	27460	ém nhẹm	2	t
+68840	27460	tạm dừng; tư thế tạo dáng	3	f
 \.
 
 
@@ -92301,11 +95731,11 @@ COPY public."HomeFeatureSection" (id, slug, title, "sortOrder", "createdAt", "up
 -- Data for Name: HomeStat; Type: TABLE DATA; Schema: public; Owner: nihongo
 --
 
-COPY public."HomeStat" (id, value, label, suffix, "sortOrder", "createdAt", "updatedAt") FROM stdin;
-5	50	Bài học	+	0	2026-08-26 11:03:47.759	2026-08-26 11:03:47.759
-6	2000	Từ vựng	+	1	2026-08-26 11:03:47.759	2026-08-26 11:03:47.759
-7	512	Kanji		2	2026-08-26 11:03:47.759	2026-08-26 11:03:47.759
-8	N5→N1	JLPT		3	2026-08-26 11:03:47.759	2026-08-26 11:03:47.759
+COPY public."HomeStat" (id, value, label, suffix, "sortOrder", "createdAt", "updatedAt", metric) FROM stdin;
+8	N5→N1	JLPT		3	2026-08-26 11:03:47.759	2026-08-26 11:03:47.759	\N
+6	2000	Từ vựng		0	2026-08-26 11:03:47.759	2026-11-02 00:47:19.885	vocab
+7	512	Kanji		1	2026-08-26 11:03:47.759	2026-11-02 00:47:19.886	kanji
+5	0	Mẫu ngữ pháp		2	2026-08-26 11:03:47.759	2026-11-02 00:47:19.886	grammar
 \.
 
 
@@ -110775,6 +114205,7 @@ COPY public."Lesson" (id, "lessonNumber", title, "createdAt", "updatedAt", descr
 16084	25105	Sou Matome N5 · Tuần 1 · Ngày 5 — N（địa điểm）で V · N（phương tiện）で	2026-09-26 06:05:15.627	2026-09-26 06:05:15.627	Tuần 1 · Bản thân & gia đình（自分と家族）	N5	\N	105	SOUMATOME
 17000	51192	N1 · Từ vựng bổ sung · Phó từ & từ nối (2/3)	2026-10-26 06:31:48.751	2026-10-26 06:31:48.751	\N	N1	\N	51192	\N
 17001	51193	N1 · Từ vựng bổ sung · Phó từ & từ nối (3/3)	2026-10-26 06:31:48.751	2026-10-26 06:31:48.751	\N	N1	\N	51193	\N
+17002	51201	N1 · Từ vựng bổ sung 2 · Khái niệm & đời sống (1/4)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51201	\N
 16085	25106	Sou Matome N5 · Tuần 1 · Ngày 6 — N（người）と · N1 と N2 ／ N1 や N2（など）	2026-09-26 06:05:15.835	2026-09-26 06:05:15.835	Tuần 1 · Bản thân & gia đình（自分と家族）	N5	\N	106	SOUMATOME
 16086	25201	Sou Matome N5 · Tuần 2 · Ngày 1 — なに／だれ／どこ／いつ／いくら · N が あります	2026-09-26 06:05:16.006	2026-09-26 06:05:16.006	Tuần 2 · Nhà cửa & đồ vật（家と物）	N5	\N	201	SOUMATOME
 16087	25202	Sou Matome N5 · Tuần 2 · Ngày 2 — N が います	2026-09-26 06:05:16.203	2026-09-26 06:05:16.203	Tuần 2 · Nhà cửa & đồ vật（家と物）	N5	\N	202	SOUMATOME
@@ -111237,6 +114668,23 @@ COPY public."Lesson" (id, "lessonNumber", title, "createdAt", "updatedAt", descr
 5994	943	N1 · Bài tập bổ sung (bài 943)	2026-09-13 00:59:14.192	2026-09-27 16:55:45.965	\N	N1	\N	9430	\N
 5995	944	N1 · Bài tập bổ sung (bài 944)	2026-09-13 00:59:14.245	2026-09-27 16:55:45.968	\N	N1	\N	9440	\N
 5999	948	N1 · Bài tập bổ sung (bài 948)	2026-09-13 00:59:14.432	2026-09-27 16:55:45.98	\N	N1	\N	9480	\N
+17003	51202	N1 · Từ vựng bổ sung 2 · Khái niệm & đời sống (2/4)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51202	\N
+17004	51203	N1 · Từ vựng bổ sung 2 · Khái niệm & đời sống (3/4)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51203	\N
+17021	51204	N1 · Từ vựng bổ sung 2 · Khái niệm & đời sống (4/4)	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51204	\N
+17005	51211	N1 · Từ vựng bổ sung 2 · Tính từ & trạng thái (1/2)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51211	\N
+17006	51212	N1 · Từ vựng bổ sung 2 · Tính từ & trạng thái (2/2)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51212	\N
+17007	51221	N1 · Từ vựng bổ sung 2 · Phó từ & từ nối	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51221	\N
+17008	51231	N1 · Từ vựng bổ sung 2 · Thành ngữ bốn chữ	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51231	\N
+17009	51241	N1 · Từ vựng bổ sung 2 · Từ ngoại lai	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51241	\N
+17010	51251	N1 · Từ vựng bổ sung 2 · Văn chương & ngôn ngữ	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51251	\N
+17011	51261	N1 · Từ vựng bổ sung 2 · Xã hội, kinh tế & pháp luật (1/3)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51261	\N
+17012	51262	N1 · Từ vựng bổ sung 2 · Xã hội, kinh tế & pháp luật (2/3)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51262	\N
+17013	51263	N1 · Từ vựng bổ sung 2 · Xã hội, kinh tế & pháp luật (3/3)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51263	\N
+17014	51271	N1 · Từ vựng bổ sung 2 · Động từ (1/5)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51271	\N
+17015	51272	N1 · Từ vựng bổ sung 2 · Động từ (2/5)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51272	\N
+17016	51273	N1 · Từ vựng bổ sung 2 · Động từ (3/5)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51273	\N
+17017	51274	N1 · Từ vựng bổ sung 2 · Động từ (4/5)	2026-11-02 01:05:02.763	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51274	\N
+17035	51275	N1 · Từ vựng bổ sung 2 · Động từ (5/5)	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	Từ N1 bổ sung (đợt 2) — các từ còn thiếu so với mục tiêu ~9.700 từ.	N1	\N	51275	\N
 \.
 
 
@@ -111376,6 +114824,551 @@ COPY public."MockExamQuestion" (id, "templateId", "sectionId", type, question, "
 66	13	listening	listening	何を伝えていますか。	感謝の気持ち	この度は、格別のご配慮を賜り、誠にありがとうございました。	\N	11	2026-09-13 05:31:49.041	2026-09-13 05:31:49.041	\N
 67	13	listening	listening	何を伝えていますか。	開催を中止すること	諸般の事情により、開催を見合わせることといたしました。	\N	12	2026-09-13 05:31:49.041	2026-09-13 05:31:49.041	\N
 68	13	listening	listening	何をお願いしていますか。	もう少し待つこと	恐縮ですが、今しばらくお待ちいただけますでしょうか。	\N	13	2026-09-13 05:31:49.041	2026-09-13 05:31:49.041	\N
+69	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n交渉は予想以上に［円滑］に進んだ。	えんかつ	\N	\N	1	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+70	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n政府は早急に必要な［措置］をとるべきだ。	そち	\N	\N	2	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+71	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n長年の［懸案］がようやく解決した。	けんあん	\N	\N	3	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+72	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n彼は相手の要求をきっぱりと［拒んだ］。	こばんだ	\N	\N	4	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+73	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n今回の件は［穏便］に済ませたい。	おんびん	\N	\N	5	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+74	14	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n駅前にはまだ昔の町の［面影］が残っている。	おもかげ	\N	\N	6	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+75	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n新製品の売れ行きは（　）で、来月から増産することが決まった。	好調	\N	\N	7	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+76	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は自分の非を認めず、最後まで（　）を張り通した。	意地	\N	\N	8	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+77	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n予算が削られたため、計画の（　）を余儀なくされた。	縮小	\N	\N	9	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+78	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n突然スピーチを頼まれて（　）したが、何とか挨拶を終えることができた。	当惑	\N	\N	10	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+79	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n双方が少しずつ（　）、ようやく合意に達した。	歩み寄って	\N	\N	11	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+80	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n転校したばかりの娘は、新しいクラスにも（　）なじんだようだ。	すんなり	\N	\N	12	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+81	14	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n小さな不正を見逃すことは、結果として不正を（　）することになりかねない。	助長	\N	\N	13	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+82	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n新人の田中さんは、人前に出るといつも［おどおど］している。	自信がなさそうにしている	\N	\N	14	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+83	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n無駄な出費は［極力］避けたいと思っている。	できるだけ	\N	\N	15	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+84	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n予算の配分をめぐって、会議は［紛糾］した。	混乱した	\N	\N	16	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+85	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n事故の原因についての彼の説明は［曖昧］だった。	はっきりしなかった	\N	\N	17	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+86	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n引っ越しの準備は［おおむね］終わった。	だいたい	\N	\N	18	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+87	14	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼女の仕事ぶりには［そつがない］。	手落ちがない	\N	\N	19	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+88	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n打開	両国は粘り強い話し合いによって、行き詰まった事態の打開を図った。	\N	\N	20	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+89	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\nひとまず	雨もやんで電車も動き出したので、ひとまず安心した。	\N	\N	21	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+90	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n手際	彼女は手際よく、あっという間に五人分の料理を作った。	\N	\N	22	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+91	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n見合わせる	強風の影響で、電車は現在運転を見合わせている。	\N	\N	23	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+92	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\nおろそか	仕事に夢中になって、家族との時間をおろそかにしてはいけない。	\N	\N	24	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+93	14	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n踏まえる	前回の失敗を踏まえて、計画を一から立て直した。	\N	\N	25	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+94	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼の実力（　）、この程度の成功は当然のことだ。	をもってすれば	\N	\N	26	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+95	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n社長の許可がない限り、会社のお金は一円（　）使うことはできない。	たりとも	\N	\N	27	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+96	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n久しぶりに帰省すると、祖母は私の顔を見る（　）泣き出した。	なり	\N	\N	28	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+97	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n周りがどんなに反対しよう（　）、私はこの道を進むつもりだ。	と	\N	\N	29	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+98	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼の無責任な発言には、怒り（　）あきれてしまった。	を通り越して	\N	\N	30	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+99	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n一流の料理人（　）、素材選びの段階から決して妥協しない。	ともなれば	\N	\N	31	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+100	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nこの作品は、彼女の長年の努力（　）完成しなかっただろう。	なくしては	\N	\N	32	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+101	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n一度試験に落ちたからといって、そんなに落ち込む（　）。	ことはない	\N	\N	33	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+102	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は医者に止められている（　）、毎晩お酒を飲んでいる。	にもかかわらず	\N	\N	34	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+103	14	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n先生が（　）本を、私もぜひ読んでみたいと思います。	お書きになった	\N	\N	35	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+104	14	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n彼は　＿＿　＿＿　★　＿＿　人ではない。\n（1 一度の　2 失敗で　3 簡単に　4 諦める）	簡単に	\N	\N	36	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+105	14	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n環境問題は、＿＿　＿＿　★　＿＿　取り組むべき課題だ。\n（1 世界全体で　2 一国　3 だけでなく　4 の問題）	だけでなく	\N	\N	37	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+106	14	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n部長の　＿＿　★　＿＿　＿＿、来週の会議は延期された。\n（1 に　2 急な　3 伴い　4 出張）	出張	\N	\N	38	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+107	14	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\nいくら　＿＿　＿＿　★　＿＿、約束を破るのはよくない。\n（1 から　2 忙しい　3 と　4 いって）	と	\N	\N	39	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+108	14	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\nこの映画は　＿＿　★　＿＿　＿＿　感動的な作品だ。\n（1 涙なしには　2 見られない　3 ほど　4 大人でも）	涙なしには	\N	\N	40	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+109	14	reading	multiple_choice	【文章】\n「便利さ」は時間を生み出すと言われる。しかし、生み出された時間を私たちは何に使っているだろうか。多くの人は、浮いた時間にまた別の用事を詰め込み、以前より忙しくなっている。便利さそのものが悪いのではない。問題は、空いた時間を「埋めなければならないもの」と考えてしまう私たちの側にあるのではないだろうか。\n\n質問：筆者の考えに合うものはどれか。	空いた時間を何かで埋めようとする考え方に問題がある。	\N	\N	41	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+110	14	reading	multiple_choice	【文章】\n（社内メール）\n営業部各位\n来週月曜日の定例会議は、会議室の工事のため、第二会議室に場所を変更して行います。開始時刻に変更はありません。なお、当日配布予定の資料は、事前に共有フォルダに掲載しますので、各自印刷のうえご持参ください。\n総務課　山田\n\n質問：このメールで最も伝えたいことは何か。	会議の場所が変わること、資料は各自で印刷して持ってくること	\N	\N	42	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+111	14	reading	multiple_choice	【文章】\n子どもに「失敗してもいい」と言うのは簡単だ。だが、大人が失敗を笑ったり責めたりしていれば、その言葉は届かない。子どもは言葉よりも、大人の振る舞いを見て学ぶ。失敗を許す空気は、言葉ではなく、大人自身が失敗とどう向き合うかによって作られるのである。\n\n質問：筆者によると、失敗を許す空気を作るには何が大切か。	大人自身が失敗にどう向き合うかを示すこと	\N	\N	43	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+112	14	reading	multiple_choice	【文章】\n古い建物を壊して新しくすることは、一見すると合理的だ。しかし、建物には、そこで暮らした人々の記憶が刻まれている。安全性の確保は欠かせないが、何もかもを新しくすることが、町の価値を高めるとは限らない。残すべきものを見極める目が、今、求められている。\n\n質問：筆者の主張として最も適切なものはどれか。	安全に配慮しつつ、残すべき古い建物を見極める必要がある。	\N	\N	44	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+113	14	reading	multiple_choice	【文章】\n近年、「タイパ」という言葉をよく耳にする。タイムパフォーマンス、つまり時間あたりの満足度を重視する考え方だ。映画を倍速で見たり、要約だけを読んだりするのはその典型である。\n限られた時間を有効に使いたいという気持ちは理解できる。しかし、物語の「間」や、何も起こらない場面にこそ、作品の味わいがあることも少なくない。効率よく情報を得ることと、作品を味わうことは、本来別のものなのだ。\nすべてを速くこなそうとすると、私たちは「結果」だけを手に入れ、「過程」を楽しむ機会を失ってしまう。時には、あえてゆっくり時間を使う贅沢があってもよいのではないか。\n\n質問：筆者が「タイパ」を重視する見方について述べていることはどれか。	気持ちは理解できるが、作品を味わう機会を失うおそれがある。	\N	\N	45	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+114	14	reading	multiple_choice	【文章】\n近年、「タイパ」という言葉をよく耳にする。タイムパフォーマンス、つまり時間あたりの満足度を重視する考え方だ。映画を倍速で見たり、要約だけを読んだりするのはその典型である。\n限られた時間を有効に使いたいという気持ちは理解できる。しかし、物語の「間」や、何も起こらない場面にこそ、作品の味わいがあることも少なくない。効率よく情報を得ることと、作品を味わうことは、本来別のものなのだ。\nすべてを速くこなそうとすると、私たちは「結果」だけを手に入れ、「過程」を楽しむ機会を失ってしまう。時には、あえてゆっくり時間を使う贅沢があってもよいのではないか。\n\n質問：「何も起こらない場面」について、筆者はどう考えているか。	作品の味わいが生まれる大切な部分になりうる。	\N	\N	46	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+115	14	reading	multiple_choice	【文章】\n近年、「タイパ」という言葉をよく耳にする。タイムパフォーマンス、つまり時間あたりの満足度を重視する考え方だ。映画を倍速で見たり、要約だけを読んだりするのはその典型である。\n限られた時間を有効に使いたいという気持ちは理解できる。しかし、物語の「間」や、何も起こらない場面にこそ、作品の味わいがあることも少なくない。効率よく情報を得ることと、作品を味わうことは、本来別のものなのだ。\nすべてを速くこなそうとすると、私たちは「結果」だけを手に入れ、「過程」を楽しむ機会を失ってしまう。時には、あえてゆっくり時間を使う贅沢があってもよいのではないか。\n\n質問：筆者が最も言いたいことは何か。	効率だけを求めず、ゆっくり過程を楽しむ時間も大切にしたい。	\N	\N	47	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+116	14	reading	multiple_choice	【文章】\nある町の図書館が、閉館時間を夜九時まで延ばしたところ、利用者が大幅に増えたという。増えたのは、仕事帰りの会社員や、部活動を終えた高校生だった。\n図書館の担当者は「本を借りる人が増えただけでなく、館内で勉強したり、ただ静かに過ごしたりする人が増えた」と話す。家でも職場でも学校でもない、一人で落ち着ける場所を求める人が、それだけ多いということだろう。\n図書館は本を貸す場所から、人が居場所を見つける場所へと、役割を広げつつあるのかもしれない。\n\n質問：閉館時間を延ばした結果、どうなったか。	昼間に来られなかった人たちの利用が増えた。	\N	\N	48	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+117	14	reading	multiple_choice	【文章】\nある町の図書館が、閉館時間を夜九時まで延ばしたところ、利用者が大幅に増えたという。増えたのは、仕事帰りの会社員や、部活動を終えた高校生だった。\n図書館の担当者は「本を借りる人が増えただけでなく、館内で勉強したり、ただ静かに過ごしたりする人が増えた」と話す。家でも職場でも学校でもない、一人で落ち着ける場所を求める人が、それだけ多いということだろう。\n図書館は本を貸す場所から、人が居場所を見つける場所へと、役割を広げつつあるのかもしれない。\n\n質問：「それだけ多い」とは、何が多いということか。	一人で落ち着いて過ごせる場所を求める人	\N	\N	49	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+118	14	reading	multiple_choice	【文章】\nある町の図書館が、閉館時間を夜九時まで延ばしたところ、利用者が大幅に増えたという。増えたのは、仕事帰りの会社員や、部活動を終えた高校生だった。\n図書館の担当者は「本を借りる人が増えただけでなく、館内で勉強したり、ただ静かに過ごしたりする人が増えた」と話す。家でも職場でも学校でもない、一人で落ち着ける場所を求める人が、それだけ多いということだろう。\n図書館は本を貸す場所から、人が居場所を見つける場所へと、役割を広げつつあるのかもしれない。\n\n質問：筆者は図書館についてどのように考えているか。	本を貸すだけでなく、人の居場所としての役割も持ち始めている。	\N	\N	50	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+119	14	reading	multiple_choice	【文章】\n「わかりやすさ」が求められる時代である。テレビの解説も、ビジネスの資料も、短く、簡単であることがよしとされる。確かに、わかりやすい説明は親切だ。だが、わかりやすさには落とし穴もある。\n複雑な問題を単純に言い切ってしまうと、本来考えるべき細部や例外が切り捨てられる。聞き手は「わかった」と感じるが、実際には、問題の一面しか理解していないことが多い。しかも、一度わかったつもりになると、人はそれ以上考えようとしなくなる。\n大切なのは、わかりにくいものを、わかりにくいまま引き受ける力ではないだろうか。すぐに答えが出ない問いを前にして、焦らずに考え続けること。それは、情報があふれる現代においてこそ、私たちに求められている態度なのである。\n\n質問：筆者によると、「わかりやすさ」の落とし穴とは何か。	問題の一面しか理解していないのに、わかったと感じてしまうこと	\N	\N	51	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+120	14	reading	multiple_choice	【文章】\n「わかりやすさ」が求められる時代である。テレビの解説も、ビジネスの資料も、短く、簡単であることがよしとされる。確かに、わかりやすい説明は親切だ。だが、わかりやすさには落とし穴もある。\n複雑な問題を単純に言い切ってしまうと、本来考えるべき細部や例外が切り捨てられる。聞き手は「わかった」と感じるが、実際には、問題の一面しか理解していないことが多い。しかも、一度わかったつもりになると、人はそれ以上考えようとしなくなる。\n大切なのは、わかりにくいものを、わかりにくいまま引き受ける力ではないだろうか。すぐに答えが出ない問いを前にして、焦らずに考え続けること。それは、情報があふれる現代においてこそ、私たちに求められている態度なのである。\n\n質問：「わかったつもり」になった人はどうなると述べられているか。	それ以上深く考えようとしなくなる。	\N	\N	52	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+121	14	reading	multiple_choice	【文章】\n「わかりやすさ」が求められる時代である。テレビの解説も、ビジネスの資料も、短く、簡単であることがよしとされる。確かに、わかりやすい説明は親切だ。だが、わかりやすさには落とし穴もある。\n複雑な問題を単純に言い切ってしまうと、本来考えるべき細部や例外が切り捨てられる。聞き手は「わかった」と感じるが、実際には、問題の一面しか理解していないことが多い。しかも、一度わかったつもりになると、人はそれ以上考えようとしなくなる。\n大切なのは、わかりにくいものを、わかりにくいまま引き受ける力ではないだろうか。すぐに答えが出ない問いを前にして、焦らずに考え続けること。それは、情報があふれる現代においてこそ、私たちに求められている態度なのである。\n\n質問：この文章で筆者が最も言いたいことは何か。	すぐに答えの出ない問題を、焦らずに考え続ける態度が大切だ。	\N	\N	53	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+122	14	reading	multiple_choice	【文章】\nA：在宅勤務は、通勤時間がなくなる分、家族と過ごす時間や自分のための時間が増える。集中して作業できるという声も多い。ただし、同僚との何気ない会話が減り、相談しにくくなるという課題もある。\nB：オフィスに集まることの価値は、雑談から生まれるアイデアにある。在宅勤務は効率的に見えるが、新しい発想が生まれにくい。とはいえ、毎日出社する必要はなく、目的に応じて使い分けるのが現実的だ。\n\n質問：AとBの両方が触れている点はどれか。	在宅勤務では、人との何気ないやり取りが減ること	\N	\N	54	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+123	14	reading	multiple_choice	【文章】\nA：在宅勤務は、通勤時間がなくなる分、家族と過ごす時間や自分のための時間が増える。集中して作業できるという声も多い。ただし、同僚との何気ない会話が減り、相談しにくくなるという課題もある。\nB：オフィスに集まることの価値は、雑談から生まれるアイデアにある。在宅勤務は効率的に見えるが、新しい発想が生まれにくい。とはいえ、毎日出社する必要はなく、目的に応じて使い分けるのが現実的だ。\n\n質問：在宅勤務について、AとBはどのような立場をとっているか。	Aは利点と課題を挙げ、Bは目的に応じて出社と使い分けるべきだと述べている。	\N	\N	55	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+124	14	reading	multiple_choice	【文章】\n（市民講座のお知らせ）\n①やさしい写真教室　土曜 10:00〜12:00　受講料 3,000円　定員 15名　※カメラ持参\n②はじめての韓国語　水曜 19:00〜20:30　受講料 5,000円　定員 20名\n③親子料理教室　日曜 13:00〜15:00　受講料 1組 2,000円　定員 10組　※小学生と保護者\n④パソコン基礎　火曜 10:00〜12:00　受講料 4,000円　定員 12名　※パソコン貸出あり\n申込：各講座開始日の2週間前まで（先着順）\n\n質問：平日の夜しか時間がない会社員の林さんが受講できる講座はどれか。	②はじめての韓国語	\N	\N	56	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+176	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n一環	今回の植樹は、町の緑化計画の一環として行われた。	\N	\N	25	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+125	14	reading	multiple_choice	【文章】\n（市民講座のお知らせ）\n①やさしい写真教室　土曜 10:00〜12:00　受講料 3,000円　定員 15名　※カメラ持参\n②はじめての韓国語　水曜 19:00〜20:30　受講料 5,000円　定員 20名\n③親子料理教室　日曜 13:00〜15:00　受講料 1組 2,000円　定員 10組　※小学生と保護者\n④パソコン基礎　火曜 10:00〜12:00　受講料 4,000円　定員 12名　※パソコン貸出あり\n申込：各講座開始日の2週間前まで（先着順）\n\n質問：小学3年生の子どもと一緒に、週末に参加したい。費用はいくらか。	2,000円	\N	\N	57	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+126	14	listening	listening	会社で男の人と女の人が話しています。男の人はこのあとまず何をしなければなりませんか。	資料の宛名を直す	会社で男の人と女の人が話しています。男の人はこのあとまず何をしなければなりませんか。\n男：部長、明日のプレゼンの資料、できました。\n女：ありがとう。あ、でも、先方の担当者が変わったって連絡があったの。宛名だけ直してくれる？\n男：わかりました。印刷はそのあとでいいですか。\n女：印刷は私がやっておくから、直したらデータを送って。それから、会議室の予約も確認しておいてね。\n男：会議室は昨日予約しました。\n女：そう、じゃあ大丈夫ね。\n男の人はこのあとまず何をしなければなりませんか。	\N	58	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+127	14	listening	listening	大学で女の学生と先生が話しています。女の学生は何を準備しなければなりませんか。	参考文献のリスト	大学で女の学生と先生が話しています。女の学生は何を準備しなければなりませんか。\n女：先生、来週の発表のことなんですが、グラフは配布資料に入れたほうがいいでしょうか。\n男：そうだね、スライドで見せるなら、資料には入れなくていいよ。それより、参考文献のリストは必ずつけてね。\n女：はい。発表の原稿も提出しますか。\n男：原稿はいらない。発表時間は十五分だから、それだけ守ってください。\n女の学生は何を準備しなければなりませんか。	\N	59	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+128	14	listening	listening	市役所で男の人と係の人が話しています。男の人はこのあとどこへ行きますか。	二階の市民課	市役所で男の人と係の人が話しています。男の人はこのあとどこへ行きますか。\n男：すみません、住所変更の手続きをしたいんですが。\n女：はい、転入届ですね。こちらは二階の市民課になります。\n男：あ、それと、子どもの保育園の申し込みもしたいんですが。\n女：保育園のほうは三階の子ども課ですが、転入届が済んでからでないと申し込めないんです。\n男：わかりました。じゃあ、先にそっちを済ませます。\n男の人はこのあとどこへ行きますか。	\N	60	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+129	14	listening	listening	電話で女の人と男の人が話しています。女の人は何時に店に行きますか。	十二時半ごろ	電話で女の人と男の人が話しています。女の人は何時に店に行きますか。\n女：もしもし、修理をお願いしていた時計なんですが、今日受け取れますか。\n男：はい、もう仕上がっております。本日は午後七時まで営業しております。\n女：仕事が六時に終わるので、六時半ごろでも大丈夫ですか。\n男：申し訳ございません、受け取りの受付は閉店の一時間前までとなっておりまして。\n女：そうですか。じゃあ、昼休みに行きます。十二時半ごろに。\n男：かしこまりました。\n女の人は何時に店に行きますか。	\N	61	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+130	14	listening	listening	会社で女の人と男の人が話しています。女の人は企画書をどう直しますか。	目的のすぐ後に費用の説明を入れる	会社で女の人と男の人が話しています。女の人は企画書をどう直しますか。\n女：課長、企画書を見ていただけましたか。\n男：うん、内容はいいと思う。ただ、費用の説明が最後のほうにあって、見落とされそうだね。\n女：では、費用を最初のページに移しましょうか。\n男：いや、最初は目的のままでいい。目的のすぐ後に費用を持ってきて。\n女：わかりました。\n女の人は企画書をどう直しますか。	\N	62	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+131	14	listening	listening	男の人と女の人が話しています。女の人はどうして引っ越すことにしましたか。	仕事をするための部屋が欲しいから	男の人と女の人が話しています。女の人はどうして引っ越すことにしましたか。\n男：引っ越すんだって？今のマンション、駅から近くて便利だったのに。\n女：うん、便利なのはよかったんだけどね。家賃が上がるわけでもないし。\n男：じゃあ、どうして？\n女：在宅勤務が増えたでしょう。仕事用の部屋がどうしても欲しくて。\n男：なるほどね。\n女の人はどうして引っ越すことにしましたか。	\N	63	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+132	14	listening	listening	ラジオで料理研究家が話しています。料理研究家は、おいしいご飯を炊くために最も大切なことは何だと言っていますか。	炊く前にお米に十分水を吸わせること	ラジオで料理研究家が話しています。料理研究家は、おいしいご飯を炊くために最も大切なことは何だと言っていますか。\n女：おいしいご飯というと、お米の種類や炊飯器が気になる方が多いと思います。もちろんそれも大事ですが、私が一番大切だと思うのは、お米に水を十分吸わせることです。洗ったらすぐ炊くのではなく、夏なら三十分、冬なら一時間ほど水につけておく。これだけで、驚くほど味が変わりますよ。\n料理研究家は、おいしいご飯を炊くために最も大切なことは何だと言っていますか。	\N	64	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+133	14	listening	listening	男の人と女の人が映画について話しています。男の人はこの映画のどこが一番よかったと言っていますか。	言葉なしで気持ちが伝わる場面	男の人と女の人が映画について話しています。男の人はこの映画のどこが一番よかったと言っていますか。\n女：昨日の映画、どうだった？映像がきれいだって評判だけど。\n男：うん、確かに映像はきれいだったし、音楽もよかった。でも、僕が一番心に残ったのは、主人公の父親が最後に何も言わずに息子を見送る場面かな。セリフがないのに、気持ちが全部伝わってきたんだ。\n女：へえ、私も見に行こうかな。\n男の人はこの映画のどこが一番よかったと言っていますか。	\N	65	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+177	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n雨の中、傘も差さず（　）、彼は駅まで走っていった。	に	\N	\N	26	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+134	14	listening	listening	会社で男の人と女の人が話しています。新しいシステムの導入が遅れている一番の理由は何ですか。	データを移す作業に時間がかかっているから	会社で男の人と女の人が話しています。新しいシステムの導入が遅れている一番の理由は何ですか。\n男：新しいシステム、まだ使えないんですか。予定では先月からでしたよね。\n女：ええ。予算は通っているし、業者の準備もできているんです。\n男：じゃあ何が問題なんですか。\n女：今のシステムからデータを移すのに、思ったより時間がかかっていて。古いデータの形式がばらばらなんですよ。\n男：そうでしたか。\n新しいシステムの導入が遅れている一番の理由は何ですか。	\N	66	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+135	14	listening	listening	女の人が講演会で話しています。女の人は、ボランティアを続けられた理由は何だと言っていますか。	一緒に活動する仲間がいたから	女の人が講演会で話しています。女の人は、ボランティアを続けられた理由は何だと言っていますか。\n女：私が地域の子どもたちの学習支援を始めて、もう十年になります。最初は、時間がない、自分に教えられるのかと不安ばかりでした。それでも続けられたのは、同じ思いを持つ仲間がいたからです。一人だったら、きっと途中でやめていたと思います。\n女の人は、ボランティアを続けられた理由は何だと言っていますか。	\N	67	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+136	14	listening	listening	テレビで専門家が話しています。専門家は何について話していますか。	寝る前の画面の光が睡眠に与える影響	テレビで専門家が話しています。\n男：最近、夜遅くまでスマートフォンを見ている人が増えています。画面の光は、脳に昼間だと勘違いさせ、眠りに必要なホルモンの分泌を妨げます。その結果、寝つきが悪くなったり、眠りが浅くなったりするのです。寝る一時間前には画面を見るのをやめ、部屋の明かりも少し暗くすることをおすすめします。\n専門家は何について話していますか。	\N	68	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+137	14	listening	listening	大学の授業で先生が話しています。先生の話のテーマは何ですか。	多数決の問題点と少数意見を聞く大切さ	大学の授業で先生が話しています。\n女：私たちは「多数決」を公平な決め方だと考えがちです。しかし、多数決では、少数の人の強い意見が反映されにくいという問題があります。例えば、三人がわずかに賛成し、二人が強く反対している場合、多数決では賛成に決まります。大切なのは、結論を出す前に、少数意見を十分に聞く過程なのです。\n先生の話のテーマは何ですか。	\N	69	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+138	14	listening	listening	男の人が会社の朝礼で話しています。男の人が最も伝えたいことは何ですか。	忙しくても基本的な確認を怠らないでほしい	男の人が会社の朝礼で話しています。\n男：先月、取引先から苦情がありました。原因を調べると、小さな確認漏れが重なったことがわかりました。一人ひとりは「これくらい大丈夫だろう」と思っていたのです。忙しいときこそ、基本の確認を省かないでください。小さなミスは、重なると大きな問題になります。\n男の人が最も伝えたいことは何ですか。	\N	70	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+139	14	listening	listening	ラジオで女の人が話しています。女の人は、読書についてどう考えていますか。	合わない本は途中でやめてもいい	ラジオで女の人が話しています。\n女：本を読むなら、最後まで読み通さなければいけないと思っていませんか。私は、合わないと感じたら途中でやめてもいいと思っています。無理に読み続けて本が嫌いになるよりも、面白いと思える一冊に出会うことのほうが、ずっと大切ですから。\n女の人は、読書についてどう考えていますか。	\N	71	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+140	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	それが、急に今日中に必要になったらしいんです。	この書類、明日まででいいって言ってなかったっけ？	\N	72	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+141	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうですか。では、また改めて伺います。	せっかく来てもらったのに、あいにく部長は外出しておりまして。	\N	73	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+142	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ええ、教えたことをすぐ実践できるんですよ。	新人の佐藤さん、思ったよりずっと飲み込みが早いね。	\N	74	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+143	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	でも、週末だから念のため予約しておこうよ。	あの店、予約しないと入れないこともないんじゃない？	\N	75	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+144	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	申し訳ありません。次回から前日までにお送りします。	会議の資料、もう少し早くいただけると助かるんですが。	\N	76	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+145	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうだよね。何かあったのかな。	山田さんに限って、約束を忘れるなんてことはないと思うけど。	\N	77	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+146	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ありがとうございます。精一杯やらせていただきます。	このプロジェクト、君に任せようと思うんだが、どうかな。	\N	78	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+147	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	いえいえ、こちらこそお時間をいただいてありがとうございます。	雨の中、わざわざお越しいただいて恐縮です。	\N	79	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+148	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうなんだ。評判ほどじゃなかったんだね。	あのレストラン、高いばかりで大しておいしくなかったよ。	\N	80	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+149	14	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	もう一度、こちらから確認の連絡を入れてみましょうか。	例の件、先方からまだ返事がないんだけど、どうしたものかね。	\N	81	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+150	14	listening	listening	家族三人が旅行の行き先について話しています。三人はどこへ行くことにしましたか。	山の温泉	家族三人が旅行の行き先について話しています。\n父：今年の夏休み、どこに行こうか。候補は、海の近くのホテル、山の温泉、それから都会のテーマパークだね。\n母：海はいいけど、去年も行ったわよね。\n娘：私はテーマパークがいい！でも、夏は混んでて暑いかな。\n父：温泉なら涼しいし、ゆっくりできるよ。近くに川遊びができる場所もあるらしい。\n娘：川遊びできるなら、そこでもいいよ。\n母：じゃあ決まりね。\n三人はどこへ行くことにしましたか。	\N	82	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+151	14	listening	listening	会社で上司と部下二人が、新入社員の研修方法について話しています。どの方法に決めましたか。	先輩社員が一対一で教える	会社で上司と部下二人が、新入社員の研修方法について話しています。\n上司：今年の研修、どうしようか。案は三つ。外部の講師を呼ぶ、先輩社員が一対一で教える、オンライン教材を使う。\n部下A：外部講師は質が高いですが、費用がかかりますね。\n部下B：オンライン教材は安いですけど、質問しにくいという声がありました。\n部下A：先輩が教える方法なら、職場にもすぐなじめると思います。先輩の負担は増えますが。\n上司：負担は業務を調整して減らそう。職場になじむことを一番に考えたいからね。それでいこう。\nどの方法に決めましたか。	\N	83	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+152	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n景気の回復は依然として［緩慢］だ。	かんまん	\N	\N	1	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+153	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n彼の提案は会議で［一蹴］された。	いっしゅう	\N	\N	2	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+154	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n社長は記者の質問に［憤然］と席を立った。	ふんぜん	\N	\N	3	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+155	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n彼女の演技には観客も［圧倒］された。	あっとう	\N	\N	4	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+156	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n経費を［賄う］ために、寄付を募った。	まかなう	\N	\N	5	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+157	15	kanji	multiple_choice	次の文の［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n彼は人の意見に［惑わされる］ことがない。	まどわされる	\N	\N	6	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+158	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n会議では、賛成と反対の意見が（　）し、結論が出なかった。	拮抗	\N	\N	7	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+159	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n新しい法律の（　）は来年四月の予定だ。	施行	\N	\N	8	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+160	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は細かい作業を（　）こなすので、上司からの信頼も厚い。	黙々と	\N	\N	9	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+161	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n事故の原因は、まだ（　）されていない。	解明	\N	\N	10	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+162	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n長引く不況で、多くの中小企業が（　）に立たされている。	苦境	\N	\N	11	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+163	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼の話はいつも（　）が長く、なかなか本題に入らない。	前置き	\N	\N	12	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+164	15	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n計画の細部については、担当者の（　）に任せることにした。	裁量	\N	\N	13	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+165	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼は［とっさに］ハンドルを右に切った。	瞬間的に	\N	\N	14	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+166	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\nこの件については、すでに［了承］を得ています。	承知してもらうこと	\N	\N	15	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+167	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼の言うことは、いつも［つじつまが合わない］。	話の筋が通らない	\N	\N	16	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+168	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼女は［ひたむきに］練習を続けた。	一生懸命に	\N	\N	17	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+169	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n会社の業績は［にわかに］悪化した。	急に	\N	\N	18	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+170	15	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\nその説明では、どうも［腑に落ちない］。	納得できない	\N	\N	19	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+171	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n発足	地域の高齢者を支援するための新しい団体が発足した。	\N	\N	20	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+172	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\nまちまち	同じ質問をしても、人によって答えはまちまちだった。	\N	\N	21	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+173	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n心当たり	財布をなくしたが、どこで落としたのか心当たりがない。	\N	\N	22	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+174	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n取り留める	事故に遭ったが、すぐに手術を受けて一命を取り留めた。	\N	\N	23	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+175	15	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\nおおらか	彼はおおらかな性格で、細かいことは気にしない。	\N	\N	24	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+178	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n試合に負けた悔しさ（　）、選手たちは涙を流した。	のあまり	\N	\N	27	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+179	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nこの病気は、早期に発見（　）、治療は難しくない。	しさえすれば	\N	\N	28	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+180	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n子どもでも（　）、こんな簡単な問題が解けないはずがない。	あるまいし	\N	\N	29	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+181	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼女の歌声は、聞く人の心を癒やさず（　）。	にはおかない	\N	\N	30	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+182	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n長年の研究（　）、ついに新しい薬が完成した。	の末に	\N	\N	31	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+183	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は会社を経営する（　）、大学で講師も務めている。	かたわら	\N	\N	32	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+184	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n開会式は、市長のあいさつ（　）始まった。	をもって	\N	\N	33	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+185	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n弟は、さんざん遊んだ（　）、宿題を一つもやっていなかった。	あげく	\N	\N	34	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+186	15	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nお忙しいところ恐縮ですが、ご確認（　）幸いです。	いただければ	\N	\N	35	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+187	15	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\nこの仕事は　＿＿　＿＿　★　＿＿　できるものではない。\n（1 経験の　2 人に　3 簡単に　4 浅い）	人に	\N	\N	36	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+188	15	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n彼女は　＿＿　★　＿＿　＿＿　黙ってうなずいた。\n（1 何か　2 そうに　3 言いた　4 しながらも）	言いた	\N	\N	37	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+189	15	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n駅前に　＿＿　＿＿　★　＿＿　町の雰囲気が大きく変わった。\n（1 ができた　2 大型の　3 ことで　4 商業施設）	ができた	\N	\N	38	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+190	15	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n社長の　＿＿　★　＿＿　＿＿　計画は実現しなかった。\n（1 なくしては　2 決断　3 この　4 思い切った）	決断	\N	\N	39	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+191	15	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n新しい企画は　＿＿　★　＿＿　＿＿　予想以上の反響を呼んだ。\n（1 発表される　2 SNSを中心に　3 や否や　4 たちまち）	や否や	\N	\N	40	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+192	15	reading	multiple_choice	【文章】\n「若いうちは苦労を買ってでもせよ」と言われる。だが、苦労そのものに価値があるわけではない。価値があるのは、苦労をどう乗り越えたか、そこから何を学んだかである。意味もなく人に苦労を強いることは、成長の機会ではなく、ただの負担でしかない。\n\n質問：筆者の考えに合うものはどれか。	苦労は、そこから何を学ぶかによって価値が決まる。	\N	\N	41	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+193	15	reading	multiple_choice	【文章】\n（マンションの掲示）\n住民の皆様へ\n来月一日から、資源ごみの回収日が毎週水曜日から木曜日に変わります。回収時刻は従来どおり午前八時までです。なお、段ボールはひもで縛ってから出してください。ひもで縛られていないものは回収されませんので、ご注意ください。\n管理組合\n\n質問：来月から住民がしなければならないことは何か。	資源ごみを木曜日の午前八時までに出す。	\N	\N	42	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+194	15	reading	multiple_choice	【文章】\n仕事が速い人は、必ずしも手を動かすのが速い人ではない。むしろ、取りかかる前に、何をどの順番でやるかを考える時間を惜しまない人である。いきなり始めて途中でやり直すより、最初に少し立ち止まるほうが、結果的に早く終わるのだ。\n\n質問：筆者によると、仕事が速い人とはどんな人か。	始める前に、手順をよく考える人	\N	\N	43	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+195	15	reading	multiple_choice	【文章】\n方言を「正しくない日本語」と考える人がいる。しかし、方言はその土地の暮らしや歴史の中で育まれてきた言葉である。共通語が全国の人と話すための道具だとすれば、方言は、その土地の人と心を通わせるための言葉だと言えるだろう。\n\n質問：筆者は方言をどのようなものだと考えているか。	その土地の人どうしが心を通わせるための言葉	\N	\N	44	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+196	15	reading	multiple_choice	【文章】\nある企業が、社員の会議時間を半分にする取り組みを始めた。会議は原則三十分、資料は事前に配り、当日は意見交換だけを行う。\n当初は「時間が足りない」という不満の声もあった。しかし、数か月たつと、社員は事前に資料を読み、自分の意見をまとめてから会議に臨むようになった。その結果、会議の時間は短くなったにもかかわらず、議論の中身はむしろ深まったという。\n時間を減らすことは、単なる効率化ではない。限られた時間をどう使うかを、一人ひとりに考えさせるきっかけになるのである。\n\n質問：取り組みを始めた当初、社員はどう感じていたか。	時間が足りないと不満に思っていた。	\N	\N	45	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+232	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうですね。何か悩みでもあるんでしょうか。	最近、山本さん、ずいぶん元気がないみたいだけど。	\N	81	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+246	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	うん、午後なら大丈夫だよ。	あした、もし時間があったら、手伝ってもらえる？	\N	12	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+197	15	reading	multiple_choice	【文章】\nある企業が、社員の会議時間を半分にする取り組みを始めた。会議は原則三十分、資料は事前に配り、当日は意見交換だけを行う。\n当初は「時間が足りない」という不満の声もあった。しかし、数か月たつと、社員は事前に資料を読み、自分の意見をまとめてから会議に臨むようになった。その結果、会議の時間は短くなったにもかかわらず、議論の中身はむしろ深まったという。\n時間を減らすことは、単なる効率化ではない。限られた時間をどう使うかを、一人ひとりに考えさせるきっかけになるのである。\n\n質問：会議の時間を短くした結果、どうなったか。	社員が準備してから会議に臨むようになり、議論が深まった。	\N	\N	46	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+198	15	reading	multiple_choice	【文章】\nある企業が、社員の会議時間を半分にする取り組みを始めた。会議は原則三十分、資料は事前に配り、当日は意見交換だけを行う。\n当初は「時間が足りない」という不満の声もあった。しかし、数か月たつと、社員は事前に資料を読み、自分の意見をまとめてから会議に臨むようになった。その結果、会議の時間は短くなったにもかかわらず、議論の中身はむしろ深まったという。\n時間を減らすことは、単なる効率化ではない。限られた時間をどう使うかを、一人ひとりに考えさせるきっかけになるのである。\n\n質問：筆者は、時間を減らすことについてどう考えているか。	時間の使い方を一人ひとりが考えるきっかけになる。	\N	\N	47	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+199	15	reading	multiple_choice	【文章】\n「褒めて伸ばす」という子育ての方法が広く知られるようになった。確かに、褒められた子どもは自信を持ち、意欲的になる。\nただし、注意したいのは褒め方である。「頭がいいね」と能力を褒められ続けた子どもは、失敗を恐れ、難しい課題を避けるようになるという研究がある。一方、「よく頑張ったね」と努力を褒められた子どもは、失敗しても挑戦を続ける傾向があるそうだ。\n褒めること自体よりも、何を褒めるかが、子どもの成長を左右するのである。\n\n質問：能力を褒められ続けた子どもはどうなる傾向があるか。	失敗を恐れて、難しいことに挑戦しなくなる。	\N	\N	48	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+200	15	reading	multiple_choice	【文章】\n「褒めて伸ばす」という子育ての方法が広く知られるようになった。確かに、褒められた子どもは自信を持ち、意欲的になる。\nただし、注意したいのは褒め方である。「頭がいいね」と能力を褒められ続けた子どもは、失敗を恐れ、難しい課題を避けるようになるという研究がある。一方、「よく頑張ったね」と努力を褒められた子どもは、失敗しても挑戦を続ける傾向があるそうだ。\n褒めること自体よりも、何を褒めるかが、子どもの成長を左右するのである。\n\n質問：筆者が最も言いたいことは何か。	子どもの成長には、何を褒めるかが重要だ。	\N	\N	49	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+201	15	reading	multiple_choice	【文章】\n「褒めて伸ばす」という子育ての方法が広く知られるようになった。確かに、褒められた子どもは自信を持ち、意欲的になる。\nただし、注意したいのは褒め方である。「頭がいいね」と能力を褒められ続けた子どもは、失敗を恐れ、難しい課題を避けるようになるという研究がある。一方、「よく頑張ったね」と努力を褒められた子どもは、失敗しても挑戦を続ける傾向があるそうだ。\n褒めること自体よりも、何を褒めるかが、子どもの成長を左右するのである。\n\n質問：「よく頑張ったね」と褒められた子どもについて、文章の内容に合うものはどれか。	失敗しても挑戦を続けることが多い。	\N	\N	50	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+202	15	reading	multiple_choice	【文章】\n私たちは毎日、膨大な量の情報に囲まれて暮らしている。スマートフォンを開けば、世界中のニュースや他人の意見が次々と流れてくる。情報が多いことは、一見すると豊かなことのように思える。\nしかし、情報が増えるほど、人は自分に都合のよい情報だけを選ぶようになる。自分と同じ意見ばかりに触れていると、それが世の中の多数派であるかのように錯覚してしまう。異なる意見に出会う機会は、かえって減っているのかもしれない。\nこうした状況の中で大切なのは、あえて自分と違う意見に耳を傾けることだ。それは心地よいことではない。だが、自分の考えを疑い、確かめる機会を持たなければ、私たちは情報の多さの中で、かえって視野を狭めてしまうだろう。\n\n質問：筆者によると、情報が増えると人はどうなるか。	自分に都合のよい情報だけを選ぶようになる。	\N	\N	51	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+203	15	reading	multiple_choice	【文章】\n私たちは毎日、膨大な量の情報に囲まれて暮らしている。スマートフォンを開けば、世界中のニュースや他人の意見が次々と流れてくる。情報が多いことは、一見すると豊かなことのように思える。\nしかし、情報が増えるほど、人は自分に都合のよい情報だけを選ぶようになる。自分と同じ意見ばかりに触れていると、それが世の中の多数派であるかのように錯覚してしまう。異なる意見に出会う機会は、かえって減っているのかもしれない。\nこうした状況の中で大切なのは、あえて自分と違う意見に耳を傾けることだ。それは心地よいことではない。だが、自分の考えを疑い、確かめる機会を持たなければ、私たちは情報の多さの中で、かえって視野を狭めてしまうだろう。\n\n質問：「錯覚してしまう」とあるが、何を錯覚するのか。	自分と同じ意見が、世の中の多数派であること	\N	\N	52	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+204	15	reading	multiple_choice	【文章】\n私たちは毎日、膨大な量の情報に囲まれて暮らしている。スマートフォンを開けば、世界中のニュースや他人の意見が次々と流れてくる。情報が多いことは、一見すると豊かなことのように思える。\nしかし、情報が増えるほど、人は自分に都合のよい情報だけを選ぶようになる。自分と同じ意見ばかりに触れていると、それが世の中の多数派であるかのように錯覚してしまう。異なる意見に出会う機会は、かえって減っているのかもしれない。\nこうした状況の中で大切なのは、あえて自分と違う意見に耳を傾けることだ。それは心地よいことではない。だが、自分の考えを疑い、確かめる機会を持たなければ、私たちは情報の多さの中で、かえって視野を狭めてしまうだろう。\n\n質問：筆者の主張として最も適切なものはどれか。	自分の考えを確かめるために、異なる意見にも耳を傾けるべきだ。	\N	\N	53	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+205	15	reading	multiple_choice	【文章】\nA：小学校での英語教育は、早ければ早いほどよい。子どもは音を聞き分ける力が高く、発音も自然に身につく。英語に親しむことで、外国の文化への関心も広がるだろう。\nB：英語を早く始めること自体は否定しない。ただ、母語である日本語の力が十分でないうちに英語の時間を増やすと、考える力の土台が弱くなるおそれがある。英語教育と同時に、日本語の力を育てることも忘れてはならない。\n\n質問：AとBのどちらも認めていることは何か。	早いうちから英語を学ぶことには意味がある。	\N	\N	54	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+206	15	reading	multiple_choice	【文章】\nA：小学校での英語教育は、早ければ早いほどよい。子どもは音を聞き分ける力が高く、発音も自然に身につく。英語に親しむことで、外国の文化への関心も広がるだろう。\nB：英語を早く始めること自体は否定しない。ただ、母語である日本語の力が十分でないうちに英語の時間を増やすと、考える力の土台が弱くなるおそれがある。英語教育と同時に、日本語の力を育てることも忘れてはならない。\n\n質問：Bが心配していることは何か。	日本語の力が育たないうちに英語の時間を増やすこと	\N	\N	55	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+207	15	reading	multiple_choice	【文章】\n（スポーツクラブ料金表）\n・一般会員：月 8,000円（全日利用可）\n・平日会員：月 6,000円（月〜金 終日）\n・夜間会員：月 5,000円（全日 18:00以降）\n・学生会員：月 4,000円（全日利用可・学生証が必要）\n※入会金 3,000円（キャンペーン中につき、今月入会の方は無料）\n\n質問：会社員の森さんは、土曜日の午前と平日の夜に通いたい。どの会員になるのがよいか。	一般会員	\N	\N	56	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+208	15	reading	multiple_choice	【文章】\n（スポーツクラブ料金表）\n・一般会員：月 8,000円（全日利用可）\n・平日会員：月 6,000円（月〜金 終日）\n・夜間会員：月 5,000円（全日 18:00以降）\n・学生会員：月 4,000円（全日利用可・学生証が必要）\n※入会金 3,000円（キャンペーン中につき、今月入会の方は無料）\n\n質問：大学生の小川さんが来月入会し、学生会員になる場合、最初の月に払う金額はいくらか。	7,000円	\N	\N	57	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+209	15	listening	listening	会社で女の人と男の人が話しています。女の人はこのあと何をしますか。	先方に打ち合わせの時間を確認する	会社で女の人と男の人が話しています。女の人はこのあと何をしますか。\n女：課長、来週の出張の件ですが、ホテルはもう予約しました。\n男：ありがとう。新幹線のほうは？\n女：新幹線は、先方との打ち合わせの時間が決まってから取ろうと思っています。\n男：そうか。先方には連絡した？\n女：いえ、まだです。\n男：じゃあ、まずそれを確認して。時間が決まらないと何も進まないから。\n女の人はこのあと何をしますか。	\N	58	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+210	15	listening	listening	病院で受付の人と男の人が話しています。男の人は次に何をしますか。	問診票を書く	病院で受付の人と男の人が話しています。男の人は次に何をしますか。\n女：こんにちは。初めての方ですか。\n男：はい。\n女：では、保険証をお預かりします。それから、こちらの問診票にご記入ください。\n男：はい。あ、保険証、今日は家に忘れてしまって。\n女：そうですか。では本日は、いったん全額をお支払いいただいて、後日保険証をお持ちいただければ差額をお返しします。まずは問診票のほうをお願いします。\n男の人は次に何をしますか。	\N	59	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+211	15	listening	listening	大学で男の学生と女の学生が話しています。男の学生はいつまでにレポートを出しますか。	木曜日	大学で男の学生と女の学生が話しています。男の学生はいつまでにレポートを出しますか。\n男：経済学のレポート、締め切りっていつだっけ。\n女：金曜日だよ。でも、先生が、提出は事務室じゃなくてオンラインでって言ってた。\n男：そうなんだ。金曜日はバイトで忙しいから、前の日に出しておこう。\n女：それがいいよ。\n男の学生はいつまでにレポートを出しますか。	\N	60	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+212	15	listening	listening	電話で男の人と女の人が話しています。女の人は何を持っていきますか。	飲み物	電話で男の人と女の人が話しています。女の人は何を持っていきますか。\n男：あした、うちでバーベキューするんだけど、来られる？\n女：うん、行く行く。何か持っていこうか。\n男：肉と野菜はこっちで用意するから、飲み物をお願いできる？\n女：いいよ。お皿とかは？\n男：紙皿はあるから大丈夫。\n女：じゃあ、飲み物だけね。\n女の人は何を持っていきますか。	\N	61	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+213	15	listening	listening	会社で男の人と女の人が話しています。男の人は会議の資料をどうしますか。	十部用意し、グラフのページだけカラーにする	会社で男の人と女の人が話しています。男の人は会議の資料をどうしますか。\n男：明日の会議の資料、十部印刷すればいいですか。\n女：出席者は八人だけど、念のため二部多く用意しておいて。\n男：わかりました。カラーで印刷しますか。\n女：グラフのページだけカラーにして、ほかは白黒でいいわ。\n男の人は会議の資料をどうしますか。	\N	62	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+214	15	listening	listening	男の人と女の人が話しています。男の人が仕事を辞めた一番の理由は何ですか。	自分の店を開きたいから	男の人と女の人が話しています。男の人が仕事を辞めた一番の理由は何ですか。\n女：会社、辞めたんだって？給料もよかったのに。\n男：うん。給料に不満はなかったし、人間関係も悪くなかったんだ。\n女：じゃあ、どうして？\n男：昔から、自分の店を開くのが夢だったんだよ。年齢的にも、今始めないともうできないと思って。\n男の人が仕事を辞めた一番の理由は何ですか。	\N	63	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+215	15	listening	listening	テレビでアナウンサーが話しています。今年の桜の開花が早い理由は何だと言っていますか。	三月に暖かい日が続いたから	テレビでアナウンサーが話しています。今年の桜の開花が早い理由は何だと言っていますか。\n女：今年は、各地で桜の開花が例年より一週間ほど早くなっています。冬の寒さが厳しかったため、つぼみが十分に目を覚まし、その後、三月に入ってから気温の高い日が続いたことが主な原因と考えられています。\n今年の桜の開花が早い理由は何だと言っていますか。	\N	64	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+216	15	listening	listening	女の人と男の人が新しいカフェについて話しています。女の人はこのカフェの何が一番気に入っていますか。	ゆっくり本が読めること	女の人と男の人が新しいカフェについて話しています。女の人はこのカフェの何が一番気に入っていますか。\n男：駅前の新しいカフェ、よく行ってるんだって？コーヒーがおいしいの？\n女：コーヒーも悪くないけど、それより、席と席の間が広くて、ゆっくり本が読めるのがいいのよ。\n男：へえ。値段は？\n女：ちょっと高めかな。\n女の人はこのカフェの何が一番気に入っていますか。	\N	65	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+217	15	listening	listening	会社で上司と部下が話しています。上司は部下の報告書の何が問題だと言っていますか。	結論がわかりにくいこと	会社で上司と部下が話しています。上司は部下の報告書の何が問題だと言っていますか。\n女：課長、報告書、いかがでしたか。\n男：うん、よく調べてあるし、誤字もない。ただね、結論がどこに書いてあるのかわかりにくいんだ。読む人は忙しいから、最初に結論を書いてほしい。\n女：わかりました。すぐ直します。\n上司は部下の報告書の何が問題だと言っていますか。	\N	66	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+218	15	listening	listening	男の人が講演で話しています。男の人は、外国語の上達に最も必要なことは何だと言っていますか。	間違いを恐れずに話すこと	男の人が講演で話しています。男の人は、外国語の上達に最も必要なことは何だと言っていますか。\n男：外国語を学ぶとき、多くの人は単語や文法の知識を増やすことに力を入れます。もちろんそれも大切ですが、私の経験では、間違いを恐れずに実際に話してみることが何より重要です。間違えて、直して、また話す。その繰り返しの中でしか、言葉は身につかないのです。\n男の人は、外国語の上達に最も必要なことは何だと言っていますか。	\N	67	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+219	15	listening	listening	ラジオで専門家が話しています。専門家は何について話していますか。	家庭でできる食品ロスの減らし方	ラジオで専門家が話しています。\n女：食品ロスの多くは、実は家庭から出ています。買いすぎて使い切れなかった野菜や、賞味期限が切れた食品などです。賞味期限は「おいしく食べられる期限」であって、過ぎたらすぐ食べられなくなるわけではありません。買い物の前に冷蔵庫の中を確認する、それだけでも食品ロスは減らせます。\n専門家は何について話していますか。	\N	68	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+220	15	listening	listening	大学の授業で先生が話しています。先生は何について話していますか。	最初の情報が判断に与える影響	大学の授業で先生が話しています。\n男：人は、最初に見た情報に判断を引きずられる傾向があります。例えば、最初に一万円という値段を見せられた後で五千円の商品を見ると、安く感じてしまう。これを心理学では「アンカリング効果」と呼びます。買い物だけでなく、交渉や評価の場面でも、この効果は私たちの判断に影響しているのです。\n先生は何について話していますか。	\N	69	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+221	15	listening	listening	女の人がスピーチをしています。女の人が伝えたいことは何ですか。	小さな声かけが人の支えになる	女の人がスピーチをしています。\n女：私は三年前、留学先で言葉が通じず、毎日が不安でした。そんなとき、隣の部屋の学生が、毎朝あいさつをしてくれたんです。たった一言でしたが、そのおかげで、ここにいていいんだと思えました。小さな声かけが、誰かの支えになることがある。今度は私が、そういう存在になりたいと思っています。\n女の人が伝えたいことは何ですか。	\N	70	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+222	15	listening	listening	テレビで男の人が話しています。男の人は、町の商店街についてどう考えていますか。	人とのつながりを生かせば生き残れる	テレビで男の人が話しています。\n男：大型のショッピングモールができてから、町の商店街は客が減りました。でも、商店街には、店の人と話しながら買い物ができる良さがあります。値段や品ぞろえで勝負するのではなく、人とのつながりを大切にした店づくりをすれば、商店街はまだまだ生き残れると思います。\n男の人は、町の商店街についてどう考えていますか。	\N	71	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+223	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ううん、私も今来たところ。	ごめん、待った？道が思った以上に混んでて。	\N	72	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+224	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	では、もう少し内容を練り直します。	この企画、今のままだと、通るかどうか微妙だね。	\N	73	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+225	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	えっ、そうなんですか。寂しくなりますね。	田中さん、来月から大阪に転勤だそうですよ。	\N	74	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+226	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	お疲れさまでした。	お先に失礼します。	\N	75	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+227	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	はい、こちらにご用意しております。	例の資料、まだできてないとは言わせないよ。	\N	76	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+228	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	あ、ここを押してから、枚数を選んでください。	あのう、このコピー機、使い方がよくわからないんですが。	\N	77	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+229	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	家で映画でも見て過ごそうか。	せっかくの休みなのに、雨じゃどこにも行けないね。	\N	78	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+230	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	確かに、少しつじつまが合わない気がします。	彼の話、どうも腑に落ちないところがあるんだよね。	\N	79	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+231	15	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ありがとうございます。よろしくお願いします。	この件については、私のほうから先方に伝えておきます。	\N	80	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+233	15	listening	listening	男の人と女の人がパソコンを買うことについて話しています。男の人はどのパソコンを買いますか。	B	男の人と女の人がパソコンを買うことについて話しています。\n女：パソコン、どれにするか決めた？\n男：まだ迷ってて。Aは画面が大きくて仕事しやすいけど、重いんだ。Bは軽くて持ち運びに便利だけど、値段が高い。Cは安いけど、性能がちょっとね。\n女：出張が多いんでしょう？毎日持ち歩くなら、重いのはつらいよ。\n男：そうなんだよね。値段は少し高くても、毎日使うものだから、それにするよ。\n男の人はどのパソコンを買いますか。	\N	82	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+234	15	listening	listening	会社で三人が社員旅行の行き先について話しています。行き先はどこに決まりましたか。	京都	会社で三人が社員旅行の行き先について話しています。\n女1：候補は、京都、北海道、沖縄の三つですね。\n男：北海道は料理がおいしいけど、移動に時間がかかるなあ。一泊二日だからね。\n女2：沖縄も飛行機代が高いし、台風の季節が心配です。\n女1：京都なら新幹線ですぐだし、歴史のある場所も多いですよね。\n男：そうだね。短い日程なら、移動が楽なところがいい。そこにしよう。\n行き先はどこに決まりましたか。	\N	83	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	\N
+235	16	listening	listening	男の人と女の人が話しています。男の人はこのあと何を買いますか。	しょうゆ	スーパーで男の人と女の人が話しています。男の人はこのあと何を買いますか。\n女：卵と牛乳はもうかごに入れたよ。\n男：パンも買う？\n女：パンはまだ家にあるから、いらない。あ、そうだ、しょうゆがなくなりそうだった。\n男：じゃあ、取ってくるよ。\n男の人はこのあと何を買いますか。	\N	1	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+236	16	listening	listening	女の学生と男の学生が話しています。二人はどこで会いますか。	学校の食堂	女の学生と男の学生が話しています。二人はどこで会いますか。\n女：あしたの勉強会、図書館でする？\n男：図書館は話せないから、駅の前のカフェはどう？\n女：あそこはいつも混んでるよ。学校の食堂なら、午後はすいてるけど。\n男：じゃあ、そうしよう。\n二人はどこで会いますか。	\N	2	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+237	16	listening	listening	会社で女の人と男の人が話しています。男の人は何時に会議室に行きますか。	一時四十五分	会社で女の人と男の人が話しています。男の人は何時に会議室に行きますか。\n女：会議は二時からですけど、準備があるので、三十分前に来てもらえますか。\n男：わかりました。\n女：あ、でも、私が一時半まで別の打ち合わせなので、四十五分でいいです。\n男：はい。\n男の人は何時に会議室に行きますか。	\N	3	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+238	16	listening	listening	男の人が店の人と話しています。男の人はどのシャツを買いますか。	大きいサイズの白いシャツ	男の人が店の人と話しています。男の人はどのシャツを買いますか。\n男：すみません、この青いシャツ、もう少し大きいサイズはありますか。\n女：申し訳ありません、青は今そのサイズしかなくて。白なら大きいサイズがございます。\n男：白ですか。じゃあ、それにします。\n男の人はどのシャツを買いますか。	\N	4	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+239	16	listening	listening	女の人と男の人が話しています。女の人はどうして元気がありませんか。	犬が病気になったから	女の人と男の人が話しています。女の人はどうして元気がありませんか。\n男：元気ないね。テスト、だめだったの？\n女：ううん、テストはよかったの。\n男：じゃあ、どうしたの？\n女：実は、かわいがっていた犬が病気になっちゃって。\n女の人はどうして元気がありませんか。	\N	5	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+240	16	listening	listening	男の人と女の人が話しています。男の人はどうして遅れましたか。	かぎが見つからなかったから	男の人と女の人が話しています。男の人はどうして遅れましたか。\n女：遅かったね。電車が止まったの？\n男：いや、電車は大丈夫だったんだけど、家を出るとき、かぎが見つからなくて。\n女：そうだったんだ。\n男の人はどうして遅れましたか。	\N	6	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+241	16	listening	listening	ラジオで女の人が話しています。あしたの天気はどうですか。	朝は晴れて、夕方から雨	ラジオで女の人が話しています。あしたの天気はどうですか。\n女：あしたは、朝のうちは晴れますが、昼過ぎから雲が多くなり、夕方からは雨が降るでしょう。お出かけの際は、傘をお持ちください。\nあしたの天気はどうですか。	\N	7	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+242	16	listening	listening	男の人と女の人が話しています。女の人が新しいアルバイトを選んだ一番の理由は何ですか。	家から近いから	男の人と女の人が話しています。女の人が新しいアルバイトを選んだ一番の理由は何ですか。\n男：新しいアルバイト、始めたんだって？時給がいいの？\n女：時給は前と同じくらい。でも、家から歩いて五分なの。\n男：それは楽だね。\n女：うん、それが一番かな。\n女の人が新しいアルバイトを選んだ一番の理由は何ですか。	\N	8	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+243	16	listening	listening	先生が学生に話しています。学生は来週の授業に何を持ってきますか。	好きな写真	先生が学生に話しています。学生は来週の授業に何を持ってきますか。\n男：来週は、教科書は使いません。そのかわり、自分が好きな写真を一枚持ってきてください。その写真について、日本語で説明してもらいます。辞書は使ってもいいですよ。\n学生は来週の授業に何を持ってきますか。	\N	9	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+244	16	listening	listening	女の人と男の人が話しています。男の人は週末何をしましたか。	映画を見に行った	女の人と男の人が話しています。男の人は週末何をしましたか。\n女：週末、山に登るって言ってたよね。どうだった？\n男：それが、雨で行けなくなって。\n女：じゃあ、家にいたの？\n男：ううん、友達と映画を見に行ったよ。\n男の人は週末何をしましたか。	\N	10	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+245	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ええ、いいですよ。	すみません、ちょっとこの荷物、持っていただけませんか。	\N	11	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+342	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	わたしのです。	これは だれの かさですか。	\N	48	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+247	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	うん、初めてだけど、がんばってみた。	このケーキ、全部一人で作ったの？	\N	13	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+248	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	いいえ、私も今来たところです。	遅くなってすみません。	\N	14	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+249	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	歩いて十分ぐらいです。	駅までどのくらいかかりますか。	\N	15	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+250	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	じゃあ、お茶をお願いします。	お茶とコーヒー、どちらがいいですか。	\N	16	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+251	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	どういたしまして。また何かあったら言ってね。	今週の土曜日、引っ越しを手伝ってくれてありがとう。	\N	17	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+252	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	うん、読み終わったら返してね。	この本、借りてもいい？	\N	18	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+253	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ありがとう。そうさせてもらうね。	熱があるなら、きょうは早く帰ったほうがいいよ。	\N	19	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+254	16	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	うん、この仕事を終わらせてから帰る。	あれ、まだ帰らないの？	\N	20	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+255	17	listening	listening	会社で男の人と女の人が話しています。男の人はこのあとまず何をしますか。	自由記述の意見をまとめる	会社で男の人と女の人が話しています。男の人はこのあとまず何をしますか。\n女：新商品のアンケート、集計は終わった？\n男：はい、さっき終わりました。これからグラフにしようと思っています。\n女：グラフは私がやるから、先に自由記述の意見をまとめてくれない？明日の会議で一番知りたいのはそこだから。\n男：わかりました。\n男の人はこのあとまず何をしますか。	\N	1	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+256	17	listening	listening	電話で女の人と男の人が話しています。女の人はいつ歯医者に行きますか。	金曜日の午後	電話で女の人と男の人が話しています。女の人はいつ歯医者に行きますか。\n女：予約の変更をお願いしたいんですが。水曜日の午後三時に予約しているんですけど。\n男：はい。ご希望の日はございますか。\n女：木曜日の同じ時間は空いていますか。\n男：木曜日は午前中でしたら空いております。午後ですと金曜日になりますが。\n女：午前は仕事なので、金曜日でお願いします。\n女の人はいつ歯医者に行きますか。	\N	2	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+257	17	listening	listening	大学で女の学生と男の学生が話しています。女の学生はゼミの発表で何を変えますか。	データを新しいものにする	大学で女の学生と男の学生が話しています。女の学生はゼミの発表で何を変えますか。\n女：昨日、ゼミの発表の練習を先生に見てもらったんだけど。\n男：どうだった？\n女：内容はいいって。でも、データが古いから、最新のものに入れ替えるように言われた。\n男：スライドの数は？\n女：それはそのままでいいって。\n女の学生はゼミの発表で何を変えますか。	\N	3	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+258	17	listening	listening	市役所の人が話しています。粗大ごみを出すとき、まず何をしなければなりませんか。	電話かインターネットで申し込む	市役所の人が話しています。粗大ごみを出すとき、まず何をしなければなりませんか。\n女：粗大ごみを出すときは、まず電話かインターネットで申し込んでください。申し込みのときに料金をお知らせしますので、コンビニで処理券を買い、ごみに貼って、指定された日に出してください。\n粗大ごみを出すとき、まず何をしなければなりませんか。	\N	4	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+259	17	listening	listening	男の人と女の人が話しています。男の人がジムをやめた理由は何ですか。	ジムの営業時間に行けなくなったから	男の人と女の人が話しています。男の人がジムをやめた理由は何ですか。\n女：ジム、やめちゃったの？\n男：うん。料金は高くなかったし、設備もよかったんだけどね。\n女：じゃあ、どうして？\n男：仕事の時間が変わって、営業時間に間に合わなくなっちゃったんだ。\n男の人がジムをやめた理由は何ですか。	\N	5	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+260	17	listening	listening	女の人がインタビューに答えています。女の人がこの仕事を選んだきっかけは何ですか。	祖母の入院中に看護師が優しくしてくれたこと	女の人がインタビューに答えています。女の人がこの仕事を選んだきっかけは何ですか。\n男：看護師になろうと思ったきっかけは何ですか。\n女：子どものころ、祖母が長く入院していたんです。そのとき、看護師さんが祖母だけでなく、家族の私たちにも優しく声をかけてくれて。それで、私もこういう仕事がしたいと思いました。\n女の人がこの仕事を選んだきっかけは何ですか。	\N	6	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+261	17	listening	listening	男の人と女の人が新しいレストランについて話しています。男の人はこのレストランの何が不満ですか。	料理が出るのが遅いこと	男の人と女の人が新しいレストランについて話しています。男の人はこのレストランの何が不満ですか。\n女：駅前の新しいイタリアン、行ってみた？\n男：うん。味はよかったし、値段も手ごろだったよ。\n女：へえ、いいじゃない。\n男：でも、料理が出てくるまで四十分も待たされたのはね。\n男の人はこのレストランの何が不満ですか。	\N	7	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+292	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ええ、五分ほどでしたら大丈夫ですよ。	お忙しいところ申し訳ないのですが、少しお時間をいただけないでしょうか。	\N	18	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+293	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	すみません。自分で何とかできると思ってしまって。	こんなことになるなら、最初から相談してくれればよかったのに。	\N	19	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+262	17	listening	listening	テレビで医者が話しています。医者は、熱中症を防ぐために何が最も大切だと言っていますか。	のどが渇く前に水分をとること	テレビで医者が話しています。医者は、熱中症を防ぐために何が最も大切だと言っていますか。\n男：熱中症を防ぐには、帽子をかぶる、涼しい服を着るなどの工夫も大切です。しかし、何よりも大切なのは、のどが渇く前にこまめに水分をとることです。のどが渇いたと感じたときには、すでに体の水分が不足していることが多いのです。\n医者は、熱中症を防ぐために何が最も大切だと言っていますか。	\N	8	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+263	17	listening	listening	ラジオで男の人が話しています。男の人は何について話していますか。	自転車に乗る人がルールを守る必要性	ラジオで男の人が話しています。男の人は何について話していますか。\n男：最近、自転車で通勤する人が増えています。健康にいい、交通費がかからないなどの理由からです。ただ、それに伴って、自転車と歩行者の事故も増えています。自転車も車と同じ乗り物だという意識を持って、ルールを守って走ってほしいと思います。\n男の人は何について話していますか。	\N	9	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+264	17	listening	listening	女の人が講演で話しています。女の人の話のテーマは何ですか。	日常生活の中でできる運動	女の人が講演で話しています。女の人の話のテーマは何ですか。\n女：私たちはよく、忙しいから運動できないと言います。でも、エレベーターではなく階段を使う、一駅手前で降りて歩くなど、生活の中で体を動かす機会はたくさんあります。特別な時間を作らなくても、運動はできるのです。\n女の人の話のテーマは何ですか。	\N	10	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+265	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	はい、夕方までには必ずお出しします。	このレポート、今日中に仕上げてもらえるかな。	\N	11	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+266	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ええ、実は昔、レストランで働いていたそうですよ。	佐藤さんって、見かけによらず、料理が上手なんですね。	\N	12	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+267	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	はい、三時なら問題ありません。	会議の時間、三時からに変更になったんだけど、大丈夫？	\N	13	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+268	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ううん、量が多すぎたよね。気にしないで。	せっかく作ってくれたのに、残してしまってごめんね。	\N	14	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+269	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	あ、すみません。すぐもらってきます。	あれ、この書類、課長のハンコが押してないよ。	\N	15	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+270	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	うん、折りたたみ傘ならあるよ。	急に雨が降ってきたね。傘、持ってる？	\N	16	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+271	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	ええ、皆さん親切なので、だいぶ慣れてきました。	新しい部署には、もう慣れた？	\N	17	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+272	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうですね。すぐに直します。	この資料、もう少し字を大きくしたほうが見やすいんじゃない？	\N	18	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+273	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	え、いいんですか。じゃあ、お言葉に甘えて。	今日は私がごちそうしますよ。	\N	19	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+274	17	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	わかった。資料をもう一度見せてくれ。	部長、この件、もう一度検討していただけないでしょうか。	\N	20	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+275	18	listening	listening	会社で女の人と男の人が話しています。男の人はこのあとまず何をしますか。	契約書の支払い条件を修正する	会社で女の人と男の人が話しています。男の人はこのあとまず何をしますか。\n女：例の新規取引先との契約書、法務部のチェックは通った？\n男：はい、昨日戻ってきました。あとは先方に送るだけです。\n女：その前に、支払い条件のところ、先週の打ち合わせで変更になったでしょう。反映されてる？\n男：あ、まだでした。すぐ修正して、もう一度法務部に確認してもらいます。\n女：修正が軽微なら、法務部へは私から口頭で伝えておくから、直したらそのまま送って。\n男の人はこのあとまず何をしますか。	\N	1	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+276	18	listening	listening	大学で先生と女の学生が話しています。女の学生は論文をどう直しますか。	先行研究の部分を短くし、研究の必要性を明確にする	大学で先生と女の学生が話しています。女の学生は論文をどう直しますか。\n男：論文、読みましたよ。調査はしっかりしているし、結論も妥当だと思う。\n女：ありがとうございます。\n男：ただ、先行研究の紹介が長すぎて、あなた自身の問題意識が見えにくくなっているね。そこを半分くらいにして、なぜこの研究が必要なのかをはっきり書いてください。\n女：はい、わかりました。\n女の学生は論文をどう直しますか。	\N	2	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+277	18	listening	listening	電話で男の人と女の人が話しています。男の人は何を持って行かなければなりませんか。	卒業証明書と身分証明書	電話で男の人と女の人が話しています。男の人は何を持って行かなければなりませんか。\n男：来週の面接の件でお電話しました。当日、持参するものを確認したいのですが。\n女：はい。履歴書は事前にメールでいただいておりますので、不要です。卒業証明書と、身分証明書をお持ちください。\n男：作品集などは必要ですか。\n女：作品については、面接の際に口頭でご説明いただければ結構です。\n男の人は何を持って行かなければなりませんか。	\N	3	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+341	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	おはよう。	あさ、ともだちに あいました。なんと いいますか。	\N	47	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+278	18	listening	listening	男の人と女の人が話しています。女の人が転職を決めた一番の理由は何ですか。	海外と関わる仕事がしたいから	男の人と女の人が話しています。女の人が転職を決めた一番の理由は何ですか。\n男：転職するって聞いたけど、今の会社、待遇も悪くないんでしょう。\n女：ええ、給料にも人間関係にも、特に不満はないの。\n男：じゃあ、どうして？\n女：今の会社だと、どうしても国内の仕事が中心でしょう。もっと海外と関わる仕事がしたくて。語学を生かせる場所を探してたの。\n女の人が転職を決めた一番の理由は何ですか。	\N	4	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+279	18	listening	listening	テレビで経済の専門家が話しています。専門家は、物価が上がっている主な原因は何だと言っていますか。	円安で輸入の費用が増えたこと	テレビで経済の専門家が話しています。専門家は、物価が上がっている主な原因は何だと言っていますか。\n男：ここ一年、食料品を中心に物価の上昇が続いています。人件費の上昇を挙げる声もありますが、影響はまだ限定的です。主な要因は、原材料の多くを輸入に頼る中で、円安が進み、輸入にかかる費用が大きく膨らんだことにあると考えられます。\n専門家は、物価が上がっている主な原因は何だと言っていますか。	\N	5	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+280	18	listening	listening	女の人が講演で話しています。女の人は、組織を変えるために何が最も重要だと言っていますか。	現場の人と変える理由を共有すること	女の人が講演で話しています。女の人は、組織を変えるために何が最も重要だと言っていますか。\n女：組織を変えようとするとき、多くの人は新しい制度や仕組みを作ることから始めます。しかし、どれほど優れた制度でも、現場の人が納得していなければ形だけのものになってしまいます。遠回りに見えても、まず現場の声に耳を傾け、変える理由を共有すること。それなしには、どんな改革も根づきません。\n女の人は、組織を変えるために何が最も重要だと言っていますか。	\N	6	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+281	18	listening	listening	男の人と女の人が話しています。男の人はこの本のどこを評価していますか。	反対の意見も丁寧に紹介している点	男の人と女の人が話しています。男の人はこの本のどこを評価していますか。\n女：話題のあの本、読んだ？難しい内容をわかりやすく書いてるって評判だけど。\n男：うん、確かに読みやすかった。でも、僕が感心したのは、筆者が自分と反対の立場の意見も丁寧に紹介しているところなんだ。\n女：へえ、そういう本って意外と少ないよね。\n男の人はこの本のどこを評価していますか。	\N	7	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+282	18	listening	listening	ラジオで女の人が話しています。女の人は何について話していますか。	空気を読むことの良い面と問題点	ラジオで女の人が話しています。女の人は何について話していますか。\n女：「空気を読む」ことは、日本では大切な力だとされています。確かに、場の雰囲気を察して行動できれば、無用な衝突は避けられます。しかし、全員が空気を読んで黙ってしまえば、本当に必要な意見まで出なくなる。時には、あえて空気を読まずに発言する勇気も必要なのではないでしょうか。\n女の人は何について話していますか。	\N	8	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+283	18	listening	listening	大学の授業で先生が話しています。先生の話の主なテーマは何ですか。	原因を一つに決めつけることの危険性	大学の授業で先生が話しています。先生の話の主なテーマは何ですか。\n男：私たちは、物事の原因を一つに絞りたがる傾向があります。ある商品が売れなかったのは広告のせいだ、というように。しかし実際には、価格、時期、競合商品など、複数の要因が絡み合っていることがほとんどです。単純な説明は理解しやすい反面、本当の原因を見誤らせる危険があるのです。\n先生の話の主なテーマは何ですか。	\N	9	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+284	18	listening	listening	男の人がスピーチをしています。男の人が最も伝えたいことは何ですか。	失敗を恐れずに挑戦してほしい	男の人がスピーチをしています。男の人が最も伝えたいことは何ですか。\n男：私は入社以来、失敗を恐れて、確実にできる仕事ばかりを選んできました。評価は悪くありませんでした。でも、十年たって振り返ると、自分が何も成長していないことに気づいたのです。失敗しない道は安全ですが、そこからは何も生まれません。若い皆さんには、失敗を恐れず挑戦してほしいと思います。\n男の人が最も伝えたいことは何ですか。	\N	10	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+285	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	では、人員を増やして対応しましょうか。	このままでは、納期に間に合わないことも考えられなくはないね。	\N	11	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+286	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	いえいえ、どうかお気になさらないでください。	先日はとんだご迷惑をおかけしまして。	\N	12	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+287	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	残念ですが、次こそは通るように頑張ります。	君の企画、いいとこまでいったんだけどなあ。	\N	13	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+288	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	へえ、意外だね。いつも一緒にいるのに。	あの二人、仲がいいと思いきや、実はそうでもないらしいよ。	\N	14	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+289	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	じゃあ、私から一緒に話してみましょうか。	部長に直接言うのは、ちょっと気が引けるんですよね。	\N	15	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+290	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	わかりました。データを追加します。	この報告書、数字の裏付けがもう少し欲しいところだね。	\N	16	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+291	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そんな、皆さんのおかげですよ。	田中さんがいなかったら、このプロジェクトは成り立たなかったよ。	\N	17	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+294	18	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	そうですね。返事を待ってから対応を考えましょう。	例の案件、先方の出方次第ってところかな。	\N	20	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	\N
+295	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nこの ［新しい］ かばんは いくらですか。	あたらしい	\N	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+296	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nまいあさ ［九時］に がっこうへ いきます。	くじ	\N	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+297	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nえきの ［北］に こうえんが あります。	きた	\N	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+298	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nきのう ともだちと ［映画］を みました。	えいが	\N	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+299	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nこの ［道］を まっすぐ いって ください。	みち	\N	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+300	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nへやに ［椅子］が よっつ あります。	いす	\N	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+301	19	kanji	multiple_choice	［　］のことばは ひらがなで どう かきますか。\n\nあには ［会社］で はたらいて います。	かいしゃ	\N	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+302	19	kanji	multiple_choice	［　］のことばは どう かきますか。\n\nまいにち ［でんしゃ］で がっこうへ いきます。	電車	\N	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+303	19	kanji	multiple_choice	［　］のことばは どう かきますか。\n\nあしたは ［やすみ］です。	休み	\N	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+304	19	kanji	multiple_choice	［　］のことばは どう かきますか。\n\nこの みせの ［さかな］は おいしいです。	魚	\N	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+305	19	kanji	multiple_choice	［　］のことばは どう かきますか。\n\n［みみ］が いたいです。	耳	\N	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+306	19	kanji	multiple_choice	［　］のことばは どう かきますか。\n\nその ［ほん］を とって ください。	本	\N	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+307	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nさむいですから、まどを（　）ください。	しめて	\N	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+308	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nこの（　）は とても からいです。	カレー	\N	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+309	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nあした テストが ありますから、こんばん（　）します。	べんきょう	\N	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+310	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nかぜを ひきましたから、（　）へ いきます。	びょういん	\N	\N	16	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+311	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nわたしの へやは あまり（　）です。	ひろくない	\N	\N	17	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+312	19	vocab	multiple_choice	（　）に なにを いれますか。いちばん いい ものを えらんで ください。\n\nくつしたを 二（　）かいました。	そく	\N	\N	18	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+313	19	vocab	multiple_choice	［　］の ぶんと だいたい おなじ いみの ぶんが あります。いちばん いい ものを えらんで ください。\n\n［あしたは よっかです。］	きょうは みっかです。	\N	\N	19	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+314	19	vocab	multiple_choice	［　］の ぶんと だいたい おなじ いみの ぶんが あります。いちばん いい ものを えらんで ください。\n\n［この へやは くらいです。］	この へやは あかるくないです。	\N	\N	20	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+315	19	vocab	multiple_choice	［　］の ぶんと だいたい おなじ いみの ぶんが あります。いちばん いい ものを えらんで ください。\n\n［おととい デパートへ いきました。］	ふつか まえに デパートへ いきました。	\N	\N	21	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+316	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nわたしは まいばん 九時（　）ねます。	に	\N	\N	22	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+317	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nとしょかん（　）本を よみました。	で	\N	\N	23	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+318	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nA「なにを のみますか。」B「コーヒー（　）おねがいします。」	を	\N	\N	24	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+319	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの ケーキは（　）おいしいです。	とても	\N	\N	25	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+320	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nきのうは あめでしたが、きょうは（　）。	いい てんきです	\N	\N	26	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+321	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nA「いっしょに ひるごはんを たべませんか。」B「ええ、（　）。」	たべましょう	\N	\N	27	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+322	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nテレビを（　）ながら ごはんを たべます。	み	\N	\N	28	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+323	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nわたしは あねより せが（　）です。	たかい	\N	\N	29	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+324	19	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nしゅくだいを（　）から、あそびに いきます。	して	\N	\N	30	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+325	19	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nわたしの　＿＿　＿＿　★　＿＿　です。\n（1 は　2 いぬ　3 しろい　4 とても）	とても	\N	\N	31	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+326	19	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nつくえの　＿＿　★　＿＿　＿＿　あります。\n（1 に　2 うえ　3 が　4 ほん）	に	\N	\N	32	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+327	19	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nきのう　＿＿　＿＿　★　＿＿　を かいました。\n（1 で　2 シャツ　3 デパート　4 あおい）	あおい	\N	\N	33	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+328	19	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nこれは　＿＿　★　＿＿　＿＿　です。\n（1 くれた　2 ともだち　3 が　4 てがみ）	が	\N	\N	34	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+329	19	reading	multiple_choice	【文章】\nわたしは まいあさ 六時に おきます。それから こうえんを さんぽします。七時に あさごはんを たべて、八時に いえを でます。\n\n質問：この 人は あさごはんの まえに なにを しますか。	こうえんを さんぽします	\N	\N	35	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+330	19	reading	multiple_choice	【文章】\n（メモ）\nキムさんへ\nあしたの パーティーは 三時からです。わたしの へやで します。のみものは わたしが かいますから、キムさんは おかしを もって きて ください。\nたなか\n\n質問：キムさんは あした なにを もって いきますか。	おかし	\N	\N	36	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+331	19	reading	multiple_choice	【文章】\nわたしの すきな ところ\nわたしは えきの ちかくの きっさてんが すきです。その みせは ちいさいですが、しずかで、コーヒーが とても おいしいです。わたしは にちようびの ごご、よく そこで 本を よみます。せんしゅう、ともだちの リンさんと いっしょに いきました。リンさんは コーヒーが きらいですから、こうちゃを のみました。リンさんも その みせが すきに なりました。\n\n質問：リンさんは きっさてんで なにを のみましたか。	こうちゃ	\N	\N	37	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+332	19	reading	multiple_choice	【文章】\nわたしの すきな ところ\nわたしは えきの ちかくの きっさてんが すきです。その みせは ちいさいですが、しずかで、コーヒーが とても おいしいです。わたしは にちようびの ごご、よく そこで 本を よみます。せんしゅう、ともだちの リンさんと いっしょに いきました。リンさんは コーヒーが きらいですから、こうちゃを のみました。リンさんも その みせが すきに なりました。\n\n質問：「わたし」は にちようびの ごご、きっさてんで なにを しますか。	本を よみます	\N	\N	38	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+333	19	reading	multiple_choice	【文章】\n（びじゅつかんの おしらせ）\n・あいて いる 日：かようび〜にちようび\n・やすみ：げつようび\n・じかん：ごぜん 九時〜ごご 五時\n・おかね：おとな 500えん、こども（小学生）200えん\n\n質問：おとな 一人と 小学生 一人で いきます。いくら はらいますか。	700えん	\N	\N	39	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+334	19	listening	listening	おんなの 人と おとこの 人が はなして います。おとこの 人は なにを かいますか。	パンと たまご	おんなの 人と おとこの 人が はなして います。おとこの 人は なにを かいますか。\nおんな：パンと たまごを かって きて ください。\nおとこ：ぎゅうにゅうは？\nおんな：ぎゅうにゅうは まだ れいぞうこに ありますから、いいです。\nおとこの 人は なにを かいますか。	\N	40	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+335	19	listening	listening	せんせいが がくせいに はなして います。がくせいは あした なんじに がっこうに きますか。	八時半	せんせいが がくせいに はなして います。がくせいは あした なんじに がっこうに きますか。\nせんせい：あしたは バスで びじゅつかんへ いきます。バスは 九時に でますから、八時半に がっこうに きて ください。\nがくせいは あした なんじに がっこうに きますか。	\N	41	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+336	19	listening	listening	おとこの 人と おんなの 人が はなして います。ふたりは どこで あいますか。	ほんや	おとこの 人と おんなの 人が はなして います。ふたりは どこで あいますか。\nおとこ：あした、えきの まえで あいましょうか。\nおんな：えきの まえは 人が おおいですから、えきの ちかくの ほんやは どうですか。\nおとこ：いいですね。そう しましょう。\nふたりは どこで あいますか。	\N	42	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+337	19	listening	listening	みせで おとこの 人と みせの 人が はなして います。おとこの 人は どれを かいますか。	あおい かさ	みせで おとこの 人と みせの 人が はなして います。おとこの 人は どれを かいますか。\nおとこ：すみません、その くろい かさは いくらですか。\nみせの 人：二千えんです。\nおとこ：ちょっと たかいですね。その あおい かさは？\nみせの 人：千二百えんです。\nおとこ：じゃあ、それを ください。\nおとこの 人は どれを かいますか。	\N	43	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+338	19	listening	listening	おんなの 人と おとこの 人が はなして います。おんなの 人は どうして きのう がっこうを やすみましたか。	はが いたかったから	おんなの 人と おとこの 人が はなして います。おんなの 人は どうして きのう がっこうを やすみましたか。\nおとこ：きのう、どうして やすみましたか。かぜですか。\nおんな：いいえ、げんきです。はが いたかったですから、はいしゃへ いきました。\nおんなの 人は どうして きのう がっこうを やすみましたか。	\N	44	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+339	19	listening	listening	おとこの 人と おんなの 人が はなして います。おとこの 人は にちようび なにを しましたか。	うちで りょうりを つくった	おとこの 人と おんなの 人が はなして います。おとこの 人は にちようび なにを しましたか。\nおんな：にちようびは なにを しましたか。\nおとこ：ともだちと テニスを する つもりでしたが、あめでしたから、うちで りょうりを つくりました。\nおとこの 人は にちようび なにを しましたか。	\N	45	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+340	19	listening	listening	おんなの 人が はなして います。おんなの 人の かぞくは なんにんですか。	四人	おんなの 人が はなして います。おんなの 人の かぞくは なんにんですか。\nおんな：わたしの かぞくは ちちと ははと あにと わたしです。それから いぬが 一ぴき います。\nおんなの 人の かぞくは なんにんですか。	\N	46	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+343	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	ええ、みましょう。	いっしょに えいがを みませんか。	\N	49	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+344	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	あそこです。	すみません、トイレは どこですか。	\N	50	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+345	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	おそまつさまでした。	ごちそうさまでした。	\N	51	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+346	19	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	六時ごろです。	なんじに いえへ かえりますか。	\N	52	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+347	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nこの 町は ［交通］が べんりです。	こうつう	\N	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+348	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\n［急いで］ えきへ 行きました。	いそいで	\N	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+349	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nりょこうの ［計画］を 立てました。	けいかく	\N	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+350	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nこの みちは 夜 ［暗い］です。	くらい	\N	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+351	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nにもつを ［運んで］ ください。	はこんで	\N	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+352	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nここに ［住所］を 書いて ください。	じゅうしょ	\N	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+353	20	kanji	multiple_choice	［　］の ことばは ひらがなで どう 書きますか。\n\nことしの 夏は とても ［暑かった］です。	あつかった	\N	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+354	20	kanji	multiple_choice	［　］の ことばは どう 書きますか。\n\nまどを ［しめて］ ください。	閉めて	\N	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+355	20	kanji	multiple_choice	［　］の ことばは どう 書きますか。\n\nえいごを ［ならって］ います。	習って	\N	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+356	20	kanji	multiple_choice	［　］の ことばは どう 書きますか。\n\nこの ［しなもの］は 高いです。	品物	\N	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+357	20	kanji	multiple_choice	［　］の ことばは どう 書きますか。\n\nあしたの ［よてい］を おしえて ください。	予定	\N	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+358	20	kanji	multiple_choice	［　］の ことばは どう 書きますか。\n\n［おもい］ にもつを もちました。	重い	\N	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+359	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\n友だちの たんじょうびに 花を（　）。	おくりました	\N	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+360	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nしゅくだいを わすれて、先生に（　）。	しかられました	\N	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+361	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの くすりは ごはんを 食べた（　）に のんで ください。	あと	\N	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+362	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nあしたの 会議の 時間を（　）して ください。	かくにん	\N	\N	16	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+363	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nかぜが（　）、まどが ガタガタ なって います。	つよくて	\N	\N	17	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+364	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの 道は 車が おおいので、（　）わたって ください。	ちゅういして	\N	\N	18	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+365	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nしあいに まけて、とても（　）です。	ざんねん	\N	\N	19	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+366	20	vocab	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nしりょうを 十まい（　）して ください。	コピー	\N	\N	20	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+367	20	vocab	multiple_choice	［　］の 文と だいたい 同じ いみの 文が あります。いちばん いい ものを えらんで ください。\n\n［この りょうりは あまり おいしくないです。］	この りょうりは まずいです。	\N	\N	21	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+368	20	vocab	multiple_choice	［　］の 文と だいたい 同じ いみの 文が あります。いちばん いい ものを えらんで ください。\n\n［山田さんは 先生に しつもんしました。］	山田さんは 先生に ききました。	\N	\N	22	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+369	20	vocab	multiple_choice	［　］の 文と だいたい 同じ いみの 文が あります。いちばん いい ものを えらんで ください。\n\n［きのうは ひまでした。］	きのうは いそがしくなかったです。	\N	\N	23	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+370	20	vocab	multiple_choice	［　］の 文と だいたい 同じ いみの 文が あります。いちばん いい ものを えらんで ください。\n\n［ここで たばこを すっては いけません。］	ここは きんえんです。	\N	\N	24	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+371	20	vocab	multiple_choice	つぎの ことばの つかいかたで いちばん いい ものを えらんで ください。\n\nねっしん	かれは まいばん ねっしんに 日本語を べんきょうして います。	\N	\N	25	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+372	20	vocab	multiple_choice	つぎの ことばの つかいかたで いちばん いい ものを えらんで ください。\n\nひきだし	ペンは つくえの ひきだしに 入って います。	\N	\N	26	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+373	20	vocab	multiple_choice	つぎの ことばの つかいかたで いちばん いい ものを えらんで ください。\n\nおみまい	にゅういんして いる 友だちの おみまいに 行きました。	\N	\N	27	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+374	20	vocab	multiple_choice	つぎの ことばの つかいかたで いちばん いい ものを えらんで ください。\n\nこしょう	エレベーターが こしょうして いるので、かいだんを つかいます。	\N	\N	28	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+375	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの 本は 子ども（　）読めます。	でも	\N	\N	29	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+376	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nあめが ふり（　）ですから、かさを もって 行きましょう。	そう	\N	\N	30	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+377	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nドアに かぎが（　）あります。	かけて	\N	\N	31	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+378	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nねる 前に はを（　）なさい。	みがき	\N	\N	32	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+379	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\n先生に 日本の うたを おしえて（　）。	いただきました	\N	\N	33	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+380	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\n日本へ 来た（　）、すしを 食べた ことが ありません。	のに	\N	\N	34	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+381	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\n母に へやを そうじ（　）。	させられました	\N	\N	35	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+382	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nかぜを ひかない（　）、まいにち うんどうして います。	ように	\N	\N	36	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+383	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの ボタンを（　）、きっぷが 出ます。	おすと	\N	\N	37	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+384	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nA「社長は もう（　）か。」B「はい、さっき 帰られました。」	お帰りに なりました	\N	\N	38	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+385	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nこの しごとは 今日中に（　）。	おわらせなければ なりません	\N	\N	39	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+386	20	grammar	multiple_choice	（　）に 何を 入れますか。いちばん いい ものを えらんで ください。\n\nかれは 何も 言わないで、へやを 出て（　）。	いって しまいました	\N	\N	40	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+387	20	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nこれは　＿＿　＿＿　★　＿＿　です。\n（1 に　2 母　3 もらった　4 プレゼント）	もらった	\N	\N	41	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+388	20	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nあした　＿＿　★　＿＿　＿＿　行きません。\n（1 ふったら　2 あめが　3 にも　4 どこ）	ふったら	\N	\N	42	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+389	20	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\n日本語を　＿＿　＿＿　★　＿＿　と 思って います。\n（1 ために　2 りゅうがく　3 しよう　4 べんきょうする）	りゅうがく	\N	\N	43	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+390	20	grammar	multiple_choice	★に 入る ものは どれですか。いちばん いい ものを えらんで ください。\n\nこの 店の ケーキは　＿＿　★　＿＿　＿＿　おいしいです。\n（1 ほど　2 くらべられない　3 と　4 ほかの 店）	と	\N	\N	44	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+391	20	reading	multiple_choice	【文章】\nわたしの 町には 大きな こうえんが あります。春に なると、さくらが たくさん さいて、人が おおぜい 来ます。でも、わたしは 人が 少ない 秋の こうえんの ほうが すきです。木の はが 赤や 黄色に なって、とても きれいだからです。\n\n質問：「わたし」は どうして 秋の こうえんが すきですか。	人が 少なくて、木の はが きれいだから	\N	\N	45	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+392	20	reading	multiple_choice	【文章】\n（会社の けいじ）\nみなさんへ\n来週の 月曜日、ビルの 電気の てんけんが あります。午前十時から十二時まで、エレベーターが つかえません。また、パソコンは 十時までに 電源を 切って ください。\nそうむ課\n\n質問：月曜日の 十時までに しなければ ならない ことは 何ですか。	パソコンの 電源を 切る	\N	\N	46	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+393	20	reading	multiple_choice	【文章】\nわたしは 先月から 毎朝 ジョギングを して います。はじめは 十分 走るだけで つかれましたが、今は 三十分 走れるように なりました。朝 走ると、一日中 気分が いいです。これからも つづけたいと 思います。\n\n質問：「わたし」は 今 どのくらい 走れますか。	三十分	\N	\N	47	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+394	20	reading	multiple_choice	【文章】\nはじめての アルバイト\nわたしは 大学に 入ってから、レストランで アルバイトを はじめました。さいしょは お客さんの ちゅうもんを まちがえたり、おさらを わったり して、しっぱいばかりでした。店長に しかられて、やめたいと 思った ことも あります。\nでも、先ぱいが「さいしょは だれでも しっぱいするよ」と 言って、いろいろ おしえて くれました。それから、わたしは 先ぱいの しごとを よく 見て、まねを するように しました。\n今では、あたらしい アルバイトの 人に しごとを おしえて います。あの とき 先ぱいが いなかったら、わたしは もう やめて いたと 思います。\n\n質問：「わたし」は どうして アルバイトを やめたいと 思いましたか。	しっぱいばかりで、店長に しかられたから	\N	\N	48	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+434	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n引っ越しの荷物を（　）するのに、一週間かかった。	整理	\N	\N	19	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+435	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n試験に合格して、（　）した。	ほっと	\N	\N	20	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+395	20	reading	multiple_choice	【文章】\nはじめての アルバイト\nわたしは 大学に 入ってから、レストランで アルバイトを はじめました。さいしょは お客さんの ちゅうもんを まちがえたり、おさらを わったり して、しっぱいばかりでした。店長に しかられて、やめたいと 思った ことも あります。\nでも、先ぱいが「さいしょは だれでも しっぱいするよ」と 言って、いろいろ おしえて くれました。それから、わたしは 先ぱいの しごとを よく 見て、まねを するように しました。\n今では、あたらしい アルバイトの 人に しごとを おしえて います。あの とき 先ぱいが いなかったら、わたしは もう やめて いたと 思います。\n\n質問：「わたし」は 先ぱいに 言われてから 何を しましたか。	先ぱいの しごとを 見て、まねを した	\N	\N	49	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+396	20	reading	multiple_choice	【文章】\nはじめての アルバイト\nわたしは 大学に 入ってから、レストランで アルバイトを はじめました。さいしょは お客さんの ちゅうもんを まちがえたり、おさらを わったり して、しっぱいばかりでした。店長に しかられて、やめたいと 思った ことも あります。\nでも、先ぱいが「さいしょは だれでも しっぱいするよ」と 言って、いろいろ おしえて くれました。それから、わたしは 先ぱいの しごとを よく 見て、まねを するように しました。\n今では、あたらしい アルバイトの 人に しごとを おしえて います。あの とき 先ぱいが いなかったら、わたしは もう やめて いたと 思います。\n\n質問：この 文章で いちばん 言いたい ことは 何ですか。	先ぱいの おかげで アルバイトを つづけられた	\N	\N	50	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+397	20	reading	multiple_choice	【文章】\n（市の スポーツ教室）\n・水えい：火よう日 18:00〜19:00 1回 300円\n・テニス：土よう日 10:00〜12:00 1回 500円 ※ラケットを かします（100円）\n・ヨガ：水よう日 19:00〜20:00 1回 400円\n・バドミントン：日よう日 14:00〜16:00 1回 300円\n\n質問：会社員の リーさんは 週末の 午前に 教室に 行きたいです。ラケットを もって いません。いくら はらいますか。	600円	\N	\N	51	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+398	20	reading	multiple_choice	【文章】\n（市の スポーツ教室）\n・水えい：火よう日 18:00〜19:00 1回 300円\n・テニス：土よう日 10:00〜12:00 1回 500円 ※ラケットを かします（100円）\n・ヨガ：水よう日 19:00〜20:00 1回 400円\n・バドミントン：日よう日 14:00〜16:00 1回 300円\n\n質問：平日の 夜、七時から 始まる 教室は どれですか。	ヨガ	\N	\N	52	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+399	20	listening	listening	会社で 男の 人と 女の 人が 話して います。男の 人は このあと まず 何を しますか。	しりょうの 数字を たしかめる	会社で 男の 人と 女の 人が 話して います。男の 人は このあと まず 何を しますか。\n女：田中さん、会議の しりょう、コピーして くれましたか。\n男：これから します。\n女：コピーの 前に、三ページ目の 数字を もう一度 見て ください。まちがって いるかも しれません。\n男：わかりました。\n男の 人は このあと まず 何を しますか。	\N	53	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+400	20	listening	listening	女の 学生と 男の 学生が 話して います。女の 学生は 何で 図書館へ 行きますか。	じてんしゃ	女の 学生と 男の 学生が 話して います。女の 学生は 何で 図書館へ 行きますか。\n男：図書館へ 行くなら、バスが べんりだよ。\n女：でも バスは 時間が かかるでしょう。電車は？\n男：電車は えきから 少し 歩くよ。じてんしゃなら 十分ぐらいだけど。\n女：じゃあ、天気も いいし、じてんしゃで 行くわ。\n女の 学生は 何で 図書館へ 行きますか。	\N	54	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+401	20	listening	listening	男の 人と 女の 人が 話して います。男の 人は 何を じゅんびしますか。	かさ	男の 人と 女の 人が 話して います。男の 人は 何を じゅんびしますか。\n女：あしたの ハイキング、お弁当は わたしが 作るね。\n男：ありがとう。じゃあ、ぼくは 飲み物を 買って おくよ。\n女：飲み物は 山の 上の 店でも 買えるよ。それより、雨が ふるかも しれないから、かさを もって きて。\n男：わかった。\n男の 人は 何を じゅんびしますか。	\N	55	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+402	20	listening	listening	店で 女の 人と 店の 人が 話して います。女の 人は いつ 店に 来ますか。	しあさって	店で 女の 人と 店の 人が 話して います。女の 人は いつ 店に 来ますか。\n女：この くつ、わたしの サイズは ありますか。\n店の 人：もうしわけありません。今 ありませんが、あさって とどきます。\n女：あさっては しごとが いそがしいので、その つぎの 日に 来ます。\n女の 人は いつ 店に 来ますか。	\N	56	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+403	20	listening	listening	先生が 学生に 話して います。学生は しゅくだいを どう 出しますか。	金曜日までに メールで 送る	先生が 学生に 話して います。学生は しゅくだいを どう 出しますか。\n先生：しゅくだいの レポートは、紙で 出さないで ください。メールで 金曜日までに 送って ください。\n学生は しゅくだいを どう 出しますか。	\N	57	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+404	20	listening	listening	男の 人と 女の 人が 話して います。女の 人は どうして 引っこしますか。	となりが うるさいから	男の 人と 女の 人が 話して います。女の 人は どうして 引っこしますか。\n男：引っこすんですか。今の アパート、えきから 近くて いいでしょう。\n女：ええ、べんりなんですけど、となりの 部屋の 人が 夜 うるさくて、ねられないんです。\n女の 人は どうして 引っこしますか。	\N	58	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+405	20	listening	listening	女の 人と 男の 人が 話して います。男の 人は 週末 何を しましたか。	家で 子どもと ゲームを した	女の 人と 男の 人が 話して います。男の 人は 週末 何を しましたか。\n女：週末、海へ 行くと 言って いましたね。\n男：ええ、でも 子どもが ねつを 出して しまって。\n女：そうですか。じゃあ、ずっと 家に いたんですか。\n男：はい。子どもと いっしょに 家で ゲームを しました。\n男の 人は 週末 何を しましたか。	\N	59	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+406	20	listening	listening	ラジオで 女の 人が 話して います。あしたの 天気は どうですか。	くもりで、夜は さむい	ラジオで 女の 人が 話して います。あしたの 天気は どうですか。\n女：あしたは 一日中 くもりですが、雨は ふらないでしょう。ただ、夜は 気温が 下がって、さむく なります。\nあしたの 天気は どうですか。	\N	60	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+407	20	listening	listening	男の 人と 女の 人が 話して います。男の 人が この 会社を えらんだ いちばんの 理由は 何ですか。	外国へ 行く しごとが できるから	男の 人と 女の 人が 話して います。男の 人が この 会社を えらんだ いちばんの 理由は 何ですか。\n女：あたらしい 会社は どうですか。きゅうりょうが いいんですか。\n男：きゅうりょうは 前と 同じぐらいです。でも、外国へ 行く しごとが できるので、それで えらびました。\n男の 人が この 会社を えらんだ いちばんの 理由は 何ですか。	\N	61	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+408	20	listening	listening	女の 人が 話して います。女の 人は 毎日 どのくらい 日本語を べんきょうして いますか。	一時間	女の 人が 話して います。女の 人は 毎日 どのくらい 日本語を べんきょうして いますか。\n女：わたしは しごとが いそがしいので、毎日 少しずつ べんきょうして います。朝 三十分、夜 三十分です。週末は 二時間 べんきょうします。\n女の 人は 毎日 どのくらい 日本語を べんきょうして いますか。	\N	62	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+409	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ええ、どうぞ。	すみません、この 席、あいて いますか。	\N	63	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+410	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ありがとうございます。	きょうは つかれたでしょう。ゆっくり 休んで ください。	\N	64	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+411	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ええ、いいですよ。	この 本、来週まで かりても いいですか。	\N	65	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+412	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ううん、まだ 半分しか して いない。	しゅくだい、もう 終わった？	\N	66	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+413	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	どうしたんですか。	先生、あした じゅぎょうを 休んでも いいですか。	\N	67	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+414	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	いいですね。そう しましょう。	お茶でも 飲みませんか。	\N	68	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+415	20	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ありがとうございます。たすかります。	駅まで おくりましょうか。	\N	69	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+416	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n駅前に新しいビルが［完成］した。	かんせい	\N	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+417	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n試合の［結果］を教えてください。	けっか	\N	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+418	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\nこの問題は［複雑］で、すぐには解けない。	ふくざつ	\N	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+419	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n母は毎朝、庭の花に水を［与えて］いる。	あたえて	\N	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+420	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n友達と旅行の［費用］を半分ずつ出した。	ひよう	\N	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+421	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n彼は［汗］をかきながら走ってきた。	あせ	\N	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+422	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\n会議の［準備］はもうできていますか。	じゅんび	\N	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+423	21	kanji	multiple_choice	［　］のことばの読み方として最もよいものを、一つえらびなさい。\n\nこの川は［浅い］ので、子どもでも遊べる。	あさい	\N	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+424	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\n痛みを［とめる］薬をもらった。	止める	\N	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+425	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\n新しい仕事に［なれる］まで時間がかかった。	慣れる	\N	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+426	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\n彼の［いけん］に賛成です。	意見	\N	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+427	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\n大雨で電車が［おくれた］。	遅れた	\N	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+428	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\nこの部屋は日当たりがよくて［あたたかい］。	暖かい	\N	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+429	21	kanji	multiple_choice	［　］のことばを漢字で書くとき、最もよいものを、一つえらびなさい。\n\n電話番号を［ひかえて］おいてください。	控えて	\N	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+430	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n道が（　）いて、約束の時間に遅れてしまった。	混んで	\N	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+431	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n新しい商品の（　）を聞くために、アンケートをとった。	感想	\N	\N	16	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+432	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n雨で試合が（　）になった。	中止	\N	\N	17	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+433	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n弟は、ゲームに（　）して、宿題を忘れていた。	夢中	\N	\N	18	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+436	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\nこのかばんは軽くて、（　）も多いので使いやすい。	ポケット	\N	\N	21	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+437	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n天気予報によると、台風が（　）いるらしい。	近づいて	\N	\N	22	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+438	21	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つえらびなさい。\n\n約束の時間に遅れないように、（　）家を出た。	早めに	\N	\N	23	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+439	21	vocab	multiple_choice	［　］に意味が最も近いものを、一つえらびなさい。\n\nこの料理は［たちまち］なくなった。	すぐに	\N	\N	24	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+440	21	vocab	multiple_choice	［　］に意味が最も近いものを、一つえらびなさい。\n\n彼の話は［おおげさ］だ。	実際より大きく言う	\N	\N	25	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+441	21	vocab	multiple_choice	［　］に意味が最も近いものを、一つえらびなさい。\n\n会議の時間を［変更］した。	変えた	\N	\N	26	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+442	21	vocab	multiple_choice	［　］に意味が最も近いものを、一つえらびなさい。\n\n彼女は［ほほえんで］いた。	笑って	\N	\N	27	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+443	21	vocab	multiple_choice	［　］に意味が最も近いものを、一つえらびなさい。\n\nこの靴は［きつい］。	小さすぎる	\N	\N	28	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+444	21	vocab	multiple_choice	つぎのことばの使い方として最もよいものを、一つえらびなさい。\n\n支度	もうすぐ出かけるので、早く支度をしなさい。	\N	\N	29	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+445	21	vocab	multiple_choice	つぎのことばの使い方として最もよいものを、一つえらびなさい。\n\n落ち着く	深呼吸をしたら、気持ちが落ち着いた。	\N	\N	30	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+446	21	vocab	multiple_choice	つぎのことばの使い方として最もよいものを、一つえらびなさい。\n\n通り過ぎる	おしゃべりに夢中で、降りる駅を通り過ぎてしまった。	\N	\N	31	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+447	21	vocab	multiple_choice	つぎのことばの使い方として最もよいものを、一つえらびなさい。\n\n共通	二人には、音楽が好きだという共通の趣味がある。	\N	\N	32	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+448	21	vocab	multiple_choice	つぎのことばの使い方として最もよいものを、一つえらびなさい。\n\n明らか	調査の結果、事故の原因が明らかになった。	\N	\N	33	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+449	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n毎日少しずつでも、勉強を続ける（　）が大切だ。	こと	\N	\N	34	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+450	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n雨が降っている（　）、彼は傘をささずに出かけた。	のに	\N	\N	35	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+451	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n日本に来て（　）、もう三年になる。	から	\N	\N	36	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+452	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n彼は医者（　）、病気のことをよく知らない。	のくせに	\N	\N	37	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+453	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\nテストの結果（　）、クラスが決まる。	によって	\N	\N	38	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+454	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n冷めない（　）、早く食べてください。	うちに	\N	\N	39	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+455	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\nこの仕事は、経験がない人（　）難しいだろう。	には	\N	\N	40	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+456	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n彼が来る（　）、会議は始められない。	までは	\N	\N	41	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+457	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n日本の生活に慣れる（　）、友達も増えてきた。	につれて	\N	\N	42	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+458	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\n先生がおっしゃった（　）、来週は休講です。	とおり	\N	\N	43	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+459	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\nA「この資料、私が（　）か。」B「ありがとう。お願いします。」	コピーしましょう	\N	\N	44	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+460	21	grammar	multiple_choice	つぎの文の（　）に入れるのに最もよいものを、一つえらびなさい。\n\nこんなに難しい問題が、小学生に解ける（　）。	はずがない	\N	\N	45	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+461	21	grammar	multiple_choice	つぎの文の　★　に入る最もよいものを、一つえらびなさい。\n\nこれは　＿＿　＿＿　★　＿＿　写真です。\n（1 とった　2 旅行　3 で　4 京都）	で	\N	\N	46	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+462	21	grammar	multiple_choice	つぎの文の　★　に入る最もよいものを、一つえらびなさい。\n\nこの映画は　＿＿　★　＿＿　＿＿　人気がある。\n（1 だけでなく　2 子ども　3 にも　4 大人）	だけでなく	\N	\N	47	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+463	21	grammar	multiple_choice	つぎの文の　★　に入る最もよいものを、一つえらびなさい。\n\n明日の試験は　＿＿　＿＿　★　＿＿　自信がない。\n（1 合格できる　2 勉強したが　3 かどうか　4 たくさん）	合格できる	\N	\N	48	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+464	21	grammar	multiple_choice	つぎの文の　★　に入る最もよいものを、一つえらびなさい。\n\n駅から遠い　＿＿　★　＿＿　＿＿　このアパートは人気がある。\n（1 安い　2 家賃が　3 ので　4 けれど）	家賃が	\N	\N	49	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+465	21	grammar	multiple_choice	つぎの文の　★　に入る最もよいものを、一つえらびなさい。\n\n彼が会社を辞めた　＿＿　＿＿　★　＿＿　。\n（1 誰も　2 理由を　3 いない　4 知る人は）	誰も	\N	\N	50	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+466	21	reading	multiple_choice	【文章】\n最近、本を読む人が減っていると言われる。しかし、スマートフォンで小説を読む人は増えているそうだ。紙の本が売れなくなっても、文章を読む人が減っているとは限らない。読み方が変わってきているのだ。\n\n質問：筆者が言いたいことは何か。	本の読み方が変わっているだけで、読む人が減ったとは言えない。	\N	\N	51	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+467	21	reading	multiple_choice	【文章】\n（お知らせ）\nマンションにお住まいの皆様\n来週の水曜日、午前九時から午後三時まで、水道の工事を行います。この時間は水が使えません。必要な水は、前の日までにご用意ください。\n管理会社\n\n質問：住民は何をしなければならないか。	火曜日までに、必要な水を用意しておく。	\N	\N	52	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+468	21	reading	multiple_choice	【文章】\n私は毎日、日記を書いている。特別なことがない日でも、その日に食べたものや天気を書くようにしている。何年かたって読み返すと、忘れていた小さな出来事を思い出して、なつかしい気持ちになるからだ。\n\n質問：「私」が毎日日記を書くのはなぜか。	後で読み返して、忘れていたことを思い出せるから	\N	\N	53	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+469	21	reading	multiple_choice	【文章】\n（メール）\n山下さん\n来週の打ち合わせですが、こちらの都合で、火曜日から木曜日に変更していただけないでしょうか。時間と場所は同じでお願いします。ご迷惑をおかけしますが、よろしくお願いします。\n田中\n\n質問：田中さんが山下さんにお願いしていることは何か。	打ち合わせの日を木曜日に変えること	\N	\N	54	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+470	21	reading	multiple_choice	【文章】\n日本では、電車の中で電話をする人はほとんどいない。電車の中で話すと、周りの人に迷惑がかかると考えられているからだ。\n私は日本に来たばかりのころ、電車の中で国の友達と電話で話していて、隣の人に注意されたことがある。そのときはとても驚いたが、今では、電車の中は静かな方がいいと思うようになった。疲れて帰るとき、静かな電車の中で休めるのはありがたい。\nもちろん、国によって考え方は違う。どちらが正しいということではなく、その国のルールを知って、それに合わせることが大切なのだと思う。\n\n質問：「私」は日本に来たばかりのころ、どんな経験をしたか。	電車の中で電話をしていて、注意された。	\N	\N	55	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+471	21	reading	multiple_choice	【文章】\n日本では、電車の中で電話をする人はほとんどいない。電車の中で話すと、周りの人に迷惑がかかると考えられているからだ。\n私は日本に来たばかりのころ、電車の中で国の友達と電話で話していて、隣の人に注意されたことがある。そのときはとても驚いたが、今では、電車の中は静かな方がいいと思うようになった。疲れて帰るとき、静かな電車の中で休めるのはありがたい。\nもちろん、国によって考え方は違う。どちらが正しいということではなく、その国のルールを知って、それに合わせることが大切なのだと思う。\n\n質問：今の「私」は電車の中についてどう思っているか。	静かな方がいいと思っている。	\N	\N	56	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+472	21	reading	multiple_choice	【文章】\n日本では、電車の中で電話をする人はほとんどいない。電車の中で話すと、周りの人に迷惑がかかると考えられているからだ。\n私は日本に来たばかりのころ、電車の中で国の友達と電話で話していて、隣の人に注意されたことがある。そのときはとても驚いたが、今では、電車の中は静かな方がいいと思うようになった。疲れて帰るとき、静かな電車の中で休めるのはありがたい。\nもちろん、国によって考え方は違う。どちらが正しいということではなく、その国のルールを知って、それに合わせることが大切なのだと思う。\n\n質問：「私」がいちばん言いたいことは何か。	その国のルールを知って、合わせることが大切だ。	\N	\N	57	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+473	21	reading	multiple_choice	【文章】\nある町で、古い空き家を改装して、地域の人が自由に使える「みんなの家」が作られた。お年寄りがお茶を飲みに来たり、子どもたちが宿題をしに来たりする。\nこの家を始めたのは、近所に住む主婦の佐藤さんだ。「一人暮らしのお年寄りが増えて、話し相手がいない人が多いと気づいたんです」と佐藤さんは言う。\n最初は人が集まらず、一日に一人も来ない日もあった。しかし、佐藤さんが毎日家の前で声をかけ続けた結果、今では毎日二十人以上が訪れる。\n\n質問：佐藤さんが「みんなの家」を始めたきっかけは何か。	話し相手がいないお年寄りが多いことに気づいたこと	\N	\N	58	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+474	21	reading	multiple_choice	【文章】\nある町で、古い空き家を改装して、地域の人が自由に使える「みんなの家」が作られた。お年寄りがお茶を飲みに来たり、子どもたちが宿題をしに来たりする。\nこの家を始めたのは、近所に住む主婦の佐藤さんだ。「一人暮らしのお年寄りが増えて、話し相手がいない人が多いと気づいたんです」と佐藤さんは言う。\n最初は人が集まらず、一日に一人も来ない日もあった。しかし、佐藤さんが毎日家の前で声をかけ続けた結果、今では毎日二十人以上が訪れる。\n\n質問：今、「みんなの家」に人がたくさん来るようになったのはなぜか。	佐藤さんが毎日声をかけ続けたから	\N	\N	59	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+475	21	reading	multiple_choice	【文章】\nある町で、古い空き家を改装して、地域の人が自由に使える「みんなの家」が作られた。お年寄りがお茶を飲みに来たり、子どもたちが宿題をしに来たりする。\nこの家を始めたのは、近所に住む主婦の佐藤さんだ。「一人暮らしのお年寄りが増えて、話し相手がいない人が多いと気づいたんです」と佐藤さんは言う。\n最初は人が集まらず、一日に一人も来ない日もあった。しかし、佐藤さんが毎日家の前で声をかけ続けた結果、今では毎日二十人以上が訪れる。\n\n質問：「みんなの家」について、文章の内容と合っているものはどれか。	始めたころは、人が来ない日もあった。	\N	\N	60	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+515	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼女は細かいところにまで（　）が行き届いている。	気配り	\N	\N	17	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+516	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n初めての海外旅行では、言葉が通じなくてずいぶん（　）した。	苦労	\N	\N	18	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+476	21	reading	multiple_choice	【文章】\n（料理教室の案内）\nA 和食の基本　月2回（土）10:00〜12:00　月4,000円\nB パン作り　月2回（日）13:00〜15:00　月5,000円　※エプロン持参\nC 夜のかんたん料理　月4回（水）19:00〜20:30　月6,000円\nD 子どもと作るおやつ　月1回（土）14:00〜15:30　1回2,000円（親子1組）\n※初めての方は、最初の1回だけ体験できます（体験料1,000円）\n\n質問：平日の夜しか時間がない人が参加できるのはどれか。	C	\N	\N	61	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+477	21	reading	multiple_choice	【文章】\n（料理教室の案内）\nA 和食の基本　月2回（土）10:00〜12:00　月4,000円\nB パン作り　月2回（日）13:00〜15:00　月5,000円　※エプロン持参\nC 夜のかんたん料理　月4回（水）19:00〜20:30　月6,000円\nD 子どもと作るおやつ　月1回（土）14:00〜15:30　1回2,000円（親子1組）\n※初めての方は、最初の1回だけ体験できます（体験料1,000円）\n\n質問：初めての人が、パン作りの教室を一回だけ体験したい。いくら払うか。	1,000円	\N	\N	62	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+478	21	listening	listening	会社で男の人と女の人が話しています。男の人はこのあとまず何をしますか。	資料を印刷する	会社で男の人と女の人が話しています。男の人はこのあとまず何をしますか。\n女：明日のお客さん、何人来るか確認した？\n男：はい、五人です。会議室も予約しました。\n女：ありがとう。お茶の用意は、明日の朝でいいわ。それより、今日中に資料を人数分印刷しておいて。\n男：わかりました。すぐやります。\n男の人はこのあとまず何をしますか。	\N	63	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+479	21	listening	listening	大学で女の学生と男の学生が話しています。女の学生は何を持っていきますか。	筆記用具	大学で女の学生と男の学生が話しています。女の学生は何を持っていきますか。\n女：明日の実習、何を持っていけばいいんだっけ？\n男：白衣と筆記用具。教科書は使わないって先生が言ってたよ。\n女：白衣、まだ買ってないんだ。\n男：大学で貸してくれるらしいよ。\n女：よかった。じゃあ、筆記用具だけだね。\n女の学生は何を持っていきますか。	\N	64	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+480	21	listening	listening	電話で女の人と男の人が話しています。女の人は何時に駅に行きますか。	九時四十五分	電話で女の人と男の人が話しています。女の人は何時に駅に行きますか。\n男：明日、駅で十時に会う約束だったけど、少し早くしてもいい？映画が十時十五分に始まるんだ。\n女：いいよ。じゃあ、九時半はどう？\n男：九時半だと早すぎるかな。九時四十五分にしよう。\n女：わかった。\n女の人は何時に駅に行きますか。	\N	65	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+481	21	listening	listening	店で男の人と店員が話しています。男の人はどうしますか。	黒いパソコンを今日持って帰る	店で男の人と店員が話しています。男の人はどうしますか。\n男：このパソコン、今日持って帰れますか。\n店員：申し訳ありません。この色は在庫がなくて、お届けは三日後になります。黒でしたら、今日お持ち帰りいただけますが。\n男：色はどちらでもいいので、黒をください。\n男の人はどうしますか。	\N	66	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+482	21	listening	listening	先生が学生に話しています。学生はレポートをどうしなければなりませんか。	パソコンで作り、授業の前にメールで送る	先生が学生に話しています。学生はレポートをどうしなければなりませんか。\n先生：レポートは、手で書かずに、パソコンで作ってください。長さはA4で二枚以内です。来週の授業の前までに、メールで送ってください。\n学生はレポートをどうしなければなりませんか。	\N	67	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+483	21	listening	listening	男の人と女の人が話しています。女の人はどうして料理教室に通い始めましたか。	一人暮らしを始めるから	男の人と女の人が話しています。女の人はどうして料理教室に通い始めましたか。\n男：料理教室に通ってるんだって？料理が好きなの？\n女：そうでもないんだけど、来月から一人暮らしを始めるから、自分で作れるようになりたくて。\n男：なるほど。\n女の人はどうして料理教室に通い始めましたか。	\N	68	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+484	21	listening	listening	女の人と男の人が話しています。男の人はどうして昨日のパーティーに行きませんでしたか。	財布を落として、交番に行っていたから	女の人と男の人が話しています。男の人はどうして昨日のパーティーに行きませんでしたか。\n女：昨日のパーティー、来なかったね。仕事が忙しかったの？\n男：仕事は早く終わったんだけど、帰りに財布を落としちゃって、交番に行ってたんだ。\n女：えっ、それは大変だったね。\n男の人はどうして昨日のパーティーに行きませんでしたか。	\N	69	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+485	21	listening	listening	ラジオで男の人が話しています。男の人は、よく眠るために何が一番大切だと言っていますか。	毎日同じ時間に起きること	ラジオで男の人が話しています。男の人は、よく眠るために何が一番大切だと言っていますか。\n男：よく眠るためには、寝る前にお風呂に入る、温かい飲み物を飲むなど、いろいろな方法があります。でも、一番大切なのは、毎日同じ時間に起きることです。そうすると、自然に夜も眠くなります。\n男の人は、よく眠るために何が一番大切だと言っていますか。	\N	70	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+486	21	listening	listening	女の人と男の人が新しい店について話しています。女の人はこの店のどこがいいと言っていますか。	朝早くから開いていること	女の人と男の人が新しい店について話しています。女の人はこの店のどこがいいと言っていますか。\n男：駅前に新しいパン屋ができたね。もう行った？\n女：うん、行ったよ。値段はちょっと高いけど、朝七時から開いてるから、仕事の前に寄れるのがいいの。\n男：へえ、それは便利だね。\n女の人はこの店のどこがいいと言っていますか。	\N	71	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+487	21	listening	listening	男の人と女の人が話しています。男の人の旅行はどうでしたか。	楽しかったが、雨で山に登れなかった	男の人と女の人が話しています。男の人の旅行はどうでしたか。\n女：北海道旅行、どうだった？\n男：景色はきれいだったし、料理もおいしかったよ。でも、ずっと雨で、予定していた山登りができなかったのが残念だった。\n男の人の旅行はどうでしたか。	\N	72	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+488	21	listening	listening	テレビで女の人が話しています。女の人は何について話していますか。	お弁当を持っていく人が増えている理由	テレビで女の人が話しています。女の人は何について話していますか。\n女：最近、お弁当を持って会社に行く人が増えています。お金の節約になるだけでなく、自分で食べるものを選べるので、健康にもいいからです。前の晩の残り物を入れれば、朝の準備も簡単です。\n女の人は何について話していますか。	\N	73	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+489	21	listening	listening	男の人が話しています。男の人は何について話していますか。	自転車で通勤するよさ	男の人が話しています。男の人は何について話していますか。\n男：私は毎朝、会社まで自転車で通っています。最初は大変でしたが、体が丈夫になったし、満員電車に乗らなくていいので、ストレスも減りました。雨の日は大変ですが、これからも続けたいです。\n男の人は何について話していますか。	\N	74	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+490	21	listening	listening	女の先生が学生に話しています。先生は何について話していますか。	新聞の読み方	女の先生が学生に話しています。先生は何について話していますか。\n先生：日本語の新聞を読むとき、知らない言葉を全部辞書で調べていませんか。それだと、時間がかかって疲れてしまいます。まずは辞書を使わずに全体を読んで、だいたいの意味をつかむようにしましょう。\n先生は何について話していますか。	\N	75	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+491	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	ええ、どうぞ。	すみません、この荷物、ここに置いてもいいですか。	\N	76	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+492	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	確か、十時からだったと思うよ。	明日の会議、何時からだったっけ？	\N	77	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+493	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	いいよ。簡単だから、すぐできるよ。	このケーキ、作り方を教えてもらえない？	\N	78	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+494	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	いいえ。もう体は大丈夫ですか。	先週は休んでしまって、すみませんでした。	\N	79	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+495	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	うん、いいよ。どうぞ。	このパソコン、ちょっと使わせてもらってもいい？	\N	80	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+496	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	ええ、何度も行ったことがありますから。	駅までの道、わかりますか。	\N	81	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+497	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	うん、この仕事を片付けてから帰るよ。	あれ、まだ残ってたの？	\N	82	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+498	21	listening	listening	メモはありません。文を聞いて、最もよい返事をえらんでください。	いいね。行こう行こう。	週末、天気がよかったら、海に行かない？	\N	83	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+499	22	kanji	multiple_choice	［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n社長の［指示］に従って行動した。	しじ	\N	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+500	22	kanji	multiple_choice	［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\nこの地域は果物の［栽培］が盛んだ。	さいばい	\N	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+501	22	kanji	multiple_choice	［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n彼の意見はいつも［鋭い］。	するどい	\N	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+502	22	kanji	multiple_choice	［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n資料を［詳しく］読んでおいてください。	くわしく	\N	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+503	22	kanji	multiple_choice	［　］の言葉の読み方として最もよいものを、一つ選びなさい。\n\n雨で試合の開始が［延期］された。	えんき	\N	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+504	22	kanji	multiple_choice	［　］の言葉を漢字で書くとき、最もよいものを、一つ選びなさい。\n\n新しい商品の［せんでん］に力を入れる。	宣伝	\N	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+505	22	kanji	multiple_choice	［　］の言葉を漢字で書くとき、最もよいものを、一つ選びなさい。\n\n試験に合格して、両親を［よろこばせた］。	喜ばせた	\N	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+506	22	kanji	multiple_choice	［　］の言葉を漢字で書くとき、最もよいものを、一つ選びなさい。\n\n交通［じこ］のニュースを見た。	事故	\N	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+507	22	kanji	multiple_choice	［　］の言葉を漢字で書くとき、最もよいものを、一つ選びなさい。\n\n機械の［こしょう］で、工場が止まった。	故障	\N	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+508	22	kanji	multiple_choice	［　］の言葉を漢字で書くとき、最もよいものを、一つ選びなさい。\n\n友人に本を［かした］。	貸した	\N	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+509	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。（語形成）\n\nこの小説は、作家が亡くなったため（　）完成のままだ。	未	\N	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+510	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。（語形成）\n\n今年の（　）売上は、去年を上回った。	総	\N	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+511	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。（語形成）\n\n彼の発言は、（　）常識だと批判された。	非	\N	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+512	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は（　）が強く、一度引き受けた仕事は最後までやり通す。	責任感	\N	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+513	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は会議で（　）意見を述べ、皆を驚かせた。	思い切った	\N	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+514	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n体調を（　）、しばらく仕事を休むことになった。	崩して	\N	\N	16	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+517	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n計画を（　）に移すまでに、半年かかった。	実行	\N	\N	19	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+518	22	vocab	multiple_choice	（　）に入れるのに最もよいものを、一つ選びなさい。\n\n雪で電車が止まり、駅は帰宅する人で（　）していた。	混雑	\N	\N	20	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+519	22	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼は［たびたび］遅刻する。	何度も	\N	\N	21	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+520	22	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\nこの問題は［ややこしい］。	複雑だ	\N	\N	22	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+521	22	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n会議は［スムーズに］進んだ。	順調に	\N	\N	23	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+522	22	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼の態度に［うんざりした］。	いやになった	\N	\N	24	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+523	22	vocab	multiple_choice	［　］の言葉に意味が最も近いものを、一つ選びなさい。\n\n彼女は［とっくに］帰った。	ずっと前に	\N	\N	25	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+524	22	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n矛盾	彼の話には矛盾があって、信じられない。	\N	\N	26	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+525	22	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n補う	足りない栄養は、サプリメントで補っている。	\N	\N	27	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+526	22	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n手がかり	事件を解決する手がかりが見つかった。	\N	\N	28	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+527	22	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\nせめて	旅行は無理でも、せめて週末くらいはゆっくり休みたい。	\N	\N	29	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+528	22	vocab	multiple_choice	次の言葉の使い方として最もよいものを、一つ選びなさい。\n\n保存	作ったデータは、こまめに保存しておいたほうがいい。	\N	\N	30	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+529	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n日本語が上手になる（　）、毎日練習するしかない。	には	\N	\N	31	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+530	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nこの店は、味（　）値段（　）、申し分ない。	といい／といい	\N	\N	32	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+531	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n約束した（　）、最後まで責任を持ってやるべきだ。	以上	\N	\N	33	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+532	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼は忙しい（　）、いつも笑顔で手伝ってくれる。	にもかかわらず	\N	\N	34	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+533	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nこの薬は、年齢（　）、誰でも飲むことができる。	を問わず	\N	\N	35	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+534	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n試験の結果が心配で、夜も眠れない（　）。	ほどだ	\N	\N	36	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+535	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n長年住んでいた町を離れるのは、寂しい（　）。	ものがある	\N	\N	37	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+536	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n社長の許可を得た（　）、計画を進めることにした。	うえで	\N	\N	38	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+537	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼の話は、聞けば聞く（　）わからなくなる。	ほど	\N	\N	39	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+538	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n子どもの教育（　）、家庭と学校の協力が欠かせない。	に関しては	\N	\N	40	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+539	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\nこちらの資料は、ご自由にお持ち（　）。	ください	\N	\N	41	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+540	22	grammar	multiple_choice	次の文の（　）に入れるのに最もよいものを、一つ選びなさい。\n\n彼がそんなひどいことを言う（　）。何かの間違いだろう。	わけがない	\N	\N	42	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+541	22	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\nこの仕事は　＿＿　＿＿　★　＿＿　できるものではない。\n（1 一人で　2 経験の　3 浅い　4 人が）	人が	\N	\N	43	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+542	22	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n彼女は　＿＿　★　＿＿　＿＿　ピアノを習っている。\n（1 ころ　2 子どもの　3 から　4 ずっと）	ころ	\N	\N	44	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+543	22	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n駅前の　＿＿　＿＿　★　＿＿　予約が取れない。\n（1 人気が　2 レストランは　3 なかなか　4 あって）	あって	\N	\N	45	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+544	22	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\n先生に　＿＿　★　＿＿　＿＿　、作文がずっとよくなった。\n（1 もらった　2 アドバイスの　3 おかげで　4 して）	もらった	\N	\N	46	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+545	22	grammar	multiple_choice	次の文の　★　に入る最もよいものを、一つ選びなさい。\n\nこのままでは、　＿＿　＿＿　★　＿＿　。\n（1 間に合わない　2 締め切りに　3 かもしれない　4 計画の）	間に合わない	\N	\N	47	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+546	22	reading	multiple_choice	【文章】\n最近、職場で「報告・連絡・相談」が大切だとよく言われる。しかし、上司が忙しそうにしていると、部下はなかなか相談できない。部下に相談してほしいなら、まず上司の側が、話しかけやすい雰囲気を作ることが必要なのではないか。\n\n質問：筆者の考えに合うものはどれか。	部下が相談しやすい雰囲気を、上司が作るべきだ。	\N	\N	48	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+547	22	reading	multiple_choice	【文章】\n（社内メール）\n各位\n来月より、出張の交通費の精算方法が変わります。これまでの紙の申請書は廃止し、社内システムから申請していただきます。領収書は、写真を撮ってシステムに添付してください。原本の提出は不要です。\n経理部\n\n質問：来月から出張の交通費を精算するとき、どうしなければならないか。	システムで申請し、領収書の写真を添付する。	\N	\N	49	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+548	22	reading	multiple_choice	【文章】\n旅行の楽しみは、目的地に着いてからだけではない。どこへ行こうか、何を食べようかと計画を立てている時間も、実は旅の一部なのだ。研究によると、人は旅行そのものよりも、旅行を待つ期間に幸せを感じやすいという。\n\n質問：筆者によると、旅行の楽しみとは何か。	旅行の計画を立てて、待っている時間も楽しみの一つだ。	\N	\N	50	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+549	22	reading	multiple_choice	【文章】\n「失敗は成功のもと」という言葉がある。しかし、失敗しただけで、自然に成功に近づくわけではない。なぜ失敗したのかを考え、次に生かしてはじめて、失敗は意味を持つのである。\n\n質問：筆者は失敗についてどう考えているか。	原因を考えて次に生かすことで、失敗に意味が生まれる。	\N	\N	51	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+550	22	reading	multiple_choice	【文章】\n日本では、ペットを「家族の一員」と考える人が増えている。ペットと一緒に泊まれるホテルや、ペット用の保険なども珍しくなくなった。\nその一方で、飼い主が高齢になり、ペットの世話ができなくなるという問題も起きている。犬や猫の寿命は延び、二十年近く生きることもある。飼い始めたときは元気でも、最後まで面倒を見られるとは限らないのだ。\nペットを飼う前に、自分の年齢や生活の変化も考えて、最後まで責任を持てるかどうかをよく考えることが大切である。\n\n質問：最近、どんな問題が起きているか。	飼い主が年をとって、ペットの世話ができなくなること	\N	\N	52	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+551	22	reading	multiple_choice	【文章】\n日本では、ペットを「家族の一員」と考える人が増えている。ペットと一緒に泊まれるホテルや、ペット用の保険なども珍しくなくなった。\nその一方で、飼い主が高齢になり、ペットの世話ができなくなるという問題も起きている。犬や猫の寿命は延び、二十年近く生きることもある。飼い始めたときは元気でも、最後まで面倒を見られるとは限らないのだ。\nペットを飼う前に、自分の年齢や生活の変化も考えて、最後まで責任を持てるかどうかをよく考えることが大切である。\n\n質問：「最後まで面倒を見られるとは限らない」のはなぜか。	ペットが長生きし、飼い主の生活や体が変わることがあるから	\N	\N	53	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+552	22	reading	multiple_choice	【文章】\n日本では、ペットを「家族の一員」と考える人が増えている。ペットと一緒に泊まれるホテルや、ペット用の保険なども珍しくなくなった。\nその一方で、飼い主が高齢になり、ペットの世話ができなくなるという問題も起きている。犬や猫の寿命は延び、二十年近く生きることもある。飼い始めたときは元気でも、最後まで面倒を見られるとは限らないのだ。\nペットを飼う前に、自分の年齢や生活の変化も考えて、最後まで責任を持てるかどうかをよく考えることが大切である。\n\n質問：筆者が最も言いたいことは何か。	ペットを飼う前に、最後まで責任を持てるかよく考えるべきだ。	\N	\N	54	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+553	22	reading	multiple_choice	【文章】\n子どものころ、私は本を読むのが苦手だった。字を追っているうちに眠くなってしまうのだ。そんな私を変えたのは、中学の国語の先生だった。\n先生は授業の始めに、毎回十分間、本を読んで聞かせてくれた。続きが気になるところで必ず終わるので、私たちは次の授業を楽しみに待った。そのうち、待ちきれなくなった私は、図書館でその本を借りて、自分で読んでしまった。\n今思えば、あれは先生の作戦だったのだろう。「読みなさい」と言われるよりも、「続きが知りたい」という気持ちのほうが、人を動かすのである。\n\n質問：先生は授業の始めに何をしたか。	本を読んで聞かせた。	\N	\N	55	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+554	22	reading	multiple_choice	【文章】\n子どものころ、私は本を読むのが苦手だった。字を追っているうちに眠くなってしまうのだ。そんな私を変えたのは、中学の国語の先生だった。\n先生は授業の始めに、毎回十分間、本を読んで聞かせてくれた。続きが気になるところで必ず終わるので、私たちは次の授業を楽しみに待った。そのうち、待ちきれなくなった私は、図書館でその本を借りて、自分で読んでしまった。\n今思えば、あれは先生の作戦だったのだろう。「読みなさい」と言われるよりも、「続きが知りたい」という気持ちのほうが、人を動かすのである。\n\n質問：「あれは先生の作戦だった」とあるが、どんな作戦か。	続きを知りたい気持ちにさせて、自分から本を読ませる作戦	\N	\N	56	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+555	22	reading	multiple_choice	【文章】\n子どものころ、私は本を読むのが苦手だった。字を追っているうちに眠くなってしまうのだ。そんな私を変えたのは、中学の国語の先生だった。\n先生は授業の始めに、毎回十分間、本を読んで聞かせてくれた。続きが気になるところで必ず終わるので、私たちは次の授業を楽しみに待った。そのうち、待ちきれなくなった私は、図書館でその本を借りて、自分で読んでしまった。\n今思えば、あれは先生の作戦だったのだろう。「読みなさい」と言われるよりも、「続きが知りたい」という気持ちのほうが、人を動かすのである。\n\n質問：筆者が最も言いたいことは何か。	命令されるより、知りたいという気持ちのほうが人を動かす。	\N	\N	57	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+556	22	reading	multiple_choice	【文章】\nA：小学生にスマートフォンを持たせることには賛成だ。何かあったときにすぐ連絡がとれるし、位置もわかるので安心だ。ただ、使う時間は家庭でルールを決める必要がある。\nB：小学生にスマートフォンはまだ早いと思う。ゲームや動画に夢中になって、勉強や睡眠の時間が減ってしまうおそれがある。連絡のためなら、通話だけできる簡単な携帯電話で十分だ。\n\n質問：AとBは、小学生とスマートフォンについてどのように述べているか。	Aは安全のために賛成し、Bは使いすぎを心配して反対している。	\N	\N	58	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+557	22	reading	multiple_choice	【文章】\nA：小学生にスマートフォンを持たせることには賛成だ。何かあったときにすぐ連絡がとれるし、位置もわかるので安心だ。ただ、使う時間は家庭でルールを決める必要がある。\nB：小学生にスマートフォンはまだ早いと思う。ゲームや動画に夢中になって、勉強や睡眠の時間が減ってしまうおそれがある。連絡のためなら、通話だけできる簡単な携帯電話で十分だ。\n\n質問：AとBのどちらも触れていることは何か。	子どもと連絡をとること	\N	\N	59	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+558	22	reading	multiple_choice	【文章】\n（市民プールの利用案内）\n・営業時間：9:00〜21:00（月曜休館）\n・料金：大人 600円／中学生以下 300円／65歳以上 400円\n・回数券（11回分）：大人 6,000円\n・17:00以降は、大人料金が 400円になります\n\n質問：会社員の木村さん（35歳）が、平日の仕事の後、18時ごろに一回泳ぐ場合、料金はいくらか。	400円	\N	\N	60	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+559	22	reading	multiple_choice	【文章】\n（市民プールの利用案内）\n・営業時間：9:00〜21:00（月曜休館）\n・料金：大人 600円／中学生以下 300円／65歳以上 400円\n・回数券（11回分）：大人 6,000円\n・17:00以降は、大人料金が 400円になります\n\n質問：この案内の内容と合っているものはどれか。	月曜日はプールを利用できない。	\N	\N	61	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+560	22	listening	listening	会社で女の人と男の人が話しています。男の人はこのあと何をしますか。	パンフレットをブースごとに分ける	会社で女の人と男の人が話しています。男の人はこのあと何をしますか。\n女：来週の展示会のパンフレット、何部届いた？\n男：五百部です。\n女：足りるかな。去年は七百人ぐらい来たのよ。\n男：じゃあ、追加で注文しましょうか。\n女：注文は私がするから、あなたは届いた分をブースごとに分けておいて。\n男の人はこのあと何をしますか。	\N	62	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+561	22	listening	listening	大学で男の学生と事務の人が話しています。男の学生はこのあとまず何をしますか。	先生に推薦状を頼む	大学で男の学生と事務の人が話しています。男の学生はこのあとまず何をしますか。\n男：奨学金の申し込みをしたいんですが。\n女：はい。申込書と成績証明書、それから推薦状が必要です。\n男：推薦状は先生に頼めばいいんですか。\n女：はい。ただ、先生に書いていただくのに一週間ほどかかりますから、締め切りに間に合うように、まずそちらをお願いしてください。\n男の学生はこのあとまず何をしますか。	\N	63	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+562	22	listening	listening	電話で女の人と男の人が話しています。女の人は何をしなければなりませんか。	予約番号をメールで送る	電話で女の人と男の人が話しています。女の人は何をしなければなりませんか。\n男：お電話ありがとうございます。○○ホテルです。\n女：来週の予約を、二名から三名に変更したいんですが。\n男：かしこまりました。お部屋はそのままで、追加のベッドをご用意できます。ただ、三名様ですと朝食の追加料金がかかりますが。\n女：大丈夫です。\n男：では、ご予約番号を後ほどメールでお送りいただけますか。\n女の人は何をしなければなりませんか。	\N	64	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+563	22	listening	listening	会社で男の人と女の人が話しています。女の人はプレゼンテーションをどう直しますか。	細かいデータは資料に入れ、要点だけ話す	会社で男の人と女の人が話しています。女の人はプレゼンテーションをどう直しますか。\n男：明日のプレゼン、一度通して見せてもらったけど、ちょっと長いね。\n女：二十分の予定が、三十分近くかかってしまいました。\n男：説明はわかりやすいから、細かいデータのところを資料に回して、話すのは要点だけにしたら？\n女：わかりました。そうします。\n女の人はプレゼンテーションをどう直しますか。	\N	65	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+564	22	listening	listening	店で女の人と店員が話しています。女の人はどのコースを選びますか。	パンのコース	店で女の人と店員が話しています。女の人はどのコースを選びますか。\n女：料理教室に申し込みたいんですが、どんなコースがありますか。\n店員：和食、パン、お菓子の三つです。和食は土曜日、パンとお菓子は平日の夜です。\n女：週末は子どもの世話があるので、平日がいいですね。お菓子は甘いものが苦手なので…。\n店員：では、こちらになりますね。\n女の人はどのコースを選びますか。	\N	66	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+565	22	listening	listening	男の人と女の人が話しています。男の人が引っ越しをやめた一番の理由は何ですか。	会社まで遠すぎるから	男の人と女の人が話しています。男の人が引っ越しをやめた一番の理由は何ですか。\n女：引っ越すって言ってたけど、やめたの？\n男：うん。新しい部屋は広いし、家賃も安かったんだけど。\n女：じゃあ、どうして？\n男：会社まで一時間半もかかるんだよ。毎日それは無理だと思って。\n男の人が引っ越しをやめた一番の理由は何ですか。	\N	67	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+566	22	listening	listening	ラジオで女の人が話しています。女の人は、この町の観光客が増えた一番の理由は何だと言っていますか。	町を舞台にした映画がヒットしたから	ラジオで女の人が話しています。女の人は、この町の観光客が増えた一番の理由は何だと言っていますか。\n女：この町では、ここ数年、観光客が大幅に増えています。新しい駅ができて交通が便利になったこともありますが、一番大きいのは、町の古い町並みを舞台にした映画が大ヒットしたことです。映画を見て、実際に訪れたいと思う人が多かったのです。\n女の人は、この町の観光客が増えた一番の理由は何だと言っていますか。	\N	68	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+567	22	listening	listening	男の人と女の人が話しています。女の人は、新しい仕事のどこが大変だと言っていますか。	出張が多いこと	男の人と女の人が話しています。女の人は、新しい仕事のどこが大変だと言っていますか。\n男：新しい仕事、どう？\n女：職場の人は親切だし、仕事の内容も面白いよ。\n男：よかったね。\n女：ただ、毎週のように出張があって、なかなか家でゆっくりできないのがね。\n女の人は、新しい仕事のどこが大変だと言っていますか。	\N	69	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+568	22	listening	listening	テレビで医者が話しています。医者は、運動を長く続けるために何が一番大切だと言っていますか。	楽しいと思える運動を選ぶこと	テレビで医者が話しています。医者は、運動を長く続けるために何が一番大切だと言っていますか。\n男：運動を始めても、続かない人が多いですね。最初から目標を高くしすぎると、つらくなってやめてしまいます。大切なのは、自分が楽しいと思える運動を選ぶことです。楽しければ、自然に続けられます。\n医者は、運動を長く続けるために何が一番大切だと言っていますか。	\N	70	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+569	22	listening	listening	女の人が講演で話しています。女の人は、外国語を学ぶよさは何だと言っていますか。	自分の国の言葉や文化を外から見られること	女の人が講演で話しています。女の人は、外国語を学ぶよさは何だと言っていますか。\n女：外国語を学ぶと、仕事の幅が広がるとよく言われます。それも確かですが、私が一番よかったと思うのは、自分の国の言葉や文化を、外から見られるようになったことです。当たり前だと思っていたことが、実は当たり前ではないと気づけたのです。\n女の人は、外国語を学ぶよさは何だと言っていますか。	\N	71	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+570	22	listening	listening	テレビで専門家が話しています。専門家は何について話していますか。	災害に備えて準備しておくこと	テレビで専門家が話しています。専門家は何について話していますか。\n男：最近、地震や大雨などの災害が増えています。いざというときのために、水や食料を三日分は用意しておきましょう。また、家族とどこに集まるか、どうやって連絡をとるかを、前もって話し合っておくことも大切です。\n専門家は何について話していますか。	\N	72	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+571	22	listening	listening	大学の授業で先生が話しています。先生は何について話していますか。	インターネットの情報を使うときの注意	大学の授業で先生が話しています。先生は何について話していますか。\n女：レポートを書くとき、インターネットの情報をそのまま使う人がいますが、注意が必要です。誰が書いたのかわからない情報も多いからです。必ず、本や公的な機関の資料など、信頼できる情報と照らし合わせて確認するようにしてください。\n先生は何について話していますか。	\N	73	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+572	22	listening	listening	男の人が話しています。男の人の話のテーマは何ですか。	ボランティアが自分の元気にもなること	男の人が話しています。男の人の話のテーマは何ですか。\n男：私は定年退職してから、地域のボランティアを始めました。最初は時間をつぶすつもりでしたが、子どもたちに昔の遊びを教えていると、自分のほうが元気をもらっていることに気づきました。人の役に立つことは、自分のためにもなるのです。\n男の人の話のテーマは何ですか。	\N	74	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+573	22	listening	listening	ラジオで女の人が話しています。女の人は何について話していますか。	「もったいない」という考え方と環境との関係	ラジオで女の人が話しています。女の人は何について話していますか。\n女：「もったいない」という言葉は、海外でも知られるようになりました。物を最後まで大切に使う、という日本人の考え方を表しています。食べ物を残さない、壊れたものを直して使う。そんな小さな習慣が、環境を守ることにもつながっているのです。\n女の人は何について話していますか。	\N	75	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+574	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	はい、帰る前に必ずお渡しします。	この書類、今日中に部長に渡しておいてもらえる？	\N	76	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+575	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	本当だ。定休日だったみたいだね。	せっかく来たのに、お店、閉まってるね。	\N	77	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+576	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	えっ、本当ですか。全然知りませんでした。	佐藤さん、来月で会社を辞めるらしいですよ。	\N	78	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+577	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	じゃあ、業者に連絡してみます。	このコピー機、さっきから調子が悪いんだけど。	\N	79	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+578	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	お疲れさまでした。	お先に失礼します。	\N	80	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+579	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	いいですね。彼なら安心です。	今度の企画、田中さんに任せてみてはどうかな。	\N	81	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+580	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	じゃあ、キャンプは来週にしようか。	週末の天気、崩れるみたいだよ。	\N	82	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+581	22	listening	listening	メモはありません。文を聞いて、最もよい返事を選んでください。	大変でしたね。まだ始まったばかりですから、大丈夫ですよ。	遅れて申し訳ありません。電車が止まってしまって。	\N	83	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+599	24	listening	listening	会社で 女の 人と 男の 人が 話して います。男の 人は このあと 何を しますか。	いすを ならべる	会社で 女の 人と 男の 人が 話して います。男の 人は このあと まず 何を しますか。\n女：すみません、会議室の いすを 十こ ならべて ください。\n男：はい。テーブルも うごかしますか。\n女：テーブルは もう うごかしました。いすの あとで、まどを あけて ください。\n男の 人は このあと まず 何を しますか。	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+582	22	listening	listening	三人が新しい店の場所について話しています。どこに決まりましたか。	住宅街	三人が新しい店の場所について話しています。どこに決まりましたか。\n男：候補は、駅前、大学の近く、住宅街の三つだね。\n女1：駅前は人が多いけど、家賃がすごく高いですよ。\n女2：大学の近くなら、若いお客さんが来てくれそうです。でも、夏休みや春休みは学生がいなくなりますね。\n女1：住宅街なら家賃も安いし、家族連れが一年中来てくれると思います。\n男：うちの店は家族向けのメニューが多いから、そこがいいね。\nどこに決まりましたか。	\N	84	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+583	22	listening	listening	夫婦が子どもの習い事について話しています。何を習わせることにしましたか。	ピアノ	夫婦が子どもの習い事について話しています。何を習わせることにしましたか。\n妻：水泳、英会話、ピアノ、どれがいいかしら。\n夫：水泳は体が丈夫になるし、いいんじゃないか。\n妻：でも、あの子、水が怖いって言ってたわよ。\n夫：そうか。英会話は？\n妻：本人は、友達が習ってるピアノをやりたいって。\n夫：本人がやりたいなら、それが一番続くだろう。そうしよう。\n何を習わせることにしましたか。	\N	85	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+584	23	listening	listening	おとこの 人と おんなの 人が はなして います。ふたりは なにで いきますか。	でんしゃ	おとこの 人と おんなの 人が はなして います。ふたりは なにで いきますか。\nおとこ：あした、バスで いきましょうか。\nおんな：バスは じかんが かかりますから、でんしゃで いきましょう。\nおとこ：はい、そう しましょう。\nふたりは なにで いきますか。	\N	1	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+585	23	listening	listening	おんなの 人が はなして います。おんなの 人は きのうの ごご なにを しましたか。	かいものに いった	おんなの 人が はなして います。おんなの 人は きのうの ごご なにを しましたか。\nおんな：きのうは ごぜん、へやを そうじしました。ごごは ともだちと かいものに いきました。\nおんなの 人は きのうの ごご なにを しましたか。	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+586	23	listening	listening	おとこの 人と おんなの 人が はなして います。おとこの 人は なにを のみますか。	こうちゃ	おとこの 人と おんなの 人が はなして います。おとこの 人は なにを のみますか。\nおんな：コーヒーと こうちゃと ジュースが ありますよ。\nおとこ：コーヒーは よる ねられませんから、こうちゃを ください。\nおとこの 人は なにを のみますか。	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+587	23	listening	listening	せんせいが はなして います。がくせいは あした なにを もって きますか。	えんぴつと けしゴム	せんせいが はなして います。がくせいは あした なにを もって きますか。\nせんせい：あしたは えを かきます。えんぴつと けしゴムを もって きて ください。かみは がっこうに あります。\nがくせいは あした なにを もって きますか。	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+588	23	listening	listening	おとこの 人と おんなの 人が はなして います。おんなの 人の たんじょうびは いつですか。	三月 八日	おとこの 人と おんなの 人が はなして います。おんなの 人の たんじょうびは いつですか。\nおとこ：たんじょうびは いつですか。\nおんな：三月 八日です。\nおとこ：あ、らいしゅうですね。\nおんなの 人の たんじょうびは いつですか。	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+589	23	listening	listening	みせで おんなの 人と みせの 人が はなして います。おんなの 人は いくら はらいますか。	三百五十えん	みせで おんなの 人と みせの 人が はなして います。おんなの 人は いくら はらいますか。\nおんな：りんごを みっつ ください。\nみせの 人：ひとつ 百えんです。\nおんな：じゃあ、みかんも ひとつ ください。\nみせの 人：みかんは 五十えんです。\nおんなの 人は いくら はらいますか。	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+590	23	listening	listening	おとこの 人と おんなの 人が はなして います。おとこの 人の へやは なんがいですか。	四かい	おとこの 人と おんなの 人が はなして います。おとこの 人の へやは なんがいですか。\nおんな：たなかさんの へやは 三がいですか。\nおとこ：いいえ、三がいは やまださんの へやです。わたしの へやは その うえです。\nおとこの 人の へやは なんがいですか。	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+591	23	listening	listening	おんなの 人と おとこの 人が はなして います。おとこの 人は どうして げんきが ありませんか。	ねむいから	おんなの 人と おとこの 人が はなして います。おとこの 人は どうして げんきが ありませんか。\nおんな：げんきが ありませんね。びょうきですか。\nおとこ：いいえ、きのう おそくまで しごとを しましたから、ねむいんです。\nおとこの 人は どうして げんきが ありませんか。	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+592	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	こちらこそ、どうぞ よろしく。	はじめまして。どうぞ よろしく。	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+593	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	三時はんです。	いま なんじですか。	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+594	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	百二十えんです。	この りんご、ひとつ いくらですか。	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+595	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	いってらっしゃい。	いってきます。	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+596	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	ともだちと テニスを しました。	しゅうまつ、なにを しましたか。	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+597	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	はい、どうぞ。	すみません、えんぴつを かして ください。	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+598	23	listening	listening	えなどは ありません。ぶんを きいて、いちばん いい こたえを えらんで ください。	とうきょうです。	どこに すんで いますか。	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+600	24	listening	listening	男の 学生と 女の 学生が 話して います。二人は 何時に 会いますか。	二時	男の 学生と 女の 学生が 話して います。二人は 何時に 会いますか。\n男：あした、図書館の 前で 一時に 会おうか。\n女：ごめん、午前中 アルバイトが あって、一時は ちょっと…。二時なら 大丈夫。\n男：じゃあ、二時に しよう。\n二人は 何時に 会いますか。	\N	2	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+601	24	listening	listening	女の 人と 店の 人が 話して います。女の 人は どれを 買いますか。	大きい 白い セーター	女の 人と 店の 人が 話して います。女の 人は どれを 買いますか。\n女：この 赤い セーター、もう少し 大きいのは ありますか。\n店の 人：赤は この サイズだけです。白と 黒なら 大きいのが ございます。\n女：じゃあ、白を ください。\n女の 人は どれを 買いますか。	\N	3	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+602	24	listening	listening	男の 人と 女の 人が 話して います。男の 人は 日曜日に 何を しますか。	家族と 食事を する	男の 人と 女の 人が 話して います。男の 人は 日曜日に 何を しますか。\n女：日曜日、いっしょに えいがを 見に 行かない？\n男：行きたいけど、日曜日は 母の たんじょうびなんだ。家族で 食事を するんだ。\n女：そう。じゃあ、また 今度ね。\n男の 人は 日曜日に 何を しますか。	\N	4	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+603	24	listening	listening	先生が 学生に 話して います。あした 学生は 何時までに 学校に 来ますか。	八時四十五分	先生が 学生に 話して います。あした 学生は 何時までに 学校に 来ますか。\n先生：あしたは テストが あります。テストは 九時から ですが、テストの せつめいを しますから、十五分 前までに 来て ください。\nあした 学生は 何時までに 学校に 来ますか。	\N	5	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+604	24	listening	listening	女の 人と 男の 人が 話して います。女の 人は どうして 会社を 休みましたか。	子どもを 病院へ つれて 行ったから	女の 人と 男の 人が 話して います。女の 人は どうして 会社を 休みましたか。\n男：きのう、会社を 休んだね。かぜ？\n女：ううん、子どもが ねつを 出して、病院へ つれて 行ったの。\n男：そう。もう 大丈夫？\n女：うん、もう 元気。\n女の 人は どうして 会社を 休みましたか。	\N	6	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+605	24	listening	listening	男の 人と 女の 人が 話して います。男の 人は 何が いちばん 楽しかったと 言って いますか。	着物を 着て 歩いた こと	男の 人と 女の 人が 話して います。男の 人は 何が いちばん 楽しかったと 言って いますか。\n女：京都の りょこう、どうだった？\n男：おてらも きれいだったし、食べ物も おいしかったよ。でも、いちばん 楽しかったのは、着物を 着て 町を 歩いた ことかな。\n男の 人は 何が いちばん 楽しかったと 言って いますか。	\N	7	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+606	24	listening	listening	女の 人が 話して います。女の 人は 毎朝 何を しますか。	犬と さんぽを する	女の 人が 話して います。女の 人は 起きて まず 何を しますか。\n女：わたしは 毎朝 六時に 起きます。起きたら、まず 犬と さんぽを します。それから シャワーを あびて、朝ごはんを 食べます。\n女の 人は 起きて まず 何を しますか。	\N	8	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+607	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ええ、どうぞ。どこへ 行きたいんですか。	すみません、ちょっと 道を 聞いても いいですか。	\N	9	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+608	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	すみません、わたしも わからないんです。	この 漢字の 読み方、わかりますか。	\N	10	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+609	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	じゃあ、家で 映画でも 見ましょう。	明日、雨だったら、どうしますか。	\N	11	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+610	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	ありがとうございます。いただきます。	お茶、もう 一杯 いかがですか。	\N	12	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+611	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	うん、とても おもしろかったよ。	先週 かした 本、もう 読んだ？	\N	13	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+612	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	じゃあ、きょうは わたしが はらうよ。	あ、さいふを 家に わすれて きちゃった。	\N	14	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
+613	24	listening	listening	えなどは ありません。文を 聞いて、いちばん いい 返事を えらんで ください。	すみません、ここは だめなんです。	すみません、ここで しゃしんを とっても いいですか。	\N	15	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	\N
 \.
 
 
@@ -111656,6 +115649,2186 @@ COPY public."MockExamQuestionOption" (id, "questionId", text, "sortOrder", "imag
 270	68	今すぐ来ること	1	\N
 271	68	帰ること	2	\N
 272	68	電話をかけ直すこと	3	\N
+273	69	えんかつ	0	\N
+274	69	えんこつ	1	\N
+275	69	えんがつ	2	\N
+276	69	いんかつ	3	\N
+277	70	そち	0	\N
+278	70	しょち	1	\N
+279	70	そうち	2	\N
+280	70	さち	3	\N
+281	71	けんあん	0	\N
+282	71	けねん	1	\N
+283	71	かいあん	2	\N
+284	71	けんあい	3	\N
+285	72	こばんだ	0	\N
+286	72	はばんだ	1	\N
+287	72	いどんだ	2	\N
+288	72	ちぢんだ	3	\N
+289	73	おんびん	0	\N
+290	73	おんべん	1	\N
+291	73	いんびん	2	\N
+292	73	おんぴん	3	\N
+293	74	おもかげ	0	\N
+294	74	めんえい	1	\N
+295	74	おもえい	2	\N
+296	74	めんかげ	3	\N
+297	75	好調	0	\N
+298	75	低迷	1	\N
+299	75	難航	2	\N
+300	75	順延	3	\N
+301	76	意地	0	\N
+302	76	意図	1	\N
+303	76	意向	2	\N
+304	76	意義	3	\N
+305	77	縮小	0	\N
+306	77	拡充	1	\N
+307	77	達成	2	\N
+308	77	推進	3	\N
+309	78	当惑	0	\N
+310	78	納得	1	\N
+311	78	感心	2	\N
+312	78	安堵	3	\N
+313	79	歩み寄って	0	\N
+314	79	割り込んで	1	\N
+315	79	立て込んで	2	\N
+316	79	張り合って	3	\N
+317	80	すんなり	0	\N
+318	80	ぐったり	1	\N
+319	80	うっかり	2	\N
+320	80	ずっしり	3	\N
+321	81	助長	0	\N
+322	81	抑制	1	\N
+323	81	阻止	2	\N
+324	81	是正	3	\N
+325	82	自信がなさそうにしている	0	\N
+326	82	楽しそうにしている	1	\N
+327	82	怒ったようにしている	2	\N
+328	82	忙しそうにしている	3	\N
+329	83	できるだけ	0	\N
+330	83	絶対に	1	\N
+331	83	しばらく	2	\N
+332	83	なんとなく	3	\N
+333	84	混乱した	0	\N
+334	84	中止になった	1	\N
+335	84	早く終わった	2	\N
+336	84	延期された	3	\N
+337	85	はっきりしなかった	0	\N
+338	85	長すぎた	1	\N
+339	85	丁寧だった	2	\N
+340	85	正確だった	3	\N
+341	86	だいたい	0	\N
+342	86	すべて	1	\N
+343	86	やっと	2	\N
+344	86	少しだけ	3	\N
+345	87	手落ちがない	0	\N
+346	87	やる気がない	1	\N
+347	87	スピードがない	2	\N
+348	87	面白みがない	3	\N
+349	88	両国は粘り強い話し合いによって、行き詰まった事態の打開を図った。	0	\N
+350	88	古くなった家を打開して、新しい家を建てることにした。	1	\N
+351	88	届いた箱を打開して、中身を一つずつ確かめた。	2	\N
+352	88	社長は会議の冒頭で、短い打開の挨拶をした。	3	\N
+353	89	雨もやんで電車も動き出したので、ひとまず安心した。	0	\N
+354	89	彼はひとまず毎朝ジョギングを欠かさない。	1	\N
+355	89	この店は駅から遠いが、ひとまず人気がある。	2	\N
+356	89	ひとまず昔、この村に一人の老人が住んでいた。	3	\N
+357	90	彼女は手際よく、あっという間に五人分の料理を作った。	0	\N
+358	90	彼は手際が高いので、上の棚にも手が届く。	1	\N
+359	90	この手際は丈夫なので、長く使えるだろう。	2	\N
+360	90	手際のある人と一緒に暮らしたいと思っている。	3	\N
+361	91	強風の影響で、電車は現在運転を見合わせている。	0	\N
+362	91	久しぶりに友人と駅の改札で見合わせた。	1	\N
+363	91	彼は鏡に映った自分の顔を見合わせた。	2	\N
+364	91	試験の結果を先生に見合わせてもらった。	3	\N
+365	92	仕事に夢中になって、家族との時間をおろそかにしてはいけない。	0	\N
+366	92	このスープは薄くて、おろそかな味がする。	1	\N
+367	92	今日はおろそかな天気で、洗濯物がよく乾いた。	2	\N
+368	92	彼はおろそかな声で、子守歌を歌った。	3	\N
+369	93	前回の失敗を踏まえて、計画を一から立て直した。	0	\N
+370	93	道に落ちていた空き缶をうっかり踏まえてしまった。	1	\N
+371	93	階段を一段ずつ踏まえて、ゆっくり上った。	2	\N
+372	93	急いでブレーキを踏まえて、車を止めた。	3	\N
+373	94	をもってすれば	0	\N
+374	94	をよそに	1	\N
+375	94	にひきかえ	2	\N
+376	94	をものともせず	3	\N
+377	95	たりとも	0	\N
+378	95	ばかりか	1	\N
+379	95	ながらも	2	\N
+380	95	ならでは	3	\N
+381	96	なり	0	\N
+382	96	うちに	1	\N
+383	96	ばかりに	2	\N
+384	96	どころか	3	\N
+385	97	と	0	\N
+386	97	では	1	\N
+387	97	なら	2	\N
+388	97	から	3	\N
+389	98	を通り越して	0	\N
+390	98	にかけては	1	\N
+391	98	に即して	2	\N
+392	98	をめぐって	3	\N
+393	99	ともなれば	0	\N
+394	99	ならではの	1	\N
+395	99	あっての	2	\N
+396	99	とはいえ	3	\N
+397	100	なくしては	0	\N
+398	100	をもって	1	\N
+399	100	に至って	2	\N
+400	100	を皮切りに	3	\N
+401	101	ことはない	0	\N
+402	101	わけだ	1	\N
+403	101	ばかりだ	2	\N
+404	101	べくもない	3	\N
+405	102	にもかかわらず	0	\N
+406	102	からには	1	\N
+407	102	とあって	2	\N
+408	102	ばかりか	3	\N
+409	103	お書きになった	0	\N
+410	103	お書きした	1	\N
+411	103	書かせていただいた	2	\N
+412	103	書いてさしあげた	3	\N
+413	104	簡単に	0	\N
+414	104	一度の	1	\N
+415	104	失敗で	2	\N
+416	104	諦める	3	\N
+417	105	だけでなく	0	\N
+418	105	世界全体で	1	\N
+419	105	一国	2	\N
+420	105	の問題	3	\N
+421	106	出張	0	\N
+422	106	に	1	\N
+423	106	急な	2	\N
+424	106	伴い	3	\N
+425	107	と	0	\N
+426	107	から	1	\N
+427	107	忙しい	2	\N
+428	107	いって	3	\N
+429	108	涙なしには	0	\N
+430	108	見られない	1	\N
+431	108	ほど	2	\N
+432	108	大人でも	3	\N
+433	109	空いた時間を何かで埋めようとする考え方に問題がある。	0	\N
+434	109	便利な道具を使うと、かえって時間がなくなる。	1	\N
+435	109	忙しさをなくすには、便利さを手放すべきだ。	2	\N
+436	109	浮いた時間には、新しい用事を入れたほうがよい。	3	\N
+437	110	会議の場所が変わること、資料は各自で印刷して持ってくること	0	\N
+438	110	会議の開始時刻と場所が変わること	1	\N
+439	110	会議が工事のため中止になること	2	\N
+440	110	資料は当日会議室で配布されること	3	\N
+441	111	大人自身が失敗にどう向き合うかを示すこと	0	\N
+442	111	子どもに「失敗してもいい」と繰り返し伝えること	1	\N
+443	111	子どもが失敗しないように大人が手助けすること	2	\N
+444	111	失敗した子どもを厳しく指導すること	3	\N
+445	112	安全に配慮しつつ、残すべき古い建物を見極める必要がある。	0	\N
+446	112	古い建物はすべて保存すべきだ。	1	\N
+447	112	安全のためには古い建物を壊すしかない。	2	\N
+448	112	新しい建物には町の記憶がないので価値がない。	3	\N
+449	113	気持ちは理解できるが、作品を味わう機会を失うおそれがある。	0	\N
+450	113	時間を有効に使うために、もっと広めるべきだ。	1	\N
+451	113	映画や本を楽しむためには欠かせない考え方だ。	2	\N
+452	113	若者だけの考え方で、社会には広がっていない。	3	\N
+453	114	作品の味わいが生まれる大切な部分になりうる。	0	\N
+454	114	時間の無駄なので、飛ばして見てもよい。	1	\N
+455	114	作品の内容を理解するための情報が多い。	2	\N
+456	114	倍速で見ても、意味は変わらない。	3	\N
+457	115	効率だけを求めず、ゆっくり過程を楽しむ時間も大切にしたい。	0	\N
+458	115	結果を早く手に入れることが、何より重要だ。	1	\N
+459	115	贅沢をするためには、時間を節約する必要がある。	2	\N
+460	115	作品は要約で読むほうが内容をよく理解できる。	3	\N
+461	116	昼間に来られなかった人たちの利用が増えた。	0	\N
+462	116	本を借りる人は減ったが、勉強する人が増えた。	1	\N
+463	116	高校生の部活動の時間が長くなった。	2	\N
+464	116	会社員が昼休みに来るようになった。	3	\N
+465	117	一人で落ち着いて過ごせる場所を求める人	0	\N
+466	117	夜遅くまで働いている会社員	1	\N
+467	117	図書館で本を借りる高校生	2	\N
+468	117	家で勉強できない学生	3	\N
+469	118	本を貸すだけでなく、人の居場所としての役割も持ち始めている。	0	\N
+470	118	本を貸す役割はもう必要なくなっている。	1	\N
+471	118	夜遅くまで開けると、静かな環境が失われる。	2	\N
+472	118	学生が勉強するための場所にするべきだ。	3	\N
+473	119	問題の一面しか理解していないのに、わかったと感じてしまうこと	0	\N
+474	119	説明が短すぎて、聞き手が理解できないこと	1	\N
+475	119	説明する側が、細かい点まで調べなくなること	2	\N
+476	119	わかりやすい資料を作るのに時間がかかること	3	\N
+477	120	それ以上深く考えようとしなくなる。	0	\N
+478	120	他の人にも説明したくなる。	1	\N
+479	120	細部や例外に注意を向けるようになる。	2	\N
+480	120	わかりにくい説明を求めるようになる。	3	\N
+481	121	すぐに答えの出ない問題を、焦らずに考え続ける態度が大切だ。	0	\N
+482	121	説明はできるだけ短く、簡単にするべきだ。	1	\N
+483	121	情報が多すぎるので、必要なものだけを選ぶべきだ。	2	\N
+484	121	わかりやすい説明をする人が信頼される。	3	\N
+485	122	在宅勤務では、人との何気ないやり取りが減ること	0	\N
+486	122	在宅勤務では、家族との時間が増えること	1	\N
+487	122	在宅勤務は、毎日出社するより疲れること	2	\N
+488	122	オフィスでは、集中して作業ができること	3	\N
+489	123	Aは利点と課題を挙げ、Bは目的に応じて出社と使い分けるべきだと述べている。	0	\N
+490	123	AもBも、在宅勤務をやめるべきだと述べている。	1	\N
+491	123	Aは反対し、Bは全面的に賛成している。	2	\N
+492	123	AもBも、在宅勤務の利点だけを述べている。	3	\N
+493	124	②はじめての韓国語	0	\N
+494	124	①やさしい写真教室	1	\N
+495	124	③親子料理教室	2	\N
+496	124	④パソコン基礎	3	\N
+497	125	2,000円	0	\N
+498	125	3,000円	1	\N
+499	125	4,000円	2	\N
+500	125	5,000円	3	\N
+501	126	資料の宛名を直す	0	\N
+502	126	資料を印刷する	1	\N
+503	126	会議室を予約する	2	\N
+504	126	先方に電話する	3	\N
+505	127	参考文献のリスト	0	\N
+506	127	グラフを入れた配布資料	1	\N
+507	127	発表の原稿	2	\N
+508	127	十五分のビデオ	3	\N
+509	128	二階の市民課	0	\N
+510	128	三階の子ども課	1	\N
+511	128	一階の受付	2	\N
+512	128	保育園	3	\N
+513	129	十二時半ごろ	0	\N
+514	129	六時ごろ	1	\N
+515	129	六時半ごろ	2	\N
+516	129	七時ごろ	3	\N
+517	130	目的のすぐ後に費用の説明を入れる	0	\N
+518	130	最初のページに費用の説明を入れる	1	\N
+519	130	目的の説明を最後に移す	2	\N
+520	130	費用の説明を削る	3	\N
+521	131	仕事をするための部屋が欲しいから	0	\N
+522	131	駅から遠かったから	1	\N
+523	131	家賃が上がるから	2	\N
+524	131	会社が遠くなったから	3	\N
+525	132	炊く前にお米に十分水を吸わせること	0	\N
+526	132	高いお米を選ぶこと	1	\N
+527	132	性能のいい炊飯器を使うこと	2	\N
+528	132	洗ったらすぐに炊くこと	3	\N
+529	133	言葉なしで気持ちが伝わる場面	0	\N
+530	133	映像の美しさ	1	\N
+531	133	音楽	2	\N
+532	133	主人公のセリフ	3	\N
+533	134	データを移す作業に時間がかかっているから	0	\N
+534	134	予算が足りないから	1	\N
+535	134	業者の準備ができていないから	2	\N
+536	134	社員が使い方を知らないから	3	\N
+537	135	一緒に活動する仲間がいたから	0	\N
+538	135	時間に余裕があったから	1	\N
+539	135	教えることに自信があったから	2	\N
+540	135	子どもたちの成績が上がったから	3	\N
+541	136	寝る前の画面の光が睡眠に与える影響	0	\N
+542	136	スマートフォンの新しい機能	1	\N
+543	136	部屋の明かりの選び方	2	\N
+544	136	昼寝の効果	3	\N
+545	137	多数決の問題点と少数意見を聞く大切さ	0	\N
+546	137	多数決が最も公平な理由	1	\N
+547	137	少数意見を無視してよい場合	2	\N
+548	137	会議を短くする方法	3	\N
+549	138	忙しくても基本的な確認を怠らないでほしい	0	\N
+550	138	取引先を変えるべきだ	1	\N
+551	138	苦情の担当者を決めたい	2	\N
+552	138	仕事をもっと速く進めてほしい	3	\N
+553	139	合わない本は途中でやめてもいい	0	\N
+554	139	本は必ず最後まで読むべきだ	1	\N
+555	139	一冊を何度も読み返すべきだ	2	\N
+556	139	人にすすめられた本を読むべきだ	3	\N
+557	140	それが、急に今日中に必要になったらしいんです。	0	\N
+558	140	はい、明日お持ちします。	1	\N
+559	140	いいえ、言ってもいいですよ。	2	\N
+560	140	じゃあ、昨日出しておきました。	3	\N
+561	141	そうですか。では、また改めて伺います。	0	\N
+562	141	いえいえ、せっかくですから。	1	\N
+563	141	それはよかったですね。	2	\N
+564	141	じゃあ、部長と一緒に行きましょう。	3	\N
+565	142	ええ、教えたことをすぐ実践できるんですよ。	0	\N
+566	142	ええ、食べるのも早いんですよ。	1	\N
+567	142	すみません、すぐ注意しておきます。	2	\N
+568	142	そうですね、もう少し時間がかかりそうです。	3	\N
+569	143	でも、週末だから念のため予約しておこうよ。	0	\N
+570	143	うん、絶対に入れないよね。	1	\N
+571	143	じゃあ、予約しないでおこうか、残念だね。	2	\N
+572	143	そうだね、もう閉店したらしいよ。	3	\N
+573	144	申し訳ありません。次回から前日までにお送りします。	0	\N
+574	144	どういたしまして。	1	\N
+575	144	いえ、もう少し遅くても大丈夫ですよ。	2	\N
+576	144	よかったです。お役に立てて。	3	\N
+577	145	そうだよね。何かあったのかな。	0	\N
+578	145	うん、山田さんはよく忘れるからね。	1	\N
+579	145	じゃあ、山田さんだけ呼ぼうか。	2	\N
+580	145	限られた人しか来ないんだね。	3	\N
+581	146	ありがとうございます。精一杯やらせていただきます。	0	\N
+582	146	いえ、任せていただいたことはありません。	1	\N
+583	146	はい、課長にお任せします。	2	\N
+584	146	そうですね、どうなったか聞いてみます。	3	\N
+585	147	いえいえ、こちらこそお時間をいただいてありがとうございます。	0	\N
+586	147	ええ、本当にひどい雨でしたね、困りました。	1	\N
+1024	256	木曜日の午前	3	\N
+587	147	いいえ、雨は降っていませんでしたよ。	2	\N
+588	147	はい、またお越しください。	3	\N
+589	148	そうなんだ。評判ほどじゃなかったんだね。	0	\N
+590	148	高くておいしいなら最高だね。	1	\N
+591	148	じゃあ、今度みんなで行こうよ。	2	\N
+592	148	うん、安いのにおいしいよね。	3	\N
+593	149	もう一度、こちらから確認の連絡を入れてみましょうか。	0	\N
+594	149	はい、もう返事しておきました。	1	\N
+595	149	いいえ、どうもしていません。	2	\N
+596	149	それはよかったですね。	3	\N
+597	150	山の温泉	0	\N
+598	150	海の近くのホテル	1	\N
+599	150	都会のテーマパーク	2	\N
+600	150	川の近くのキャンプ場	3	\N
+601	151	先輩社員が一対一で教える	0	\N
+602	151	外部の講師を呼ぶ	1	\N
+603	151	オンライン教材を使う	2	\N
+604	151	外部講師とオンライン教材を組み合わせる	3	\N
+605	152	かんまん	0	\N
+606	152	えんまん	1	\N
+607	152	かんばん	2	\N
+608	152	だんまん	3	\N
+609	153	いっしゅう	0	\N
+610	153	いっけり	1	\N
+611	153	いちしゅう	2	\N
+612	153	いっそく	3	\N
+613	154	ふんぜん	0	\N
+614	154	ふんねん	1	\N
+615	154	ぶんぜん	2	\N
+616	154	ふくぜん	3	\N
+617	155	あっとう	0	\N
+618	155	あつどう	1	\N
+619	155	あっとく	2	\N
+620	155	おうとう	3	\N
+621	156	まかなう	0	\N
+622	156	つくなう	1	\N
+623	156	おぎなう	2	\N
+624	156	あがなう	3	\N
+625	157	まどわされる	0	\N
+626	157	まよわされる	1	\N
+627	157	わずらわされる	2	\N
+628	157	まぎらわされる	3	\N
+629	158	拮抗	0	\N
+630	158	相殺	1	\N
+631	158	統合	2	\N
+632	158	一致	3	\N
+633	159	施行	0	\N
+634	159	履行	1	\N
+635	159	遂行	2	\N
+636	159	進行	3	\N
+637	160	黙々と	0	\N
+638	160	堂々と	1	\N
+639	160	悠々と	2	\N
+640	160	転々と	3	\N
+641	161	解明	0	\N
+642	161	解散	1	\N
+643	161	解約	2	\N
+644	161	解禁	3	\N
+645	162	苦境	0	\N
+646	162	環境	1	\N
+647	162	佳境	2	\N
+648	162	心境	3	\N
+649	163	前置き	0	\N
+650	163	前売り	1	\N
+651	163	前払い	2	\N
+652	163	前向き	3	\N
+653	164	裁量	0	\N
+654	164	分量	1	\N
+655	164	器量	2	\N
+656	164	度量	3	\N
+657	165	瞬間的に	0	\N
+658	165	ゆっくりと	1	\N
+659	165	迷った末に	2	\N
+660	165	計画どおりに	3	\N
+661	166	承知してもらうこと	0	\N
+662	166	反対されること	1	\N
+663	166	提案すること	2	\N
+664	166	質問されること	3	\N
+665	167	話の筋が通らない	0	\N
+666	167	声が小さい	1	\N
+667	167	話が長い	2	\N
+668	167	相手に合わせない	3	\N
+669	168	一生懸命に	0	\N
+670	168	嫌々ながら	1	\N
+671	168	時々	2	\N
+672	168	楽しそうに	3	\N
+673	169	急に	0	\N
+674	169	少しずつ	1	\N
+675	169	予想どおり	2	\N
+676	169	一時的に	3	\N
+677	170	納得できない	0	\N
+678	170	聞き取れない	1	\N
+679	170	覚えられない	2	\N
+680	170	終わらない	3	\N
+681	171	地域の高齢者を支援するための新しい団体が発足した。	0	\N
+682	171	朝早く家を発足して、空港へ向かった。	1	\N
+683	171	彼は長い入院生活から発足して、仕事に戻った。	2	\N
+684	171	新しい商品が来月発足される予定だ。	3	\N
+685	172	同じ質問をしても、人によって答えはまちまちだった。	0	\N
+686	172	彼はまちまちと歩いて、駅に向かった。	1	\N
+687	172	店の前には、客がまちまち並んでいた。	2	\N
+688	172	雨がまちまち降ってきたので、急いで帰った。	3	\N
+689	173	財布をなくしたが、どこで落としたのか心当たりがない。	0	\N
+690	173	彼女の優しい心当たりに、思わず涙が出た。	1	\N
+691	173	試験の前日は心当たりで眠れなかった。	2	\N
+692	173	心当たりに満ちた手紙を受け取った。	3	\N
+693	174	事故に遭ったが、すぐに手術を受けて一命を取り留めた。	0	\N
+694	174	会議の内容を取り留めて、メモにまとめた。	1	\N
+695	174	逃げた犬をやっと取り留めることができた。	2	\N
+696	174	散らかった部屋の物を取り留めて片付けた。	3	\N
+697	175	彼はおおらかな性格で、細かいことは気にしない。	0	\N
+698	175	今日はおおらかな雨が一日中降っていた。	1	\N
+699	175	このかばんはおおらかで、たくさん入る。	2	\N
+700	175	彼女はおおらかな声で、こっそりささやいた。	3	\N
+701	176	今回の植樹は、町の緑化計画の一環として行われた。	0	\N
+702	176	彼は一環として、毎朝五時に起きている。	1	\N
+703	176	この一環の本は、全部で十巻ある。	2	\N
+704	176	会議は一環して、午後まで続いた。	3	\N
+705	177	に	0	\N
+706	177	で	1	\N
+707	177	て	2	\N
+708	177	と	3	\N
+709	178	のあまり	0	\N
+710	178	にかまけて	1	\N
+711	178	をよそに	2	\N
+712	178	ともなく	3	\N
+713	179	しさえすれば	0	\N
+714	179	するにつけ	1	\N
+715	179	したところで	2	\N
+716	179	するや否や	3	\N
+717	180	あるまいし	0	\N
+718	180	あるにせよ	1	\N
+719	180	あるからには	2	\N
+720	180	あるとはいえ	3	\N
+721	181	にはおかない	0	\N
+722	181	にはいられない	1	\N
+723	181	にすむ	2	\N
+724	181	じまいだ	3	\N
+725	182	の末に	0	\N
+726	182	の手前	1	\N
+727	182	の矢先に	2	\N
+728	182	のかたわら	3	\N
+729	183	かたわら	0	\N
+730	183	とたん	1	\N
+731	183	あげく	2	\N
+732	183	しまつ	3	\N
+733	184	をもって	0	\N
+734	184	をおして	1	\N
+735	184	をよそに	2	\N
+736	184	をものともせず	3	\N
+737	185	あげく	0	\N
+738	185	かたわら	1	\N
+739	185	ついでに	2	\N
+740	185	うちに	3	\N
+741	186	いただければ	0	\N
+742	186	させていただければ	1	\N
+743	186	くださいましたら	2	\N
+744	186	さしあげれば	3	\N
+745	187	人に	0	\N
+746	187	経験の	1	\N
+747	187	簡単に	2	\N
+748	187	浅い	3	\N
+749	188	言いた	0	\N
+750	188	何か	1	\N
+751	188	そうに	2	\N
+752	188	しながらも	3	\N
+753	189	ができた	0	\N
+754	189	ことで	1	\N
+755	189	大型の	2	\N
+756	189	商業施設	3	\N
+757	190	決断	0	\N
+758	190	なくしては	1	\N
+759	190	この	2	\N
+760	190	思い切った	3	\N
+761	191	や否や	0	\N
+762	191	発表される	1	\N
+763	191	SNSを中心に	2	\N
+764	191	たちまち	3	\N
+765	192	苦労は、そこから何を学ぶかによって価値が決まる。	0	\N
+766	192	若いうちは、できるだけ多くの苦労をすべきだ。	1	\N
+767	192	苦労はすべて無駄なので、避けるべきだ。	2	\N
+768	192	人に苦労をさせることは、成長につながる。	3	\N
+769	193	資源ごみを木曜日の午前八時までに出す。	0	\N
+770	193	資源ごみを水曜日の午前八時までに出す。	1	\N
+771	193	段ボールを管理組合に直接持っていく。	2	\N
+772	193	資源ごみをひもで縛らずに出す。	3	\N
+773	194	始める前に、手順をよく考える人	0	\N
+774	194	手を動かすのが誰よりも速い人	1	\N
+775	194	やり直しを恐れず、すぐに始める人	2	\N
+776	194	一度に多くの仕事を引き受ける人	3	\N
+777	195	その土地の人どうしが心を通わせるための言葉	0	\N
+778	195	共通語より劣った言葉	1	\N
+779	195	全国の人と話すための道具	2	\N
+780	195	いずれ消えていく古い言葉	3	\N
+781	196	時間が足りないと不満に思っていた。	0	\N
+782	196	会議が短くなって喜んでいた。	1	\N
+783	196	資料を事前に読むのは当然だと思っていた。	2	\N
+784	196	議論が深まったと感じていた。	3	\N
+785	197	社員が準備してから会議に臨むようになり、議論が深まった。	0	\N
+786	197	議論の時間が足りず、結論が出なくなった。	1	\N
+787	197	資料を配らなくなり、会議が早く終わった。	2	\N
+788	197	会議の回数が増え、全体の時間は変わらなかった。	3	\N
+789	198	時間の使い方を一人ひとりが考えるきっかけになる。	0	\N
+790	198	効率化のためだけに行うべきだ。	1	\N
+791	198	議論が浅くなるので、慎重に行うべきだ。	2	\N
+792	198	社員の不満が大きいので、やめたほうがよい。	3	\N
+793	199	失敗を恐れて、難しいことに挑戦しなくなる。	0	\N
+794	199	自信がついて、どんなことにも挑戦する。	1	\N
+795	199	努力することの大切さを学ぶ。	2	\N
+796	199	褒められないと勉強しなくなる。	3	\N
+797	200	子どもの成長には、何を褒めるかが重要だ。	0	\N
+798	200	子どもはできるだけたくさん褒めるべきだ。	1	\N
+799	200	子どもを褒めることはよくない。	2	\N
+800	200	子どもの能力を正しく評価するべきだ。	3	\N
+801	201	失敗しても挑戦を続けることが多い。	0	\N
+802	201	失敗を恐れるようになる。	1	\N
+803	201	難しい課題を避けるようになる。	2	\N
+804	201	自分は頭がいいと思うようになる。	3	\N
+805	202	自分に都合のよい情報だけを選ぶようになる。	0	\N
+806	202	あらゆる意見を公平に比べるようになる。	1	\N
+807	202	情報を信用しなくなる。	2	\N
+808	202	スマートフォンを使わなくなる。	3	\N
+809	203	自分と同じ意見が、世の中の多数派であること	0	\N
+810	203	自分が多くの情報を持っていること	1	\N
+811	203	他人の意見がすべて間違っていること	2	\N
+812	203	ニュースがすべて正しいこと	3	\N
+813	204	自分の考えを確かめるために、異なる意見にも耳を傾けるべきだ。	0	\N
+814	204	情報はできるだけ少ないほうがよい。	1	\N
+815	204	心地よい情報だけを選んで生活するべきだ。	2	\N
+816	204	スマートフォンでニュースを見るのはやめるべきだ。	3	\N
+817	205	早いうちから英語を学ぶことには意味がある。	0	\N
+818	205	英語の授業時間をもっと増やすべきだ。	1	\N
+819	205	日本語の力が弱くなるおそれがある。	2	\N
+820	205	英語よりも日本語を優先するべきだ。	3	\N
+821	206	日本語の力が育たないうちに英語の時間を増やすこと	0	\N
+822	206	子どもの発音がよくならないこと	1	\N
+823	206	外国の文化に関心を持たなくなること	2	\N
+824	206	英語を始める時期が遅すぎること	3	\N
+825	207	一般会員	0	\N
+826	207	平日会員	1	\N
+827	207	夜間会員	2	\N
+828	207	学生会員	3	\N
+829	208	7,000円	0	\N
+830	208	4,000円	1	\N
+831	208	3,000円	2	\N
+832	208	8,000円	3	\N
+833	209	先方に打ち合わせの時間を確認する	0	\N
+834	209	ホテルを予約する	1	\N
+835	209	新幹線の切符を取る	2	\N
+836	209	課長に報告書を出す	3	\N
+837	210	問診票を書く	0	\N
+838	210	保険証を取りに家に帰る	1	\N
+839	210	全額を支払う	2	\N
+840	210	診察室に入る	3	\N
+841	211	木曜日	0	\N
+842	211	水曜日	1	\N
+843	211	金曜日	2	\N
+844	211	土曜日	3	\N
+845	212	飲み物	0	\N
+846	212	肉	1	\N
+847	212	野菜	2	\N
+848	212	紙皿	3	\N
+849	213	十部用意し、グラフのページだけカラーにする	0	\N
+850	213	八部用意し、すべてカラーにする	1	\N
+851	213	十部用意し、すべて白黒にする	2	\N
+852	213	八部用意し、グラフのページだけカラーにする	3	\N
+853	214	自分の店を開きたいから	0	\N
+854	214	給料が安かったから	1	\N
+855	214	人間関係が悪かったから	2	\N
+856	214	体を壊したから	3	\N
+857	215	三月に暖かい日が続いたから	0	\N
+858	215	冬が暖かかったから	1	\N
+859	215	雨が多かったから	2	\N
+860	215	日照時間が短かったから	3	\N
+861	216	ゆっくり本が読めること	0	\N
+862	216	コーヒーがおいしいこと	1	\N
+863	216	値段が安いこと	2	\N
+864	216	駅から近いこと	3	\N
+865	217	結論がわかりにくいこと	0	\N
+866	217	調査が足りないこと	1	\N
+867	217	誤字が多いこと	2	\N
+868	217	分量が少ないこと	3	\N
+869	218	間違いを恐れずに話すこと	0	\N
+870	218	単語の数を増やすこと	1	\N
+871	218	文法を正確に覚えること	2	\N
+872	218	その国に住むこと	3	\N
+873	219	家庭でできる食品ロスの減らし方	0	\N
+874	219	賞味期限の決め方	1	\N
+875	219	冷蔵庫の選び方	2	\N
+876	219	野菜の保存方法	3	\N
+877	220	最初の情報が判断に与える影響	0	\N
+878	220	上手な値段の決め方	1	\N
+879	220	交渉で勝つための方法	2	\N
+880	220	買い物で節約するコツ	3	\N
+881	221	小さな声かけが人の支えになる	0	\N
+882	221	留学では言葉の勉強が一番大切だ	1	\N
+883	221	隣の人とは仲良くするべきだ	2	\N
+884	221	外国での生活はとても不安だ	3	\N
+885	222	人とのつながりを生かせば生き残れる	0	\N
+886	222	値段を下げなければ生き残れない	1	\N
+887	222	ショッピングモールと合併するべきだ	2	\N
+888	222	もう役割を終えたので閉じるべきだ	3	\N
+889	223	ううん、私も今来たところ。	0	\N
+890	223	うん、道は空いてたよ。	1	\N
+891	223	じゃあ、待っててね。	2	\N
+892	223	いいえ、混んでいません。	3	\N
+893	224	では、もう少し内容を練り直します。	0	\N
+894	224	はい、もう通りました。	1	\N
+895	224	そうですね、とても微笑ましいです。	2	\N
+896	224	じゃあ、別の道を通りましょう。	3	\N
+897	225	えっ、そうなんですか。寂しくなりますね。	0	\N
+898	225	はい、来月行ってきました。	1	\N
+899	225	では、大阪まで送ります。	2	\N
+900	225	いえ、転勤はしていません。	3	\N
+901	226	お疲れさまでした。	0	\N
+902	226	いってらっしゃい。	1	\N
+903	226	お先にどうぞ。	2	\N
+904	226	ただいま。	3	\N
+905	227	はい、こちらにご用意しております。	0	\N
+906	227	はい、言いませんでした。	1	\N
+907	227	まだ言っていません。	2	\N
+908	227	では、私が言っておきます。	3	\N
+909	228	あ、ここを押してから、枚数を選んでください。	0	\N
+910	228	はい、私もよくわかります。	1	\N
+911	228	じゃあ、使わないでおきます。	2	\N
+912	228	コピー機は便利ですよね。	3	\N
+913	229	家で映画でも見て過ごそうか。	0	\N
+914	229	うん、晴れてよかったね。	1	\N
+915	229	じゃあ、海に行こうか。	2	\N
+916	229	せっかくだから、雨を降らせよう。	3	\N
+917	230	確かに、少しつじつまが合わない気がします。	0	\N
+918	230	はい、よく落ちますね。	1	\N
+919	230	そうですね、とても納得できます。	2	\N
+920	230	じゃあ、拾っておきます。	3	\N
+921	231	ありがとうございます。よろしくお願いします。	0	\N
+922	231	いいえ、伝えないでください、どうも。	1	\N
+923	231	はい、先方から聞きました。	2	\N
+924	231	では、伝えてもらいました。	3	\N
+925	232	そうですね。何か悩みでもあるんでしょうか。	0	\N
+926	232	ええ、とても元気ですね。	1	\N
+927	232	はい、山本さんは来ません。	2	\N
+928	232	じゃあ、元気を出しましょう。	3	\N
+929	233	B	0	\N
+930	233	A	1	\N
+931	233	C	2	\N
+932	233	まだ決めていない	3	\N
+933	234	京都	0	\N
+934	234	北海道	1	\N
+935	234	沖縄	2	\N
+936	234	まだ決まっていない	3	\N
+937	235	しょうゆ	0	\N
+938	235	卵	1	\N
+939	235	牛乳	2	\N
+940	235	パン	3	\N
+941	236	学校の食堂	0	\N
+942	236	図書館	1	\N
+943	236	駅の前のカフェ	2	\N
+944	236	駅の改札	3	\N
+945	237	一時四十五分	0	\N
+946	237	一時半	1	\N
+947	237	二時	2	\N
+948	237	二時半	3	\N
+949	238	大きいサイズの白いシャツ	0	\N
+950	238	大きいサイズの青いシャツ	1	\N
+951	238	小さいサイズの青いシャツ	2	\N
+952	238	小さいサイズの白いシャツ	3	\N
+953	239	犬が病気になったから	0	\N
+954	239	テストがだめだったから	1	\N
+955	239	風邪をひいたから	2	\N
+956	239	友達とけんかしたから	3	\N
+957	240	かぎが見つからなかったから	0	\N
+958	240	電車が止まったから	1	\N
+959	240	寝坊したから	2	\N
+960	240	道に迷ったから	3	\N
+961	241	朝は晴れて、夕方から雨	0	\N
+962	241	一日中晴れ	1	\N
+963	241	朝から雨	2	\N
+964	241	朝は雨で、午後から晴れ	3	\N
+965	242	家から近いから	0	\N
+966	242	時給がいいから	1	\N
+967	242	仕事が楽だから	2	\N
+968	242	友達がいるから	3	\N
+969	243	好きな写真	0	\N
+970	243	教科書	1	\N
+971	243	辞書だけ	2	\N
+972	243	作文	3	\N
+973	244	映画を見に行った	0	\N
+974	244	山に登った	1	\N
+975	244	家で休んだ	2	\N
+976	244	友達の家に行った	3	\N
+977	245	ええ、いいですよ。	0	\N
+978	245	いいえ、持っていません。	1	\N
+979	245	はい、ありがとうございます。	2	\N
+980	245	どうぞ、お持ちください。	3	\N
+981	246	うん、午後なら大丈夫だよ。	0	\N
+982	246	うん、手伝ってもらったよ。	1	\N
+983	246	あしたは時間だよ。	2	\N
+984	246	ありがとう、助かったよ。	3	\N
+985	247	うん、初めてだけど、がんばってみた。	0	\N
+986	247	うん、全部食べたよ。	1	\N
+987	247	ううん、まだ作ってないよ。	2	\N
+988	247	じゃあ、一緒に作ろう。	3	\N
+989	248	いいえ、私も今来たところです。	0	\N
+990	248	はい、すみませんでした。	1	\N
+991	248	じゃあ、遅くなりましょう。	2	\N
+992	248	いいえ、早いですね。	3	\N
+993	249	歩いて十分ぐらいです。	0	\N
+994	249	駅で待っています。	1	\N
+995	249	三百円です。	2	\N
+996	249	まっすぐ行ってください、ありがとう。	3	\N
+997	250	じゃあ、お茶をお願いします。	0	\N
+998	250	はい、どちらもいいです、どうぞ。	1	\N
+999	250	コーヒーはありません。	2	\N
+1000	250	お茶はおいしいですね。	3	\N
+1001	251	どういたしまして。また何かあったら言ってね。	0	\N
+1002	251	うん、手伝ってあげるよ。	1	\N
+1003	251	いいえ、引っ越ししません。	2	\N
+1004	251	じゃあ、土曜日にね。	3	\N
+1005	252	うん、読み終わったら返してね。	0	\N
+1006	252	うん、借りたよ。	1	\N
+1007	252	ありがとう、借りるね。	2	\N
+1008	252	いいえ、貸しません、ありがとう。	3	\N
+1009	253	ありがとう。そうさせてもらうね。	0	\N
+1010	253	うん、熱くないよ。	1	\N
+1011	253	じゃあ、もっと働くね。	2	\N
+1012	253	いいえ、早く来ました。	3	\N
+1013	254	うん、この仕事を終わらせてから帰る。	0	\N
+1014	254	うん、もう帰ったよ。	1	\N
+1015	254	じゃあ、帰らないでね。	2	\N
+1016	254	うん、まだ来ないよ。	3	\N
+1017	255	自由記述の意見をまとめる	0	\N
+1018	255	アンケートを集計する	1	\N
+1019	255	グラフを作る	2	\N
+1020	255	会議の資料を印刷する	3	\N
+1021	256	金曜日の午後	0	\N
+1022	256	水曜日の午後	1	\N
+1023	256	木曜日の午後	2	\N
+1025	257	データを新しいものにする	0	\N
+1026	257	内容を全部変える	1	\N
+1027	257	スライドを減らす	2	\N
+1028	257	発表の時間を短くする	3	\N
+1029	258	電話かインターネットで申し込む	0	\N
+1030	258	コンビニで処理券を買う	1	\N
+1031	258	ごみに処理券を貼る	2	\N
+1032	258	指定された日に出す	3	\N
+1033	259	ジムの営業時間に行けなくなったから	0	\N
+1034	259	料金が高かったから	1	\N
+1035	259	設備がよくなかったから	2	\N
+1036	259	仕事をやめたから	3	\N
+1037	260	祖母の入院中に看護師が優しくしてくれたこと	0	\N
+1038	260	自分が子どものころに入院したこと	1	\N
+1039	260	親が看護師だったこと	2	\N
+1040	260	学校の先生にすすめられたこと	3	\N
+1041	261	料理が出るのが遅いこと	0	\N
+1042	261	味がよくないこと	1	\N
+1043	261	値段が高いこと	2	\N
+1044	261	駅から遠いこと	3	\N
+1045	262	のどが渇く前に水分をとること	0	\N
+1046	262	帽子をかぶること	1	\N
+1047	262	涼しい服を着ること	2	\N
+1048	262	外に出ないこと	3	\N
+1049	263	自転車に乗る人がルールを守る必要性	0	\N
+1050	263	自転車通勤の健康への効果	1	\N
+1051	263	交通費を節約する方法	2	\N
+1052	263	新しい自転車の選び方	3	\N
+1053	264	日常生活の中でできる運動	0	\N
+1054	264	忙しい人の時間の使い方	1	\N
+1055	264	エレベーターの安全な使い方	2	\N
+1056	264	スポーツジムの選び方	3	\N
+1057	265	はい、夕方までには必ずお出しします。	0	\N
+1058	265	はい、今日中に仕上がりました。	1	\N
+1059	265	いいえ、仕上げてもらいました。	2	\N
+1060	265	じゃあ、明日やってもらいます。	3	\N
+1061	266	ええ、実は昔、レストランで働いていたそうですよ。	0	\N
+1062	266	ええ、見かけたことがありますよ。	1	\N
+1063	266	そうですね、全然できませんね。	2	\N
+1064	266	はい、料理を見かけました。	3	\N
+1065	267	はい、三時なら問題ありません。	0	\N
+1066	267	はい、三時に変更しました。	1	\N
+1067	267	いいえ、大丈夫じゃありませんでした。	2	\N
+1068	267	じゃあ、二時に行きますね。	3	\N
+1069	268	ううん、量が多すぎたよね。気にしないで。	0	\N
+1070	268	うん、全部食べてくれてありがとう。	1	\N
+1071	268	じゃあ、もっと作るね。	2	\N
+1072	268	ううん、作っていないよ。	3	\N
+1073	269	あ、すみません。すぐもらってきます。	0	\N
+1074	269	はい、押しておきました。	1	\N
+1075	269	いいえ、課長はいません。	2	\N
+1076	269	じゃあ、捨てておきます。	3	\N
+1077	270	うん、折りたたみ傘ならあるよ。	0	\N
+1078	270	うん、雨はやんだよ。	1	\N
+1079	270	いいえ、降っていないよ。	2	\N
+1080	270	じゃあ、傘をさしてあげたよ。	3	\N
+1081	271	ええ、皆さん親切なので、だいぶ慣れてきました。	0	\N
+1082	271	ええ、慣れていただきました。	1	\N
+1083	271	いいえ、まだ部署がありません。	2	\N
+1084	271	はい、新しくなりました。	3	\N
+1085	272	そうですね。すぐに直します。	0	\N
+1086	272	はい、よく見えません。	1	\N
+1087	272	いいえ、字は書いていません。	2	\N
+1088	272	じゃあ、小さくしましょう。	3	\N
+1089	273	え、いいんですか。じゃあ、お言葉に甘えて。	0	\N
+1090	273	はい、ごちそうさまでした、また明日。	1	\N
+1091	273	いいえ、ごちそうしてください。	2	\N
+1092	273	じゃあ、私もごちそうになりました。	3	\N
+1093	274	わかった。資料をもう一度見せてくれ。	0	\N
+1094	274	うん、検討してもらったよ。	1	\N
+1095	274	いや、検討しなくていいよ、ありがとう。	2	\N
+1096	274	はい、もう一度お願いします。	3	\N
+1097	275	契約書の支払い条件を修正する	0	\N
+1098	275	契約書を先方に送る	1	\N
+1099	275	法務部に確認を依頼する	2	\N
+1100	275	先方と打ち合わせをする	3	\N
+1101	276	先行研究の部分を短くし、研究の必要性を明確にする	0	\N
+1102	276	調査をやり直す	1	\N
+1103	276	結論を書き直す	2	\N
+1104	276	先行研究の紹介を増やす	3	\N
+1105	277	卒業証明書と身分証明書	0	\N
+1106	277	履歴書と卒業証明書	1	\N
+1107	277	作品集と身分証明書	2	\N
+1108	277	履歴書と作品集	3	\N
+1109	278	海外と関わる仕事がしたいから	0	\N
+1110	278	給料が安いから	1	\N
+1111	278	人間関係が悪いから	2	\N
+1112	278	語学を勉強したいから	3	\N
+1113	279	円安で輸入の費用が増えたこと	0	\N
+1114	279	人件費が上がったこと	1	\N
+1115	279	国内の生産量が減ったこと	2	\N
+1116	279	消費者の需要が増えたこと	3	\N
+1117	280	現場の人と変える理由を共有すること	0	\N
+1118	280	新しい制度をすぐに作ること	1	\N
+1119	280	優れたリーダーを外から呼ぶこと	2	\N
+1120	280	形だけでも改革を始めること	3	\N
+1121	281	反対の意見も丁寧に紹介している点	0	\N
+1122	281	内容がわかりやすい点	1	\N
+1123	281	話題になっている点	2	\N
+1124	281	短くて読みやすい点	3	\N
+1125	282	空気を読むことの良い面と問題点	0	\N
+1126	282	空気を読む力を伸ばす方法	1	\N
+1127	282	会議で発言しない人の性格	2	\N
+1128	282	日本と外国の会議の違い	3	\N
+1129	283	原因を一つに決めつけることの危険性	0	\N
+1130	283	広告が売上に与える影響	1	\N
+1131	283	商品の価格の決め方	2	\N
+1132	283	競合商品の分析方法	3	\N
+1133	284	失敗を恐れずに挑戦してほしい	0	\N
+1134	284	確実にできる仕事を選ぶべきだ	1	\N
+1135	284	評価を気にして働くべきだ	2	\N
+1136	284	十年同じ会社で働くべきだ	3	\N
+1137	285	では、人員を増やして対応しましょうか。	0	\N
+1138	285	はい、間に合いました。	1	\N
+1139	285	いえ、考えたことはありません。	2	\N
+1140	285	そうですね、納期はまだ決まっていません、残念ですね。	3	\N
+1141	286	いえいえ、どうかお気になさらないでください。	0	\N
+1142	286	ええ、本当に迷惑でしたね、では。	1	\N
+1143	286	いいえ、迷惑をかけていません。	2	\N
+1144	286	こちらこそ、ごちそうさまでした。	3	\N
+1145	287	残念ですが、次こそは通るように頑張ります。	0	\N
+1146	287	ありがとうございます、通ってよかったです。	1	\N
+1147	287	はい、いいところへ行ってきました。	2	\N
+1148	287	じゃあ、企画しなくてもいいですね。	3	\N
+1149	288	へえ、意外だね。いつも一緒にいるのに。	0	\N
+1150	288	うん、やっぱり仲がいいよね。	1	\N
+1151	288	じゃあ、二人を呼ぼうか。	2	\N
+1152	288	そう、思ったとおりだね。	3	\N
+1153	289	じゃあ、私から一緒に話してみましょうか。	0	\N
+1154	289	はい、気を引いてみます。	1	\N
+1155	289	そうですね、部長はとても気が利きますね。	2	\N
+1156	289	いいえ、直接言いました、どうも。	3	\N
+1157	290	わかりました。データを追加します。	0	\N
+1158	290	はい、裏を見ておきます。	1	\N
+1159	290	いいえ、数字は欲しくありません。	2	\N
+1160	290	では、もう少し短くします、ありがとう。	3	\N
+1161	291	そんな、皆さんのおかげですよ。	0	\N
+1162	291	はい、田中さんはいませんでした。	1	\N
+1163	291	そうですね、もう少しで成り立ちます。	2	\N
+1164	291	じゃあ、田中さんに頼みましょう。	3	\N
+1165	292	ええ、五分ほどでしたら大丈夫ですよ。	0	\N
+1166	292	はい、時間をあげました。	1	\N
+1167	292	いいえ、お忙しくありません、どうぞ。	2	\N
+1168	292	では、お時間をいただきます。	3	\N
+1169	293	すみません。自分で何とかできると思ってしまって。	0	\N
+1170	293	はい、最初から相談しました。	1	\N
+1171	293	よかったですね、相談して。	2	\N
+1172	293	じゃあ、これから相談しないでおきます。	3	\N
+1173	294	そうですね。返事を待ってから対応を考えましょう。	0	\N
+1174	294	はい、先方はもう出かけました。	1	\N
+1175	294	いいえ、案件はありません。	2	\N
+1176	294	じゃあ、先に出ましょう。	3	\N
+1177	295	あたらしい	0	\N
+1178	295	あらたしい	1	\N
+1179	295	あたらい	2	\N
+1180	295	あだらしい	3	\N
+1181	296	くじ	0	\N
+1182	296	きゅうじ	1	\N
+1183	296	くし	2	\N
+1184	296	きゅじ	3	\N
+1185	297	きた	0	\N
+1186	297	みなみ	1	\N
+1187	297	にし	2	\N
+1188	297	ひがし	3	\N
+1189	298	えいが	0	\N
+1190	298	えが	1	\N
+1191	298	えいか	2	\N
+1192	298	えいがく	3	\N
+1193	299	みち	0	\N
+1194	299	どう	1	\N
+1195	299	まち	2	\N
+1196	299	みず	3	\N
+1197	300	いす	0	\N
+1198	300	いず	1	\N
+1199	300	いしゅ	2	\N
+1200	300	えす	3	\N
+1201	301	かいしゃ	0	\N
+1202	301	がいしゃ	1	\N
+1203	301	かいしや	2	\N
+1204	301	かいじゃ	3	\N
+1205	302	電車	0	\N
+1206	302	電事	1	\N
+1207	302	雷車	2	\N
+1208	302	電東	3	\N
+1209	303	休み	0	\N
+1210	303	体み	1	\N
+1211	303	木み	2	\N
+1212	303	休すみ	3	\N
+1213	304	魚	0	\N
+1214	304	角	1	\N
+1215	304	鳥	2	\N
+1216	304	馬	3	\N
+1217	305	耳	0	\N
+1218	305	目	1	\N
+1219	305	口	2	\N
+1220	305	手	3	\N
+1221	306	本	0	\N
+1222	306	木	1	\N
+1223	306	休	2	\N
+1224	306	体	3	\N
+1225	307	しめて	0	\N
+1226	307	あけて	1	\N
+1227	307	つけて	2	\N
+1228	307	かけて	3	\N
+1229	308	カレー	0	\N
+1230	308	ケーキ	1	\N
+1231	308	ジュース	2	\N
+1232	308	アイスクリーム	3	\N
+1233	309	べんきょう	0	\N
+1234	309	さんぽ	1	\N
+1235	309	りょこう	2	\N
+1236	309	せんたく	3	\N
+1237	310	びょういん	0	\N
+1238	310	ぎんこう	1	\N
+1239	310	ゆうびんきょく	2	\N
+1240	310	としょかん	3	\N
+1241	311	ひろくない	0	\N
+1242	311	ひろいじゃない	1	\N
+1243	311	ひろいくない	2	\N
+1244	311	ひろくなかった	3	\N
+1245	312	そく	0	\N
+1246	312	ほん	1	\N
+1247	312	まい	2	\N
+1248	312	だい	3	\N
+1249	313	きょうは みっかです。	0	\N
+1250	313	きょうは いつかです。	1	\N
+1251	313	きのうは よっかでした。	2	\N
+1252	313	あさっては むいかです。	3	\N
+1253	314	この へやは あかるくないです。	0	\N
+1254	314	この へやは ひろくないです。	1	\N
+1255	314	この へやは しずかです。	2	\N
+1256	314	この へやは あたらしいです。	3	\N
+1257	315	ふつか まえに デパートへ いきました。	0	\N
+1258	315	きのう デパートへ いきました。	1	\N
+1259	315	あした デパートへ いきます。	2	\N
+1260	315	あさって デパートへ いきます。	3	\N
+1261	316	に	0	\N
+1262	316	で	1	\N
+1263	316	を	2	\N
+1264	316	が	3	\N
+1265	317	で	0	\N
+1266	317	に	1	\N
+1267	317	へ	2	\N
+1268	317	を	3	\N
+1269	318	を	0	\N
+1270	318	が	1	\N
+1271	318	に	2	\N
+1272	318	で	3	\N
+1273	319	とても	0	\N
+1274	319	あまり	1	\N
+1275	319	ぜんぜん	2	\N
+1276	319	まだ	3	\N
+1277	320	いい てんきです	0	\N
+1278	320	いい てんきでした	1	\N
+1279	320	あめでした	2	\N
+1280	320	さむかったです	3	\N
+1281	321	たべましょう	0	\N
+1282	321	たべました	1	\N
+1283	321	たべません	2	\N
+1284	321	たべて いました	3	\N
+1285	322	み	0	\N
+1286	322	みる	1	\N
+1287	322	みて	2	\N
+1288	322	みた	3	\N
+1289	323	たかい	0	\N
+1290	323	たかく	1	\N
+1291	323	たかくて	2	\N
+1292	323	たかいの	3	\N
+1293	324	して	0	\N
+1294	324	する	1	\N
+1295	324	した	2	\N
+1296	324	しない	3	\N
+1297	325	とても	0	\N
+1298	325	は	1	\N
+1299	325	いぬ	2	\N
+1300	325	しろい	3	\N
+1301	326	に	0	\N
+1302	326	うえ	1	\N
+1303	326	が	2	\N
+1304	326	ほん	3	\N
+1305	327	あおい	0	\N
+1306	327	で	1	\N
+1307	327	シャツ	2	\N
+1308	327	デパート	3	\N
+1309	328	が	0	\N
+1310	328	くれた	1	\N
+1311	328	ともだち	2	\N
+1312	328	てがみ	3	\N
+1313	329	こうえんを さんぽします	0	\N
+1314	329	いえを でます	1	\N
+1315	329	しんぶんを よみます	2	\N
+1316	329	ねます	3	\N
+1317	330	おかし	0	\N
+1318	330	のみもの	1	\N
+1319	330	ケーキと のみもの	2	\N
+1320	330	なにも もって いかない	3	\N
+1321	331	こうちゃ	0	\N
+1322	331	コーヒー	1	\N
+1323	331	ジュース	2	\N
+1324	331	みず	3	\N
+1325	332	本を よみます	0	\N
+1326	332	ともだちと はなします	1	\N
+1327	332	しごとを します	2	\N
+1328	332	コーヒーを つくります	3	\N
+1329	333	700えん	0	\N
+1330	333	500えん	1	\N
+1331	333	1000えん	2	\N
+1332	333	400えん	3	\N
+1333	334	パンと たまご	0	\N
+1334	334	パンと ぎゅうにゅう	1	\N
+1335	334	たまごと ぎゅうにゅう	2	\N
+1336	334	パンだけ	3	\N
+1337	335	八時半	0	\N
+1338	335	八時	1	\N
+1339	335	九時	2	\N
+1340	335	九時半	3	\N
+1341	336	ほんや	0	\N
+1342	336	えきの まえ	1	\N
+1343	336	えきの なか	2	\N
+1344	336	きっさてん	3	\N
+1345	337	あおい かさ	0	\N
+1346	337	くろい かさ	1	\N
+1347	337	あおい かばん	2	\N
+1348	337	くろい かばん	3	\N
+1349	338	はが いたかったから	0	\N
+1350	338	かぜを ひいたから	1	\N
+1351	338	あたまが いたかったから	2	\N
+1352	338	りょこうに いったから	3	\N
+1353	339	うちで りょうりを つくった	0	\N
+1354	339	ともだちと テニスを した	1	\N
+1355	339	えいがを みた	2	\N
+1356	339	かいものに いった	3	\N
+1357	340	四人	0	\N
+1358	340	三人	1	\N
+1359	340	五人	2	\N
+1360	340	六人	3	\N
+1361	341	おはよう。	0	\N
+1362	341	こんばんは。	1	\N
+1363	341	おやすみなさい。	2	\N
+1364	341	いただきます。	3	\N
+1365	342	わたしのです。	0	\N
+1366	342	かさです。	1	\N
+1367	342	あそこです。	2	\N
+1368	342	あおいです。	3	\N
+1369	343	ええ、みましょう。	0	\N
+1370	343	ええ、みました。	1	\N
+1371	343	いいえ、えいがです。	2	\N
+1372	343	はい、みて ください。	3	\N
+1373	344	あそこです。	0	\N
+1374	344	トイレです。	1	\N
+1375	344	はい、そうです。	2	\N
+1376	344	どういたしまして。	3	\N
+1377	345	おそまつさまでした。	0	\N
+1378	345	いただきます。	1	\N
+1379	345	いってきます。	2	\N
+1380	345	はじめまして。	3	\N
+1381	346	六時ごろです。	0	\N
+1382	346	でんしゃで かえります。	1	\N
+1383	346	きのう かえりました。	2	\N
+1384	346	いえに います。	3	\N
+1385	347	こうつう	0	\N
+1386	347	こうづう	1	\N
+1387	347	こうとう	2	\N
+1388	347	ごうつう	3	\N
+1389	348	いそいで	0	\N
+1390	348	きゅういで	1	\N
+1391	348	おいで	2	\N
+1392	348	さわいで	3	\N
+1393	349	けいかく	0	\N
+1394	349	けいが	1	\N
+1395	349	けかく	2	\N
+1396	349	けいかつ	3	\N
+1397	350	くらい	0	\N
+1398	350	ひくい	1	\N
+1399	350	ふかい	2	\N
+1400	350	さむい	3	\N
+1401	351	はこんで	0	\N
+1402	351	えらんで	1	\N
+1403	351	よんで	2	\N
+1404	351	あそんで	3	\N
+1405	352	じゅうしょ	0	\N
+1406	352	じゅうじょ	1	\N
+1407	352	すみしょ	2	\N
+1408	352	じゅしょう	3	\N
+1409	353	あつかった	0	\N
+1410	353	さむかった	1	\N
+1411	353	あたたかかった	2	\N
+1412	353	すずしかった	3	\N
+1413	354	閉めて	0	\N
+1414	354	開めて	1	\N
+1415	354	問めて	2	\N
+1416	354	間めて	3	\N
+1417	355	習って	0	\N
+1418	355	羽って	1	\N
+1419	355	学って	2	\N
+1420	355	教って	3	\N
+1421	356	品物	0	\N
+1422	356	品者	1	\N
+1423	356	口物	2	\N
+1424	356	晶物	3	\N
+1425	357	予定	0	\N
+1426	357	予走	1	\N
+1427	357	矛定	2	\N
+1428	357	子定	3	\N
+1429	358	重い	0	\N
+1430	358	動い	1	\N
+1431	358	軽い	2	\N
+1432	358	量い	3	\N
+1433	359	おくりました	0	\N
+1434	359	うけました	1	\N
+1435	359	かりました	2	\N
+1436	359	ひろいました	3	\N
+1437	360	しかられました	0	\N
+1438	360	ほめられました	1	\N
+1439	360	たのまれました	2	\N
+1440	360	しょうたいされました	3	\N
+1441	361	あと	0	\N
+1442	361	まえ	1	\N
+1443	361	あいだ	2	\N
+1444	361	うち	3	\N
+1445	362	かくにん	0	\N
+1446	362	せつめい	1	\N
+1447	362	しょうかい	2	\N
+1448	362	ちゅうい	3	\N
+1449	363	つよくて	0	\N
+1450	363	ふかくて	1	\N
+1451	363	おもくて	2	\N
+1452	363	ひろくて	3	\N
+1453	364	ちゅういして	0	\N
+1454	364	しんぱいして	1	\N
+1455	364	えんりょして	2	\N
+1456	364	がまんして	3	\N
+1457	365	ざんねん	0	\N
+1458	365	ていねい	1	\N
+1459	365	ふべん	2	\N
+1460	365	じょうず	3	\N
+1461	366	コピー	0	\N
+1462	366	メモ	1	\N
+1463	366	サイン	2	\N
+1464	366	チェック	3	\N
+1465	367	この りょうりは まずいです。	0	\N
+1466	367	この りょうりは からいです。	1	\N
+1467	367	この りょうりは あまいです。	2	\N
+1468	367	この りょうりは とても おいしいです。	3	\N
+1469	368	山田さんは 先生に ききました。	0	\N
+1470	368	山田さんは 先生に こたえました。	1	\N
+1471	368	先生は 山田さんに ききました。	2	\N
+1472	368	山田さんは 先生に おしえました。	3	\N
+1473	369	きのうは いそがしくなかったです。	0	\N
+1474	369	きのうは いそがしかったです。	1	\N
+1475	369	きのうは やすみでした。	2	\N
+1476	369	きのうは つかれました。	3	\N
+1477	370	ここは きんえんです。	0	\N
+1478	370	ここは きつえんじょです。	1	\N
+1479	370	ここで たばこを すっても いいです。	2	\N
+1480	370	ここで たばこを うって います。	3	\N
+1481	371	かれは まいばん ねっしんに 日本語を べんきょうして います。	0	\N
+1482	371	きょうは ねっしんな 天気ですね。	1	\N
+1483	371	この スープは ねっしんですから、気を つけて ください。	2	\N
+1484	371	ねっしんが あるので、学校を 休みました。	3	\N
+1485	372	ペンは つくえの ひきだしに 入って います。	0	\N
+1486	372	ぎんこうで お金を ひきだしに 行きます。	1	\N
+1487	372	かれは ピアノを ひきだしに します。	2	\N
+1488	372	へやの ひきだしを つけて ください。	3	\N
+1489	373	にゅういんして いる 友だちの おみまいに 行きました。	0	\N
+1490	373	あたらしい 家の おみまいに パーティーを しました。	1	\N
+1491	373	しけんに ごうかくして、おみまいを もらいました。	2	\N
+1492	373	あさ、先生に おみまいを 言いました。	3	\N
+1618	405	海へ 行った	1	\N
+1493	374	エレベーターが こしょうして いるので、かいだんを つかいます。	0	\N
+1494	374	ステーキに こしょうして 食べます。	1	\N
+1495	374	かれは こしょうで 学校を 休みました。	2	\N
+1496	374	この 時計は こしょうなので、高いです。	3	\N
+1497	375	でも	0	\N
+1498	375	しか	1	\N
+1499	375	だけ	2	\N
+1500	375	ばかり	3	\N
+1501	376	そう	0	\N
+1502	376	よう	1	\N
+1503	376	らしい	2	\N
+1504	376	みたい	3	\N
+1505	377	かけて	0	\N
+1506	377	かかって	1	\N
+1507	377	かける	2	\N
+1508	377	かけ	3	\N
+1509	378	みがき	0	\N
+1510	378	みがく	1	\N
+1511	378	みがいて	2	\N
+1512	378	みがいた	3	\N
+1513	379	いただきました	0	\N
+1514	379	さしあげました	1	\N
+1515	379	あげました	2	\N
+1516	379	やりました	3	\N
+1517	380	のに	0	\N
+1518	380	ので	1	\N
+1519	380	から	2	\N
+1520	380	ため	3	\N
+1521	381	させられました	0	\N
+1522	381	させました	1	\N
+1523	381	されました	2	\N
+1524	381	しました	3	\N
+1525	382	ように	0	\N
+1526	382	ために	1	\N
+1527	382	ばかりに	2	\N
+1528	382	うちに	3	\N
+1529	383	おすと	0	\N
+1530	383	おすなら	1	\N
+1531	383	おしても	2	\N
+1532	383	おしたり	3	\N
+1533	384	お帰りに なりました	0	\N
+1534	384	お帰りしました	1	\N
+1535	384	帰られて いただきました	2	\N
+1536	384	お帰りいたしました	3	\N
+1537	385	おわらせなければ なりません	0	\N
+1538	385	おわらなければ なりません	1	\N
+1539	385	おわらせても いいです	2	\N
+1540	385	おわった ことが あります	3	\N
+1541	386	いって しまいました	0	\N
+1542	386	いって おきました	1	\N
+1543	386	いって みました	2	\N
+1544	386	いって ありました	3	\N
+1545	387	もらった	0	\N
+1546	387	に	1	\N
+1547	387	母	2	\N
+1548	387	プレゼント	3	\N
+1549	388	ふったら	0	\N
+1550	388	あめが	1	\N
+1551	388	にも	2	\N
+1552	388	どこ	3	\N
+1553	389	りゅうがく	0	\N
+1554	389	ために	1	\N
+1555	389	しよう	2	\N
+1556	389	べんきょうする	3	\N
+1557	390	と	0	\N
+1558	390	ほど	1	\N
+1559	390	くらべられない	2	\N
+1560	390	ほかの 店	3	\N
+1561	391	人が 少なくて、木の はが きれいだから	0	\N
+1562	391	さくらが たくさん さくから	1	\N
+1563	391	人が おおぜい 来るから	2	\N
+1564	391	大きな こうえんだから	3	\N
+1565	392	パソコンの 電源を 切る	0	\N
+1566	392	エレベーターに のる	1	\N
+1567	392	てんけんを する	2	\N
+1568	392	そうむ課に 行く	3	\N
+1569	393	三十分	0	\N
+1570	393	十分	1	\N
+1571	393	一時間	2	\N
+1572	393	十五分	3	\N
+1573	394	しっぱいばかりで、店長に しかられたから	0	\N
+1574	394	先ぱいが こわかったから	1	\N
+1575	394	しごとが つまらなかったから	2	\N
+1576	394	大学の べんきょうが いそがしかったから	3	\N
+1577	395	先ぱいの しごとを 見て、まねを した	0	\N
+1578	395	店長に あやまった	1	\N
+1579	395	アルバイトを やめた	2	\N
+1580	395	あたらしい 人に しごとを おしえた	3	\N
+1581	396	先ぱいの おかげで アルバイトを つづけられた	0	\N
+1582	396	アルバイトは しっぱいが おおい	1	\N
+1583	396	レストランの しごとは たいへんだ	2	\N
+1584	396	店長は とても きびしい	3	\N
+1585	397	600円	0	\N
+1586	397	500円	1	\N
+1587	397	300円	2	\N
+1588	397	400円	3	\N
+1589	398	ヨガ	0	\N
+1590	398	水えい	1	\N
+1591	398	テニス	2	\N
+1592	398	バドミントン	3	\N
+1593	399	しりょうの 数字を たしかめる	0	\N
+1594	399	しりょうを コピーする	1	\N
+1595	399	会議に 出る	2	\N
+1596	399	女の 人に しりょうを わたす	3	\N
+1597	400	じてんしゃ	0	\N
+1598	400	バス	1	\N
+1599	400	電車	2	\N
+1600	400	あるいて	3	\N
+1601	401	かさ	0	\N
+1602	401	お弁当	1	\N
+1603	401	飲み物	2	\N
+1604	401	ちず	3	\N
+1605	402	しあさって	0	\N
+1606	402	きょう	1	\N
+1607	402	あした	2	\N
+1608	402	あさって	3	\N
+1609	403	金曜日までに メールで 送る	0	\N
+1610	403	金曜日までに 紙で 出す	1	\N
+1611	403	月曜日に 紙で 出す	2	\N
+1612	403	月曜日までに メールで 送る	3	\N
+1613	404	となりが うるさいから	0	\N
+1614	404	えきから 遠いから	1	\N
+1615	404	やちんが 高いから	2	\N
+1616	404	部屋が せまいから	3	\N
+1617	405	家で 子どもと ゲームを した	0	\N
+1619	405	びょういんで はたらいた	2	\N
+1620	405	友だちと 出かけた	3	\N
+1621	406	くもりで、夜は さむい	0	\N
+1622	406	一日中 雨	1	\N
+1623	406	晴れて あたたかい	2	\N
+1624	406	朝は 雨で、夜は 晴れ	3	\N
+1625	407	外国へ 行く しごとが できるから	0	\N
+1626	407	きゅうりょうが いいから	1	\N
+1627	407	家から 近いから	2	\N
+1628	407	休みが 多いから	3	\N
+1629	408	一時間	0	\N
+1630	408	三十分	1	\N
+1631	408	二時間	2	\N
+1632	408	三時間	3	\N
+1633	409	ええ、どうぞ。	0	\N
+1634	409	ええ、あけて ください。	1	\N
+1635	409	いいえ、すわりました。	2	\N
+1636	409	どういたしまして。	3	\N
+1637	410	ありがとうございます。	0	\N
+1638	410	はい、つかれさせました。	1	\N
+1639	410	いいえ、休みませんでした。	2	\N
+1640	410	じゃあ、休んで いきましょう。	3	\N
+1641	411	ええ、いいですよ。	0	\N
+1642	411	ええ、かりました。	1	\N
+1643	411	はい、かして ください。	2	\N
+1644	411	いいえ、来週です。	3	\N
+1645	412	ううん、まだ 半分しか して いない。	0	\N
+1646	412	うん、これから 終わるよ。	1	\N
+1647	412	ううん、もう 終わったよ。	2	\N
+1648	412	うん、まだ はじめて いない。	3	\N
+1649	413	どうしたんですか。	0	\N
+1650	413	はい、休みました。	1	\N
+1651	413	いいえ、じゅぎょうです。	2	\N
+1652	413	じゃあ、休ませて ください。	3	\N
+1653	414	いいですね。そう しましょう。	0	\N
+1654	414	はい、飲みました。	1	\N
+1655	414	お茶を ください、どうも。	2	\N
+1656	414	いいえ、飲んで ください。	3	\N
+1657	415	ありがとうございます。たすかります。	0	\N
+1658	415	はい、おくって あげます。	1	\N
+1659	415	いいえ、駅です。	2	\N
+1660	415	どうぞ、おくって ください、ありがとう。	3	\N
+1661	416	かんせい	0	\N
+1662	416	かんぜい	1	\N
+1663	416	がんせい	2	\N
+1664	416	かんしょう	3	\N
+1665	417	けっか	0	\N
+1666	417	けつか	1	\N
+1667	417	けっが	2	\N
+1668	417	けいか	3	\N
+1669	418	ふくざつ	0	\N
+1670	418	ふくさつ	1	\N
+1671	418	ふくじゃつ	2	\N
+1672	418	ふうざつ	3	\N
+1673	419	あたえて	0	\N
+1674	419	あらえて	1	\N
+1675	419	かかえて	2	\N
+1676	419	ささえて	3	\N
+1677	420	ひよう	0	\N
+1678	420	ひよ	1	\N
+1679	420	ひいよう	2	\N
+1680	420	ひょう	3	\N
+1681	421	あせ	0	\N
+1682	421	なみだ	1	\N
+1683	421	いき	2	\N
+1684	421	ちから	3	\N
+1685	422	じゅんび	0	\N
+1686	422	じゅんぴ	1	\N
+1687	422	しゅんび	2	\N
+1688	422	じゅうび	3	\N
+1689	423	あさい	0	\N
+1690	423	ふかい	1	\N
+1691	423	せまい	2	\N
+1692	423	ほそい	3	\N
+1693	424	止める	0	\N
+1694	424	留める	1	\N
+1695	424	泊める	2	\N
+1696	424	停める	3	\N
+1697	425	慣れる	0	\N
+1698	425	馴れる	1	\N
+1699	425	成れる	2	\N
+1700	425	熟れる	3	\N
+1701	426	意見	0	\N
+1702	426	異見	1	\N
+1703	426	意験	2	\N
+1704	426	意件	3	\N
+1705	427	遅れた	0	\N
+1706	427	送れた	1	\N
+1707	427	後れた	2	\N
+1708	427	贈れた	3	\N
+1709	428	暖かい	0	\N
+1710	428	温かい	1	\N
+1711	428	援かい	2	\N
+1712	428	緩かい	3	\N
+1713	429	控えて	0	\N
+1714	429	引えて	1	\N
+1715	429	惜えて	2	\N
+1716	429	空えて	3	\N
+1717	430	混んで	0	\N
+1718	430	空いて	1	\N
+1719	430	並んで	2	\N
+1720	430	止まって	3	\N
+1721	431	感想	0	\N
+1722	431	感謝	1	\N
+1723	431	感動	2	\N
+1724	431	感心	3	\N
+1725	432	中止	0	\N
+1726	432	中心	1	\N
+1727	432	中間	2	\N
+1728	432	中身	3	\N
+1729	433	夢中	0	\N
+1730	433	熱心	1	\N
+1731	433	集中	2	\N
+1732	433	真剣	3	\N
+1733	434	整理	0	\N
+1734	434	修理	1	\N
+1735	434	料理	2	\N
+1736	434	処理	3	\N
+1737	435	ほっと	0	\N
+1738	435	がっかり	1	\N
+1739	435	いらいら	2	\N
+1740	435	びっくり	3	\N
+1741	436	ポケット	0	\N
+1742	436	ボタン	1	\N
+1743	436	サイズ	2	\N
+1744	436	ベルト	3	\N
+1745	437	近づいて	0	\N
+1746	437	近よって	1	\N
+1747	437	近くなって	2	\N
+1748	437	近まって	3	\N
+1749	438	早めに	0	\N
+1750	438	早くて	1	\N
+1751	438	早さで	2	\N
+1752	438	早まって	3	\N
+1753	439	すぐに	0	\N
+1754	439	少しずつ	1	\N
+1755	439	やっと	2	\N
+1756	439	だんだん	3	\N
+1757	440	実際より大きく言う	0	\N
+1758	440	とても長い	1	\N
+1759	440	声が大きい	2	\N
+1760	440	とてもおもしろい	3	\N
+1761	441	変えた	0	\N
+1762	441	決めた	1	\N
+1763	441	知らせた	2	\N
+1764	441	確かめた	3	\N
+1765	442	笑って	0	\N
+1766	442	泣いて	1	\N
+1767	442	怒って	2	\N
+1768	442	驚いて	3	\N
+1769	443	小さすぎる	0	\N
+1770	443	大きすぎる	1	\N
+1771	443	重すぎる	2	\N
+1772	443	古すぎる	3	\N
+1773	444	もうすぐ出かけるので、早く支度をしなさい。	0	\N
+1774	444	この店は支度が安くておいしい。	1	\N
+1775	444	彼は毎日、支度に住んでいる。	2	\N
+1776	444	雨の支度で、試合が中止になった。	3	\N
+1777	445	深呼吸をしたら、気持ちが落ち着いた。	0	\N
+1778	445	階段から落ち着いて、けがをした。	1	\N
+1779	445	財布をどこかに落ち着いてしまった。	2	\N
+1780	445	木の葉が地面に落ち着いた。	3	\N
+1781	446	おしゃべりに夢中で、降りる駅を通り過ぎてしまった。	0	\N
+1782	446	試験に通り過ぎて、とてもうれしい。	1	\N
+1783	446	この道は、車がたくさん通り過ぎない。	2	\N
+1784	446	彼の説明は通り過ぎて、よくわかった。	3	\N
+1785	447	二人には、音楽が好きだという共通の趣味がある。	0	\N
+1786	447	駅まで友達と共通で歩いた。	1	\N
+1787	447	この部屋は、家族で共通に住んでいる。	2	\N
+1788	447	彼は共通して、毎朝走っている。	3	\N
+1789	448	調査の結果、事故の原因が明らかになった。	0	\N
+1790	448	今日は明らかな天気で、気持ちがいい。	1	\N
+1791	448	この部屋は電気をつけると明らかだ。	2	\N
+1792	448	彼女は明らかな声で歌った。	3	\N
+1793	449	こと	0	\N
+1794	449	もの	1	\N
+1795	449	ところ	2	\N
+1796	449	わけ	3	\N
+1797	450	のに	0	\N
+1798	450	ので	1	\N
+1799	450	から	2	\N
+1800	450	ために	3	\N
+1801	451	から	0	\N
+1802	451	まで	1	\N
+1803	451	ので	2	\N
+1804	451	うちに	3	\N
+1805	452	のくせに	0	\N
+1806	452	のおかげで	1	\N
+1807	452	のために	2	\N
+1808	452	によって	3	\N
+1809	453	によって	0	\N
+1810	453	について	1	\N
+1811	453	に対して	2	\N
+1812	453	にとって	3	\N
+1813	454	うちに	0	\N
+1814	454	あいだに	1	\N
+1815	454	までに	2	\N
+1816	454	ところに	3	\N
+1817	455	には	0	\N
+1818	455	では	1	\N
+1819	455	にも	2	\N
+1820	455	とは	3	\N
+1821	456	までは	0	\N
+1822	456	までに	1	\N
+1823	456	うちは	2	\N
+1824	456	ところで	3	\N
+1825	457	につれて	0	\N
+1826	457	にとって	1	\N
+1827	457	において	2	\N
+1828	457	について	3	\N
+1829	458	とおり	0	\N
+1830	458	ばかり	1	\N
+1831	458	ほど	2	\N
+1832	458	ため	3	\N
+1833	459	コピーしましょう	0	\N
+1834	459	コピーさせましょう	1	\N
+1835	459	コピーされましょう	2	\N
+1836	459	コピーしてもらいましょう	3	\N
+1837	460	はずがない	0	\N
+1838	460	わけだ	1	\N
+1839	460	ことだ	2	\N
+1840	460	ものだ	3	\N
+1841	461	で	0	\N
+1842	461	とった	1	\N
+1843	461	旅行	2	\N
+1844	461	京都	3	\N
+1845	462	だけでなく	0	\N
+1846	462	子ども	1	\N
+1847	462	にも	2	\N
+1848	462	大人	3	\N
+1849	463	合格できる	0	\N
+1850	463	勉強したが	1	\N
+1851	463	かどうか	2	\N
+1852	463	たくさん	3	\N
+1853	464	家賃が	0	\N
+1854	464	安い	1	\N
+1855	464	ので	2	\N
+1856	464	けれど	3	\N
+1857	465	誰も	0	\N
+1858	465	知る人は	1	\N
+1859	465	理由を	2	\N
+1860	465	いない	3	\N
+1861	466	本の読み方が変わっているだけで、読む人が減ったとは言えない。	0	\N
+1862	466	本を読む人が減っているので、心配だ。	1	\N
+1863	466	スマートフォンで読むのはよくない。	2	\N
+1864	466	紙の本の方が読みやすい。	3	\N
+1865	467	火曜日までに、必要な水を用意しておく。	0	\N
+1866	467	水曜日に管理会社へ行く。	1	\N
+1867	467	水曜日の午後三時までに工事をする。	2	\N
+1868	467	水曜日の朝、水道を止める。	3	\N
+1869	468	後で読み返して、忘れていたことを思い出せるから	0	\N
+1870	468	特別なことがたくさんあるから	1	\N
+1871	468	食べたものを記録する必要があるから	2	\N
+1872	468	天気の変化を調べているから	3	\N
+1873	469	打ち合わせの日を木曜日に変えること	0	\N
+1874	469	打ち合わせの時間を変えること	1	\N
+1875	469	打ち合わせの場所を変えること	2	\N
+1876	469	打ち合わせをやめること	3	\N
+1877	470	電車の中で電話をしていて、注意された。	0	\N
+1878	470	電車の中で話しかけられて、驚いた。	1	\N
+1879	470	電車の中がうるさくて、休めなかった。	2	\N
+1880	470	電車の乗り方がわからなかった。	3	\N
+1881	471	静かな方がいいと思っている。	0	\N
+1882	471	電話をしてもいいと思っている。	1	\N
+1883	471	もっと話をした方がいいと思っている。	2	\N
+1884	471	ルールが厳しすぎると思っている。	3	\N
+1885	472	その国のルールを知って、合わせることが大切だ。	0	\N
+1886	472	日本のルールがいちばん正しい。	1	\N
+1887	472	電車の中では電話をしてはいけない。	2	\N
+1888	472	国によって考え方が違うのは問題だ。	3	\N
+1889	473	話し相手がいないお年寄りが多いことに気づいたこと	0	\N
+1890	473	子どもたちの勉強する場所がなかったこと	1	\N
+1891	473	空き家が多くて危なかったこと	2	\N
+1892	473	自分が一人暮らしで寂しかったこと	3	\N
+1893	474	佐藤さんが毎日声をかけ続けたから	0	\N
+1894	474	家を新しくきれいにしたから	1	\N
+1895	474	お茶が無料で飲めるから	2	\N
+1896	474	子どもたちが友達を連れてきたから	3	\N
+1897	475	始めたころは、人が来ない日もあった。	0	\N
+1898	475	最初から毎日二十人以上来ていた。	1	\N
+1899	475	子どもは利用できない。	2	\N
+1900	475	町が作った施設である。	3	\N
+1901	476	C	0	\N
+1902	476	A	1	\N
+1903	476	B	2	\N
+1904	476	D	3	\N
+1905	477	1,000円	0	\N
+1906	477	5,000円	1	\N
+1907	477	2,500円	2	\N
+1908	477	6,000円	3	\N
+1909	478	資料を印刷する	0	\N
+1910	478	会議室を予約する	1	\N
+1911	478	お茶を用意する	2	\N
+1912	478	お客さんの人数を確認する	3	\N
+1913	479	筆記用具	0	\N
+1914	479	白衣と筆記用具	1	\N
+1915	479	教科書	2	\N
+1916	479	白衣と教科書	3	\N
+1917	480	九時四十五分	0	\N
+1918	480	九時半	1	\N
+1919	480	十時	2	\N
+1920	480	十時十五分	3	\N
+1921	481	黒いパソコンを今日持って帰る	0	\N
+1922	481	三日後に届けてもらう	1	\N
+1923	481	別の店で買う	2	\N
+1924	481	買うのをやめる	3	\N
+1925	482	パソコンで作り、授業の前にメールで送る	0	\N
+1926	482	手で書いて、授業で出す	1	\N
+1927	482	パソコンで作り、授業で出す	2	\N
+1928	482	手で書いて、メールで送る	3	\N
+1929	483	一人暮らしを始めるから	0	\N
+1930	483	料理が好きだから	1	\N
+1931	483	友達に誘われたから	2	\N
+1932	483	仕事で必要だから	3	\N
+1933	484	財布を落として、交番に行っていたから	0	\N
+1934	484	仕事が忙しかったから	1	\N
+1935	484	体の調子が悪かったから	2	\N
+1936	484	パーティーのことを忘れていたから	3	\N
+1937	485	毎日同じ時間に起きること	0	\N
+1938	485	寝る前にお風呂に入ること	1	\N
+1939	485	温かい飲み物を飲むこと	2	\N
+1940	485	早く寝ること	3	\N
+1941	486	朝早くから開いていること	0	\N
+1942	486	値段が安いこと	1	\N
+1943	486	パンの種類が多いこと	2	\N
+1944	486	店員が親切なこと	3	\N
+1945	487	楽しかったが、雨で山に登れなかった	0	\N
+1946	487	天気がよくて、山にも登れた	1	\N
+1947	487	料理がおいしくなかった	2	\N
+1948	487	景色が見えなかった	3	\N
+1949	488	お弁当を持っていく人が増えている理由	0	\N
+1950	488	お弁当の作り方	1	\N
+1951	488	会社の食堂の問題	2	\N
+1952	488	朝ご飯の大切さ	3	\N
+1953	489	自転車で通勤するよさ	0	\N
+1954	489	満員電車の問題	1	\N
+1955	489	雨の日の過ごし方	2	\N
+1956	489	体を丈夫にする方法	3	\N
+1957	490	新聞の読み方	0	\N
+1958	490	辞書の選び方	1	\N
+1959	490	新しい言葉の覚え方	2	\N
+1960	490	日本語の書き方	3	\N
+1961	491	ええ、どうぞ。	0	\N
+1962	491	ええ、置きました。	1	\N
+1963	491	はい、置いてください、すみません。	2	\N
+1964	491	いいえ、ここです。	3	\N
+1965	492	確か、十時からだったと思うよ。	0	\N
+1966	492	うん、会議だったよ。	1	\N
+1967	492	明日じゃなかったよ、ありがとう。	2	\N
+1968	492	十時までだったっけ。	3	\N
+1969	493	いいよ。簡単だから、すぐできるよ。	0	\N
+1970	493	うん、教えてもらったよ。	1	\N
+1971	493	ありがとう、作ってあげる。	2	\N
+1972	493	ううん、食べてないよ。	3	\N
+1973	494	いいえ。もう体は大丈夫ですか。	0	\N
+1974	494	はい、休みました。	1	\N
+1975	494	いいえ、休んでください。	2	\N
+1976	494	どういたしまして、また来週。	3	\N
+1977	495	うん、いいよ。どうぞ。	0	\N
+1978	495	うん、使わせてあげたよ。	1	\N
+1979	495	ありがとう、使わせて。	2	\N
+1980	495	ううん、使ってないよ。	3	\N
+1981	496	ええ、何度も行ったことがありますから。	0	\N
+1982	496	ええ、道です。	1	\N
+1983	496	いいえ、わかりました。	2	\N
+1984	496	じゃあ、教えてあげてください。	3	\N
+1985	497	うん、この仕事を片付けてから帰るよ。	0	\N
+1986	497	うん、もう帰ったよ。	1	\N
+1987	497	ううん、残してないよ。	2	\N
+1988	497	じゃあ、残っててね。	3	\N
+1989	498	いいね。行こう行こう。	0	\N
+1990	498	うん、天気がよかったね。	1	\N
+1991	498	海には行かなかったよ。	2	\N
+1992	498	じゃあ、行ったらどう？	3	\N
+1993	499	しじ	0	\N
+1994	499	しし	1	\N
+1995	499	じし	2	\N
+1996	499	しじつ	3	\N
+1997	500	さいばい	0	\N
+1998	500	さいはい	1	\N
+1999	500	せいばい	2	\N
+2000	500	さいぼく	3	\N
+2001	501	するどい	0	\N
+2002	501	かしこい	1	\N
+2003	501	きびしい	2	\N
+2004	501	つよい	3	\N
+2005	502	くわしく	0	\N
+2006	502	こまかく	1	\N
+2007	502	やさしく	2	\N
+2008	502	ただしく	3	\N
+2009	503	えんき	0	\N
+2010	503	えんぎ	1	\N
+2011	503	ていき	2	\N
+2012	503	えいき	3	\N
+2013	504	宣伝	0	\N
+2014	504	宣云	1	\N
+2015	504	宜伝	2	\N
+2016	504	専伝	3	\N
+2017	505	喜ばせた	0	\N
+2018	505	悦ばせた	1	\N
+2019	505	歓ばせた	2	\N
+2020	505	慶ばせた	3	\N
+2021	506	事故	0	\N
+2022	506	事古	1	\N
+2023	506	自故	2	\N
+2024	506	時故	3	\N
+2025	507	故障	0	\N
+2026	507	故章	1	\N
+2027	507	古障	2	\N
+2028	507	故傷	3	\N
+2029	508	貸した	0	\N
+2030	508	借した	1	\N
+2031	508	化した	2	\N
+2032	508	課した	3	\N
+2033	509	未	0	\N
+2034	509	不	1	\N
+2035	509	無	2	\N
+2036	509	非	3	\N
+2037	510	総	0	\N
+2038	510	全	1	\N
+2039	510	多	2	\N
+2040	510	満	3	\N
+2041	511	非	0	\N
+2042	511	不	1	\N
+2043	511	無	2	\N
+2044	511	未	3	\N
+2045	512	責任感	0	\N
+2046	512	責任者	1	\N
+2047	512	無責任	2	\N
+2048	512	責任上	3	\N
+2049	513	思い切った	0	\N
+2050	513	思い出した	1	\N
+2051	513	思い込んだ	2	\N
+2052	513	思いついた	3	\N
+2053	514	崩して	0	\N
+2054	514	壊して	1	\N
+2055	514	倒して	2	\N
+2056	514	破って	3	\N
+2057	515	気配り	0	\N
+2058	515	気分	1	\N
+2059	515	気味	2	\N
+2060	515	気配	3	\N
+2061	516	苦労	0	\N
+2062	516	努力	1	\N
+2063	516	工夫	2	\N
+2064	516	用心	3	\N
+2065	517	実行	0	\N
+2066	517	実現	1	\N
+2067	517	実験	2	\N
+2068	517	実際	3	\N
+2069	518	混雑	0	\N
+2070	518	混乱	1	\N
+2071	518	混合	2	\N
+2072	518	混同	3	\N
+2073	519	何度も	0	\N
+2074	519	ときどき	1	\N
+2075	519	いつも	2	\N
+2076	519	ときには	3	\N
+2077	520	複雑だ	0	\N
+2078	520	簡単だ	1	\N
+2079	520	重要だ	2	\N
+2080	520	珍しい	3	\N
+2081	521	順調に	0	\N
+2082	521	ゆっくり	1	\N
+2083	521	急に	2	\N
+2084	521	静かに	3	\N
+2085	522	いやになった	0	\N
+2086	522	感動した	1	\N
+2087	522	驚いた	2	\N
+2088	522	安心した	3	\N
+2089	523	ずっと前に	0	\N
+2090	523	さっき	1	\N
+2091	523	たった今	2	\N
+2092	523	もうすぐ	3	\N
+2093	524	彼の話には矛盾があって、信じられない。	0	\N
+2094	524	この料理は矛盾していて、とてもおいしい。	1	\N
+2095	524	矛盾な天気が続いて、困っている。	2	\N
+2096	524	彼は矛盾に仕事をこなす。	3	\N
+2097	525	足りない栄養は、サプリメントで補っている。	0	\N
+2098	525	けがをした足を補って、病院へ行った。	1	\N
+2099	525	友達と駅で補って、一緒に帰った。	2	\N
+2100	525	古い家を補って、新しく建てた。	3	\N
+2101	526	事件を解決する手がかりが見つかった。	0	\N
+2102	526	手がかりがよくて、料理が上手だ。	1	\N
+2103	526	この手がかりは、とても使いやすい。	2	\N
+2104	526	彼は手がかりに仕事を手伝ってくれた。	3	\N
+2105	527	旅行は無理でも、せめて週末くらいはゆっくり休みたい。	0	\N
+2106	527	彼はせめて毎日勉強している。	1	\N
+2107	527	せめて雨が降ってきて、困った。	2	\N
+2108	527	このかばんはせめて大きい。	3	\N
+2109	528	作ったデータは、こまめに保存しておいたほうがいい。	0	\N
+2110	528	彼は自分の意見を最後まで保存した。	1	\N
+2111	528	古い友人と保存して、話をした。	2	\N
+2112	528	病気が保存して、入院した。	3	\N
+2113	529	には	0	\N
+2114	529	とは	1	\N
+2115	529	では	2	\N
+2116	529	のに	3	\N
+2117	530	といい／といい	0	\N
+2118	530	とか／とか	1	\N
+2119	530	やら／やら	2	\N
+2120	530	なり／なり	3	\N
+2121	531	以上	0	\N
+2122	531	以来	1	\N
+2123	531	以外	2	\N
+2124	531	以内	3	\N
+2125	532	にもかかわらず	0	\N
+2126	532	にかかわらず	1	\N
+2127	532	に限らず	2	\N
+2128	532	にしたがって	3	\N
+2129	533	を問わず	0	\N
+2130	533	をめぐって	1	\N
+2131	533	をはじめ	2	\N
+2132	533	を通じて	3	\N
+2133	534	ほどだ	0	\N
+2134	534	ものだ	1	\N
+2135	534	ことだ	2	\N
+2136	534	わけだ	3	\N
+2137	535	ものがある	0	\N
+2138	535	ことがある	1	\N
+2139	535	ものではない	2	\N
+2140	535	ことになる	3	\N
+2141	536	うえで	0	\N
+2142	536	うちに	1	\N
+2143	536	ところ	2	\N
+2144	536	ばかりに	3	\N
+2145	537	ほど	0	\N
+2146	537	だけ	1	\N
+2147	537	まで	2	\N
+2148	537	ばかり	3	\N
+2149	538	に関しては	0	\N
+2150	538	にこたえて	1	\N
+2151	538	に比べて	2	\N
+2152	538	にわたって	3	\N
+2153	539	ください	0	\N
+2154	539	いたします	1	\N
+2155	539	させてください	2	\N
+2156	539	いただきます	3	\N
+2157	540	わけがない	0	\N
+2158	540	わけだ	1	\N
+2159	540	わけにはいかない	2	\N
+2160	540	わけではない	3	\N
+2161	541	人が	0	\N
+2162	541	一人で	1	\N
+2163	541	経験の	2	\N
+2164	541	浅い	3	\N
+2165	542	ころ	0	\N
+2166	542	子どもの	1	\N
+2167	542	から	2	\N
+2168	542	ずっと	3	\N
+2169	543	あって	0	\N
+2170	543	人気が	1	\N
+2171	543	レストランは	2	\N
+2172	543	なかなか	3	\N
+2173	544	もらった	0	\N
+2174	544	アドバイスの	1	\N
+2175	544	おかげで	2	\N
+2176	544	して	3	\N
+2177	545	間に合わない	0	\N
+2178	545	締め切りに	1	\N
+2179	545	かもしれない	2	\N
+2180	545	計画の	3	\N
+2181	546	部下が相談しやすい雰囲気を、上司が作るべきだ。	0	\N
+2182	546	部下はもっと積極的に相談するべきだ。	1	\N
+2183	546	上司は忙しいので、相談しないほうがいい。	2	\N
+2184	546	報告や連絡は、相談より大切だ。	3	\N
+2185	547	システムで申請し、領収書の写真を添付する。	0	\N
+2186	547	紙の申請書と領収書の原本を出す。	1	\N
+2187	547	システムで申請し、領収書の原本を経理部に出す。	2	\N
+2188	547	領収書の写真を経理部にメールで送る。	3	\N
+2189	548	旅行の計画を立てて、待っている時間も楽しみの一つだ。	0	\N
+2190	548	目的地に着いてからが、一番の楽しみだ。	1	\N
+2191	548	計画は立てずに出かけたほうが楽しい。	2	\N
+2192	548	旅行が終わった後に、思い出すのが楽しい。	3	\N
+2193	549	原因を考えて次に生かすことで、失敗に意味が生まれる。	0	\N
+2194	549	失敗をすれば、自然に成功に近づく。	1	\N
+2195	549	失敗はできるだけ避けるべきだ。	2	\N
+2196	549	失敗の原因は、考えても仕方がない。	3	\N
+2197	550	飼い主が年をとって、ペットの世話ができなくなること	0	\N
+2198	550	ペットと泊まれるホテルが少ないこと	1	\N
+2199	550	ペット用の保険が高すぎること	2	\N
+2200	550	ペットの寿命が短くなっていること	3	\N
+2201	551	ペットが長生きし、飼い主の生活や体が変わることがあるから	0	\N
+2202	551	ペットが病気になりやすいから	1	\N
+2203	551	ペット用の保険がないから	2	\N
+2204	551	ペットが家族と考えられていないから	3	\N
+2205	552	ペットを飼う前に、最後まで責任を持てるかよく考えるべきだ。	0	\N
+2206	552	ペットは家族の一員として大切にするべきだ。	1	\N
+2207	552	高齢者はペットを飼うべきではない。	2	\N
+2208	552	ペット用のサービスをもっと増やすべきだ。	3	\N
+2209	553	本を読んで聞かせた。	0	\N
+2210	553	本を読む時間をとった。	1	\N
+2211	553	図書館に連れて行った。	2	\N
+2212	553	本の感想を書かせた。	3	\N
+2213	554	続きを知りたい気持ちにさせて、自分から本を読ませる作戦	0	\N
+2214	554	授業を早く終わらせる作戦	1	\N
+2215	554	図書館の本を借りさせる作戦	2	\N
+2216	554	眠くならないように話をする作戦	3	\N
+2217	555	命令されるより、知りたいという気持ちのほうが人を動かす。	0	\N
+2218	555	子どもは本を読むのが苦手だ。	1	\N
+2219	555	国語の授業では本を読み聞かせるべきだ。	2	\N
+2220	555	図書館をもっと利用するべきだ。	3	\N
+2221	556	Aは安全のために賛成し、Bは使いすぎを心配して反対している。	0	\N
+2222	556	AもBも、安全のために持たせるべきだと述べている。	1	\N
+2223	556	Aは反対し、Bは条件つきで賛成している。	2	\N
+2224	556	AもBも、使う時間のルールは不要だと述べている。	3	\N
+2225	557	子どもと連絡をとること	0	\N
+2226	557	勉強の時間が減ること	1	\N
+2227	557	位置がわかること	2	\N
+2228	557	ゲームに夢中になること	3	\N
+2229	558	400円	0	\N
+2230	558	600円	1	\N
+2231	558	300円	2	\N
+2232	558	6,000円	3	\N
+2233	559	月曜日はプールを利用できない。	0	\N
+2234	559	65歳以上は無料である。	1	\N
+2235	559	回数券は中学生も大人と同じ料金だ。	2	\N
+2236	559	営業時間は毎日21時までで休みはない。	3	\N
+2237	560	パンフレットをブースごとに分ける	0	\N
+2238	560	パンフレットを追加で注文する	1	\N
+2239	560	展示会に行く	2	\N
+2240	560	去年の来場者数を調べる	3	\N
+2241	561	先生に推薦状を頼む	0	\N
+2242	561	申込書を書く	1	\N
+2243	561	成績証明書をもらう	2	\N
+2244	561	事務の人に書類を出す	3	\N
+2245	562	予約番号をメールで送る	0	\N
+2246	562	部屋を変更する	1	\N
+2247	562	追加のベッドを予約する	2	\N
+2248	562	朝食の料金を払いに行く	3	\N
+2249	563	細かいデータは資料に入れ、要点だけ話す	0	\N
+2250	563	説明をもっとわかりやすくする	1	\N
+2251	563	データを増やす	2	\N
+2252	563	プレゼンの時間を延ばしてもらう	3	\N
+2253	564	パンのコース	0	\N
+2254	564	和食のコース	1	\N
+2255	564	お菓子のコース	2	\N
+2256	564	まだ選んでいない	3	\N
+2257	565	会社まで遠すぎるから	0	\N
+2258	565	部屋が狭いから	1	\N
+2259	565	家賃が高いから	2	\N
+2260	565	大家さんが厳しいから	3	\N
+2261	566	町を舞台にした映画がヒットしたから	0	\N
+2262	566	新しい駅ができたから	1	\N
+2263	566	古い町並みが新しくなったから	2	\N
+2264	566	宿泊料金が安くなったから	3	\N
+2265	567	出張が多いこと	0	\N
+2266	567	職場の人が厳しいこと	1	\N
+2267	567	仕事がつまらないこと	2	\N
+2268	567	給料が安いこと	3	\N
+2269	568	楽しいと思える運動を選ぶこと	0	\N
+2270	568	高い目標を立てること	1	\N
+2271	568	毎日長い時間運動すること	2	\N
+2272	568	友達と一緒に運動すること	3	\N
+2273	569	自分の国の言葉や文化を外から見られること	0	\N
+2274	569	仕事の幅が広がること	1	\N
+2275	569	外国人の友達が増えること	2	\N
+2276	569	海外旅行が楽しくなること	3	\N
+2277	570	災害に備えて準備しておくこと	0	\N
+2278	570	地震が起きる理由	1	\N
+2279	570	大雨の予報の見方	2	\N
+2280	570	家族で旅行する方法	3	\N
+2281	571	インターネットの情報を使うときの注意	0	\N
+2282	571	レポートの書き方の基本	1	\N
+2283	571	図書館の使い方	2	\N
+2284	571	インターネットの便利さ	3	\N
+2285	572	ボランティアが自分の元気にもなること	0	\N
+2286	572	定年後の時間の使い方の問題	1	\N
+2287	572	昔の遊びの種類	2	\N
+2288	572	子どもの教育の方法	3	\N
+2289	573	「もったいない」という考え方と環境との関係	0	\N
+2290	573	日本語の言葉の覚え方	1	\N
+2291	573	壊れたものの直し方	2	\N
+2292	573	海外で人気の日本料理	3	\N
+2293	574	はい、帰る前に必ずお渡しします。	0	\N
+2294	574	はい、部長にもらいました。	1	\N
+2295	574	いいえ、今日はいません。	2	\N
+2296	574	じゃあ、渡してもらいます。	3	\N
+2297	575	本当だ。定休日だったみたいだね。	0	\N
+2298	575	うん、開いててよかったね。	1	\N
+2299	575	じゃあ、入ろうか。	2	\N
+2300	575	せっかくだから、閉めておこう。	3	\N
+2301	576	えっ、本当ですか。全然知りませんでした。	0	\N
+2302	576	はい、辞めさせました。	1	\N
+2303	576	じゃあ、来月に来ます。	2	\N
+2304	576	いいえ、辞めていません。	3	\N
+2305	577	じゃあ、業者に連絡してみます。	0	\N
+2306	577	はい、とても調子がいいですね。	1	\N
+2307	577	コピーしておきました。	2	\N
+2308	577	いいえ、悪くないです、ありがとう。	3	\N
+2309	578	お疲れさまでした。	0	\N
+2310	578	ただいま。	1	\N
+2311	578	いってらっしゃい。	2	\N
+2312	578	お先にどうぞ。	3	\N
+2313	579	いいですね。彼なら安心です。	0	\N
+2314	579	はい、任せてもらいました。	1	\N
+2315	579	いいえ、田中さんはいません。	2	\N
+2316	579	じゃあ、私がやりました。	3	\N
+2317	580	じゃあ、キャンプは来週にしようか。	0	\N
+2318	580	よかった、晴れるんだね。	1	\N
+2319	580	うん、崩しておいたよ。	2	\N
+2320	580	じゃあ、海に行こう。	3	\N
+2321	581	大変でしたね。まだ始まったばかりですから、大丈夫ですよ。	0	\N
+2322	581	はい、遅れてください。	1	\N
+2323	581	じゃあ、電車を止めましょう。	2	\N
+2324	581	いいえ、申し訳ありません。	3	\N
+2325	582	住宅街	0	\N
+2326	582	駅前	1	\N
+2327	582	大学の近く	2	\N
+2328	582	まだ決まっていない	3	\N
+2329	583	ピアノ	0	\N
+2330	583	水泳	1	\N
+2331	583	英会話	2	\N
+2332	583	水泳と英会話	3	\N
+2333	584	でんしゃ	0	\N
+2334	584	バス	1	\N
+2335	584	タクシー	2	\N
+2336	584	じてんしゃ	3	\N
+2337	585	かいものに いった	0	\N
+2338	585	へやを そうじした	1	\N
+2339	585	えいがを みた	2	\N
+2340	585	うちで ねた	3	\N
+2341	586	こうちゃ	0	\N
+2342	586	コーヒー	1	\N
+2343	586	ジュース	2	\N
+2344	586	みず	3	\N
+2345	587	えんぴつと けしゴム	0	\N
+2346	587	えんぴつと かみ	1	\N
+2347	587	かみと けしゴム	2	\N
+2348	587	ほんと ノート	3	\N
+2349	588	三月 八日	0	\N
+2350	588	三月 四日	1	\N
+2351	588	四月 八日	2	\N
+2352	588	八月 三日	3	\N
+2353	589	三百五十えん	0	\N
+2354	589	三百えん	1	\N
+2355	589	百五十えん	2	\N
+2356	589	四百えん	3	\N
+2357	590	四かい	0	\N
+2358	590	三がい	1	\N
+2359	590	二かい	2	\N
+2360	590	五かい	3	\N
+2361	591	ねむいから	0	\N
+2362	591	びょうきだから	1	\N
+2363	591	おなかが いたいから	2	\N
+2364	591	しごとが ないから	3	\N
+2365	592	こちらこそ、どうぞ よろしく。	0	\N
+2366	592	いただきます。	1	\N
+2367	592	さようなら。	2	\N
+2368	592	おかげさまで。	3	\N
+2369	593	三時はんです。	0	\N
+2370	593	三じかんです。	1	\N
+2371	593	すいようびです。	2	\N
+2372	593	あしたです。	3	\N
+2373	594	百二十えんです。	0	\N
+2374	594	みっつです。	1	\N
+2375	594	あかいです。	2	\N
+2376	594	おいしいです。	3	\N
+2377	595	いってらっしゃい。	0	\N
+2378	595	おかえりなさい。	1	\N
+2379	595	ただいま。	2	\N
+2380	595	おやすみなさい。	3	\N
+2381	596	ともだちと テニスを しました。	0	\N
+2382	596	テニスが すきです。	1	\N
+2383	596	らいしゅう します。	2	\N
+2384	596	ともだちは げんきです。	3	\N
+2385	597	はい、どうぞ。	0	\N
+2386	597	はい、かりました。	1	\N
+2387	597	いいえ、えんぴつです。	2	\N
+2388	597	どういたしまして。	3	\N
+2389	598	とうきょうです。	0	\N
+2390	598	でんしゃで きました。	1	\N
+2391	598	ひとりです。	2	\N
+2392	598	きのう きました。	3	\N
+2393	599	いすを ならべる	0	\N
+2394	599	テーブルを うごかす	1	\N
+2395	599	まどを あける	2	\N
+2396	599	会議に 出る	3	\N
+2397	600	二時	0	\N
+2398	600	一時	1	\N
+2399	600	午前中	2	\N
+2400	600	三時	3	\N
+2401	601	大きい 白い セーター	0	\N
+2402	601	大きい 赤い セーター	1	\N
+2403	601	大きい 黒い セーター	2	\N
+2404	601	小さい 赤い セーター	3	\N
+2405	602	家族と 食事を する	0	\N
+2406	602	えいがを 見に 行く	1	\N
+2407	602	アルバイトを する	2	\N
+2408	602	母と 買い物に 行く	3	\N
+2409	603	八時四十五分	0	\N
+2410	603	九時	1	\N
+2411	603	九時十五分	2	\N
+2412	603	八時半	3	\N
+2413	604	子どもを 病院へ つれて 行ったから	0	\N
+2414	604	かぜを ひいたから	1	\N
+2415	604	りょこうに 行ったから	2	\N
+2416	604	けがを したから	3	\N
+2417	605	着物を 着て 歩いた こと	0	\N
+2418	605	おてらを 見た こと	1	\N
+2419	605	おいしい 物を 食べた こと	2	\N
+2420	605	しゃしんを とった こと	3	\N
+2421	606	犬と さんぽを する	0	\N
+2422	606	シャワーを あびる	1	\N
+2423	606	朝ごはんを 食べる	2	\N
+2424	606	しんぶんを 読む	3	\N
+2425	607	ええ、どうぞ。どこへ 行きたいんですか。	0	\N
+2426	607	ええ、聞きました。	1	\N
+2427	607	いいえ、道です。	2	\N
+2428	607	はい、聞いて あげました。	3	\N
+2429	608	すみません、わたしも わからないんです。	0	\N
+2430	608	はい、書きました。	1	\N
+2431	608	いいえ、読みました。	2	\N
+2432	608	その 漢字は 読みます。	3	\N
+2433	609	じゃあ、家で 映画でも 見ましょう。	0	\N
+2434	609	ええ、雨でしたね。	1	\N
+2435	609	はい、晴れて よかったです。	2	\N
+2436	609	明日は 日曜日です。	3	\N
+2437	610	ありがとうございます。いただきます。	0	\N
+2438	610	いいえ、いかがですか。	1	\N
+2439	610	はい、一杯です。	2	\N
+2440	610	どうぞ、飲んで ください。	3	\N
+2441	611	うん、とても おもしろかったよ。	0	\N
+2442	611	うん、かして あげたよ。	1	\N
+2443	611	ううん、読んで あげない。	2	\N
+2444	611	うん、来週 読んだよ。	3	\N
+2445	612	じゃあ、きょうは わたしが はらうよ。	0	\N
+2446	612	よかったね。	1	\N
+2447	612	じゃあ、家で はらって。	2	\N
+2448	612	さいふは 高いね。	3	\N
+2449	613	すみません、ここは だめなんです。	0	\N
+2450	613	はい、とりました。	1	\N
+2451	613	いいえ、とって ください。	2	\N
+2452	613	しゃしんは きれいですね。	3	\N
 \.
 
 
@@ -111669,12 +117842,22 @@ COPY public."MockExamTemplate" (id, slug, level, title, description, "durationMi
 3	n3	n3	Đề thi thử JLPT N3	Từ vựng, ngữ pháp, kanji & nghe (bộ N3 trong app)	70	301	399	21	32	12	10	5	4	4	65	Bộ N3 trong app	t	2	2026-09-02 09:53:49.552	2026-09-02 09:53:49.552	GENERATED
 4	n2	n2	Đề thi thử JLPT N2	Từ vựng, ngữ pháp, kanji & nghe (bộ N2 trong app)	75	401	499	401	499	12	10	5	4	4	65	Bộ N2 trong app	t	3	2026-09-02 09:53:49.559	2026-09-02 09:53:49.559	GENERATED
 5	n1	n1	Đề thi thử JLPT N1	Từ vựng, ngữ pháp, kanji & nghe (bộ N1 trong app)	80	501	599	501	599	12	10	5	4	4	65	Bộ N1 trong app	t	4	2026-09-02 09:53:49.564	2026-09-02 09:53:49.564	GENERATED
-8	n5-thi-th-jlpt-n5-1789200452741	n5	Đề thi thử JLPT N5		50	1	25	1	10	12	10	5	4	4	65	Minna Bài 1–25	t	0	2026-09-12 08:07:32.751	2026-09-12 08:07:32.751	GENERATED
 9	n5-format-moi	n5	N5 — Đề luyện theo cấu trúc đề thi gần đây	Đề tự soạn, mô phỏng cấu trúc & tỉ lệ điểm của đề thi JLPT hiện hành (không sao chép đề thật).	90	1	1	1	1	12	10	5	4	4	60	Đề tự soạn (mô phỏng format gần đây)	t	5	2026-09-13 05:31:48.832	2026-09-13 05:31:48.832	CUSTOM
 10	n4-format-moi	n4	N4 — Đề luyện theo cấu trúc đề thi gần đây	Đề tự soạn, mô phỏng cấu trúc & tỉ lệ điểm của đề thi JLPT hiện hành (không sao chép đề thật).	115	1	1	1	1	12	10	5	4	4	65	Đề tự soạn (mô phỏng format gần đây)	t	6	2026-09-13 05:31:48.913	2026-09-13 05:31:48.913	CUSTOM
 11	n3-format-moi	n3	N3 — Đề luyện theo cấu trúc đề thi gần đây	Đề tự soạn, mô phỏng cấu trúc & tỉ lệ điểm của đề thi JLPT hiện hành (không sao chép đề thật).	140	1	1	1	1	12	10	5	4	4	65	Đề tự soạn (mô phỏng format gần đây)	t	7	2026-09-13 05:31:48.954	2026-09-13 05:31:48.954	CUSTOM
 12	n2-format-moi	n2	N2 — Đề luyện theo cấu trúc đề thi gần đây	Đề tự soạn, mô phỏng cấu trúc & tỉ lệ điểm của đề thi JLPT hiện hành (không sao chép đề thật).	155	1	1	1	1	12	10	5	4	4	65	Đề tự soạn (mô phỏng format gần đây)	t	8	2026-09-13 05:31:48.999	2026-09-13 05:31:48.999	CUSTOM
 13	n1-format-moi	n1	N1 — Đề luyện theo cấu trúc đề thi gần đây	Đề tự soạn, mô phỏng cấu trúc & tỉ lệ điểm của đề thi JLPT hiện hành (không sao chép đề thật).	165	1	1	1	1	12	10	5	4	4	65	Đề tự soạn (mô phỏng format gần đây)	t	9	2026-09-13 05:31:49.041	2026-09-13 05:31:49.041	CUSTOM
+14	n1-day-du-1	n1	N1 — Đề thi thử đầy đủ số 1	Đề tự soạn mô phỏng đầy đủ cấu trúc JLPT N1: Từ vựng – Kanji (đọc, ngữ cảnh, đồng nghĩa, cách dùng), Ngữ pháp (chọn mẫu, sắp xếp ★), Đọc hiểu (ngắn, trung, dài, so sánh, tìm thông tin) và Nghe (5 dạng).	165	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 83 câu · đủ 5 phần như đề thật	t	14	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	CUSTOM
+15	n1-day-du-2	n1	N1 — Đề thi thử đầy đủ số 2	Đề tự soạn mô phỏng đầy đủ cấu trúc JLPT N1: Từ vựng – Kanji (đọc, ngữ cảnh, đồng nghĩa, cách dùng), Ngữ pháp (chọn mẫu, sắp xếp ★), Đọc hiểu (ngắn, trung, dài, so sánh, tìm thông tin) và Nghe (5 dạng).	165	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 83 câu · đủ 5 phần như đề thật	t	15	2026-11-02 01:14:30.604	2026-11-02 01:14:30.604	CUSTOM
+16	n3-luyen-nghe	n3	N3 — Luyện nghe (20 câu)	20 câu nghe N3 theo các dạng trong đề thật: hiểu nhiệm vụ, nắm ý chính, hiểu khái quát và phản xạ trả lời. Mỗi đoạn được nghe tối đa 3 lần.	25	1	1	1	1	0	0	0	0	0	60	Chỉ phần Nghe · đề tự soạn	t	16	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	CUSTOM
+17	n2-luyen-nghe	n2	N2 — Luyện nghe (20 câu)	20 câu nghe N2 theo các dạng trong đề thật: hiểu nhiệm vụ, nắm ý chính, hiểu khái quát và phản xạ trả lời. Mỗi đoạn được nghe tối đa 3 lần.	30	1	1	1	1	0	0	0	0	0	60	Chỉ phần Nghe · đề tự soạn	t	17	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	CUSTOM
+18	n1-luyen-nghe	n1	N1 — Luyện nghe (20 câu)	20 câu nghe N1 theo các dạng trong đề thật: hiểu nhiệm vụ, nắm ý chính, hiểu khái quát và phản xạ trả lời. Mỗi đoạn được nghe tối đa 3 lần.	35	1	1	1	1	0	0	0	0	0	60	Chỉ phần Nghe · đề tự soạn	t	18	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91	CUSTOM
+19	n5-day-du-1	n5	N5 — Đề thi thử đầy đủ số 1	Đề tự soạn theo đúng cấu trúc JLPT N5: Từ vựng – Kanji, Ngữ pháp (kể cả sắp xếp ★), Đọc hiểu và Nghe. Bỏ các dạng cần tranh minh họa.	90	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 52 câu · đủ các phần như đề thật	t	19	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
+20	n4-day-du-1	n4	N4 — Đề thi thử đầy đủ số 1	Đề tự soạn theo đúng cấu trúc JLPT N4: Từ vựng – Kanji, Ngữ pháp (kể cả sắp xếp ★), Đọc hiểu và Nghe. Bỏ các dạng cần tranh minh họa.	115	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 69 câu · đủ các phần như đề thật	t	20	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
+21	n3-day-du-1	n3	N3 — Đề thi thử đầy đủ số 1	Đề tự soạn theo đúng cấu trúc JLPT N3: Từ vựng – Kanji, Ngữ pháp (kể cả sắp xếp ★), Đọc hiểu và Nghe. Bỏ các dạng cần tranh minh họa.	140	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 83 câu · đủ các phần như đề thật	t	21	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
+22	n2-day-du-1	n2	N2 — Đề thi thử đầy đủ số 1	Đề tự soạn theo đúng cấu trúc JLPT N2: Từ vựng – Kanji, Ngữ pháp (kể cả sắp xếp ★), Đọc hiểu và Nghe. Bỏ các dạng cần tranh minh họa.	155	1	1	1	1	0	0	0	0	0	60	Đề tự soạn · 85 câu · đủ các phần như đề thật	t	22	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
+23	n5-luyen-nghe	n5	N5 — Luyện nghe (15 câu)	15 câu nghe N5: hiểu nhiệm vụ, nắm ý chính và phản xạ trả lời. Mỗi đoạn được nghe tối đa 3 lần.	15	1	1	1	1	0	0	0	0	0	60	Chỉ phần Nghe · đề tự soạn	t	23	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
+24	n4-luyen-nghe	n4	N4 — Luyện nghe (15 câu)	15 câu nghe N4: hiểu nhiệm vụ, nắm ý chính và phản xạ trả lời. Mỗi đoạn được nghe tối đa 3 lần.	20	1	1	1	1	0	0	0	0	0	60	Chỉ phần Nghe · đề tự soạn	t	24	2026-11-02 01:41:48.591	2026-11-02 01:41:48.591	CUSTOM
 \.
 
 
@@ -111742,11 +117925,15 @@ COPY public."Payout" (id, "coachId", "amountCents", currency, status, "stripeTra
 --
 
 COPY public."PodcastResource" (id, "externalKey", title, description, url, level, "sortOrder", "createdAt", "updatedAt") FROM stdin;
-1	nhk-easy	NHK World — Easy Japanese	Bài ngắn N5–N4, có script tiếng Anh/Nhật. Rất phù hợp nghe hàng ngày.	https://www3.nhk.or.jp/nhkworld/en/learning/easyjapanese/	N5–N4	0	2026-06-25 10:52:31.265	2026-06-25 10:52:31.265
-2	nhk-learn	NHK — Learn Japanese	Khóa học có audio từng bài, phát âm chuẩn.	https://www3.nhk.or.jp/nhkworld/en/learnejapanese/	N5+	1	2026-06-25 10:52:31.265	2026-06-25 10:52:31.265
-3	jpod101	JapanesePod101 — Newbie	Podcast miễn phí cấp sơ cấp, đăng ký free tier để nghe.	https://www.japanesepod101.com/japanese-podcasts/	N5	2	2026-06-25 10:52:31.265	2026-06-25 10:52:31.265
 4	tofugu	Tofugu Podcast	Chủ đề văn hóa & ngôn ngữ, nói chậm hơn podcast thông thường.	https://www.tofugu.com/podcast/	N5–N4	3	2026-06-25 10:52:31.265	2026-06-25 10:52:31.265
-5	jlpt-samples	JLPT — Đề mẫu (nghe)	Audio đề thi chính thức để luyện nghe có cấu trúc.	https://jlpt.jp/e/samples/forlearners.html	N5	4	2026-06-25 10:52:31.265	2026-06-25 10:52:31.265
+1	nhk-easy	NHK World — Học tiếng Nhật (bản tiếng Việt)	Bài học hội thoại ngắn có giải thích bằng tiếng Việt, có audio.	https://www3.nhk.or.jp/nhkworld/vi/learnjapanese/	N5–N4	0	2026-06-25 10:52:31.265	2026-11-02 01:17:38.91
+2	nhk-learn	NHK — Learn Japanese	Tổng hợp chương trình học tiếng Nhật của NHK World.	https://www3.nhk.or.jp/nhkworld/en/learnjapanese/	N5+	1	2026-06-25 10:52:31.265	2026-11-02 01:17:38.91
+3	jpod101	JapanesePod101 — Thư viện bài học	Podcast theo cấp độ, từ sơ cấp đến cao cấp.	https://www.japanesepod101.com/lesson-library/	N5–N2	2	2026-06-25 10:52:31.265	2026-11-02 01:17:38.91
+5	jlpt-samples	JLPT — Đề mẫu (nghe)	Đề mẫu chính thức có file nghe cho mọi cấp.	https://www.jlpt.jp/e/samples/forlearners.html	N5–N1	4	2026-06-25 10:52:31.265	2026-11-02 01:17:38.91
+10	teppei	Nihongo con Teppei	Podcast nói hoàn toàn bằng tiếng Nhật tự nhiên, chủ đề đời thường.	https://nihongoconteppei.com/	N4–N2	5	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91
+11	nhk-news-easy	NHK NEWS WEB EASY	Tin tức viết lại bằng tiếng Nhật dễ, có furigana và audio đọc tin.	https://www3.nhk.or.jp/news/easy/	N3–N2	6	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91
+12	nhk-radio-ondemand	NHK らじる★らじる — Nghe lại	Nghe lại các chương trình radio NHK: phỏng vấn, tọa đàm, văn hóa.	https://www.nhk.or.jp/radio/ondemand/	N2–N1	7	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91
+13	nhk-radio-news	NHK ラジオニュース	Bản tin radio tốc độ thật — luyện nghe cho N1.	https://www.nhk.or.jp/radionews/	N1	8	2026-11-02 01:17:38.91	2026-11-02 01:17:38.91
 \.
 
 
@@ -111935,6 +118122,7 @@ COPY public."ReadingPassage" (id, title, content, "jlptLevel", source, "estimate
 61	「察する文化」について	日本語には、「言わなくても分かってほしい」という気持ちを表す場面が多いと言われる。これは、相手の気持ちを言葉にしなくても読み取る、いわゆる「察する文化」と関係があるようだ。\n\n確かに、家族や長年の友人など、お互いをよく知っている間柄では、この「察する」ことがうまくいけば、心地よいコミュニケーションになる。しかし、初対面の人や、違う文化で育った人に対しても同じことを求めてしまうと、誤解が生まれやすい。\n\nグローバル化が進む中で、これからは「察してもらう」ことに頼りすぎず、必要なことは言葉できちんと伝える力も、同じくらい大切になっていくのではないだろうか。	N2	nihongo-app/jlpt-expand	5	290	2026-09-13 04:20:37.172	2026-09-13 04:20:37.172
 62	地域猫活動とは	最近、「地域猫」という言葉を耳にすることが増えた。地域猫とは、特定の飼い主を持たないが、地域の住民が協力して世話をしている猫のことである。\n\n地域猫活動では、猫にエサを与えるだけでなく、これ以上数が増えないように、獣医で手術を受けさせることが重要な活動の一つとされている。手術を受けた猫は、耳の先が少し切られており、遠くからでも見分けがつくようになっている。\n\nこの活動には、「エサやりが近所迷惑になるのでは」といった反対の声もある。しかし、決められたルールの中で正しく行えば、野良猫による被害を減らしながら、猫と人が共存できる方法として、多くの自治体が支援を始めている。	N2	nihongo-app/jlpt-expand	5	295	2026-09-13 04:20:37.187	2026-09-13 04:20:37.187
 63	「便利さ」の代償	私たちの生活は、この数十年で驚くほど便利になった。スマートフォン一つで、買い物も、支払いも、情報収集もできる。かつては何日もかかっていたことが、今では数分で済んでしまう。\n\nしかし、便利さを追求してきた結果、私たちは何かを失ってはいないだろうか。例えば、道に迷ったときに人に尋ねる機会は減り、地図アプリに頼りきりになった。効率を優先するあまり、人と人との小さなやり取りが失われつつあるように思えてならない。\n\n便利さそのものを否定するつもりはない。ただ、便利になったからこそ、あえて手間をかけることの価値を、もう一度見直してみる必要があるのではないだろうか。	N1	nihongo-app/jlpt-expand	6	340	2026-09-13 04:20:37.195	2026-09-13 04:20:37.195
+75	すきなきせつ	わたしは秋がいちばんすきです。\n\n夏はあつくて、あまりそとに出ません。冬はさむくて、朝おきるのがたいへんです。春はきれいですが、花のこなで目がかゆくなります。\n\n秋はすずしくて、たべものもおいしいです。秋になると、よく山へさんぽに行きます。	N5	nihongo-app/reading-2	3	11	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
 64	言葉の変化をどう見るか	「最近の若者の言葉遣いは乱れている」という声を耳にすることがある。しかし、言葉というものは、時代とともに変化し続けるものであり、ある時代の「正しい」言葉が、別の時代には「乱れた」言葉に見えるというのは、いつの時代にも繰り返されてきたことである。\n\nもちろん、公的な場や文章においては、一定の規範を守ることが求められる。その意味で、言葉の使い分けを教えることには意義がある。しかし、日常的な話し言葉の変化まで一律に「間違い」として切り捨ててしまうのは、言葉の本質を見誤っているように思われる。\n\n言葉が変化するのは、それを使う人々の生活や価値観が変化しているからにほかならない。変化を単純に否定するのではなく、なぜそのような変化が起きているのかを考えることのほうが、よほど建設的ではないだろうか。	N1	nihongo-app/jlpt-expand	6	350	2026-09-13 04:20:37.204	2026-09-13 04:20:37.204
 65	「待つ」ことの意味	現代社会では、あらゆることが「速さ」を基準に評価されがちだ。検索すれば一瞬で答えが出て、注文すれば翌日には荷物が届く。そんな時代に生きていると、「待つ」という行為は、単なる時間の無駄であるかのように感じられてしまう。\n\nしかし、思い返してみると、待っている間にこそ考えが深まったり、相手を思いやる気持ちが育ったりした経験があるのではないだろうか。手紙の返事を何日も待った経験がある世代には、待つことの中にある豊かさが、実感として分かるはずだ。\n\nすべてを効率化することが、必ずしも人を幸せにするとは限らない。待つ時間を単なる無駄だと切り捨ててしまう前に、その時間の中で何を得られるかを、一度考えてみる価値はあるだろう。	N1	nihongo-app/jlpt-expand	6	360	2026-09-13 04:20:37.211	2026-09-13 04:20:37.211
 66	少子高齢化と地方の未来	日本の多くの地方都市では、若い世代が仕事を求めて都市部へ流出し、高齢化と人口減少が同時に進んでいる。このままでは、地域の医療や交通など、生活を支える基盤そのものが維持できなくなる地域も出てくるだろうと言われている。\n\nこうした状況に対し、一部の地方自治体では、移住者への支援や、テレワークを活用した働き方の提案など、独自の取り組みを進めている。実際に、自然の豊かさや生活コストの低さに魅力を感じ、都市部から移住する人も少しずつ増えている。\n\nとはいえ、こうした取り組みだけで、長年続いてきた人口減少の流れを完全に止められるとは考えにくい。地方の未来を語る上で重要なのは、人口を元に戻すことだけを目標にするのではなく、少ない人口でも持続可能な仕組みをどう作るかという視点ではないだろうか。	N1	nihongo-app/jlpt-expand	6	370	2026-09-13 04:20:37.219	2026-09-13 04:20:37.219
@@ -111942,6 +118130,7 @@ COPY public."ReadingPassage" (id, title, content, "jlptLevel", source, "estimate
 68	「無駄」の効用	効率化が叫ばれる時代において、「無駄」という言葉はしばしば否定的な意味で使われる。会議の無駄、時間の無駄、お金の無駄。できることなら、すべての無駄を排除したいと考える人は少なくないだろう。\n\nしかし、振り返ってみると、一見無駄に思えた時間や経験が、後になって思わぬ形で役に立つことがある。目的もなく歩いた散歩の途中で新しいアイデアを思いついたり、遠回りをして得た知識が、別の場面で生きてきたりする。\n\nすべてを効率だけで測ろうとすると、こうした「無駄」から生まれる思いがけない発見までも切り捨ててしまいかねない。無駄を全て肯定するつもりはないが、無駄の中にこそ、次に繋がる何かが潜んでいることも、忘れずにいたいものである。	N1	nihongo-app/jlpt-expand	6	390	2026-09-13 04:20:37.235	2026-09-13 04:20:37.235
 69	「わかりやすさ」の功罪	テレビや本、インターネットの記事など、あらゆる情報が「わかりやすさ」を求められる時代になった。複雑な問題も、短い時間で、簡単な言葉で説明されることが好まれる。\n\nわかりやすい説明には、多くの人に情報を届けられるという利点がある。難しい専門用語ばかりの説明では、一部の人にしか内容が伝わらない。その意味で、わかりやすさを追求すること自体は、決して悪いことではない。\n\nただし、物事を単純化しすぎると、本来複雑であるはずの問題が、あたかも簡単に白黒つけられるものであるかのように見えてしまう危険もある。わかりやすい説明を受け取る側も、その裏には単純化しきれない部分が残されているかもしれないという意識を、常に持っておく必要があるのではないだろうか。	N1	nihongo-app/jlpt-expand	6	395	2026-09-13 04:20:37.243	2026-09-13 04:20:37.243
 40	図書館からのお知らせ	市立図書館をご利用のみなさまへ\n\n来月の1日から、図書館のシステムが新しくなります。それにともない、下記の期間は休館いたしますので、ご注意ください。\n\n休館期間：3月25日（月）〜3月31日（日）\n\nなお、休館中も本の返却はできます。入口の横にある返却ポストをご利用ください。ただし、CDやDVDは機械が壊れるおそれがあるため、ポストには入れないでください。休館明けに直接カウンターへお持ちください。\n\n新しいシステムでは、インターネットから本の予約ができるようになります。ご自宅のパソコンやスマートフォンから、24時間いつでも予約が可能です。くわしい使い方は、休館明けにホームページでお知らせします。	N3	nihongo-app/jlpt	4	110	2026-08-29 06:53:05.266	2026-08-29 06:53:05.266
+76	たんじょうびのプレゼント	きのうはわたしのたんじょうびでした。\n\n母からはあたらしいかばんをもらいました。父はケーキをかってきました。\n\nあねはわたしに本をくれました。わたしがほしかった本です。とてもうれしかったです。\n\n夜、かぞくみんなでケーキを食べました。	N5	nihongo-app/reading-2	3	12	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
 41	習慣を変えるということ	新しい年になると、「今年こそ運動を続けよう」「毎日日記を書こう」と決める人が多い。しかし、そのほとんどが1か月もたたないうちにやめてしまうそうだ。\n\nなぜ続かないのだろうか。専門家によると、多くの人は最初から高すぎる目標を立ててしまうからだという。「毎日1時間走る」と決めても、忙しい日や疲れている日には難しい。一度できない日があると、「もうだめだ」と思ってやめてしまうのだ。\n\n続けるコツは、目標を小さくすることだ。たとえば「毎日5分だけ歩く」なら、どんなに疲れていてもできる。小さな成功を積み重ねるうちに、それがやがて習慣になる。習慣になれば、やらないほうが気持ち悪く感じるようになるという。\n\n大切なのは「完璧にやること」ではなく「やめないこと」なのである。	N3	nihongo-app/jlpt	4	120	2026-08-29 06:53:05.302	2026-08-29 06:53:05.302
 42	同僚へのメール	件名：明日の会議の資料について\n\n木村さん\n\nお疲れさまです。営業部の田中です。\n\n明日の午後2時からの会議で使う資料ですが、先ほど確認したところ、去年のデータが古いままになっていました。私のほうで新しい数字に直しておきます。\n\nつきましては、木村さんが作成された「今後の計画」のページだけ、今日中にメールで送っていただけないでしょうか。それを私がまとめて、明日の朝、全員に配ります。\n\nなお、会議室がいつもの301号室から502号室に変わりましたので、お間違えのないようお願いします。\n\nよろしくお願いします。\n田中	N3	nihongo-app/jlpt	3	130	2026-08-29 06:53:05.331	2026-08-29 06:53:05.331
 43	「ながら作業」の落とし穴	音楽を聴きながら勉強する、テレビを見ながら食事をする。こうした「ながら作業」は、時間を有効に使っているように見える。しかし、近年の研究は、それが必ずしも効率的ではないことを示している。\n\n人間の脳は、実は二つのことを同時に処理することが苦手だ。「ながら作業」をしているとき、脳は二つの作業を高速で行き来しているだけで、本当に同時に行っているわけではない。この切り替えのたびに、わずかだが時間とエネルギーが失われる。その結果、一つずつ順番に片づけるよりも、かえって時間がかかることさえある。\n\nとはいえ、すべての「ながら作業」が悪いわけではない。体が慣れた単純な作業、たとえば歩くことや皿を洗うことなら、頭を使う作業と組み合わせても問題は少ない。問題になるのは、両方とも集中力を必要とする場合である。\n\n大事な仕事に取りかかるときは、スマートフォンを別の部屋に置き、一つのことだけに集中する時間を作ったほうがいい。遠回りに見えて、それが結局は一番の近道なのだ。	N2	nihongo-app/jlpt	5	210	2026-08-29 06:53:05.357	2026-08-29 06:53:05.357
@@ -111955,6 +118144,17 @@ COPY public."ReadingPassage" (id, title, content, "jlptLevel", source, "estimate
 50	引っ越しをして分かったこと	先月、一人暮らしを始めるために引っ越しをした。実家にいたときは、料理も洗濯も掃除も、全部母がやってくれていた。だから、自分で全部やらなければならなくなって、はじめは本当に大変だった。\n\n特に困ったのは料理だ。簡単なものしか作れないので、毎日同じようなメニューになってしまう。それでも、少しずつ作れる料理が増えてきて、最近は自分で作った料理を食べるのが楽しみになった。\n\n引っ越しをする前は、一人暮らしは自由でいいと思っていた。でも、実際にやってみると、家族がどれだけ自分を助けてくれていたかがよく分かった。今度実家に帰ったら、母に「ありがとう」と伝えたいと思う。	N3	nihongo-app/jlpt-expand	4	150	2026-09-13 04:20:37.026	2026-09-13 04:20:37.026
 51	コンビニの新しいサービス	最近、多くのコンビニで新しいサービスが始まっている。それは、店で買った食品をその場で温めて、店内の席で食べられるというサービスだ。\n\nこれまでは、コンビニで温かい弁当を買っても、家や職場に着くまでに冷めてしまうことが多かった。しかし、店内に電子レンジと席が用意されたことで、買ってすぐに温かいまま食べられるようになった。\n\nこのサービスは、特に一人で昼食をとる会社員や、時間があまりない学生に人気がある。レストランに入るより安く、早く食事ができるからだ。今後、このようなサービスを取り入れるコンビニはさらに増えていくと考えられている。	N3	nihongo-app/jlpt-expand	4	160	2026-09-13 04:20:37.044	2026-09-13 04:20:37.044
 52	スマートフォンと読書	私は電車の中で本を読むのが好きだ。しかし、最近は本を読んでいる人より、スマートフォンを見ている人のほうがずっと多い。\n\nもちろん、スマートフォンでニュースを読んだり、電子書籍を読んだりする人もいるだろう。しかし、多くの人はゲームをしたり、動画を見たりしているように見える。\n\n読書には、想像力を育てたり、知らない言葉を覚えたりする効果があると言われている。スマートフォンが悪いわけではないが、たまには本を開いて、じっくり文章を読む時間を作ってもいいのではないだろうか。	N3	nihongo-app/jlpt-expand	4	170	2026-09-13 04:20:37.062	2026-09-13 04:20:37.062
+71	わたしの一日	わたしは毎朝六時半におきます。\n\nあさごはんはパンとたまごです。七時半に家を出て、バスで学校へ行きます。\n\n学校は八時半から三時までです。ひるごはんは学校で友だちと食べます。\n\n家にかえってから、しゅくだいをします。夜は十時にねます。	N5	nihongo-app/reading-2	3	7	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+72	へやのせつめい	これはわたしのへやです。\n\nまどのちかくにつくえがあります。つくえの上にパソコンと本があります。\n\nつくえの右にベッドがあります。ベッドの下にはこがあります。はこの中にはふゆのふくが入っています。\n\nへやはせまいですが、あかるくて、すきです。	N5	nihongo-app/reading-2	3	8	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+73	メモ	リーさんへ\n\nきょう、わたしはびょういんへ行きます。ですから、学校をやすみます。\n\nあしたのテストのはんいを、メールでおしえてくださいませんか。\n\nよろしくおねがいします。\n\nマリア	N5	nihongo-app/reading-2	2	9	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+74	デパートのおしらせ	デパートのおしらせ\n\n・あいているじかん：あさ十時からよる八時まで\n・やすみ：毎月第二水曜日\n・七かい：レストラン（よる九時まで）\n・一かい：くつ、かばん\n・三かい：子どものふく\n\n※土曜日と日曜日は、ちゅうしゃじょうがこみます。でんしゃやバスでおこしください。	N5	nihongo-app/reading-2	3	10	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+77	日本で初めての冬	わたしはタイから来ました。日本に来て、初めての冬です。\n\nタイは一年中あたたかいので、雪を見たことがありませんでした。先月、友だちと北海道へ行って、初めて雪を見ました。とてもきれいで、写真をたくさんとりました。\n\nでも、寒さには困っています。朝、ふとんから出るのがたいへんです。友だちに教えてもらって、あたたかい下着を買いました。今は少し楽になりました。	N4	nihongo-app/reading-2	4	12	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+78	アルバイトのお知らせ	アルバイトをさがしています\n\n・しごと：カフェで飲み物を作ったり、運んだりするしごと\n・時間：月〜金 17:00〜21:00 ／ 土・日 10:00〜18:00（週3日以上）\n・時給：1,100円（土・日は1,200円）\n・日本語：かんたんな会話ができる人\n・その他：しごとのあとで、店の飲み物がむりょうで飲めます\n\nれんらく先：カフェ・ひまわり　電話 03-XXXX-XXXX	N4	nihongo-app/reading-2	4	13	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+79	図書館の新しいルール	図書館をりようするみなさんへ\n\n来月から、本を借りられる数が五さつから十さつにふえます。借りられる期間は今までと同じ二週間です。\n\nまた、インターネットで本の予約ができるようになります。予約した本は、カウンターで受け取ってください。\n\n雑誌は今までどおり、借りることはできません。図書館の中で読んでください。	N4	nihongo-app/reading-2	3	14	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+80	メール：引っこしのお知らせ	山田先生\n\nごぶさたしております。グエンです。\n\n先週、大阪から東京へ引っこしました。新しい会社は駅から歩いて五分なので、とてもべんりです。\n\n東京に来てから、まだ友だちが少なくて、すこしさびしいです。でも、週末に日本語のボランティア教室に行くことにしました。\n\n先生が東京にいらっしゃるときは、ぜひれんらくしてください。\n\nグエン	N4	nihongo-app/reading-2	3	15	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+81	ごみの出し方	ごみの出し方（さくら町）\n\n・もえるごみ：月曜日と木曜日\n・プラスチック：水曜日\n・びん・かん：第一・第三金曜日\n・古い紙（新聞・ざっし）：第二土曜日\n\nごみは、朝八時までに、きめられた場所に出してください。前の日の夜に出すと、からすがごみをちらかすので、出さないでください。	N4	nihongo-app/reading-2	4	16	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+82	わたしのしゅみ	わたしのしゅみは料理です。\n\n子どものころは、料理がぜんぜんできませんでした。大学に入って一人で住むようになってから、毎日自分で作るようになりました。はじめは失敗ばかりでしたが、インターネットで作り方を調べて、少しずつ上手になりました。\n\n今は、週末に友だちを家によんで、料理を作るのが楽しみです。みんなが「おいしい」と言ってくれると、とてもうれしいです。	N4	nihongo-app/reading-2	4	17	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
+83	病院の受付で	受付の人：こんにちは。はじめてですか。\n\nキム：はい。\n\n受付の人：では、保険証を見せてください。それから、この紙に名前と住所と、今のぐあいを書いてください。\n\nキム：はい。あの、どのくらい待ちますか。\n\n受付の人：今日はこんでいるので、三十分ぐらいです。順番が来たら、名前をよびますね。	N4	nihongo-app/reading-2	3	18	2026-11-02 01:43:56.621	2026-11-02 01:43:56.621
 \.
 
 
@@ -112123,6 +118323,45 @@ COPY public."ReadingQuestion" (id, "passageId", question, answer, explanation, "
 263	69	わかりやすい説明の利点として挙げられているのは何か。	多くの人に情報を届けられること	「多くの人に情報を届けられるという利点がある」とあります。	2
 264	69	物事を単純化しすぎると、どんな危険があるか。	複雑な問題が簡単に白黒つけられるもののように見えてしまう	「本来複雑であるはずの問題が、あたかも簡単に白黒つけられるものであるかのように見えてしまう危険もある」とあります。	3
 265	69	筆者が読者に持っておいてほしいと述べている意識は何か。	わかりやすい説明の裏に単純化しきれない部分が残されているかもしれないという意識	「その裏には単純化しきれない部分が残されているかもしれないという意識を、常に持っておく必要がある」とあります。	4
+267	71	この人は何で学校へ行きますか。	バス	Bài viết: 「バスで学校へ行きます」.	1
+268	71	学校は何時までですか。	三時	「学校は八時半から三時までです」.	2
+269	71	この人は家にかえってから何をしますか。	しゅくだいをします	「家にかえってから、しゅくだいをします」.	3
+270	72	パソコンはどこにありますか。	つくえの上	「つくえの上にパソコンと本があります」.	1
+271	72	はこの中に何がありますか。	ふゆのふく	「はこの中にはふゆのふくが入っています」.	2
+272	72	この人のへやはどんなへやですか。	せまいですが、あかるいです	「へやはせまいですが、あかるくて」.	3
+273	73	マリアさんはきょうどこへ行きますか。	びょういん	「きょう、わたしはびょういんへ行きます」.	1
+274	73	マリアさんはリーさんに何をおねがいしましたか。	テストのはんいをメールでおしえること	「テストのはんいを、メールでおしえてくださいませんか」.	2
+275	73	テストはいつですか。	あした	「あしたのテスト」.	3
+276	74	子どものふくは何かいにありますか。	三かい	「三かい：子どものふく」.	1
+277	74	レストランは何時までですか。	よる九時	「七かい：レストラン（よる九時まで）」.	2
+278	74	週末は何で行ったほうがいいですか。	でんしゃかバス	Cuối tuần bãi đỗ xe đông nên đi tàu hoặc xe buýt.	3
+279	75	この人はどのきせつがいちばんすきですか。	秋	「わたしは秋がいちばんすきです」.	1
+280	75	この人は春のどこがいやですか。	目がかゆくなること	「花のこなで目がかゆくなります」.	2
+281	75	秋になると、この人は何をしますか。	山へさんぽに行きます	「秋になると、よく山へさんぽに行きます」.	3
+282	76	この人は母から何をもらいましたか。	かばん	「母からはあたらしいかばんをもらいました」.	1
+283	76	ほしかった本をくれたのはだれですか。	あね	「あねはわたしに本をくれました。わたしがほしかった本です」.	2
+284	76	夜、何をしましたか。	かぞくでケーキを食べました	「夜、かぞくみんなでケーキを食べました」.	3
+285	77	この人は北海道で何をしましたか。	初めて雪を見て、写真をとった	「初めて雪を見ました…写真をたくさんとりました」.	1
+286	77	この人は今、何に困っていますか。	寒さ	「でも、寒さには困っています」.	2
+287	77	今、少し楽になったのはどうしてですか。	あたたかい下着を買ったから	Nhờ bạn chỉ, đã mua đồ lót giữ ấm nên đỡ hơn.	3
+288	78	このアルバイトは週に何日以上はたらかなければなりませんか。	三日	「週3日以上」.	1
+289	78	土曜日にはたらくと、時給はいくらですか。	1,200円	「土・日は1,200円」.	2
+290	78	このアルバイトについて正しいものはどれですか。	しごとのあとで飲み物がむりょうで飲める	「しごとのあとで、店の飲み物がむりょうで飲めます」.	3
+291	79	来月から何がかわりますか。	借りられる本の数がふえる	Số sách được mượn tăng từ 5 lên 10.	1
+292	79	インターネットで予約した本はどうしますか。	カウンターで受け取る	「予約した本は、カウンターで受け取ってください」.	2
+293	79	雑誌について正しいものはどれですか。	図書館の中で読む	「雑誌は…借りることはできません。図書館の中で読んでください」.	3
+294	80	グエンさんはどこからどこへ引っこしましたか。	大阪から東京へ	「大阪から東京へ引っこしました」.	1
+295	80	グエンさんが少しさびしいのはどうしてですか。	東京にまだ友だちが少ないから	「まだ友だちが少なくて、すこしさびしいです」.	2
+296	80	グエンさんは週末に何をすることにしましたか。	日本語のボランティア教室に行く	「週末に日本語のボランティア教室に行くことにしました」.	3
+297	81	新聞はいつ出しますか。	第二土曜日	「古い紙（新聞・ざっし）：第二土曜日」.	1
+298	81	ごみは何時までに出しますか。	朝八時	「朝八時までに」.	2
+299	81	前の日の夜にごみを出してはいけないのはどうしてですか。	からすがごみをちらかすから	「からすがごみをちらかすので」.	3
+300	82	この人はいつから料理を作るようになりましたか。	大学に入って一人で住むようになってから	「大学に入って一人で住むようになってから」.	1
+301	82	この人はどうやって料理が上手になりましたか。	インターネットで作り方を調べた	「インターネットで作り方を調べて、少しずつ上手になりました」.	2
+302	82	この人が今楽しみにしていることは何ですか。	友だちをよんで料理を作ること	「週末に友だちを家によんで、料理を作るのが楽しみです」.	3
+303	83	キムさんはまず何を見せますか。	保険証	「保険証を見せてください」.	1
+304	83	キムさんは紙に何を書きませんか。	電話番号	Chỉ cần viết tên, địa chỉ và tình trạng hiện tại.	2
+305	83	どのくらい待ちますか。	三十分ぐらい	「三十分ぐらいです」.	3
 \.
 
 
@@ -112771,6 +119010,162 @@ COPY public."ReadingQuestionOption" (id, "questionId", text, "sortOrder") FROM s
 1058	265	専門用語を覚えるべきだという意識	2
 1059	265	わかりやすい説明の裏に単純化しきれない部分が残されているかもしれないという意識	3
 1060	265	情報を疑うべきではないという意識	4
+1065	267	でんしゃ	0
+1066	267	じてんしゃ	1
+1067	267	バス	2
+1068	267	あるいて	3
+1069	268	八時半	0
+1070	268	十時	1
+1071	268	十二時	2
+1072	268	三時	3
+1073	269	ひるごはんを食べます	0
+1074	269	しゅくだいをします	1
+1075	269	バスにのります	2
+1076	269	すぐねます	3
+1077	270	ベッドの上	0
+1078	270	はこの中	1
+1079	270	つくえの上	2
+1080	270	まどの外	3
+1081	271	ふゆのふく	0
+1082	271	本	1
+1083	271	パソコン	2
+1084	271	くつ	3
+1085	272	せまいですが、あかるいです	0
+1086	272	ひろくて、あかるいです	1
+1087	272	せまくて、くらいです	2
+1088	272	ひろいですが、くらいです	3
+1089	273	学校	0
+1090	273	リーさんの家	1
+1091	273	びょういん	2
+1092	273	としょかん	3
+1093	274	テストをかわりにうけること	0
+1094	274	びょういんへいっしょに行くこと	1
+1095	274	テストのはんいをメールでおしえること	2
+1096	274	しゅくだいをもってくること	3
+1097	275	きょう	0
+1098	275	あした	1
+1099	275	あさって	2
+1100	275	らいしゅう	3
+1101	276	一かい	0
+1102	276	三かい	1
+1103	276	七かい	2
+1104	276	二かい	3
+1105	277	よる八時	0
+1106	277	よる九時	1
+1107	277	あさ十時	2
+1108	277	よる十時	3
+1109	278	くるま	0
+1110	278	でんしゃかバス	1
+1111	278	タクシー	2
+1112	278	じてんしゃ	3
+1113	279	秋	0
+1114	279	春	1
+1115	279	夏	2
+1116	279	冬	3
+1117	280	あついこと	0
+1118	280	目がかゆくなること	1
+1119	280	さむいこと	2
+1120	280	花がないこと	3
+1121	281	山へさんぽに行きます	0
+1122	281	うみでおよぎます	1
+1123	281	うちでねます	2
+1124	281	スキーをします	3
+1125	282	ケーキ	0
+1126	282	かばん	1
+1127	282	本	2
+1128	282	とけい	3
+1129	283	母	0
+1130	283	父	1
+1131	283	ともだち	2
+1132	283	あね	3
+1133	284	ひとりで本を読みました	0
+1134	284	かいものに行きました	1
+1135	284	レストランへ行きました	2
+1136	284	かぞくでケーキを食べました	3
+1137	285	スキーを習った	0
+1138	285	初めて雪を見て、写真をとった	1
+1139	285	あたたかい下着を買った	2
+1140	285	友だちに会いに行った	3
+1141	286	雪が少ないこと	0
+1142	286	寒さ	1
+1143	286	写真がとれないこと	2
+1144	286	友だちがいないこと	3
+1145	287	タイへ帰ったから	0
+1146	287	あたたかい下着を買ったから	1
+1147	287	ふとんを新しくしたから	2
+1148	287	雪がとけたから	3
+1149	288	一日	0
+1150	288	五日	1
+1151	288	七日	2
+1152	288	三日	3
+1153	289	1,100円	0
+1154	289	1,200円	1
+1155	289	1,000円	2
+1156	289	1,300円	3
+1157	290	日本語が上手でなければならない	0
+1158	290	平日は朝からはたらく	1
+1159	290	料理を作るしごとだ	2
+1160	290	しごとのあとで飲み物がむりょうで飲める	3
+1161	291	借りられる期間が長くなる	0
+1162	291	雑誌が借りられるようになる	1
+1163	291	借りられる本の数がふえる	2
+1164	291	図書館が休みになる	3
+1165	292	カウンターで受け取る	0
+1166	292	家にとどく	1
+1167	292	インターネットで読む	2
+1168	292	一週間後に返す	3
+1169	293	二週間借りられる	0
+1170	293	図書館の中で読む	1
+1171	293	インターネットで予約できる	2
+1172	293	十さつまで借りられる	3
+1173	294	大阪から東京へ	0
+1174	294	東京から大阪へ	1
+1175	294	大阪から京都へ	2
+1176	294	ベトナムから大阪へ	3
+1177	295	会社が遠いから	0
+1178	295	先生に会えないから	1
+1179	295	日本語が下手だから	2
+1180	295	東京にまだ友だちが少ないから	3
+1181	296	日本語のボランティア教室に行く	0
+1182	296	大阪へ帰る	1
+1183	296	先生に会いに行く	2
+1184	296	会社で働く	3
+1185	297	月曜日	0
+1186	297	水曜日	1
+1187	297	第二土曜日	2
+1188	297	第一金曜日	3
+1189	298	朝八時	0
+1190	298	朝七時	1
+1191	298	朝九時	2
+1192	298	夜八時	3
+1193	299	からすがごみをちらかすから	0
+1194	299	ごみの車が来ないから	1
+1195	299	においがするから	2
+1196	299	うるさいから	3
+1197	300	子どものころから	0
+1198	300	会社に入ってから	1
+1199	300	友だちに習ってから	2
+1200	300	大学に入って一人で住むようになってから	3
+1201	301	インターネットで作り方を調べた	0
+1202	301	料理教室に通った	1
+1203	301	母に教えてもらった	2
+1204	301	本を読んだ	3
+1205	302	友だちをよんで料理を作ること	0
+1206	302	レストランへ行くこと	1
+1207	302	料理の本を書くこと	2
+1208	302	一人で料理を食べること	3
+1209	303	お金	0
+1210	303	くすり	1
+1211	303	パスポート	2
+1212	303	保険証	3
+1213	304	名前	0
+1214	304	住所	1
+1215	304	今のぐあい	2
+1216	304	電話番号	3
+1217	305	十分ぐらい	0
+1218	305	一時間ぐらい	1
+1219	305	待ちません	2
+1220	305	三十分ぐらい	3
 \.
 
 
@@ -113187,7 +119582,10 @@ cmvx368nf0001oa01wmt401qr	$2b$12$ZLE1BL16quKTU7CgddX0pOtH6.fn1Vj97ETQul0ybn9eG6r
 cmvxax2470003oa01eutq56ul	$2b$12$BF2ADh8DLRXb66xtPMd99.jAzcLGFyH6VXP.w/k.AML8g0cnrIch.	1	2026-11-08 03:59:44.887	t	2026-11-01 03:59:44.888	2026-11-01 05:53:18.632
 cmvxez3sz0005oa01l9y33mgc	$2b$12$ePalq8jvJigsmDEBRM5F1e6mgDkissqG8yZoiwFl0MAFDA1HWhhFS	1	2026-11-08 05:53:18.85	t	2026-11-01 05:53:18.851	2026-11-01 07:33:44.699
 cmvxik9jl0007oa01rwbs6o3o	$2b$12$lXDh8VeVA0nbbSGYOmxCweHog3APBY/1A4mfg13AVZlOBe2N8nmYS	1	2026-11-08 07:33:44.913	t	2026-11-01 07:33:44.914	2026-11-01 13:43:31.791
-cmvxvrt7l0001oa01qxujkuog	$2b$12$vB.z5j0GyvEfMDGY1nmjL.LpAIMfrosVMQESQ137e5ZO1nXPzd8Sq	1	2026-11-08 13:43:32.001	f	2026-11-01 13:43:32.001	\N
+cmvxvrt7l0001oa01qxujkuog	$2b$12$vB.z5j0GyvEfMDGY1nmjL.LpAIMfrosVMQESQ137e5ZO1nXPzd8Sq	1	2026-11-08 13:43:32.001	t	2026-11-01 13:43:32.001	2026-11-01 14:02:36.756
+cmvxwgco60001rp011pbxxdi3	$2b$12$uSjLEKkWqGlBX6CD/JDFB.2IH7gGfngaip/MAsxnPu3idHfz1Fwhy	1	2026-11-08 14:02:36.966	t	2026-11-01 14:02:36.966	2026-11-01 14:22:11.826
+cmvxx5jdb0003rp013zjxu9vc	$2b$12$V.M3EpRhelaaQhg6liuuyOZDSTCFbeq3xJywXBpIRksZrz/tY9ABu	1	2026-11-08 14:22:12.043	t	2026-11-01 14:22:12.043	2026-11-02 00:16:02.13
+cmvyid7vo0001rp012rzrftwf	$2b$12$U5UMyI4FInfK07M0oXgpFOSCaVQ33oNaCiWlpNtfLtXuaxwuB.KMC	1	2026-11-09 00:16:02.34	f	2026-11-02 00:16:02.341	\N
 \.
 
 
@@ -115637,6 +122035,9 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43795	試験	しけん	shiken	kỳ thi	16120	2026-09-26 06:05:24.076	2026-10-26 23:57:45.493	\N	danh từ	N5	\N	\N	\N	\N	6
 43793	授業	じゅぎょう	jugyou	giờ học	16120	2026-09-26 06:05:24.076	2026-10-27 00:05:32.039	\N	danh từ	N5	\N	\N	\N	\N	4
 26976	学生	がくせい	gakusei	học sinh, sinh viên	1	2026-06-25 10:52:55.979	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F393.svg	12
+48886	暗黙	あんもく	anmoku	ngầm, không nói ra	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+48887	意気込み	いきごみ	ikigomi	sự hăng hái, quyết tâm	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+48888	畏敬	いけい	ikei	kính sợ, kính nể	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	3
 40043	高度	こうど	kōdo	độ cao; trình độ cao	16929	2026-09-13 00:29:23.986	2026-10-26 16:47:33.649	\N	danh từ, tính từ na	N2	\N	\N	\N	\N	15
 39652	\N	ナンバー	nanbā	số, con số	16929	2026-09-13 00:26:12.37	2026-10-26 16:59:27.024	\N	danh từ	N2	\N	\N	\N	\N	2
 39710	\N	ミリ	miri	mi-li-mét	16929	2026-09-13 00:26:12.531	2026-10-26 16:59:27.025	\N	danh từ	N2	\N	\N	\N	\N	4
@@ -115664,6 +122065,11 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43842	忙しい	いそがしい	isogashii	bận	16121	2026-09-26 06:05:24.762	2026-10-27 00:08:32.025	\N	tính từ i	N5	\N	\N	\N	\N	8
 43845	下手	へた	heta	kém	16121	2026-09-26 06:05:24.762	2026-10-27 00:08:32.025	\N	tính từ na	N5	\N	\N	\N	\N	11
 26977	会社員	かいしゃいん	kaishain	nhân viên công ty	1	2026-06-25 10:52:55.983	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E2.svg	13
+48889	遺憾	いかん	ikan	đáng tiếc (trang trọng)	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	4
+48890	意図	いと	ito	ý đồ, chủ ý	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	5
+48891	憂い	うれい	urei	nỗi lo, nỗi buồn	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	6
+48892	栄誉	えいよ	eiyo	vinh dự, vinh quang	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
+48893	回顧	かいこ	kaiko	hồi tưởng, nhìn lại	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	8
 39763	逸れます	それます	soremasu	chệch hướng, lạc đề	16931	2026-09-13 00:26:12.695	2026-10-26 16:59:27.042	\N	động từ nhóm 2	N2	\N	\N	\N	\N	3
 39765	引っ掛かります	ひっかかります	hikkakarimasu	bị mắc kẹt, bị lừa	16931	2026-09-13 00:26:12.7	2026-10-26 16:59:27.043	\N	động từ nhóm 1	N2	\N	\N	\N	\N	5
 39767	引っ繰り返ります	ひっくりかえります	hikkurikaerimasu	bị lật, bị đảo lộn	16931	2026-09-13 00:26:12.709	2026-10-26 16:59:27.044	\N	động từ nhóm 1	N2	\N	\N	\N	\N	7
@@ -115691,7 +122097,16 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43851	〜時	〜じ	~ji	… giờ	16121	2026-09-26 06:05:24.762	2026-10-27 00:08:32.028	\N	danh từ	N5	\N	\N	\N	\N	17
 43852	〜分	〜ふん	~fun	… phút	16121	2026-09-26 06:05:24.762	2026-10-27 00:08:32.029	\N	danh từ	N5	\N	\N	\N	\N	18
 43861	明日	あした	ashita	ngày mai	16121	2026-09-26 06:05:24.762	2026-10-27 00:08:32.031	\N	danh từ	N5	\N	\N	\N	\N	27
+48894	乖離	かいり	kairi	sự cách biệt, xa rời	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	9
+48895	画一	かくいつ	kakuitsu	đồng loạt, rập khuôn	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
+48896	甘受	かんじゅ	kanju	cam chịu, chấp nhận	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	11
 26978	社員	しゃいん	shain	nhân viên công ty ～	1	2026-06-25 10:52:55.988	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E2.svg	14
+48897	基調	きちょう	kichou	tông chủ đạo, nền tảng	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
+48898	拮抗	きっこう	kikkou	ngang ngửa, giằng co	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	13
+48899	機微	きび	kibi	sự tinh tế, uẩn khúc	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	14
+48900	欺瞞	ぎまん	giman	lừa dối, giả dối	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
+48901	享受	きょうじゅ	kyouju	hưởng thụ, được hưởng	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	16
+48902	苦渋	くじゅう	kujuu	cay đắng, khổ tâm	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
 39896	含めます	ふくめます	fukumemasu	bao gồm cả, tính cả	16931	2026-09-13 00:26:13	2026-10-26 16:59:27.049	\N	động từ nhóm 2	N2	\N	\N	\N	\N	19
 39908	詰まります	つまります	tsumarimasu	bị nghẹt, bị tắc	16931	2026-09-13 00:26:13.03	2026-10-26 16:59:27.05	\N	động từ nhóm 1	N2	\N	\N	\N	\N	21
 40008	交じります	まじります	majirimasu	lẫn vào, hòa lẫn với	16931	2026-09-13 00:29:23.899	2026-10-26 17:02:12.521	\N	động từ nhóm 1	N2	\N	\N	\N	\N	36
@@ -115718,6 +122133,10 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43900	長い	ながい	nagai	dài	16122	2026-09-26 06:05:25.549	2026-10-27 00:08:32.038	\N	tính từ i	N5	\N	\N	\N	\N	21
 43909	駅	えき	eki	nhà ga	16122	2026-09-26 06:05:25.549	2026-10-27 00:08:32.039	\N	danh từ	N5	\N	\N	\N	\N	30
 26979	銀行員	ぎんこういん	ginkoin	nhân viên ngân hàng	1	2026-06-25 10:52:55.992	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E6.svg	15
+48903	形成	けいせい	keisei	hình thành	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	18
+48904	互角	ごかく	gokaku	ngang tài ngang sức	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	19
+48905	誇示	こじ	koji	phô trương, khoe khoang	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	20
+48906	誤算	ごさん	gosan	tính sai, tính nhầm	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
 40112	持参	じさん	jisan	sự mang theo	16932	2026-09-13 00:29:24.21	2026-10-26 17:02:12.53	\N	danh từ, động từ する	N2	\N	\N	\N	\N	13
 40142	取り出します	とりだします	toridashimasu	lấy ra, rút ra	16932	2026-09-13 00:29:24.283	2026-10-26 17:02:12.531	\N	động từ nhóm 1	N2	\N	\N	\N	\N	15
 40160	蹴ります	けります	kerimasu	đá (chân)	16932	2026-09-13 00:29:24.357	2026-10-26 17:02:12.532	\N	động từ nhóm 1	N2	\N	\N	\N	/media/openmoji/1F9B6.svg	19
@@ -115743,8 +122162,14 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43926	公園	こうえん	kouen	công viên	16123	2026-09-26 06:05:26.219	2026-10-27 00:08:32.039	\N	danh từ	N5	\N	\N	\N	\N	2
 43928	映画館	えいがかん	eigakan	rạp chiếu phim	16123	2026-09-26 06:05:26.219	2026-10-27 00:08:32.04	\N	danh từ	N5	\N	\N	\N	\N	3
 44102	鏡	かがみ	kagami	gương	16137	2026-09-26 06:22:19.04	2026-10-27 00:12:07.099	\N	danh từ	N4	\N	\N	\N	\N	3
+48907	困惑	こんわく	konwaku	bối rối, lúng túng	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	22
+48908	災い	わざわい	wazawai	tai họa, tai ương	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
 26980	医者	いしゃ	isha	bác sĩ	1	2026-06-25 10:52:55.994	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/2695.svg	16
 26981	研究者	けんきゅうしゃ	kenkyusha	nghiên cứu sinh	1	2026-06-25 10:52:55.996	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F52C.svg	17
+48909	資質	ししつ	shishitsu	tố chất, phẩm chất	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
+48910	支障	ししょう	shishou	trở ngại, cản trở	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	25
+48911	自負	じふ	jifu	tự hào, tự tin vào bản thân	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	26
+48912	執念	しゅうねん	shuunen	lòng quyết tâm dai dẳng, chấp niệm	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	27
 46151	供給	きょうきゅう	kyoukyuu	cung cấp	16269	2026-09-26 12:15:05.181	2026-10-26 16:30:02.268	\N	danh từ, động từ する	N2	\N	\N	\N	\N	2
 46158	赤字	あかじ	akaji	thâm hụt, lỗ	16269	2026-09-26 12:15:05.181	2026-10-26 16:30:02.269	\N	danh từ	N2	\N	\N	\N	\N	9
 46162	不況	ふきょう	fukyou	kinh tế suy thoái	16270	2026-09-26 12:15:05.258	2026-10-26 16:30:02.271	\N	danh từ	N2	\N	\N	\N	\N	3
@@ -115767,8 +122192,11 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 46187	大幅	おおはば	oohaba	lớn, mạnh (thay đổi)	16272	2026-09-26 12:15:05.423	2026-10-26 16:44:57.227	\N	tính từ na	N2	\N	\N	\N	\N	8
 39535	\N	カラー	karā	màu sắc; cổ áo	16934	2026-09-13 00:26:11.991	2026-10-26 17:02:12.551	\N	danh từ	N2	\N	\N	\N	\N	27
 39608	\N	スマート	sumāto	mảnh mai, sành điệu	16934	2026-09-13 00:26:12.214	2026-10-26 17:02:12.551	\N	tính từ na	N2	\N	\N	\N	\N	29
+48913	熟知	じゅくち	jukuchi	hiểu rõ, am tường	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	28
 43993	力	ちから	chikara	sức lực	16126	2026-09-26 06:22:17.321	2026-10-27 00:12:07.103	\N	danh từ	N4	\N	\N	\N	\N	4
 43990	具合	ぐあい	guai	tình trạng (sức khỏe)	16126	2026-09-26 06:22:17.321	2026-10-27 00:17:42.548	\N	danh từ	N4	\N	\N	\N	\N	1
+48914	憔悴	しょうすい	shousui	tiều tụy, kiệt quệ	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	29
+48915	思索	しさく	shisaku	suy tư, trầm tư	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	30
 43974	怪我	けが	kega	vết thương, bị thương	16124	2026-09-26 06:22:16.966	2026-10-27 00:21:21.103	\N	danh từ, động từ する	N4	\N	\N	\N	\N	5
 43982	喉	のど	nodo	họng	16125	2026-09-26 06:22:17.187	2026-10-27 00:21:21.104	\N	danh từ	N4	\N	\N	\N	\N	3
 43994	運動	うんどう	undou	vận động, thể dục	16126	2026-09-26 06:22:17.321	2026-10-27 00:21:21.105	\N	danh từ, động từ する	N4	\N	\N	\N	\N	5
@@ -115798,8 +122226,14 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 43984	指	ゆび	yubi	ngón tay	16125	2026-09-26 06:22:17.187	2026-10-27 00:08:32.041	\N	danh từ	N4	\N	\N	\N	\N	5
 43991	血	ち	chi	máu	16126	2026-09-26 06:22:17.321	2026-10-27 00:08:32.042	\N	danh từ	N4	\N	\N	\N	\N	2
 44401	予定	よてい	yotei	dự định, kế hoạch	16171	2026-09-26 06:22:24.329	2026-10-27 00:12:07.122	\N	danh từ, động từ する	N4	\N	\N	\N	\N	12
+48916	信憑性	しんぴょうせい	shinpyousei	độ tin cậy	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
+48917	摂取	せっしゅ	sesshu	hấp thụ, tiếp thu	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	32
 27016	其れ	それ	sore	cái đó, đó( vật ở gần người nghe)	2	2026-06-25 10:52:56.236	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	1
 27018	\N	この ～	kono ~	~ này( gần người nói)	2	2026-06-25 10:52:56.241	2026-10-28 05:54:00.227	\N	từ hạn định	N5	\N	\N	\N	\N	3
+48918	専念	せんねん	sennen	chuyên tâm	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	33
+48919	羨望	せんぼう	senbou	ghen tị, ngưỡng mộ	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	34
+48920	喪失	そうしつ	soushitsu	mất mát, đánh mất	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
+48921	素養	そよう	soyou	kiến thức nền, tu dưỡng	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	36
 43037	派手	はで	hade	sặc sỡ, phô trương	16935	2026-09-13 08:54:26.236	2026-10-26 16:47:33.649	\N	tính từ na	N2	\N	\N	\N	\N	32
 39910	逆さ	さかさ	sakasa	ngược, lộn ngược	16935	2026-09-13 00:26:13.039	2026-10-26 17:02:12.558	\N	danh từ, tính từ na	N2	\N	\N	\N	\N	3
 39986	厳重	げんじゅう	genjū	nghiêm ngặt	16935	2026-09-13 00:29:23.844	2026-10-26 17:02:12.559	\N	tính từ na	N2	\N	\N	\N	\N	7
@@ -115822,9 +122256,15 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40262	人造	じんぞう	jinzō	nhân tạo	16935	2026-09-13 00:31:36.739	2026-10-26 17:04:51.209	\N	danh từ, tính từ na	N2	\N	\N	\N	\N	22
 44014	痛い	いたい	itai	đau	16128	2026-09-26 06:22:17.672	2026-10-27 00:08:32.043	\N	tính từ i	N4	\N	\N	\N	\N	5
 44018	丈夫	じょうぶ	joubu	chắc khỏe, bền	16128	2026-09-26 06:22:17.672	2026-10-27 00:08:32.043	\N	tính từ na	N4	\N	\N	\N	\N	9
+48922	脱却	だっきゃく	dakkyaku	thoát khỏi	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	37
 44022	安全	あんぜん	anzen	an toàn	16129	2026-09-26 06:22:17.855	2026-10-27 00:17:42.548	\N	tính từ na	N4	\N	\N	\N	\N	3
+48923	探求	たんきゅう	tankyuu	tìm kiếm, theo đuổi	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
+48924	沈静	ちんせい	chinsei	lắng xuống, yên ắng	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	39
 26983	病院	びょういん	byoin	bệnh viện	1	2026-06-25 10:52:56.002	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E5.svg	19
 27991	思います	おもいます	omoimasu	nghĩ	21	2026-06-25 10:53:00.632	2026-10-28 05:54:00.227	\N	động từ nhóm 1	N5	\N	\N	\N	\N	0
+48925	転嫁	てんか	tenka	đổ (trách nhiệm), chuyển sang	17002	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	40
+48926	認知	にんち	ninchi	nhận thức, công nhận	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	1
+48927	念頭	ねんとう	nentou	trong đầu, tâm niệm	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
 39771	引分け	ひきわけ	hikiwake	trận hòa	16937	2026-09-13 00:26:12.717	2026-10-26 17:02:12.576	\N	danh từ	N2	\N	\N	\N	\N	17
 39790	応援	おうえん	ōen	sự cổ vũ, ủng hộ	16937	2026-09-13 00:26:12.764	2026-10-26 17:02:12.577	\N	danh từ, động từ する	N2	\N	\N	\N	\N	19
 39848	絵の具	えのぐ	enogu	màu vẽ, hộp màu	16937	2026-09-13 00:26:12.898	2026-10-26 17:02:12.578	\N	danh từ	N2	\N	\N	\N	/media/openmoji/1F3A8.svg	21
@@ -115853,6 +122293,11 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 44025	\N	なるべく	narubeku	càng … càng tốt	16129	2026-09-26 06:22:17.855	2026-10-27 00:21:21.117	\N	phó từ	N4	\N	\N	\N	\N	6
 27083	階段	かいだん	kaidan	cầu thang	3	2026-06-25 10:52:56.543	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1FA9C.svg	14
 27089	会社	かいしゃ	kaisha	công ty	3	2026-06-25 10:52:56.555	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E2.svg	18
+48928	波紋	はもん	hamon	gợn sóng; ảnh hưởng lan rộng	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
+48929	反映	はんえい	han'ei	phản ánh	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	4
+48930	披露	ひろう	hirou	công bố, trình diễn ra mắt	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	5
+48931	包括	ほうかつ	houkatsu	bao quát, toàn diện	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
+48932	未然	みぜん	mizen	trước khi xảy ra	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
 40287	性能	せいのう	seinō	hiệu năng, tính năng	16939	2026-09-13 00:33:39.327	2026-10-26 16:47:33.651	\N	danh từ	N2	\N	\N	\N	\N	22
 39532	\N	カセット	kasetto	băng cát-xét	16939	2026-09-13 00:26:11.984	2026-10-26 17:04:35.758	\N	danh từ	N2	\N	\N	\N	\N	4
 39607	\N	スピーカー	supīkā	loa	16939	2026-09-13 00:26:12.213	2026-10-26 17:04:35.758	\N	danh từ	N2	\N	\N	\N	\N	6
@@ -115879,6 +122324,9 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 44040	会場	かいじょう	kaijou	hội trường	16131	2026-09-26 06:22:18.183	2026-10-27 00:17:42.55	\N	danh từ	N4	\N	\N	\N	\N	1
 27104	\N	どうも。	domo.	Cảm ơn.	3	2026-06-25 10:52:56.583	2026-10-28 05:54:00.227	\N	cụm từ	N5	\N	\N	\N	\N	31
 27138	朝	あさ	asa	sáng	4	2026-06-25 10:52:56.76	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F305.svg	18
+48933	目途	めど	medo	triển vọng, dự tính	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	8
+48934	落胆	らくたん	rakutan	thất vọng, chán nản	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	9
+48935	相槌	あいづち	aizuchi	lời đệm, gật gù hưởng ứng	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
 44036	同僚	どうりょう	douryou	đồng nghiệp	16130	2026-09-26 06:22:18.013	2026-10-26 16:22:04.065	\N	danh từ	N4	\N	\N	\N	\N	7
 44042	予約	よやく	yoyaku	đặt trước	16131	2026-09-26 06:22:18.183	2026-10-26 16:22:04.066	\N	danh từ, động từ する	N4	\N	\N	\N	\N	3
 40039	項目	こうもく	kōmoku	mục, khoản	16940	2026-09-13 00:29:23.967	2026-10-26 17:04:35.781	\N	danh từ	N2	\N	\N	\N	\N	28
@@ -115903,6 +122351,7 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 44033	課長	かちょう	kachou	trưởng nhóm, trưởng ban	16130	2026-09-26 06:22:18.013	2026-10-27 00:03:11.076	\N	danh từ	N4	\N	\N	\N	\N	4
 44209	自然	しぜん	shizen	thiên nhiên	16148	2026-09-26 06:22:20.691	2026-10-27 00:12:07.106	\N	danh từ	N4	\N	\N	\N	\N	0
 40389	\N	インテリ	interi	tầng lớp trí thức	16944	2026-09-13 00:37:22.378	2026-10-27 00:48:02.598	\N	danh từ	N1	\N	\N	\N	\N	1
+48936	足取り	あしどり	ashidori	bước chân; dấu vết hành tung	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
 40640	一人	いちにん	ichinin	một người	16944	2026-09-13 00:40:40.953	2026-10-27 00:48:02.603	\N	danh từ	N1	\N	\N	\N	\N	9
 41371	守衛	しゅえい	shuei	bảo vệ, người gác cổng	16944	2026-09-13 01:03:33.168	2026-10-27 00:48:02.605	\N	danh từ	N1	\N	\N	\N	\N	35
 40528	\N	ノイローゼ	noirōze	chứng suy nhược thần kinh	16946	2026-09-13 00:37:22.783	2026-10-27 00:48:02.607	\N	danh từ	N1	\N	\N	\N	\N	3
@@ -115911,7 +122360,13 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41444	出来物	できもの	dekimono	mụn nhọt, khối u	16946	2026-09-13 01:05:33.568	2026-10-27 00:48:02.611	\N	danh từ	N1	\N	\N	\N	\N	34
 37840	執着	しゅうちゃく	shūchaku	sự chấp niệm, bám víu	16948	2026-09-12 14:06:59.077	2026-10-27 00:48:02.612	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
 40454	\N	ショック	shokku	cú sốc	16948	2026-09-13 00:37:22.587	2026-10-27 00:54:08.096	\N	danh từ, động từ する	N1	\N	\N	\N	\N	30
+48937	当て	あて	ate	mục đích, chỗ trông cậy	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
 27175	\N	あすか	asuka	Asuka (tên nhà hàng giả định)	4	2026-06-25 10:52:56.839	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	51
+48938	言い分	いいぶん	iibun	lời lẽ, ý kiến (của một bên)	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	13
+48939	生き甲斐	いきがい	ikigai	lẽ sống, ý nghĩa cuộc đời	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	14
+48940	意気地	いくじ	ikuji	chí khí, can đảm	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
+48941	異色	いしょく	ishoku	khác biệt, độc đáo	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	16
+48942	一存	いちぞん	ichizon	ý kiến riêng (tự quyết)	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
 44046	説明	せつめい	setsumei	giải thích	16131	2026-09-26 06:22:18.183	2026-10-26 16:22:04.068	\N	danh từ, động từ する	N4	\N	\N	\N	\N	7
 44048	出張	しゅっちょう	shutchou	đi công tác	16131	2026-09-26 06:22:18.183	2026-10-26 16:22:04.069	\N	danh từ, động từ する	N4	\N	\N	\N	\N	9
 39724	\N	やたらに	yatarani	một cách bừa bãi, quá mức	16943	2026-09-13 00:26:12.572	2026-10-26 17:04:35.803	\N	phó từ	N2	\N	\N	\N	\N	11
@@ -115925,6 +122380,9 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40317	絶えず	たえず	taezu	không ngừng, liên tục	16943	2026-09-13 00:33:39.392	2026-10-26 17:04:35.81	\N	phó từ	N2	\N	\N	\N	\N	31
 40321	先程	さきほど	sakihodo	vừa nãy, lúc nãy	16943	2026-09-13 00:33:39.4	2026-10-26 17:04:35.81	\N	phó từ	N2	\N	\N	\N	\N	32
 43127	本来	ほんらい	honrai	vốn dĩ, bản chất	16943	2026-09-13 08:54:26.72	2026-10-26 17:04:35.811	\N	phó từ, danh từ	N2	\N	\N	\N	\N	42
+48943	戒め	いましめ	imashime	lời răn, bài học	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	18
+48944	色合い	いろあい	iroai	sắc độ; tính chất	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	19
+48945	内輪	うちわ	uchiwa	nội bộ	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	20
 44056	経験	けいけん	keiken	kinh nghiệm	16132	2026-09-26 06:22:18.338	2026-10-27 00:12:07.108	\N	danh từ, động từ する	N4	\N	\N	\N	\N	7
 44061	規則	きそく	kisoku	quy tắc	16133	2026-09-26 06:22:18.463	2026-10-27 00:14:52.711	\N	danh từ	N4	\N	\N	\N	\N	2
 44050	残業	ざんぎょう	zangyou	làm thêm giờ	16132	2026-09-26 06:22:18.338	2026-10-27 00:21:21.119	\N	danh từ, động từ する	N4	\N	\N	\N	\N	1
@@ -115951,6 +122409,12 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 29662	どなた	どなた	donata	ai (hỏi người nào đó) (kính ngữ)	1	2026-07-11 16:44:32.911	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	/media/openmoji/1F453.svg	21
 26985	－歳	－さい	-sai	tuổi (hậu tố đứng sau số)	1	2026-06-25 10:52:56.006	2026-10-28 05:54:00.227	\N	hậu tố	N5	\N	\N	\N	\N	22
 27223	３日	みっか	mikka	ngày 3, 3 ngày	5	2026-06-25 10:52:57.052	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	33
+48946	裏付け	うらづけ	urazuke	cơ sở chứng minh, bằng chứng hậu thuẫn	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
+48947	上辺	うわべ	uwabe	bề ngoài	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	22
+48948	縁起	えんぎ	engi	điềm (lành, gở)	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
+48949	会釈	えしゃく	eshaku	cúi chào nhẹ	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	24
+48950	皆無	かいむ	kaimu	hoàn toàn không có	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	25
+48951	陰口	かげぐち	kageguchi	nói xấu sau lưng	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	26
 44072	伝える	つたえる	tsutaeru	truyền đạt, nhắn	16134	2026-09-26 06:22:18.662	2026-10-27 00:21:21.121	\N	động từ nhóm 2	N4	\N	\N	\N	\N	3
 44075	送る	おくる	okuru	gửi; tiễn	16134	2026-09-26 06:22:18.662	2026-10-27 00:21:21.122	\N	động từ nhóm 1	N4	\N	\N	\N	\N	6
 41405	収益	しゅうえき	shūeki	lợi nhuận, thu nhập	16957	2026-09-13 01:05:33.408	2026-10-27 00:44:39.148	\N	danh từ	N1	\N	\N	\N	\N	41
@@ -115974,6 +122438,7 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40380	\N	アルミ	arumi	nhôm	16960	2026-09-13 00:37:22.358	2026-10-27 01:02:18.197	\N	danh từ	N1	\N	\N	\N	\N	6
 40940	共学	きょうがく	kyōgaku	học chung nam nữ	16960	2026-09-13 00:55:54.405	2026-10-27 01:02:18.204	\N	danh từ	N1	\N	\N	\N	\N	23
 26986	何歳	なんさい	nansai	mấy tuổi, bao nhiêu tuổi.	1	2026-06-25 10:52:56.008	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	23
+48952	肩書き	かたがき	katagaki	chức danh	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	27
 44416	経験	けいけん	keiken	kinh nghiệm	16171	2026-09-26 06:22:24.329	2026-10-27 00:12:07.123	\N	danh từ, động từ する	N4	\N	\N	\N	\N	27
 31814	継承	けいしょう	keishō	kế thừa	16962	2026-09-02 09:00:19.125	2026-10-27 00:48:02.614	\N	danh từ, động từ する	N1	\N	\N	\N	\N	24
 40961	教訓	きょうくん	kyōkun	bài học, lời răn dạy	16960	2026-09-13 00:55:54.467	2026-10-27 01:02:18.216	\N	danh từ	N1	\N	\N	\N	\N	26
@@ -115998,6 +122463,8 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41013	軍服	ぐんぷく	gunpuku	quân phục	16964	2026-09-13 00:55:54.646	2026-10-27 01:02:18.357	\N	danh từ	N1	\N	\N	\N	\N	3
 41034	決議	けつぎ	ketsugi	nghị quyết	16964	2026-09-13 00:59:14.163	2026-10-27 01:02:18.364	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
 41078	元首	げんしゅ	genshu	nguyên thủ quốc gia	16964	2026-09-13 00:59:14.292	2026-10-27 01:02:18.368	\N	danh từ	N1	\N	\N	\N	\N	9
+48953	片手間	かたてま	katatema	việc tay trái, làm thêm lúc rảnh	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	28
+48954	加味	かみ	kami	tính thêm vào, xem xét thêm	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	29
 44516	漫画	まんが	manga	truyện tranh	16175	2026-09-26 06:22:25.303	2026-10-27 00:12:07.126	\N	danh từ	N4	\N	\N	\N	\N	7
 44080	\N	やめる	yameru	bỏ, thôi	16135	2026-09-26 06:22:18.826	2026-10-27 00:21:21.124	\N	động từ nhóm 2	N4	\N	\N	\N	\N	1
 44083	大事	だいじ	daiji	quan trọng	16135	2026-09-26 06:22:18.826	2026-10-27 00:21:21.126	\N	tính từ na	N4	\N	\N	\N	\N	4
@@ -116024,6 +122491,9 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40441	\N	シート	shīto	tấm, tờ; ghế ngồi	16967	2026-09-13 00:37:22.529	2026-10-27 01:49:04	\N	danh từ	N1	\N	\N	\N	\N	6
 40459	\N	ストロー	sutorō	ống hút	16967	2026-09-13 00:37:22.605	2026-10-27 01:49:04.003	\N	danh từ	N1	\N	\N	\N	\N	10
 27390	黒い	くろい	kuroi	đen	8	2026-06-25 10:52:57.776	2026-10-28 05:54:00.227	\N	tính từ i	N5	\N	\N	\N	/media/openmoji/26AB.svg	29
+48955	脚光	きゃっこう	kyakkou	ánh đèn sân khấu, sự chú ý	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	30
+48956	窮地	きゅうち	kyuuchi	tình thế khốn cùng	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
+48957	虚栄	きょえい	kyoei	hư vinh, sĩ diện	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	32
 44569	自然	しぜん	shizen	thiên nhiên	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.127	\N	danh từ	N4	\N	\N	\N	\N	0
 44087	厳しい	きびしい	kibishii	nghiêm khắc	16135	2026-09-26 06:22:18.826	2026-10-27 00:21:21.128	\N	tính từ i	N4	\N	\N	\N	\N	8
 40467	\N	スラックス	surakkusu	quần tây	16967	2026-09-13 00:37:22.641	2026-10-27 01:49:04.005	\N	danh từ	N1	\N	\N	\N	\N	12
@@ -116051,7 +122521,13 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41447	準急	じゅんきゅう	junkyū	tàu bán tốc hành	16970	2026-09-13 01:05:33.58	2026-10-27 01:49:04.038	\N	danh từ	N1	\N	\N	\N	\N	34
 26987	\N	はい	hai	vâng	1	2026-06-25 10:52:56.01	2026-10-28 05:54:00.227	\N	thán từ	N5	\N	\N	\N	\N	25
 26988	\N	いいえ	iie	không	1	2026-06-25 10:52:56.012	2026-10-28 05:54:00.227	\N	thán từ	N5	\N	\N	\N	\N	26
+48958	口出し	くちだし	kuchidashi	xen vào, can thiệp bằng lời	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	33
+48959	口癖	くちぐせ	kuchiguse	câu cửa miệng	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	34
+48960	苦笑	くしょう	kushou	cười gượng, cười khổ	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
 41504	上陸	じょうりく	jōriku	sự đổ bộ lên bờ	16970	2026-09-13 01:08:01.644	2026-10-27 01:49:04.039	\N	danh từ, động từ する	N1	\N	\N	\N	\N	36
+48961	形相	ぎょうそう	gyousou	vẻ mặt (dữ dằn)	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	36
+48962	健在	けんざい	kenzai	khỏe mạnh, vẫn còn tốt	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	37
+48963	原点	げんてん	genten	điểm xuất phát, cội nguồn	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	38
 41509	城下	じょうか	jōka	vùng đất quanh lâu đài	16970	2026-09-13 01:08:01.653	2026-10-27 01:49:04.041	\N	danh từ	N1	\N	\N	\N	/media/openmoji/1F3F0.svg	38
 41556	真下	ました	mashita	ngay bên dưới	16971	2026-09-13 01:08:01.795	2026-10-27 01:49:04.042	\N	danh từ	N1	\N	\N	\N	\N	1
 44089	生活	せいかつ	seikatsu	cuộc sống, sinh hoạt	16136	2026-09-26 06:22:18.948	2026-10-27 00:00:39.521	\N	danh từ, động từ する	N4	\N	\N	\N	\N	0
@@ -116075,9 +122551,20 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41594	水源	すいげん	suigen	nguồn nước, đầu nguồn	16973	2026-09-13 01:08:01.919	2026-10-27 01:49:04.066	\N	danh từ	N1	\N	\N	\N	/media/openmoji/1F4A7.svg	16
 42078	年輪	ねんりん	nenrin	vòng tuổi cây (vân gỗ)	16974	2026-09-13 01:19:25.798	2026-10-27 01:52:10.779	\N	danh từ	N1	\N	\N	\N	/media/openmoji/1F333.svg	3
 26989	初めまして。	はじめまして。	hajimemashite.	chào lần đầu gặp nhau	1	2026-06-25 10:52:56.016	2026-10-28 05:54:00.227	\N	cụm từ	N5	\N	\N	\N	\N	27
+48964	公言	こうげん	kougen	tuyên bố công khai	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	39
+48965	心遣い	こころづかい	kokorozukai	sự quan tâm, chu đáo	17003	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	40
 44109	洗濯機	せんたくき	sentakuki	máy giặt	16138	2026-09-26 06:22:19.136	2026-10-27 00:14:52.711	\N	danh từ	N4	\N	\N	\N	\N	0
+48966	沙汰	さた	sata	chuyện, vụ việc; tin tức	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+48967	雑踏	ざっとう	zattou	cảnh chen chúc, đám đông	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+48968	里帰り	さとがえり	satogaeri	về thăm quê	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	3
+48969	仕草	しぐさ	shigusa	cử chỉ, điệu bộ	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	4
+48970	\N	しがらみ	shigarami	ràng buộc, vướng víu	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	5
 44113	材料	ざいりょう	zairyou	nguyên liệu	16138	2026-09-26 06:22:19.136	2026-10-27 00:14:52.712	\N	danh từ	N4	\N	\N	\N	\N	4
+48971	時宜	じぎ	jigi	đúng thời điểm	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	6
+48972	主眼	しゅがん	shugan	trọng tâm, điểm chính	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
 44111	電子レンジ	でんしレンジ	denshirenji	lò vi sóng	16138	2026-09-26 06:22:19.136	2026-10-27 00:21:21.129	\N	danh từ	N4	\N	\N	\N	\N	2
+48973	手腕	しゅわん	shuwan	tài cán, năng lực	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	8
+48974	処世術	しょせいじゅつ	shoseijutsu	thuật xử thế	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	9
 44115	匂い	におい	nioi	mùi	16138	2026-09-26 06:22:19.136	2026-10-27 00:21:21.13	\N	danh từ	N4	\N	\N	\N	\N	6
 46191	条約	じょうやく	jouyaku	hiệp ước	16273	2026-09-26 12:15:05.501	2026-10-26 16:44:57.231	\N	danh từ	N2	\N	\N	\N	\N	2
 44120	捨てる	すてる	suteru	vứt bỏ	16139	2026-09-26 06:22:19.298	2026-10-27 00:21:21.131	\N	động từ nhóm 2	N4	\N	\N	\N	\N	1
@@ -116099,8 +122586,12 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27325	\N	ケータイ	ketai	điện thoại di động	7	2026-06-25 10:52:57.564	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4F1.svg	40
 27326	\N	メール	meru	email, thư điện tử	7	2026-06-25 10:52:57.566	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4E7.svg	41
 27328	\N	パンチ	panchi	cái bấm lỗ	7	2026-06-25 10:52:57.57	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F587.svg	42
+48975	真価	しんか	shinka	giá trị thực	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
+48976	筋合い	すじあい	sujiai	lý do chính đáng, tư cách	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
+48977	素性	すじょう	sujou	lai lịch, thân thế	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
 44155	小説	しょうせつ	shousetsu	tiểu thuyết	16142	2026-09-26 06:22:19.854	2026-10-27 00:12:07.111	\N	danh từ	N4	\N	\N	\N	\N	6
 44157	番組	ばんぐみ	bangumi	chương trình (TV)	16142	2026-09-26 06:22:19.854	2026-10-27 00:12:07.113	\N	danh từ	N4	\N	\N	\N	\N	8
+48978	誠意	せいい	seii	thành ý	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	13
 44150	興味	きょうみ	kyoumi	hứng thú	16142	2026-09-26 06:22:19.854	2026-10-27 00:17:42.552	\N	danh từ	N4	\N	\N	\N	\N	1
 44123	沸く	わく	waku	sôi	16139	2026-09-26 06:22:19.298	2026-10-27 00:21:21.132	\N	động từ nhóm 1	N4	\N	\N	\N	\N	4
 44124	焼く	やく	yaku	nướng	16139	2026-09-26 06:22:19.298	2026-10-27 00:21:21.132	\N	động từ nhóm 1	N4	\N	\N	\N	\N	5
@@ -116157,7 +122648,13 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40795	確保	かくほ	kakuho	sự đảm bảo, giữ chắc	16979	2026-09-13 00:42:58.329	2026-10-27 01:52:10.856	\N	danh từ, động từ する	N1	\N	\N	\N	\N	5
 26990	～から 来ました。	～から きました。	~kara kimashita.	đến từ ～	1	2026-06-25 10:52:56.019	2026-10-28 05:54:00.227	\N	cụm từ	N5	\N	\N	\N	\N	28
 27329	\N	ホッチキス	hotchikisu	cái dập ghim	7	2026-06-25 10:52:57.571	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F587.svg	43
+48979	節度	せつど	setsudo	chừng mực	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	14
 44213	太陽	たいよう	taiyou	mặt trời	16148	2026-09-26 06:22:20.691	2026-10-27 00:12:07.113	\N	danh từ	N4	\N	\N	\N	\N	4
+48980	先見	せんけん	senken	nhìn xa trông rộng	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
+48981	大義	たいぎ	taigi	đại nghĩa, chính nghĩa	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	16
+48982	打算	ださん	dasan	tính toán vụ lợi	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
+48983	力量	りきりょう	rikiryou	năng lực, tài sức	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	18
+48984	手立て	てだて	tedate	cách, phương sách	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	19
 44225	枝	えだ	eda	cành cây	16149	2026-09-26 06:22:20.79	2026-10-27 00:12:07.115	\N	danh từ	N4	\N	\N	\N	\N	6
 44231	地震	じしん	jishin	động đất	16150	2026-09-26 06:22:20.929	2026-10-27 00:12:07.116	\N	danh từ	N4	\N	\N	\N	\N	2
 44221	石	いし	ishi	hòn đá	16149	2026-09-26 06:22:20.79	2026-10-27 00:14:52.714	\N	danh từ	N4	\N	\N	\N	\N	2
@@ -116183,10 +122680,17 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40866	寄贈	きそう	kisō	sự tặng, quyên góp	16979	2026-09-13 00:55:54.142	2026-10-27 01:52:10.869	\N	danh từ, động từ する	N1	\N	\N	\N	\N	20
 40891	記名	きめい	kimei	sự ký tên	16979	2026-09-13 00:55:54.222	2026-10-27 01:52:10.871	\N	danh từ, động từ する	N1	\N	\N	\N	\N	23
 27474	\N	いっしょに いかがですか。	isshoni ikagadesuka.	Anh/chị cùng ~ (làm cái gì đó) với chúng tôi được không?	9	2026-06-25 10:52:58.075	2026-10-28 05:54:00.227	\N	cụm từ	N5	\N	\N	\N	\N	40
+48985	当惑	とうわく	touwaku	bối rối, lúng túng	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	20
+48986	度胸	どきょう	dokyou	gan dạ, can đảm	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
 44268	\N	ほとんど	hotondo	hầu như	16153	2026-09-26 06:22:21.308	2026-10-27 00:12:07.117	\N	phó từ	N4	\N	\N	\N	\N	9
+48987	得策	とくさく	tokusaku	thượng sách, cách có lợi	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	22
 44276	赤ちゃん	あかちゃん	akachan	em bé	16154	2026-09-26 06:22:21.44	2026-10-27 00:14:52.717	\N	danh từ	N4	\N	\N	\N	\N	7
 44277	大人	おとな	otona	người lớn	16154	2026-09-26 06:22:21.44	2026-10-27 00:17:42.555	\N	danh từ	N4	\N	\N	\N	\N	8
 44255	変わる	かわる	kawaru	thay đổi	16152	2026-09-26 06:22:21.197	2026-10-27 00:21:21.157	\N	động từ nhóm 1	N4	\N	\N	\N	\N	6
+48988	馴染み	なじみ	najimi	quen thuộc, thân quen	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
+48989	難点	なんてん	nanten	nhược điểm, điểm khó	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
+48990	念願	ねんがん	nengan	tâm nguyện	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	25
+48991	破格	はかく	hakaku	phá lệ, ngoại lệ (rẻ, cao bất thường)	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	26
 44258	汚す	よごす	yogosu	làm bẩn	16152	2026-09-26 06:22:21.197	2026-10-27 00:21:21.158	\N	động từ nhóm 1	N4	\N	\N	\N	\N	9
 44263	柔らかい	やわらかい	yawarakai	mềm	16153	2026-09-26 06:22:21.308	2026-10-27 00:21:21.159	\N	tính từ i	N4	\N	\N	\N	\N	4
 44264	硬い	かたい	katai	cứng	16153	2026-09-26 06:22:21.308	2026-10-27 00:21:21.159	\N	tính từ i	N4	\N	\N	\N	\N	5
@@ -116209,6 +122713,10 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27477	また 今度 お願いします。	また こんど おねがいします。	mata kondo onegaishimasu.	hẹn lần sau	9	2026-06-25 10:52:58.081	2026-10-28 05:54:00.227	\N	cụm từ	N5	\N	\N	\N	\N	43
 27440	\N	クラシック	kurashikku	nhạc cổ điển	9	2026-06-25 10:52:58.003	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3B5.svg	49
 44573	太陽	たいよう	taiyou	mặt trời	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.127	\N	danh từ	N4	\N	\N	\N	\N	4
+48992	歯止め	はどめ	hadome	sự kìm hãm, phanh hãm	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	27
+48993	腹いせ	はらいせ	haraise	trút giận, trả đũa	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	28
+48994	引け目	ひけめ	hikeme	mặc cảm, tự ti	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	29
+48995	秘訣	ひけつ	hiketsu	bí quyết	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	30
 44281	知り合い	しりあい	shiriai	người quen	16155	2026-09-26 06:22:21.657	2026-10-27 00:21:21.163	\N	danh từ	N4	\N	\N	\N	\N	2
 44284	挨拶	あいさつ	aisatsu	chào hỏi	16155	2026-09-26 06:22:21.657	2026-10-27 00:21:21.163	\N	danh từ, động từ する	N4	\N	\N	\N	\N	5
 44288	安心	あんしん	anshin	yên tâm	16155	2026-09-26 06:22:21.657	2026-10-27 00:21:21.164	\N	danh từ, động từ する	N4	\N	\N	\N	\N	9
@@ -116233,8 +122741,13 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41194	差し出します	さしだします	sashidashimasu	đưa ra, trình nộp	16980	2026-09-13 00:59:14.617	2026-10-27 01:52:10.908	\N	động từ nhóm 1	N1	\N	\N	\N	\N	34
 41220	擦れます	すれます	suremasu	cọ xát, trầy xước; từng trải	16980	2026-09-13 01:01:26.366	2026-10-27 01:52:10.909	\N	động từ nhóm 2	N1	\N	\N	\N	\N	38
 27442	\N	コンサート	konsato	buổi hòa nhạc	9	2026-06-25 10:52:58.007	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3B5.svg	51
+48996	不手際	ふてぎわ	futegiwa	sơ suất, vụng về	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	31
 44329	健康	けんこう	kenkou	sức khỏe	16169	2026-09-26 06:22:23.895	2026-10-27 00:12:07.119	\N	danh từ	N4	\N	\N	\N	\N	0
 44324	\N	やっと	yatto	cuối cùng thì	16159	2026-09-26 06:22:22.416	2026-10-27 00:14:52.717	\N	phó từ	N4	\N	\N	\N	\N	5
+48997	懐	ふところ	futokoro	lòng ngực; túi tiền	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	32
+48998	身の上	みのうえ	minoue	hoàn cảnh bản thân, thân phận	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	33
+48999	見栄	みえ	mie	thể diện, sĩ diện	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	34
+49000	物腰	ものごし	monogoshi	phong thái, cử chỉ	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	35
 44304	頑張る	がんばる	ganbaru	cố gắng	16157	2026-09-26 06:22:22.028	2026-10-27 00:21:21.17	\N	động từ nhóm 1	N4	\N	\N	\N	\N	5
 44305	迎える	むかえる	mukaeru	đón	16157	2026-09-26 06:22:22.028	2026-10-27 00:21:21.17	\N	động từ nhóm 2	N4	\N	\N	\N	\N	6
 44308	嬉しい	うれしい	ureshii	vui mừng	16157	2026-09-26 06:22:22.028	2026-10-27 00:21:21.171	\N	tính từ i	N4	\N	\N	\N	\N	9
@@ -116259,10 +122772,16 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 41274	止まります	とどまります	todomarimasu	dừng lại, giới hạn ở mức	16981	2026-09-13 01:01:26.53	2026-10-27 01:55:27.677	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
 41284	試み	こころみ	kokoromi	sự thử nghiệm	16981	2026-09-13 01:01:26.555	2026-10-27 01:55:27.68	\N	danh từ	N1	\N	\N	\N	\N	3
 27456	\N	アルバイト	arubaito	việc làm thêm (～を します: làm thêm)	9	2026-06-25 10:52:58.039	2026-10-28 05:54:00.227	\N	danh từ, động từ する	N5	\N	\N	\N	\N	54
+49001	由緒	ゆいしょ	yuisho	lai lịch, nguồn gốc lâu đời	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	36
 44353	力	ちから	chikara	sức lực	16169	2026-09-26 06:22:23.895	2026-10-27 00:12:07.121	\N	danh từ	N4	\N	\N	\N	\N	24
+49002	話術	わじゅつ	wajutsu	tài ăn nói	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	37
 44382	安全	あんぜん	anzen	an toàn	16170	2026-09-26 06:22:24.193	2026-10-27 00:17:42.558	\N	tính từ na	N4	\N	\N	\N	\N	13
+49003	圧倒	あっとう	attou	áp đảo	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
 44354	運動	うんどう	undou	vận động, thể dục	16169	2026-09-26 06:22:23.895	2026-10-27 00:21:21.179	\N	danh từ, động từ する	N4	\N	\N	\N	\N	25
+49004	解消	かいしょう	kaishou	giải tỏa, xóa bỏ	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	39
 44356	食事	しょくじ	shokuji	bữa ăn	16169	2026-09-26 06:22:23.895	2026-10-27 00:21:21.18	\N	danh từ, động từ する	N4	\N	\N	\N	\N	27
+49005	確信	かくしん	kakushin	tin chắc	17004	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	40
+49006	凝視	ぎょうし	gyoushi	nhìn chằm chằm	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	1
 44369	眠る	ねむる	nemuru	ngủ	16170	2026-09-26 06:22:24.193	2026-10-27 00:21:21.181	\N	động từ nhóm 1	N4	\N	\N	\N	\N	0
 44352	骨	ほね	hone	xương	16169	2026-09-26 06:22:23.895	2026-10-26 16:27:33.546	\N	danh từ	N4	\N	\N	\N	\N	23
 44373	心配	しんぱい	shinpai	lo lắng	16170	2026-09-26 06:22:24.193	2026-10-27 00:21:21.182	\N	danh từ, động từ する	N4	\N	\N	\N	\N	4
@@ -116286,9 +122805,15 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27485	男の 人	おとこの ひと	otokono hito	người đàn ông	10	2026-06-25 10:52:58.243	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	3
 27486	女の 人	おんなの ひと	onnano hito	người đàn bà	10	2026-06-25 10:52:58.247	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	4
 27487	男の 子	おとこの こ	otokono ko	cậu con trai	10	2026-06-25 10:52:58.251	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F9D2.svg	5
+49007	空白	くうはく	kuuhaku	chỗ trống, khoảng trống	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+49008	屈辱	くつじょく	kutsujoku	nhục nhã	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
+49009	欠如	けつじょ	ketsujo	thiếu hụt	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	4
+49010	酷使	こくし	kokushi	sử dụng quá mức, bóc lột sức	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	5
 44411	給料	きゅうりょう	kyuuryou	lương	16171	2026-09-26 06:22:24.329	2026-10-27 00:12:07.123	\N	danh từ	N4	\N	\N	\N	\N	22
 44397	お客様	おきゃくさま	okyakusama	khách hàng (kính ngữ)	16171	2026-09-26 06:22:24.329	2026-10-27 00:14:52.718	\N	danh từ	N4	\N	\N	\N	\N	8
 44399	工場	こうじょう	koujou	nhà máy	16171	2026-09-26 06:22:24.329	2026-10-27 00:14:52.718	\N	danh từ	N4	\N	\N	\N	\N	10
+49011	挫折	ざせつ	zasetsu	thất bại, vấp ngã	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
+49012	成就	じょうじゅ	jouju	thành tựu, thành hiện thực	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	7
 44400	会場	かいじょう	kaijou	hội trường	16171	2026-09-26 06:22:24.329	2026-10-27 00:17:42.559	\N	danh từ	N4	\N	\N	\N	\N	11
 44385	\N	なるべく	narubeku	càng … càng tốt	16170	2026-09-26 06:22:24.193	2026-10-27 00:21:21.184	\N	phó từ	N4	\N	\N	\N	\N	16
 44388	早く	はやく	hayaku	nhanh; sớm	16170	2026-09-26 06:22:24.193	2026-10-27 00:21:21.184	\N	phó từ	N4	\N	\N	\N	\N	19
@@ -116310,8 +122835,14 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 44387	\N	きっと	kitto	chắc chắn	16170	2026-09-26 06:22:24.193	2026-10-27 00:05:32.045	\N	phó từ	N4	\N	\N	\N	\N	18
 44419	政治	せいじ	seiji	chính trị	16171	2026-09-26 06:22:24.329	2026-10-27 00:05:32.046	\N	danh từ	N4	\N	\N	\N	\N	30
 27037	\N	テレビ	terebi	tivi	2	2026-06-25 10:52:56.287	2026-10-28 05:54:00.227	TV	danh từ	N5	\N	\N	\N	/media/openmoji/1F4FA.svg	43
+49013	保留	ほりゅう	horyuu	bảo lưu, tạm hoãn	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	8
+49014	本腰	ほんごし	hongoshi	dốc sức thật sự	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	9
+49015	満喫	まんきつ	mankitsu	tận hưởng trọn vẹn	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	10
 44585	枝	えだ	eda	cành cây	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.129	\N	danh từ	N4	\N	\N	\N	\N	16
+49016	逸材	いつざい	itsuzai	nhân tài kiệt xuất	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
 44434	届く	とどく	todoku	được gửi tới	16172	2026-09-26 06:22:24.657	2026-10-27 00:21:21.188	\N	động từ nhóm 1	N4	\N	\N	\N	\N	5
+49017	真髄	しんずい	shinzui	tinh túy, cốt lõi	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
+49018	取り沙汰	とりざた	torizata	lời đồn đại	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	13
 44436	手伝う	てつだう	tetsudau	giúp đỡ	16172	2026-09-26 06:22:24.657	2026-10-27 00:21:21.189	\N	động từ nhóm 1	N4	\N	\N	\N	\N	7
 44438	遅れる	おくれる	okureru	muộn, trễ	16172	2026-09-26 06:22:24.657	2026-10-27 00:21:21.19	\N	động từ nhóm 2	N4	\N	\N	\N	\N	9
 44433	届ける	とどける	todokeru	gửi đến, giao	16172	2026-09-26 06:22:24.657	2026-10-26 16:44:57.236	\N	động từ nhóm 2	N4	\N	\N	\N	\N	4
@@ -116335,6 +122866,11 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27496	箱	はこ	hako	cái hộp	10	2026-06-25 10:52:58.281	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4E6.svg	13
 27498	冷蔵庫	れいぞうこ	reizoko	tủ lạnh	10	2026-06-25 10:52:58.287	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F9CA.svg	14
 27501	棚	たな	tana	giá sách	10	2026-06-25 10:52:58.295	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4D6.svg	15
+49019	走り書き	はしりがき	hashirigaki	viết vội	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	14
+49020	意地	いじ	iji	sự bướng bỉnh; khí khái	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	15
+49021	裏腹	うらはら	urahara	trái ngược	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	16
+49022	負い目	おいめ	oime	món nợ ân tình, mặc cảm có lỗi	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
+49023	大詰め	おおづめ	oozume	giai đoạn cuối	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	18
 45343	お得	おとく	otoku	hời, lợi	16222	2026-09-26 12:14:59.166	2026-10-26 16:40:59.177	\N	tính từ na	N3	\N	\N	\N	\N	4
 44474	味	あじ	aji	vị	16173	2026-09-26 06:22:24.845	2026-10-27 00:12:07.124	\N	danh từ	N4	\N	\N	\N	\N	22
 44587	鳥	とり	tori	chim	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.129	\N	danh từ	N4	\N	\N	\N	\N	18
@@ -116361,10 +122897,19 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 42104	背きます	そむきます	somukimasu	chống lại, làm trái	16984	2026-09-13 01:21:32.705	2026-10-27 01:55:27.764	\N	động từ nhóm 1	N1	\N	\N	\N	\N	17
 27506	\N	ATM	ATM	máy ATM, máy rút tiền	10	2026-06-25 10:52:58.312	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E7.svg	17
 27508	公園	こうえん	koen	công viên	10	2026-06-25 10:52:58.318	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3DE.svg	18
+49024	衰え	おとろえ	otoroe	sự suy giảm	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	19
 44515	小説	しょうせつ	shousetsu	tiểu thuyết	16175	2026-09-26 06:22:25.303	2026-10-27 00:12:07.125	\N	danh từ	N4	\N	\N	\N	\N	6
 44517	番組	ばんぐみ	bangumi	chương trình (TV)	16175	2026-09-26 06:22:25.303	2026-10-27 00:12:07.126	\N	danh từ	N4	\N	\N	\N	\N	8
+49025	固唾	かたず	katazu	nín thở (chờ đợi)	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	20
 42134	抜け出します	ぬけだします	nukedashimasu	lẻn ra, trốn ra ngoài	16984	2026-09-13 01:21:32.822	2026-10-27 01:55:27.767	\N	động từ nhóm 1	N1	\N	\N	\N	\N	24
+49026	空回り	からまわり	karamawari	chạy không tải, nỗ lực vô ích	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	21
+49027	気がかり	きがかり	kigakari	điều lo lắng	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	22
 42137	反します	はんします	hanshimasu	trái ngược, vi phạm	16984	2026-09-13 01:21:32.832	2026-10-27 01:55:27.769	\N	động từ する	N1	\N	\N	\N	\N	26
+49028	\N	けじめ	kejime	ranh giới, sự phân minh	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
+49029	仕業	しわざ	shiwaza	việc làm (xấu), trò	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
+49030	尻込み	しりごみ	shirigomi	chùn bước, ngần ngại	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	25
+49031	筋書き	すじがき	sujigaki	kịch bản, cốt truyện	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	26
+49032	手探り	てさぐり	tesaguri	mò mẫm	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	27
 42193	付け加えます	つけくわえます	tsukekuwaemasu	thêm vào, bổ sung	16984	2026-09-13 01:23:44.501	2026-10-27 01:55:27.771	\N	động từ nhóm 2	N1	\N	\N	\N	\N	29
 42207	腐敗	ふはい	fuhai	sự thối rữa, thối nát (đạo đức)	16984	2026-09-13 01:23:44.554	2026-10-27 01:55:27.773	\N	danh từ, động từ する	N1	\N	\N	\N	/media/openmoji/1F1E9-1F1EA.svg	31
 44514	映画	えいが	eiga	phim	16175	2026-09-26 06:22:25.303	2026-10-26 23:57:45.516	\N	danh từ	N4	\N	\N	\N	\N	5
@@ -116385,7 +122930,16 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27512	県	けん	ken	tỉnh	10	2026-06-25 10:52:58.331	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	22
 27513	上	うえ	ue	trên	10	2026-06-25 10:52:58.334	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	23
 27514	下	した	shita	dưới	10	2026-06-25 10:52:58.338	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	24
+49033	手詰まり	てづまり	tezumari	bế tắc, hết cách	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	28
+49034	\N	ばらつき	baratsuki	sự chênh lệch, không đồng đều	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	29
+49035	\N	ひずみ	hizumi	sự méo mó, lệch lạc	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	30
+49036	不意打ち	ふいうち	fuiuchi	đánh úp, bất ngờ	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
+49037	吹聴	ふいちょう	fuichou	rêu rao	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	32
+49038	見せしめ	みせしめ	miseshime	răn đe làm gương	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	33
+49039	目の当たり	まのあたり	manoatari	tận mắt	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	34
 44549	勝つ	かつ	katsu	thắng	16176	2026-09-26 06:22:25.601	2026-10-27 00:21:21.202	\N	động từ nhóm 1	N4	\N	\N	\N	\N	0
+49040	物怖じ	ものおじ	monooji	rụt rè, sợ sệt	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
+49041	矢面	やおもて	yaomote	đầu sóng ngọn gió	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	36
 44553	招待	しょうたい	shoutai	mời	16176	2026-09-26 06:22:25.601	2026-10-27 00:21:21.203	\N	danh từ, động từ する	N4	\N	\N	\N	\N	4
 44556	見つける	みつける	mitsukeru	tìm thấy	16176	2026-09-26 06:22:25.601	2026-10-27 00:21:21.204	\N	động từ nhóm 2	N4	\N	\N	\N	\N	7
 44558	楽しい	たのしい	tanoshii	vui	16176	2026-09-26 06:22:25.601	2026-10-27 00:21:21.204	\N	tính từ i	N4	\N	\N	\N	\N	9
@@ -116410,7 +122964,17 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27038	\N	ラジオ	rajio	cái radio	2	2026-06-25 10:52:56.289	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4FB.svg	44
 27039	\N	カメラ	kamera	cái máy chụp hình	2	2026-06-25 10:52:56.291	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4F7.svg	45
 44575	星	ほし	hoshi	ngôi sao	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.128	\N	danh từ	N4	\N	\N	\N	\N	6
+49042	躍起	やっき	yakki	hăng máu, cuống cuồng	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	37
+49043	\N	やりくり	yarikuri	xoay xở (chi tiêu)	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
+49044	\N	よりどころ	yoridokoro	chỗ dựa	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	39
 44591	地震	じしん	jishin	động đất	16177	2026-09-26 06:22:25.811	2026-10-27 00:12:07.13	\N	danh từ	N4	\N	\N	\N	\N	22
+49045	\N	わだかまり	wadakamari	khúc mắc, hiềm khích	17021	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	40
+49046	旺盛	おうせい	ousei	dồi dào, mạnh mẽ	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	1
+49047	穏便	おんびん	onbin	ôn hòa, êm thấm	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	2
+49048	希薄	きはく	kihaku	loãng, mờ nhạt	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	3
+49049	険悪	けんあく	ken'aku	căng thẳng, xấu đi (bầu không khí)	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	4
+49050	恣意的	しいてき	shiiteki	tùy tiện, độc đoán	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	5
+49051	繊細	せんさい	sensai	tinh tế, nhạy cảm	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N2	\N	\N	\N	\N	6
 44576	島	しま	shima	hòn đảo	16177	2026-09-26 06:22:25.811	2026-10-27 00:14:52.72	\N	danh từ	N4	\N	\N	\N	\N	7
 44590	台風	たいふう	taifuu	bão	16177	2026-09-26 06:22:25.811	2026-10-27 00:14:52.721	\N	danh từ	N4	\N	\N	\N	\N	21
 44593	空気	くうき	kuuki	không khí	16177	2026-09-26 06:22:25.811	2026-10-27 00:17:42.561	\N	danh từ	N4	\N	\N	\N	\N	24
@@ -116434,12 +122998,31 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 40955	強烈	きょうれつ	kyōretsu	mạnh mẽ, dữ dội	16987	2026-09-13 00:55:54.45	2026-10-27 01:58:44.308	\N	tính từ na	N1	\N	\N	\N	\N	19
 41005	空ろ	うつろ	utsuro	trống rỗng, hõm sâu	16987	2026-09-13 00:55:54.629	2026-10-27 01:58:44.311	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	21
 27532	本屋	ほんや	hon'ya	hiệu sách	10	2026-06-25 10:52:58.395	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4D6.svg	38
+49052	煩雑	はんざつ	hanzatsu	phức tạp, rườm rà	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	7
+49053	無謀	むぼう	mubou	liều lĩnh, thiếu suy nghĩ	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	8
+49054	余儀ない	よぎない	yoginai	bất đắc dĩ, không còn cách nào khác	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	9
+49055	大まか	おおまか	oomaka	đại khái, sơ lược	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	10
+49056	恩着せがましい	おんきせがましい	onkisegamashii	kể ơn, làm như ban ơn	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	11
 44628	\N	ほとんど	hotondo	hầu như	16178	2026-09-26 06:22:26.241	2026-10-27 00:12:07.131	\N	phó từ	N4	\N	\N	\N	\N	19
+49057	些細	ささい	sasai	nhỏ nhặt, vụn vặt	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	12
+49058	相容れない	あいいれない	aiirenai	không thể dung hòa	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	13
+49059	\N	いたたまれない	itatamarenai	không thể chịu nổi (ngượng, khó xử)	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	14
+49060	\N	うさんくさい	usankusai	đáng ngờ, mờ ám	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	15
+49061	疎い	うとい	utoi	mù tịt, không rành	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	16
 37693	約束します	やくそくします	yakusoku shimasu	hứa hẹn	16869	2026-09-12 14:06:58.161	2026-10-27 00:24:02.326	\N	động từ する	N4	\N	\N	\N	\N	8
+49062	\N	うやうやしい	uyauyashii	cung kính	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	17
 44292	謝る	あやまる	ayamaru	xin lỗi	16156	2026-09-26 06:22:21.852	2026-10-26 16:22:04.076	\N	động từ nhóm 1	N4	\N	\N	\N	\N	3
+49063	\N	おぼつかない	obotsukanai	không chắc chắn, chập chững	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	18
 37695	練習します	れんしゅうします	renshū shimasu	luyện tập	16869	2026-09-12 14:06:58.175	2026-10-27 00:24:02.327	\N	động từ する	N4	\N	\N	\N	\N	10
 41763	打ち消し	うちけし	uchikeshi	sự phủ định	16954	2026-09-13 01:12:27.316	2026-10-27 00:58:00.731	\N	danh từ	N1	\N	\N	\N	\N	28
+49064	思わしい	おもわしい	omowashii	như mong muốn (thường dùng phủ định)	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	19
+49065	\N	かけがえのない	kakegaenonai	không gì thay thế được	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	20
 41048	月並み	つきなみ	tsukinami	tầm thường, thông thường	16987	2026-09-13 00:59:14.196	2026-10-27 01:58:44.313	\N	tính từ na	N1	\N	\N	\N	\N	22
+49066	仰々しい	ぎょうぎょうしい	gyougyoushii	phô trương, khoa trương	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	21
+49067	際どい	きわどい	kiwadoi	sát nút, mấp mé	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	22
+49068	屈強	くっきょう	kukkyou	lực lưỡng, vạm vỡ	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	23
+49069	\N	けたたましい	ketatamashii	inh ỏi, chói tai	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	24
+49070	心許ない	こころもとない	kokoromotonai	bất an, không yên tâm	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	25
 44303	感じる	かんじる	kanjiru	cảm thấy	16157	2026-09-26 06:22:22.028	2026-10-26 16:22:04.076	\N	động từ nhóm 2	N4	\N	\N	\N	\N	4
 44349	気分	きぶん	kibun	tâm trạng, cảm giác	16169	2026-09-26 06:22:23.895	2026-10-26 16:22:04.077	\N	danh từ	N4	\N	\N	\N	\N	20
 44394	上司	じょうし	joushi	cấp trên	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.078	\N	danh từ	N4	\N	\N	\N	\N	5
@@ -116452,28 +123035,129 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27040	\N	コンピューター	konpyuta	máy vi tính	2	2026-06-25 10:52:56.292	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4BB.svg	46
 27044	\N	チョコレート	chokoreto	kẹo sôcôla	2	2026-06-25 10:52:56.304	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F36B.svg	47
 27502	\N	ドア	doa	cửa	10	2026-06-25 10:52:58.299	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F6AA.svg	46
+49071	小賢しい	こざかしい	kozakashii	láu cá, khôn vặt	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	26
+49072	\N	さりげない	sarigenai	tự nhiên, không phô trương	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	27
+49073	淑やか	しとやか	shitoyaka	duyên dáng, thùy mị	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	28
+49074	\N	せわしい	sewashii	bận rộn, tất bật	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	29
+49075	\N	そつがない	sotsuganai	không sơ hở, chu toàn	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	30
+49076	\N	たどたどしい	tadotadoshii	ấp úng, vấp váp	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	31
 41774	対談	たいだん	taidan	cuộc đối thoại, trò chuyện	16954	2026-09-13 01:12:27.337	2026-10-27 00:58:00.732	\N	danh từ, động từ する	N1	\N	\N	\N	\N	29
+49077	手厚い	てあつい	teatsui	chu đáo, tận tình	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	32
+49078	手ごわい	てごわい	tegowai	khó nhằn, đáng gờm	17005	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	33
+49079	\N	とめどない	tomedonai	không ngừng, tuôn trào	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	1
 27045	\N	コーヒー	kohii	cà phê	2	2026-06-25 10:52:56.305	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/2615.svg	48
+49080	苦々しい	にがにがしい	niganigashii	khó chịu, cay đắng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	2
+49081	\N	ねたましい	netamashii	đố kỵ, ghen ghét	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	3
 27062	\N	［カセット］テープ	[kasetto] tepu	băng [cassette]	2	2026-06-25 10:52:56.342	2026-10-28 05:54:00.227	[cassette] tape	danh từ	N5	\N	\N	\N	\N	50
+49082	\N	ひたむき	hitamuki	hết lòng, chuyên tâm	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	4
+49083	不躾	ぶしつけ	bushitsuke	thất lễ, sỗ sàng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	5
+49084	\N	まばゆい	mabayui	chói lóa	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	6
+49085	\N	まめ	mame	siêng năng, chu đáo	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	7
+49086	\N	みずみずしい	mizumizushii	tươi mọng, tươi tắn	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	8
+49087	目ざとい	めざとい	mezatoi	tinh mắt	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	9
+49088	\N	よそよそしい	yosoyososhii	xa cách, lạnh nhạt	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	10
+49089	弱々しい	よわよわしい	yowayowashii	yếu ớt	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	11
+49090	頑な	かたくな	katakuna	cố chấp, ương bướng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	12
+49091	気丈	きじょう	kijou	cứng cỏi, vững vàng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	13
+49092	強靭	きょうじん	kyoujin	bền bỉ, dẻo dai	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	14
+49093	軽薄	けいはく	keihaku	nông nổi, hời hợt	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	15
+49094	高尚	こうしょう	koushou	cao thượng, thanh cao	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	16
+49095	細心	さいしん	saishin	tỉ mỉ, cẩn trọng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	17
+49096	淡白	たんぱく	tanpaku	thanh đạm; thờ ơ	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	18
+49097	丁重	ていちょう	teichou	lịch sự, trọng thị	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	19
+49098	貪欲	どんよく	don'yoku	tham lam; ham học hỏi	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	20
+49099	薄情	はくじょう	hakujou	bạc tình, vô tâm	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	21
+49100	不審	ふしん	fushin	đáng ngờ	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	22
+49101	無粋	ぶすい	busui	vô duyên, thiếu tế nhị	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	23
+49102	凡庸	ぼんよう	bon'you	tầm thường	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	24
+49103	冷徹	れいてつ	reitetsu	lạnh lùng sắc bén	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	25
 44398	受付	うけつけ	uketsuke	quầy lễ tân	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.079	\N	danh từ	N4	\N	\N	\N	\N	9
+49104	老練	ろうれん	rouren	lão luyện	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	26
 44402	予約	よやく	yoyaku	đặt trước	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.08	\N	danh từ, động từ する	N4	\N	\N	\N	\N	13
+49105	\N	いびつ	ibitsu	méo mó, lệch lạc	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	27
+49106	\N	かなわない	kanawanai	không chịu nổi; không địch nổi	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	28
+49107	地道	じみち	jimichi	bền bỉ, chắc chắn	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	29
+49108	手痛い	ていたい	teitai	nặng nề, đau đớn	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	30
+49109	\N	なおざり	naozari	qua loa, lơ là	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	31
+49110	根強い	ねづよい	nezuyoi	ăn sâu, bám rễ	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ i	N1	\N	\N	\N	\N	32
+49111	\N	もってのほか	mottenohoka	không thể tha thứ, quá đáng	17006	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	33
+49112	逐一	ちくいち	chikuichi	từng cái một, chi tiết	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	1
+49113	\N	あわよくば	awayokuba	nếu may mắn thì, biết đâu	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	2
+49114	\N	いささか	isasaka	hơi, một chút	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	3
+49115	一向に	いっこうに	ikkouni	hoàn toàn (không)	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	4
+49116	未だに	いまだに	imadani	đến giờ vẫn	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	5
+49117	否応なしに	いやおうなしに	iyaounashini	bất kể muốn hay không	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	6
+49118	\N	おおむね	oomune	đại khái, nhìn chung	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	7
 44683	確か	たしか	tashika	chắc chắn; hình như	16180	2026-09-26 06:22:26.926	2026-10-27 00:12:07.133	\N	tính từ na	N4	\N	\N	\N	\N	14
+49119	思いのほか	おもいのほか	omoinohoka	ngoài dự đoán	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	8
+49120	仮に	かりに	karini	giả sử	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	9
 44611	止む	やむ	yamu	tạnh	16178	2026-09-26 06:22:26.241	2026-10-27 00:21:21.213	\N	động từ nhóm 1	N4	\N	\N	\N	\N	2
 41780	待ち合わせ	まちあわせ	machiawase	cuộc hẹn gặp	16945	2026-09-13 01:12:27.355	2026-10-27 00:48:02.619	\N	danh từ	N1	\N	\N	\N	\N	7
+49121	極力	きょくりょく	kyokuryoku	hết sức, tối đa	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	10
+49122	\N	くまなく	kumanaku	khắp mọi nơi, không sót chỗ nào	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	11
+49123	殊更	ことさら	kotosara	cố ý; đặc biệt	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	12
 41783	怠い	だるい	darui	mệt mỏi, uể oải	16947	2026-09-13 01:12:27.363	2026-10-27 00:54:08.131	\N	tính từ i	N1	\N	\N	\N	\N	2
 41784	怠慢	たいまん	taiman	sự lơ là, cẩu thả	16950	2026-09-13 01:12:27.365	2026-10-27 00:54:08.136	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	28
 41777	対話	たいわ	taiwa	cuộc đối thoại	16954	2026-09-13 01:12:27.344	2026-10-27 00:58:00.736	\N	danh từ, động từ する	N1	\N	\N	\N	\N	31
+49124	\N	さぞ	sazo	chắc hẳn là	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	13
+49125	所詮	しょせん	shosen	rốt cuộc thì, dù sao thì	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	14
+49126	\N	すかさず	sukasazu	ngay lập tức, không chần chừ	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	15
+49127	総じて	そうじて	soujite	nói chung, tổng thể	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	16
+49128	\N	そもそも	somosomo	vốn dĩ, ngay từ đầu	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ, danh từ	N2	\N	\N	\N	\N	17
+49129	断じて	だんじて	danjite	tuyệt đối (không)	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	18
+49130	着々と	ちゃくちゃくと	chakuchakuto	đều đặn, từng bước vững chắc	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	19
+49131	\N	とっさに	tossani	theo phản xạ, trong tích tắc	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	20
+49132	\N	なにとぞ	nanitozo	kính mong, xin hãy (trang trọng)	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	21
+49133	\N	ひとえに	hitoeni	hoàn toàn là nhờ, chỉ vì	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	22
+49134	\N	ひょっとして	hyottoshite	biết đâu, có lẽ	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	23
+49135	不意に	ふいに	fuini	bất thình lình	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	24
+49136	\N	ふんだんに	fundanni	dồi dào, thoải mái	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	25
 44404	連絡	れんらく	renraku	liên lạc	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.081	\N	danh từ, động từ する	N4	\N	\N	\N	\N	15
+49137	\N	まるきり	marukiri	hoàn toàn	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	26
 44407	準備	じゅんび	junbi	chuẩn bị	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.082	\N	danh từ, động từ する	N4	\N	\N	\N	\N	18
 44413	資料	しりょう	shiryou	tài liệu	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.082	\N	danh từ	N4	\N	\N	\N	\N	24
 44414	書類	しょるい	shorui	giấy tờ	16171	2026-09-26 06:22:24.329	2026-10-26 16:22:04.083	\N	danh từ	N4	\N	\N	\N	\N	25
 41223	雑	ざつ	zatsu	cẩu thả, lộn xộn	16987	2026-09-13 01:01:26.373	2026-10-27 01:58:44.331	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	34
+49138	\N	やけに	yakeni	quá, cực kỳ (khác thường)	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	27
+49139	やむを得ず	やむをえず	yamuwoezu	bất đắc dĩ, đành phải	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	28
+49140	\N	ゆくゆく	yukuyuku	về sau, trong tương lai	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	29
 27579	留学生	りゅうがくせい	ryugakusei	du học sinh	11	2026-06-25 10:52:58.588	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F393.svg	37
+49141	\N	よほど	yohodo	khá là, hẳn là rất	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N2	\N	\N	\N	\N	30
+49142	\N	たかが	takaga	chỉ là, cùng lắm là	17007	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	phó từ	N1	\N	\N	\N	\N	31
+49143	十人十色	じゅうにんといろ	juunintoiro	mỗi người một vẻ	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+49144	一石二鳥	いっせきにちょう	issekinichou	một mũi tên trúng hai đích	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+49145	一朝一夕	いっちょういっせき	itchouisseki	một sớm một chiều	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
+49146	一長一短	いっちょういったん	itchouittan	có ưu có nhược	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	4
+49147	一喜一憂	いっきいちゆう	ikkiichiyuu	lúc mừng lúc lo (theo từng biến động)	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	5
+49148	異口同音	いくどうおん	ikudouon	đồng thanh, cùng một ý	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	6
+49149	以心伝心	いしんでんしん	ishindenshin	tâm đầu ý hợp, hiểu ý không cần nói	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
 44632	恋人	こいびと	koibito	người yêu	16179	2026-09-26 06:22:26.482	2026-10-27 00:14:52.722	\N	danh từ	N4	\N	\N	\N	\N	3
+49150	右往左往	うおうさおう	uousaou	chạy loạn xạ, cuống cuồng	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	8
+49151	紆余曲折	うよきょくせつ	uyokyokusetsu	quanh co khúc khuỷu, trắc trở	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	9
+49152	温故知新	おんこちしん	onkochishin	ôn cũ biết mới	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
+49153	画竜点睛	がりょうてんせい	garyoutensei	nét chấm phá hoàn thiện (vẽ rồng điểm mắt)	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
+49154	危機一髪	ききいっぱつ	kikiippatsu	nghìn cân treo sợi tóc	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
+49155	起死回生	きしかいせい	kishikaisei	cải tử hoàn sinh, lội ngược dòng	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	13
+49156	喜怒哀楽	きどあいらく	kidoairaku	hỉ nộ ái lạc	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	14
+49157	疑心暗鬼	ぎしんあんき	gishin'anki	nghi thần nghi quỷ	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
 44616	続く	つづく	tsuzuku	tiếp diễn	16178	2026-09-26 06:22:26.241	2026-10-27 00:21:21.215	\N	động từ nhóm 1	N4	\N	\N	\N	\N	7
+49158	言語道断	ごんごどうだん	gongodoudan	không thể chấp nhận, quá đáng	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	16
 44621	美しい	うつくしい	utsukushii	đẹp	16178	2026-09-26 06:22:26.241	2026-10-27 00:21:21.215	\N	tính từ i	N4	\N	\N	\N	\N	12
 44623	柔らかい	やわらかい	yawarakai	mềm	16178	2026-09-26 06:22:26.241	2026-10-27 00:21:21.216	\N	tính từ i	N4	\N	\N	\N	\N	14
+49159	自業自得	じごうじとく	jigoujitoku	gieo gió gặt bão	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
+49160	自画自賛	じがじさん	jigajisan	tự khen mình	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	18
+49161	四苦八苦	しくはっく	shikuhakku	vô cùng vất vả	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	19
+49162	弱肉強食	じゃくにくきょうしょく	jakunikukyoushoku	cá lớn nuốt cá bé	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	20
 44625	細かい	こまかい	komakai	chi tiết, nhỏ	16178	2026-09-26 06:22:26.241	2026-10-27 00:21:21.217	\N	tính từ i	N4	\N	\N	\N	\N	16
+49163	取捨選択	しゅしゃせんたく	shushasentaku	chọn lọc	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	21
+49164	千差万別	せんさばんべつ	sensabanbetsu	muôn hình vạn trạng	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	22
+49165	前代未聞	ぜんだいみもん	zendaimimon	chưa từng có tiền lệ	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
+49166	大同小異	だいどうしょうい	daidoushoui	đại đồng tiểu dị	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
+49167	単刀直入	たんとうちょくにゅう	tantouchokunyuu	đi thẳng vào vấn đề	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	25
+49168	適材適所	てきざいてきしょ	tekizaitekisho	đúng người đúng việc	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	26
+49169	東奔西走	とうほんせいそう	touhonseisou	chạy ngược chạy xuôi	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	27
+49170	二者択一	にしゃたくいつ	nishatakuitsu	chọn một trong hai	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	28
+49171	半信半疑	はんしんはんぎ	hanshinhangi	nửa tin nửa ngờ	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	29
 44431	決める	きめる	kimeru	quyết định	16172	2026-09-26 06:22:24.657	2026-10-26 16:22:04.084	\N	động từ nhóm 2	N4	\N	\N	\N	\N	2
 44508	\N	きちんと	kichinto	gọn gàng, chỉnh tề	16174	2026-09-26 06:22:25.154	2026-10-26 16:22:04.084	\N	phó từ	N4	\N	\N	\N	\N	19
 44555	比べる	くらべる	kuraberu	so sánh	16176	2026-09-26 06:22:25.601	2026-10-26 16:22:04.085	\N	động từ nhóm 2	N4	\N	\N	\N	\N	6
@@ -116486,59 +123170,336 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 27063	\N	テープレコーダー	tepurekoda	máy casset	2	2026-06-25 10:52:56.344	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F4FC.svg	51
 27068	其処	そこ	soko	chỗ đó, đó	3	2026-06-25 10:52:56.516	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	1
 27069	彼処	あそこ	asoko	chỗ kia, kia	3	2026-06-25 10:52:56.518	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	2
+49172	付和雷同	ふわらいどう	fuwaraidou	a dua theo người khác	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	30
+49173	本末転倒	ほんまつてんとう	honmatsutentou	đầu đuôi lộn ngược, bỏ gốc lấy ngọn	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
+49174	無我夢中	むがむちゅう	mugamuchuu	say mê quên mình	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	32
+49175	油断大敵	ゆだんたいてき	yudantaiteki	chủ quan là kẻ thù lớn	17008	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	33
 44636	赤ちゃん	あかちゃん	akachan	em bé	16179	2026-09-26 06:22:26.482	2026-10-27 00:14:52.723	\N	danh từ	N4	\N	\N	\N	\N	7
+49176	\N	アポイント	apointo	cuộc hẹn (công việc)	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+49177	\N	アメニティ	amenitei	tiện nghi, đồ dùng (khách sạn)	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+49178	\N	イノベーション	inobeeshon	đổi mới sáng tạo	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
 44638	親	おや	oya	cha mẹ	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.218	\N	danh từ	N4	\N	\N	\N	\N	9
+49179	\N	インフラ	infura	cơ sở hạ tầng	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	4
+49180	\N	エビデンス	ebidensu	bằng chứng (khoa học)	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	5
+49181	\N	オーソドックス	ousodokkusu	chính thống, truyền thống	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	tính từ na	N1	\N	\N	\N	\N	6
+49182	\N	ガイドライン	gaidorain	hướng dẫn, chỉ dẫn	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
 44640	後輩	こうはい	kouhai	đàn em, hậu bối	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.219	\N	danh từ	N4	\N	\N	\N	\N	11
+49183	\N	キャパシティ	kyapashitei	sức chứa, năng lực	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	8
+49184	\N	コンセンサス	konsensasu	sự đồng thuận	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	9
+49185	\N	コンプライアンス	konpuraiansu	tuân thủ pháp luật	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
+49186	\N	ジレンマ	jirenma	tình thế tiến thoái lưỡng nan	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
+49187	\N	スキーム	sukiimu	cơ chế, kế hoạch (khung)	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
 27617	軽い	かるい	karui	nhẹ	12	2026-06-25 10:52:58.797	2026-10-28 05:54:00.227	\N	tính từ i	N5	\N	\N	\N	\N	12
+49188	\N	ステレオタイプ	sutereotaipu	định kiến rập khuôn	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	13
+49189	\N	ノウハウ	nouhau	bí quyết, kinh nghiệm thực tế	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	14
+49190	\N	バイアス	baiasu	thiên kiến, sai lệch	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
+49191	\N	パラドックス	paradokkusu	nghịch lý	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	16
+49192	\N	ビジョン	bijon	tầm nhìn	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
+49193	\N	フィードバック	fyiidobakku	phản hồi	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	18
 27618	\N	いい［コーヒーが～］	ii [kohiiga~]	thích, chọn, dùng	12	2026-06-25 10:52:58.8	2026-10-28 05:54:00.227	\N	tính từ i	N5	\N	\N	\N	\N	13
+49194	\N	プロセス	purosesu	quá trình, quy trình	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	19
+49195	\N	ポテンシャル	potensharu	tiềm năng	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	20
+49196	\N	マニフェスト	manifyesuto	cương lĩnh tranh cử	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
+49197	\N	メカニズム	mekanizumu	cơ chế	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	22
+49198	\N	モチベーション	mochibeeshon	động lực	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	23
 44617	守る	まもる	mamoru	bảo vệ; tuân thủ	16178	2026-09-26 06:22:26.241	2026-10-26 16:22:04.087	\N	động từ nhóm 1	N4	\N	\N	\N	\N	8
 44634	彼女	かのじょ	kanojo	cô ấy; bạn gái	16179	2026-09-26 06:22:26.482	2026-10-26 23:57:45.519	\N	danh từ	N4	\N	\N	\N	\N	5
+49199	\N	リテラシー	riterashii	năng lực hiểu biết (sử dụng)	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
+49200	\N	レトリック	retorikku	tu từ, thuật hùng biện	17009	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	25
+49201	修飾	しゅうしょく	shuushoku	bổ nghĩa; trang trí	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	1
+49202	著作	ちょさく	chosaku	tác phẩm, trước tác	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	2
+49203	論拠	ろんきょ	ronkyo	luận cứ	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
+49204	韻	いん	in	vần	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	4
+49205	押韻	おういん	ouin	gieo vần	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	5
+49206	寓話	ぐうわ	guuwa	truyện ngụ ngôn	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	6
+49207	叙述	じょじゅつ	jojutsu	tự thuật, mô tả	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	7
+49208	抒情	じょじょう	jojou	trữ tình	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	8
+49209	読解	どっかい	dokkai	đọc hiểu	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	9
+49210	翻案	ほんあん	hon'an	phóng tác, chuyển thể	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	10
+49211	命題	めいだい	meidai	mệnh đề; vấn đề đặt ra	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	11
+49212	余韻	よいん	yoin	dư âm	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	12
+49213	論旨	ろんし	ronshi	luận điểm chính	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	13
+49214	論破	ろんぱ	ronpa	bác bỏ (bằng lý lẽ)	17010	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	14
+49215	軋轢	あつれき	atsureki	xích mích, va chạm (quan hệ)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+49216	異議	いぎ	igi	ý kiến phản đối, phản đối	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+49217	意向	いこう	ikou	ý định, ý hướng	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	3
+49218	一掃	いっそう	issou	quét sạch, loại bỏ hoàn toàn	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	4
+49219	一翼	いちよく	ichiyoku	một phần (vai trò), một cánh	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	5
+49220	沿革	えんかく	enkaku	lịch sử phát triển (tổ chức)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	6
 44643	お祝い	おいわい	oiwai	chúc mừng, quà mừng	16179	2026-09-26 06:22:26.482	2026-10-27 00:17:42.564	\N	danh từ	N4	\N	\N	\N	\N	14
+49221	稼働	かどう	kadou	vận hành (máy móc, nhà máy)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	7
+49222	勧告	かんこく	kankoku	khuyến cáo, khuyến nghị	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	8
+49223	慣行	かんこう	kankou	tập quán, thông lệ	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	9
+49224	監修	かんしゅう	kanshuu	giám tu, biên tập chỉ đạo	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	10
 44644	挨拶	あいさつ	aisatsu	chào hỏi	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.22	\N	danh từ, động từ する	N4	\N	\N	\N	\N	15
+49225	帰属	きぞく	kizoku	thuộc về, quy thuộc	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	11
 44648	安心	あんしん	anshin	yên tâm	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.221	\N	danh từ, động từ する	N4	\N	\N	\N	\N	19
+49226	糾弾	きゅうだん	kyuudan	lên án, chỉ trích gay gắt	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	12
+49227	脅威	きょうい	kyoui	mối đe dọa	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N2	\N	\N	\N	\N	13
+49228	駆使	くし	kushi	sử dụng thành thạo, tận dụng	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	14
+49229	工面	くめん	kumen	xoay xở (tiền bạc)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	15
 27070	何処	どこ	doko	chỗ nào, đâu	3	2026-06-25 10:52:56.52	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	3
+49230	啓発	けいはつ	keihatsu	khai sáng, nâng cao nhận thức	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	16
+49231	故意	こい	koi	cố ý	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	17
+49232	高騰	こうとう	koutou	tăng vọt (giá)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	18
+49233	購読	こうどく	koudoku	đặt mua (báo, tạp chí)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	19
+49234	懇談	こんだん	kondan	trò chuyện thân mật, tọa đàm	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	20
+49235	裁量	さいりょう	sairyou	quyền tự quyết, tùy ý quyết định	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
+49236	査定	さてい	satei	thẩm định, đánh giá	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	22
+49237	参与	さんよ	san'yo	tham dự, tham gia (cố vấn)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	23
+49238	自粛	じしゅく	jishuku	tự kiềm chế, tự hạn chế	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	24
+49239	慈善	じぜん	jizen	từ thiện	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	25
+49240	諮問	しもん	shimon	trưng cầu ý kiến (cơ quan)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	26
+49241	斜陽	しゃよう	shayou	xế chiều, suy tàn	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	27
+49242	収拾	しゅうしゅう	shuushuu	dàn xếp, kiểm soát (tình hình)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	28
+49243	遵守	じゅんしゅ	junshu	tuân thủ	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	29
+49244	照会	しょうかい	shoukai	hỏi thông tin, tra cứu	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	30
+49245	所轄	しょかつ	shokatsu	thẩm quyền quản lý, sở tại	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
+49246	助長	じょちょう	jochou	tiếp tay, làm gia tăng (điều xấu)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	32
+49247	相殺	そうさい	sousai	bù trừ, triệt tiêu	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	33
+49248	嘆願	たんがん	tangan	thỉnh cầu, khẩn cầu	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	34
+49249	懲戒	ちょうかい	choukai	kỷ luật, trừng phạt	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
 47949	要因	よういん	youin	nhân tố	16403	2026-09-26 12:15:21.006	2026-10-26 16:44:57.239	\N	danh từ	N1	\N	\N	\N	\N	20
+49250	追随	ついずい	tsuizui	đi theo, bắt chước	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	36
+49251	抵触	ていしょく	teishoku	vi phạm, xung đột (luật)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	37
+49252	撤回	てっかい	tekkai	rút lại (phát ngôn, quyết định)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
+49253	添付	てんぷ	tenpu	đính kèm	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	39
+49254	統括	とうかつ	toukatsu	thống quản, quản lý chung	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	40
+49255	淘汰	とうた	touta	đào thải, sàng lọc	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	41
+49256	督促	とくそく	tokusoku	đôn đốc, thúc giục (thanh toán)	17011	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	42
+49257	内需	ないじゅ	naiju	nhu cầu nội địa	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	1
+49258	難航	なんこう	nankou	gặp khó khăn, bế tắc (đàm phán)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	2
+49259	氾濫	はんらん	hanran	lũ tràn; tràn lan	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	3
+49260	誹謗	ひぼう	hibou	phỉ báng, nói xấu	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	4
+49261	不振	ふしん	fushin	trì trệ, sa sút	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	5
+49262	付与	ふよ	fuyo	cấp cho, trao cho	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
 44653	怒る	おこる	okoru	tức giận	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.222	\N	động từ nhóm 1	N4	\N	\N	\N	\N	24
+49263	放棄	ほうき	houki	từ bỏ	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N2	\N	\N	\N	\N	7
+49264	抹消	まっしょう	masshou	xóa bỏ (đăng ký, dữ liệu)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	8
+49265	蔓延	まんえん	man'en	lan tràn, lây lan	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	9
+49266	猶予	ゆうよ	yuuyo	hoãn, gia hạn	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	10
+49267	誘致	ゆうち	yuuchi	thu hút (đầu tư, sự kiện)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	11
+49268	擁護	ようご	yougo	bảo vệ, bênh vực	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	12
+49269	履行	りこう	rikou	thực hiện (nghĩa vụ, hợp đồng)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	13
+49270	廉価	れんか	renka	giá rẻ	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, tính từ na	N1	\N	\N	\N	\N	14
+49271	商い	あきない	akinai	việc buôn bán	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
+49272	機運	きうん	kiun	thời cơ, xu thế	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	16
+49273	延滞	えんたい	entai	quá hạn (trả)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	17
+49274	概算	がいさん	gaisan	ước tính sơ bộ	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	18
 44654	笑う	わらう	warau	cười	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.222	\N	động từ nhóm 1	N4	\N	\N	\N	\N	25
+49275	画策	かくさく	kakusaku	mưu đồ, lên kế hoạch ngầm	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	19
 27071	此方	こちら	kochira	phía này, đằng này, chỗ này, đây	3	2026-06-25 10:52:56.521	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	4
+49276	棄権	きけん	kiken	bỏ quyền, bỏ cuộc	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	20
+49277	起訴	きそ	kiso	khởi tố	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	21
+49278	拠点	きょてん	kyoten	cứ điểm, cơ sở	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	22
+49279	控訴	こうそ	kouso	kháng cáo	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	23
 27705	\N	ロシア	roshia	Nga	13	2026-06-25 10:52:59.157	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	43
+49280	抗争	こうそう	kousou	đấu đá, tranh chấp	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	24
+49281	拘束	こうそく	kousoku	câu thúc, ràng buộc	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	25
+49282	根絶	こんぜつ	konzetsu	diệt tận gốc	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	26
+49283	搾取	さくしゅ	sakushu	bóc lột	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	27
 44629	気持ち	きもち	kimochi	cảm xúc, tâm trạng	16179	2026-09-26 06:22:26.482	2026-10-26 16:22:04.087	\N	danh từ	N4	\N	\N	\N	\N	0
+49284	失墜	しっつい	shittsui	mất (uy tín)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	28
+49285	辞退	じたい	jitai	từ chối, khước từ	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	29
 44647	成功	せいこう	seikou	thành công	16179	2026-09-26 06:22:26.482	2026-10-26 16:22:04.088	\N	danh từ, động từ する	N4	\N	\N	\N	\N	18
+49286	指標	しひょう	shihyou	chỉ số, chỉ tiêu	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	30
 44650	遠慮	えんりょ	enryo	ngại ngùng, khách sáo	16179	2026-09-26 06:22:26.482	2026-10-26 16:44:57.239	\N	danh từ, động từ する	N4	\N	\N	\N	\N	21
+49287	侵害	しんがい	shingai	xâm phạm	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	31
+49288	申告	しんこく	shinkoku	khai báo	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	32
+49289	親睦	しんぼく	shinboku	thân thiện, giao lưu	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	33
+49290	単身赴任	たんしんふにん	tanshinfunin	đi công tác xa nhà một mình	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	34
+49291	調達	ちょうたつ	choutatsu	huy động, thu mua	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
+49292	陳述	ちんじゅつ	chinjutsu	trình bày, khai (trước tòa)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	36
+49293	天災	てんさい	tensai	thiên tai	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	37
+49294	内定	ないてい	naitei	quyết định tuyển dụng (sơ bộ)	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
+49295	否認	ひにん	hinin	phủ nhận	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	39
+49296	備蓄	びちく	bichiku	dự trữ	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	40
+49297	名義	めいぎ	meigi	danh nghĩa, đứng tên	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	41
+49298	有償	ゆうしょう	yuushou	có trả phí	17012	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	42
+49299	容認	ようにん	younin	chấp nhận, dung thứ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	1
+49300	暗礁	あんしょう	anshou	đá ngầm; bế tắc	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	2
+49301	遺産	いさん	isan	di sản	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	3
+49302	陰謀	いんぼう	inbou	âm mưu	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	4
+49303	渦中	かちゅう	kachuu	giữa tâm điểm (sự việc)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	5
+49304	格付け	かくづけ	kakuzuke	xếp hạng, đánh giá xếp loại	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	6
+49305	寡占	かせん	kasen	độc quyền nhóm	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	7
+49306	株価	かぶか	kabuka	giá cổ phiếu	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	8
 44689	健康	けんこう	kenkou	sức khỏe	16181	2026-09-26 06:22:27.23	2026-10-27 00:12:07.133	\N	danh từ	N4	\N	\N	\N	\N	0
+49307	起業	きぎょう	kigyou	khởi nghiệp	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	9
+49308	基金	ききん	kikin	quỹ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	10
+49309	帰化	きか	kika	nhập quốc tịch	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	11
+49310	供述	きょうじゅつ	kyoujutsu	lời khai	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	12
 44659	褒める	ほめる	homeru	khen	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.224	\N	động từ nhóm 2	N4	\N	\N	\N	\N	30
+49311	拠出	きょしゅつ	kyoshutsu	đóng góp (quỹ)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	13
+49312	禁錮	きんこ	kinko	tù giam (không lao động)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	14
+49313	検察	けんさつ	kensatsu	viện kiểm sát	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	15
 44660	叱る	しかる	shikaru	mắng	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.225	\N	động từ nhóm 1	N4	\N	\N	\N	\N	31
+49314	原告	げんこく	genkoku	nguyên đơn	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	16
+49315	公約	こうやく	kouyaku	cam kết (tranh cử)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	17
+49316	国債	こくさい	kokusai	trái phiếu chính phủ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	18
+49317	裁判官	さいばんかん	saibankan	thẩm phán	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	19
+49318	債務	さいむ	saimu	khoản nợ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	20
+49319	失業率	しつぎょうりつ	shitsugyouritsu	tỷ lệ thất nghiệp	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	21
 44662	思い出す	おもいだす	omoidasu	nhớ ra	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.225	\N	động từ nhóm 1	N4	\N	\N	\N	\N	33
 44665	迎える	むかえる	mukaeru	đón	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.226	\N	động từ nhóm 2	N4	\N	\N	\N	\N	36
+49320	上場	じょうじょう	joujou	niêm yết (cổ phiếu)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	22
+49321	職権	しょっけん	shokken	quyền hạn chức vụ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	23
+49322	声明	せいめい	seimei	tuyên bố (chính thức)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	24
 44667	付き合う	つきあう	tsukiau	hẹn hò; giao du	16179	2026-09-26 06:22:26.482	2026-10-27 00:21:21.227	\N	động từ nhóm 1	N4	\N	\N	\N	\N	38
+49323	選挙区	せんきょく	senkyoku	khu vực bầu cử	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	25
+49324	租税	そぜい	sozei	thuế khóa	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	26
+49325	弾劾	だんがい	dangai	luận tội, buộc tội	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	27
 44669	悲しい	かなしい	kanashii	buồn	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.228	\N	tính từ i	N4	\N	\N	\N	\N	0
+49326	陳情	ちんじょう	chinjou	kiến nghị, thỉnh nguyện	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	28
+49327	抵当	ていとう	teitou	thế chấp	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	29
+49328	天下り	あまくだり	amakudari	quan chức về làm ở doanh nghiệp liên quan	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	30
+49329	党首	とうしゅ	toushu	chủ tịch đảng	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	31
 44652	謝る	あやまる	ayamaru	xin lỗi	16179	2026-09-26 06:22:26.482	2026-10-26 16:22:04.089	\N	động từ nhóm 1	N4	\N	\N	\N	\N	23
 45347	\N	なるほど	naruhodo	ra là vậy	16222	2026-09-26 12:14:59.166	2026-10-26 16:40:59.178	\N	phó từ	N3	\N	\N	\N	\N	8
+49330	特派員	とくはいん	tokuhain	phóng viên thường trú	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	32
+49331	任期	にんき	ninki	nhiệm kỳ	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	33
+49332	被告	ひこく	hikoku	bị cáo	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	34
+49333	被災	ひさい	hisai	bị thiên tai	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	35
+49334	批准	ひじゅん	hijun	phê chuẩn	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	36
+49335	補正	ほせい	hosei	hiệu chỉnh, bổ sung (ngân sách)	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	37
+49336	連立	れんりつ	renritsu	liên minh, liên hiệp	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	38
 44671	恥ずかしい	はずかしい	hazukashii	xấu hổ	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.228	\N	tính từ i	N4	\N	\N	\N	\N	2
 27715	手伝います	てつだいます	tetsudaimasu	giúp đỡ	14	2026-06-25 10:52:59.332	2026-10-28 05:54:00.227	\N	động từ nhóm 1	N5	\N	\N	\N	\N	8
 27716	呼びます	よびます	yobimasu	gọi	14	2026-06-25 10:52:59.334	2026-10-28 05:54:00.227	\N	động từ nhóm 1	N5	\N	\N	\N	\N	9
 27731	名前	なまえ	namae	tên	14	2026-06-25 10:52:59.369	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	22
 44708	声	こえ	koe	giọng nói	16181	2026-09-26 06:22:27.23	2026-10-27 00:12:07.134	\N	danh từ	N4	\N	\N	\N	\N	19
+49337	概況	がいきょう	gaikyou	tình hình chung	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	39
+49338	底上げ	そこあげ	sokoage	nâng mặt bằng chung	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ, động từ する	N1	\N	\N	\N	\N	40
+49339	引き合い	ひきあい	hikiai	dẫn chứng; hỏi mua	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	41
+49340	骨抜き	ほねぬき	honenuki	bị làm mất hiệu lực	17013	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	danh từ	N1	\N	\N	\N	\N	42
+49341	営む	いとなむ	itonamu	kinh doanh, điều hành; sinh sống	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
+49342	挑む	いどむ	idomu	thử thách, đương đầu	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	2
 44675	偉い	えらい	erai	giỏi giang, vĩ đại	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.229	\N	tính từ i	N4	\N	\N	\N	\N	6
+49343	否む	いなむ	inamu	phủ nhận, từ chối	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	3
+49344	戒める	いましめる	imashimeru	răn đe, khuyên răn	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	4
+49345	潤う	うるおう	uruou	được thấm ẩm; trở nên sung túc	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	5
+49346	怠る	おこたる	okotaru	lơ là, sao nhãng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	6
 44677	真面目	まじめ	majime	nghiêm túc, chăm chỉ	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.23	\N	tính từ na	N4	\N	\N	\N	\N	8
+49347	赴く	おもむく	omomuku	đi đến, hướng tới (trang trọng)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	7
+49348	害する	がいする	gaisuru	làm tổn hại, làm hỏng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ する	N1	\N	\N	\N	\N	8
+49349	偏る	かたよる	katayoru	thiên lệch, lệch về một phía	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	9
 44680	幸せ	しあわせ	shiawase	hạnh phúc	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.231	\N	tính từ na	N4	\N	\N	\N	\N	11
+49350	極める	きわめる	kiwameru	đạt tới cực điểm, tinh thông	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	10
+49351	企てる	くわだてる	kuwadateru	mưu tính, âm mưu	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	11
+49352	拒む	こばむ	kobamu	từ chối, cự tuyệt	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	12
+49353	遮る	さえぎる	saegiru	chặn, ngắt lời, che khuất	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	13
+49354	察する	さっする	sassuru	đoán biết, thấu hiểu	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ する	N1	\N	\N	\N	\N	14
 27744	\N	あとで	atode	sau	14	2026-06-25 10:52:59.401	2026-10-28 05:54:00.227	\N	phó từ	N5	\N	\N	\N	\N	35
+49355	諭す	さとす	satosu	khuyên bảo, dạy dỗ	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	15
 44663	感じる	かんじる	kanjiru	cảm thấy	16179	2026-09-26 06:22:26.482	2026-10-26 16:22:04.089	\N	động từ nhóm 2	N4	\N	\N	\N	\N	34
+49356	据える	すえる	sueru	đặt, kê; bổ nhiệm	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	16
+49357	弛む	たるむ	tarumu	chùng, lơi lỏng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	17
+49358	費やす	ついやす	tsuiyasu	tiêu tốn, dành (thời gian, tiền)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	18
 44762	予約	よやく	yoyaku	đặt trước	16183	2026-09-26 06:22:27.923	2026-10-26 16:22:04.094	\N	danh từ, động từ する	N4	\N	\N	\N	\N	13
 44763	約束	やくそく	yakusoku	lời hứa, cuộc hẹn	16183	2026-09-26 06:22:27.923	2026-10-26 16:22:04.095	\N	danh từ, động từ する	N4	\N	\N	\N	\N	14
 44674	親しい	したしい	shitashii	thân thiết	16180	2026-09-26 06:22:26.926	2026-10-26 16:27:33.55	\N	tính từ i	N4	\N	\N	\N	\N	5
 38001	協議	きょうぎ	kyōgi	hiệp thương, thảo luận	16881	2026-09-12 14:42:41.782	2026-10-26 16:30:02.284	\N	danh từ, động từ する	N3	\N	\N	\N	\N	9
 44672	懐かしい	なつかしい	natsukashii	nhớ nhung, hoài niệm	16180	2026-09-26 06:22:26.926	2026-10-26 16:50:10.82	\N	tính từ i	N4	\N	\N	\N	\N	3
+49359	貫く	つらぬく	tsuranuku	xuyên qua; giữ vững đến cùng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	19
+49360	途絶える	とだえる	todaeru	bị gián đoạn, đứt quãng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	20
+49361	滞る	とどこおる	todokooru	bị đình trệ, chậm trễ	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	21
+49362	阻む	はばむ	habamu	ngăn cản, cản trở	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	22
+49363	紡ぐ	つむぐ	tsumugu	xe sợi; dệt nên (câu chuyện)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	23
+49364	仰ぐ	あおぐ	aogu	ngước nhìn; xin (chỉ thị, ý kiến)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	24
+49365	欺く	あざむく	azamuku	lừa gạt	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	25
+49366	誂える	あつらえる	atsuraeru	đặt làm riêng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	26
+49367	侮る	あなどる	anadoru	coi thường, khinh thường	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	27
+49368	操る	あやつる	ayatsuru	điều khiển, sử dụng thành thạo	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	28
+49369	危ぶむ	あやぶむ	ayabumu	lo ngại, nghi ngại	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	29
 44682	失礼	しつれい	shitsurei	thất lễ	16180	2026-09-26 06:22:26.926	2026-10-27 00:21:21.231	\N	tính từ na	N4	\N	\N	\N	\N	13
+49370	歩む	あゆむ	ayumu	bước đi (trên con đường đời)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	30
+49371	案じる	あんじる	anjiru	lo lắng; nghĩ ra	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	31
+49372	訝る	いぶかる	ibukaru	nghi ngờ, lấy làm lạ	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	32
+49373	\N	うつむく	utsumuku	cúi gằm mặt	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	33
 27072	其方	そちら	sochira	phía đó, đằng đó, chỗ đó, đó	3	2026-06-25 10:52:56.523	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	5
+49374	埋め合わせる	うめあわせる	umeawaseru	bù đắp	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	34
+49375	敬う	うやまう	uyamau	kính trọng	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	35
+49376	潤す	うるおす	uruosu	làm ẩm; làm sung túc	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	36
+49377	帯びる	おびる	obiru	mang, chứa (tính chất)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	37
+49378	及ぶ	およぶ	oyobu	lan đến, đạt tới	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	38
+49379	掲げる	かかげる	kakageru	giương cao; nêu ra (mục tiêu)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	39
+49380	嵩む	かさむ	kasamu	tăng lên, phình ra (chi phí)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	40
+49381	\N	かさばる	kasabaru	cồng kềnh	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	41
+49382	霞む	かすむ	kasumu	mờ đi, mờ sương	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	42
+49383	叶う	かなう	kanau	thành hiện thực (ước mơ)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	43
+49384	兼ねる	かねる	kaneru	kiêm; khó mà (〜かねる)	17014	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	44
+49385	絡む	からむ	karamu	quấn vào; dính líu	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
+49386	\N	きしむ	kishimu	kêu cót két	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	2
+49387	築く	きずく	kizuku	xây dựng (quan hệ, nền tảng)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	3
+49388	鍛える	きたえる	kitaeru	rèn luyện	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	4
+49389	朽ちる	くちる	kuchiru	mục nát	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	5
+49390	覆る	くつがえる	kutsugaeru	bị lật đổ, bị đảo ngược	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	6
+49391	汲む	くむ	kumu	múc; thấu hiểu (tâm tư)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	7
+49392	\N	こじれる	kojireru	trở nên rắc rối, xấu đi	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	8
+49393	\N	こだわる	kodawaru	câu nệ; kỹ tính, chăm chút	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	9
+49394	凝らす	こらす	korasu	tập trung, dồn (tâm sức)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	10
+49395	凝る	こる	koru	say mê; bị mỏi cứng	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	11
+49396	裂く	さく	saku	xé, chia cắt	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	12
+49397	捧げる	ささげる	sasageru	dâng hiến	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	13
+49398	授ける	さずける	sazukeru	ban cho, truyền dạy	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	14
+49399	冷める	さめる	sameru	nguội; nguội lạnh (tình cảm)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	15
+49400	強いる	しいる	shiiru	ép buộc	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	16
+49401	\N	しくじる	shikujiru	làm hỏng, thất bại	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	17
 45348	\N	せっかく	sekkaku	đã mất công	16222	2026-09-26 12:14:59.166	2026-10-26 16:40:59.18	\N	phó từ	N3	\N	\N	\N	\N	9
+49402	\N	しのぐ	shinogu	vượt qua (khó khăn); vượt trội	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	18
+49403	渋る	しぶる	shiburu	ngần ngại, chần chừ	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	19
+49404	退く	しりぞく	shirizoku	lùi lại; rút lui	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	20
+49405	\N	すすぐ	susugu	súc, xả nước	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	21
+49406	澄ます	すます	sumasu	làm trong; lắng (tai)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	22
+49407	急かす	せかす	sekasu	hối thúc	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	23
+49408	添える	そえる	soeru	đính kèm, thêm vào	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	24
+49409	背く	そむく	somuku	làm trái, phản bội	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	25
+49410	絶える	たえる	taeru	dứt, tuyệt	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	26
+49411	\N	たしなむ	tashinamu	có thú (thưởng thức) ở mức vừa phải	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	27
+49412	携える	たずさえる	tazusaeru	mang theo; chung tay	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	28
+49413	称える	たたえる	tataeru	ca ngợi	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	29
+49414	漂う	ただよう	tadayou	trôi dạt; lan tỏa (bầu không khí)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	30
+49415	立て替える	たてかえる	tatekaeru	trả trước hộ	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	31
+49416	潰える	ついえる	tsuieru	tan biến, sụp đổ (hy vọng)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	32
 44684	\N	やっと	yatto	cuối cùng thì	16180	2026-09-26 06:22:26.926	2026-10-27 00:14:52.723	\N	phó từ	N4	\N	\N	\N	\N	15
+49417	司る	つかさどる	tsukasadoru	quản lý, cai quản	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	33
+49418	償う	つぐなう	tsugunau	đền bù, chuộc lỗi	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	34
+49419	慎む	つつしむ	tsutsushimu	thận trọng, kiềm chế	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	35
+49420	募る	つのる	tsunoru	chiêu mộ, quyên góp; tăng lên	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	36
+49421	\N	とがめる	togameru	trách móc; cắn rứt	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	37
+49422	途切れる	とぎれる	togireru	đứt quãng, gián đoạn	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	38
+49423	研ぐ	とぐ	togu	mài; vo (gạo)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	39
+49424	遂げる	とげる	togeru	hoàn thành, đạt được	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	40
+49425	取り繕う	とりつくろう	toritsukurou	che đậy, chữa thẹn	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	41
 44691	風邪	かぜ	kaze	cảm cúm	16181	2026-09-26 06:22:27.23	2026-10-27 00:21:21.232	\N	danh từ	N4	\N	\N	\N	\N	2
+49426	詰る	なじる	najiru	trách móc, chỉ trích	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	42
+49427	倣う	ならう	narau	noi theo, bắt chước	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	43
 44696	退院	たいいん	taiin	xuất viện	16181	2026-09-26 06:22:27.23	2026-10-27 00:21:21.233	\N	danh từ, động từ する	N4	\N	\N	\N	\N	7
+49428	\N	ねだる	nedaru	vòi vĩnh, nài nỉ	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	44
 44702	喉	のど	nodo	họng	16181	2026-09-26 06:22:27.23	2026-10-27 00:21:21.233	\N	danh từ	N4	\N	\N	\N	\N	13
+49429	練る	ねる	neru	nhào; trau chuốt (kế hoạch)	17015	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	45
 27804	電話します	でんわします	denwashimasu	gọi điện thoại	16	2026-06-25 10:52:59.743	2026-10-28 05:54:00.227	\N	động từ nhóm 3	N5	\N	\N	\N	/media/openmoji/1F4DE.svg	13
 27819	\N	おなか	onaka	bụng	16	2026-06-25 10:52:59.773	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	\N	28
+49430	臨む	のぞむ	nozomu	đối diện; tham dự	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
+49431	罵る	ののしる	nonoshiru	chửi rủa	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	2
+49432	図る	はかる	hakaru	lập kế hoạch, nhằm mục đích	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	3
+49433	諮る	はかる	hakaru	hỏi ý kiến (hội đồng)	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	4
+49434	励む	はげむ	hagemu	nỗ lực, chăm chỉ	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	5
+49435	秘める	ひめる	himeru	ẩn chứa	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	6
+49436	\N	ひるむ	hirumu	chùn bước, nao núng	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	7
+49437	耽る	ふける	fukeru	say mê, đắm chìm	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	8
+49438	隔てる	へだてる	hedateru	ngăn cách	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	9
+49439	報いる	むくいる	mukuiru	đền đáp	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	10
+49440	蒸す	むす	musu	hấp; oi bức	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	11
+49441	群がる	むらがる	muragaru	tụ tập thành đám	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	12
+49442	紛れる	まぎれる	magireru	lẫn vào; khuây khỏa	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	13
+49443	勝る	まさる	masaru	vượt trội, hơn	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	14
 44766	説明	せつめい	setsumei	giải thích	16183	2026-09-26 06:22:27.923	2026-10-26 16:22:04.096	\N	danh từ, động từ する	N4	\N	\N	\N	\N	17
+49444	\N	まごつく	magotsuku	lúng túng, bối rối	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	15
+49445	見計らう	みはからう	mihakarau	canh chừng (thời điểm)	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	16
+49446	設ける	もうける	moukeru	thiết lập, tạo ra	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	17
+49447	目論む	もくろむ	mokuromu	mưu tính	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	18
+49448	\N	もたらす	motarasu	mang lại, gây ra	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	19
 44690	病気	びょうき	byouki	bệnh	16181	2026-09-26 06:22:27.23	2026-10-27 00:03:11.156	\N	danh từ	N4	\N	\N	\N	\N	1
 44693	薬	くすり	kusuri	thuốc	16181	2026-09-26 06:22:27.23	2026-10-27 00:03:11.156	\N	danh từ	N4	\N	\N	\N	\N	4
 44699	歯医者	はいしゃ	haisha	nha sĩ	16181	2026-09-26 06:22:27.23	2026-10-27 00:03:11.157	\N	danh từ	N4	\N	\N	\N	\N	10
@@ -116546,19 +123507,133 @@ COPY public."Vocabulary" (id, kanji, kana, romaji, meaning, "lessonId", "created
 44687	\N	もちろん	mochiron	tất nhiên	16180	2026-09-26 06:22:26.926	2026-10-27 00:05:32.05	\N	phó từ	N4	\N	\N	\N	\N	18
 44701	首	くび	kubi	cổ	16181	2026-09-26 06:22:27.23	2026-10-27 00:08:32.054	\N	danh từ	N4	\N	\N	\N	\N	12
 44704	指	ゆび	yubi	ngón tay	16181	2026-09-26 06:22:27.23	2026-10-27 00:08:32.054	\N	danh từ	N4	\N	\N	\N	\N	15
+49449	弄ぶ	もてあそぶ	moteasobu	đùa giỡn, chơi đùa	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	20
+49450	催す	もよおす	moyoosu	tổ chức; cảm thấy (buồn ngủ…)	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	21
+49451	漏らす	もらす	morasu	làm rò rỉ; buột miệng	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	22
+49452	和らげる	やわらげる	yawarageru	làm dịu đi	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	23
 27073	彼方	あちら	achira	phía kia, đằng kia, chỗ kia, kia	3	2026-06-25 10:52:56.524	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	6
+49453	委ねる	ゆだねる	yudaneru	giao phó	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	24
+49454	蘇る	よみがえる	yomigaeru	hồi sinh, sống lại	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	25
+49455	煩う	わずらう	wazurau	lo phiền, đau ốm	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	26
+49456	詫びる	わびる	wabiru	xin lỗi, tạ lỗi	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	27
+49457	\N	うろたえる	urotaeru	hoảng hốt, cuống quýt	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	28
+49458	\N	おじけづく	ojikezuku	nhụt chí, sợ hãi	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	29
 27074	何方	どちら	dochira	phía nào, đằng nào, chỗ nào, đâu	3	2026-06-25 10:52:56.526	2026-10-28 05:54:00.227	\N	đại từ	N5	\N	\N	\N	\N	7
+49459	\N	おどける	odokeru	pha trò, làm trò hề	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	30
+49460	\N	おののく	ononoku	run sợ	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	31
+49461	\N	かこつける	kakotsukeru	lấy cớ	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	32
+49462	\N	かじる	kajiru	gặm; biết sơ qua	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	33
+49463	\N	かばう	kabau	che chở, bênh vực	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	34
+49464	\N	くすぐる	kusuguru	cù; kích thích (lòng tự ái…)	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	35
+49465	\N	くつろぐ	kutsurogu	thư giãn	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	36
+49466	\N	けなす	kenasu	chê bai	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	37
+49467	\N	こきつかう	kokitsukau	sai khiến, bắt làm như nô lệ	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	38
 27075	教室	きょうしつ	kyoshitsu	lớp học, phòng học	3	2026-06-25 10:52:56.528	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3EB.svg	8
+49468	\N	ごまかす	gomakasu	lừa, che giấu, lấp liếm	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	39
+49469	\N	さえずる	saezuru	(chim) hót líu lo	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	40
+49470	\N	さすらう	sasurau	lang thang, phiêu bạt	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	41
+49471	\N	しおれる	shioreru	héo rũ; ủ rũ	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	42
+49472	\N	しつける	shitsukeru	dạy dỗ (nề nếp)	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	43
+49473	\N	すねる	suneru	dỗi, hờn	17016	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	44
+49474	\N	せびる	sebiru	vòi tiền, nài xin	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
+49475	\N	そそのかす	sosonokasu	xúi giục	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	2
+49476	\N	たじろぐ	tajirogu	chùn lại, lùi bước	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	3
+49477	\N	たたずむ	tatazumu	đứng lặng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	4
+49478	\N	ちらつく	chiratsuku	lấp ló, chập chờn	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	5
+49479	\N	つまずく	tsumazuku	vấp ngã; vấp váp	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	6
 44709	気分	きぶん	kibun	tâm trạng, cảm giác	16181	2026-09-26 06:22:27.23	2026-10-26 16:22:04.091	\N	danh từ	N4	\N	\N	\N	\N	20
+49480	\N	とろける	torokeru	tan chảy	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	7
+49481	\N	なだめる	nadameru	dỗ dành, xoa dịu	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	8
+49482	\N	にじむ	nijimu	thấm, nhòe	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	9
+49483	\N	ぬかるむ	nukarumu	lầy lội	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	10
+49484	\N	はしゃぐ	hashagu	vui đùa ầm ĩ	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	11
 44707	髪	かみ	kami	tóc	16181	2026-09-26 06:22:27.23	2026-10-27 00:03:11.178	\N	danh từ	N4	\N	\N	\N	\N	18
+49485	\N	ばてる	bateru	kiệt sức, mệt lả	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	12
+49486	\N	ひけらかす	hikerakasu	khoe khoang	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	13
+49487	\N	ぼやく	boyaku	càu nhàu	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	14
+49488	\N	まくしたてる	makushitateru	nói tuôn xối xả	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	15
+49489	\N	むせる	museru	bị sặc	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	16
+49490	\N	もがく	mogaku	giãy giụa, vùng vẫy	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	17
+49491	\N	もつれる	motsureru	rối; lằng nhằng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	18
+49492	\N	ゆすぐ	yusugu	súc, tráng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	19
+49493	\N	よろめく	yoromeku	loạng choạng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	20
+49494	言い張る	いいはる	iiharu	khăng khăng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	21
+49495	打ち込む	うちこむ	uchikomu	đóng vào; dốc sức	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	22
+49496	売り込む	うりこむ	urikomu	chào hàng, quảng bá bản thân	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	23
 44706	背中	せなか	senaka	lưng	16181	2026-09-26 06:22:27.23	2026-10-27 00:08:32.055	\N	danh từ	N4	\N	\N	\N	\N	17
 44711	血	ち	chi	máu	16181	2026-09-26 06:22:27.23	2026-10-27 00:08:32.055	\N	danh từ	N4	\N	\N	\N	\N	22
 44713	力	ちから	chikara	sức lực	16181	2026-09-26 06:22:27.23	2026-10-27 00:12:07.135	\N	danh từ	N4	\N	\N	\N	\N	24
+49497	押し切る	おしきる	oshikiru	bất chấp phản đối mà làm	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	24
+49498	思い立つ	おもいたつ	omoitatsu	chợt nảy ý định	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	25
+49499	切り詰める	きりつめる	kiritsumeru	cắt giảm, thắt chặt	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	26
+49500	切り出す	きりだす	kiridasu	mở lời; đốn (gỗ)	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	27
 44714	運動	うんどう	undou	vận động, thể dục	16181	2026-09-26 06:22:27.23	2026-10-27 00:21:21.234	\N	danh từ, động từ する	N4	\N	\N	\N	\N	25
+49501	繰り越す	くりこす	kurikosu	chuyển sang (kỳ sau)	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	28
+49502	込み上げる	こみあげる	komiageru	trào dâng (cảm xúc)	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	29
+49503	差し支える	さしつかえる	sashitsukaeru	gây trở ngại	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	30
+49504	立ち直る	たちなおる	tachinaoru	vực dậy, hồi phục	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	31
+49505	立て込む	たてこむ	tatekomu	bận dồn dập	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	32
+49506	突き止める	つきとめる	tsukitomeru	truy ra, xác định	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	33
+49507	取り締まる	とりしまる	torishimaru	kiểm soát, trấn áp	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	34
 27077	事務所	じむしょ	jimusho	văn phòng	3	2026-06-25 10:52:56.532	2026-10-28 05:54:00.227	\N	danh từ	N5	\N	\N	\N	/media/openmoji/1F3E2.svg	10
+49508	成り立つ	なりたつ	naritatsu	được hình thành, đứng vững	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	35
+49509	練り直す	ねりなおす	nerinaosu	soạn lại, xem xét lại	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	36
+49510	乗り出す	のりだす	noridasu	bắt tay vào; nhoài người	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	37
+49511	張り合う	はりあう	hariau	ganh đua	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	38
+49512	引き下げる	ひきさげる	hikisageru	hạ xuống, giảm	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	39
+49513	引きずる	ひきずる	hikizuru	kéo lê; vương vấn	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	40
+49514	踏み切る	ふみきる	fumikiru	quyết định dứt khoát	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	41
+49515	見合う	みあう	miau	tương xứng	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	42
+49516	見せびらかす	みせびらかす	misebirakasu	khoe khoang	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	43
+49517	持ち越す	もちこす	mochikosu	chuyển sang (lần sau)	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	44
+49518	持ちこたえる	もちこたえる	mochikotaeru	trụ vững	17017	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	45
+49519	割り込む	わりこむ	warikomu	chen ngang	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	1
+49520	相次ぐ	あいつぐ	aitsugu	liên tiếp xảy ra	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	2
+49521	\N	あおる	aoru	kích động, thổi bùng	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	3
+49522	明かす	あかす	akasu	tiết lộ; thức trắng (đêm)	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	4
+49523	\N	あざける	azakeru	chế nhạo	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	5
+49524	値する	あたいする	ataisuru	xứng đáng	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ する	N1	\N	\N	\N	\N	6
+49525	誤る	あやまる	ayamaru	sai lầm, nhầm	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	7
+49526	歩み寄る	あゆみよる	ayumiyoru	nhượng bộ lẫn nhau	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	8
+49527	言い渡す	いいわたす	iiwatasu	tuyên (án), thông báo chính thức	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	9
+49528	居直る	いなおる	inaoru	trở mặt, quay ra lấn lướt	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	10
+49529	入り組む	いりくむ	irikumu	phức tạp, chằng chịt	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	11
+49530	打ち消す	うちけす	uchikesu	phủ nhận, xóa bỏ	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	12
+49531	\N	うぬぼれる	unuboreru	tự phụ, tự mãn	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	13
+49532	上回る	うわまわる	uwamawaru	vượt quá	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	14
+49533	追い込む	おいこむ	oikomu	dồn vào	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	15
+49534	臆する	おくする	okusuru	e sợ, rụt rè	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ する	N1	\N	\N	\N	\N	16
+49535	押し付ける	おしつける	oshitsukeru	ép buộc, đùn đẩy	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N2	\N	\N	\N	\N	17
+49536	\N	かいつまむ	kaitsumamu	tóm tắt	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	18
+49537	食い違う	くいちがう	kuichigau	mâu thuẫn, không khớp	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	19
+49538	\N	くじける	kujikeru	nản lòng	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	20
+49539	口ずさむ	くちずさむ	kuchizusamu	ngân nga	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	21
+49540	苦にする	くにする	kunisuru	lo phiền, bận tâm	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	22
+49541	\N	こじらせる	kojiraseru	làm trầm trọng thêm	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	23
+49542	小耳にはさむ	こみみにはさむ	komiminihasamu	nghe lỏm	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	24
+49543	さじを投げる	さじをなげる	sajiwonageru	bó tay, buông xuôi	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	cụm từ	N1	\N	\N	\N	\N	25
+49544	差し掛かる	さしかかる	sashikakaru	đi tới, bước vào (giai đoạn)	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	26
+49545	締めくくる	しめくくる	shimekukuru	kết thúc, tổng kết	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	27
+49546	擦り減る	すりへる	suriheru	mòn đi	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	28
+49547	せめぎ合う	せめぎあう	semegiau	giằng co, tranh chấp	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	29
+49548	\N	そらす	sorasu	lảng tránh, quay đi	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	30
+49549	絶やす	たやす	tayasu	làm tắt, để mất (lửa, nụ cười)	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	31
+49550	問い詰める	といつめる	toitsumeru	chất vấn dồn dập	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	32
 44715	散歩	さんぽ	sanpo	đi dạo	16181	2026-09-26 06:22:27.23	2026-10-27 00:21:21.235	\N	danh từ, động từ する	N4	\N	\N	\N	\N	26
 44719	太る	ふとる	futoru	béo lên	16182	2026-09-26 06:22:27.624	2026-10-27 00:21:21.236	\N	động từ nhóm 1	N4	\N	\N	\N	\N	0
+49551	\N	とどめる	todomeru	giữ lại, giới hạn	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	33
+49552	取り留める	とりとめる	toritomeru	giữ được (mạng sống)	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	34
+49553	名乗り出る	なのりでる	nanorideru	tự đứng ra nhận	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	35
+49554	\N	のさばる	nosabaru	hoành hành	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	36
 44720	痩せる	やせる	yaseru	gầy đi	16182	2026-09-26 06:22:27.624	2026-10-27 00:21:21.236	\N	động từ nhóm 2	N4	\N	\N	\N	\N	1
+49555	\N	はかどる	hakadoru	tiến triển thuận lợi	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N2	\N	\N	\N	\N	37
+49556	踏みにじる	ふみにじる	fuminijiru	chà đạp	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	38
+49557	振るう	ふるう	furuu	vung; phát huy	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	39
+49558	\N	へりくだる	herikudaru	khiêm nhường hạ mình	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	40
+49559	見かねる	みかねる	mikaneru	không thể đứng nhìn	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 2	N1	\N	\N	\N	\N	41
+49560	見くびる	みくびる	mikubiru	xem thường	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	42
+49561	\N	むしばむ	mushibamu	gặm nhấm, ăn mòn	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	43
+49562	もみ消す	もみけす	momikesu	ém nhẹm	17035	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402	\N	động từ nhóm 1	N1	\N	\N	\N	\N	44
 44722	治す	なおす	naosu	chữa	16182	2026-09-26 06:22:27.624	2026-10-27 00:21:21.237	\N	động từ nhóm 1	N4	\N	\N	\N	\N	3
 44724	折れる	おれる	oreru	bị gãy	16182	2026-09-26 06:22:27.624	2026-10-27 00:21:21.238	\N	động từ nhóm 2	N4	\N	\N	\N	\N	5
 44730	休憩	きゅうけい	kyuukei	nghỉ giải lao	16182	2026-09-26 06:22:27.624	2026-10-26 16:27:33.552	\N	danh từ, động từ する	N4	\N	\N	\N	\N	11
@@ -142558,6 +149633,683 @@ COPY public."VocabularyExample" (id, "vocabularyId", ja, kana, vi, "sortOrder", 
 13929	42389	無論、私も参加します。	むろん、わたしも さんか します。	Dĩ nhiên là tôi cũng tham gia.	0	2026-10-27 02:40:46.502	2026-10-27 02:40:46.502
 13931	42513	彼は自己流で料理を覚えた。	かれは じこりゅうで りょうりを おぼえた。	Anh ấy tự học nấu ăn theo kiểu của mình.	0	2026-10-27 02:40:46.502	2026-10-27 02:40:46.502
 13932	41559	真心を込めて料理を作った。	まごころを こめて りょうりを つくった。	Tôi nấu món ăn bằng cả tấm lòng chân thành.	0	2026-10-27 02:40:46.502	2026-10-27 02:40:46.502
+14549	48905	軍事力を誇示する。	ぐんじりょくを こじ する。	Phô trương sức mạnh quân sự.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14588	48944	この布は色合いが美しい。	この ぬのは いろあいが うつくしい。	Tấm vải này có sắc màu đẹp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14589	48945	内輪だけで食事会をした。	うちわだけで しょくじかいを した。	Đã tổ chức bữa ăn chỉ trong nội bộ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14530	48886	それは社内の暗黙のルールだ。	それは しゃないの あんもくの ルールだ。	Đó là quy tắc ngầm trong công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14531	48887	新年度に向けて意気込みを語った。	しん ねんどに むけて いきごみを かたった。	Anh ấy nói về quyết tâm cho năm tài chính mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14532	48888	大自然に畏敬の念を抱く。	だい しぜんに いけいの ねんを いだく。	Mang lòng kính sợ trước thiên nhiên hùng vĩ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14533	48889	今回の事態は誠に遺憾です。	こんかいの じたいは まことに いかんです。	Sự việc lần này thật vô cùng đáng tiếc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14534	48890	筆者の意図を正確に読み取る。	ひっしゃの いとを せいかくに よみとる。	Đọc hiểu chính xác ý đồ của tác giả.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14535	48891	備えあれば憂いなし。	そなえ あれば うれい なし。	Có chuẩn bị thì không lo lắng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14536	48892	彼は最高の栄誉に輝いた。	かれは さいこうの えいよに かがやいた。	Anh ấy đã đạt vinh dự cao nhất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14537	48893	半生を回顧する本を出版した。	はんせいを かいこ する ほんを しゅっぱん した。	Ông ấy xuất bản cuốn sách hồi tưởng nửa đời mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14538	48894	理想と現実が乖離している。	りそうと げんじつが かいり している。	Lý tưởng và hiện thực đang xa rời nhau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14539	48895	画一的な教育が問題視されている。	かくいつてきな きょういくが もんだいし されている。	Giáo dục rập khuôn đang bị xem là vấn đề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14540	48896	どんな批判も甘受するつもりだ。	どんな ひはんも かんじゅ するつもりだ。	Tôi định chấp nhận mọi lời phê phán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14541	48897	白を基調とした部屋。	しろを きちょうと した へや。	Căn phòng lấy màu trắng làm tông chủ đạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14542	48898	両チームの実力は拮抗している。	りょう チームの じつりょくは きっこう している。	Thực lực hai đội ngang ngửa nhau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14543	48899	人の心の機微に触れる小説。	ひとの こころの きびに ふれる しょうせつ。	Cuốn tiểu thuyết chạm đến những uẩn khúc trong lòng người.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14544	48900	彼の言葉には欺瞞が感じられる。	かれの ことばには ぎまんが かんじられる。	Có thể cảm thấy sự giả dối trong lời anh ta.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14545	48901	私たちは科学の恩恵を享受している。	わたしたちは かがくの おんけいを きょうじゅ している。	Chúng ta đang được hưởng lợi ích của khoa học.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14546	48902	苦渋の決断を迫られた。	くじゅうの けつだんを せまられた。	Bị buộc phải đưa ra quyết định đầy khổ tâm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14547	48903	子どもの人格形成に家庭は重要だ。	こどもの じんかく けいせいに かていは じゅうようだ。	Gia đình quan trọng với việc hình thành nhân cách trẻ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14548	48904	両者は互角の戦いを見せた。	りょうしゃは ごかくの たたかいを みせた。	Hai bên đã cho thấy trận đấu ngang tài ngang sức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14550	48906	客が来ないのは大きな誤算だった。	きゃくが こないのは おおきな ごさんだった。	Khách không đến là một tính toán sai lầm lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14551	48907	突然の質問に困惑した。	とつぜんの しつもんに こんわく した。	Tôi bối rối trước câu hỏi đột ngột.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14552	48908	口は災いの元。	くちは わざわいの もと。	Cái miệng là nguồn gốc của tai họa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14553	48909	彼には指導者としての資質がある。	かれには しどうしゃとしての ししつが ある。	Anh ấy có tố chất của một người lãnh đạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14554	48910	業務に支障が出ないよう注意する。	ぎょうむに ししょうが でないよう ちゅうい する。	Chú ý để không gây trở ngại cho công việc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14555	48911	この分野では誰にも負けないと自負している。	この ぶんやでは だれにも まけないと じふ している。	Tôi tự tin không thua ai trong lĩnh vực này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14556	48912	執念で犯人を突き止めた。	しゅうねんで はんにんを つきとめた。	Đã tìm ra hung thủ nhờ quyết tâm dai dẳng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14557	48913	彼はこの地域の事情を熟知している。	かれは この ちいきの じじょうを じゅくち している。	Anh ấy am tường tình hình khu vực này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14558	48914	看病で彼女はすっかり憔悴していた。	かんびょうで かのじょは すっかり しょうすい していた。	Vì chăm người bệnh, cô ấy đã hoàn toàn tiều tụy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14559	48915	散歩しながら思索にふける。	さんぽ しながら しさくに ふける。	Vừa đi dạo vừa đắm chìm trong suy tư.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14560	48916	その情報の信憑性は低い。	その じょうほうの しんぴょうせいは ひくい。	Độ tin cậy của thông tin đó thấp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14561	48917	ビタミンを十分に摂取する。	ビタミンを じゅうぶんに せっしゅ する。	Hấp thụ đủ vitamin.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14562	48918	退職して研究に専念する。	たいしょく して けんきゅうに せんねん する。	Nghỉ việc để chuyên tâm nghiên cứu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14563	48919	彼の成功は羨望の的だ。	かれの せいこうは せんぼうのてきだ。	Thành công của anh ấy là mục tiêu ngưỡng mộ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14564	48920	自信を喪失してしまった。	じしんを そうしつ してしまった。	Tôi đã đánh mất sự tự tin.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14565	48921	彼には音楽の素養がある。	かれには おんがくの そようが ある。	Anh ấy có kiến thức nền về âm nhạc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14566	48922	デフレからの脱却を目指す。	デフレからの だっきゃくを めざす。	Hướng tới thoát khỏi giảm phát.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14567	48923	真理の探求に一生をささげた。	しんりの たんきゅうに いっしょうを ささげた。	Đã dâng cả đời cho việc theo đuổi chân lý.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14568	48924	騒ぎはようやく沈静化した。	さわぎは ようやく ちんせいか した。	Vụ ồn ào cuối cùng cũng đã lắng xuống.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14569	48925	責任を部下に転嫁するべきではない。	せきにんを ぶかに てんか するべきではない。	Không nên đổ trách nhiệm cho cấp dưới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14570	48926	この商品はまだ十分に認知されていない。	この しょうひんは まだ じゅうぶんに にんち されていない。	Sản phẩm này vẫn chưa được biết đến đầy đủ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14571	48927	常に安全を念頭に置いて作業する。	つねに あんぜんを ねんとうに おいて さぎょう する。	Làm việc luôn đặt sự an toàn trong tâm niệm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14572	48928	彼の発言は大きな波紋を呼んだ。	かれの はつげんは おおきな はもんを よんだ。	Phát ngôn của ông ấy gây ra làn sóng phản ứng lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14573	48929	利用者の意見を製品に反映させる。	りようしゃの いけんを せいひんに はんえい させる。	Phản ánh ý kiến người dùng vào sản phẩm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14574	48930	結婚式で歌を披露した。	けっこんしきで うたを ひろう した。	Đã trình diễn một bài hát trong lễ cưới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14575	48931	包括的な対策が求められている。	ほうかつてきな たいさくが もとめられている。	Đang cần các biện pháp toàn diện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14576	48932	事故を未然に防ぐ。	じこを みぜんに ふせぐ。	Ngăn chặn tai nạn trước khi nó xảy ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14577	48933	復旧の目途が立たない。	ふっきゅうの めどが たたない。	Chưa có triển vọng khôi phục.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14578	48934	不合格の知らせに落胆した。	ふ ごうかくの しらせに らくたん した。	Thất vọng khi nhận tin trượt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14579	48935	相槌を打ちながら話を聞く。	あいづちを うちながら はなしを きく。	Vừa nghe vừa gật gù hưởng ứng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14580	48936	彼は軽い足取りで帰っていった。	かれは かるい あしどりで かえっていった。	Anh ấy bước về với những bước chân nhẹ nhàng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14581	48937	当てもなく町を歩いた。	あても なく まちを あるいた。	Lang thang trong phố không mục đích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14582	48938	双方の言い分を聞く。	そうほうの いいぶんを きく。	Lắng nghe ý kiến của cả hai bên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14583	48939	孫の成長が祖母の生き甲斐だ。	まごの せいちょうが そぼの いきがいだ。	Sự trưởng thành của cháu là lẽ sống của bà.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14584	48940	意気地のないことを言うな。	いくじの ないことを いうな。	Đừng nói những lời hèn nhát như vậy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14585	48941	彼は異色の経歴を持つ政治家だ。	かれは いしょくの けいれきを もつ せいじかだ。	Ông ấy là chính trị gia có lý lịch khác biệt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14586	48942	私の一存では決められません。	わたしの いちぞんでは きめられません。	Tôi không thể quyết định chỉ theo ý riêng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14587	48943	この失敗を今後の戒めとしたい。	この しっぱいを こんごの いましめと したい。	Muốn lấy thất bại này làm bài học sau này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14590	48946	その主張には科学的な裏付けがない。	その しゅちょうには かがくてきな うらづけが ない。	Chủ trương đó không có cơ sở khoa học.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14591	48947	人を上辺だけで判断してはいけない。	ひとを うわべだけで はんだん してはいけない。	Không được đánh giá người chỉ qua bề ngoài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14592	48948	四は縁起が悪い数字とされている。	よんは えんぎが わるい すうじと されている。	Số bốn được xem là con số xui xẻo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14593	48949	廊下ですれ違った先輩に会釈した。	ろうかで すれちがった せんぱいに えしゃく した。	Cúi chào nhẹ người tiền bối lướt qua ngoài hành lang.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14594	48950	成功の可能性は皆無に等しい。	せいこうの かのうせいは かいむに ひとしい。	Khả năng thành công gần như bằng không.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14595	48951	人の陰口を言うのはやめよう。	ひとの かげぐちを いうのは やめよう。	Thôi đừng nói xấu sau lưng người khác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14596	48952	名刺の肩書きが変わった。	めいしの かたがきが かわった。	Chức danh trên danh thiếp đã thay đổi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14597	48953	片手間にできる仕事ではない。	かたてまに できる しごとではない。	Đây không phải việc có thể làm tay trái.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14598	48954	経験を加味して評価する。	けいけんを かみ して ひょうか する。	Đánh giá có tính thêm kinh nghiệm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14599	48955	彼の研究が脚光を浴びた。	かれの けんきゅうが きゃっこうを あびた。	Nghiên cứu của ông ấy đã được chú ý.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14600	48956	会社は窮地に追い込まれた。	かいしゃは きゅうちに おいこまれた。	Công ty bị dồn vào tình thế khốn cùng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14601	48957	虚栄心から高い車を買った。	きょえいしんから たかい くるまを かった。	Mua xe đắt vì lòng hư vinh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14602	48958	他人の家庭に口出しするべきではない。	たにんの かていに くちだし するべきではない。	Không nên xen vào chuyện gia đình người khác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14603	48959	「忙しい」が彼の口癖だ。	「 いそがしい」が かれの くちぐせだ。	"Bận quá" là câu cửa miệng của anh ấy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14604	48960	子どもの鋭い質問に苦笑した。	こどもの するどい しつもんに くしょう した。	Cười gượng trước câu hỏi sắc sảo của đứa trẻ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14605	48961	彼はすごい形相で怒鳴った。	かれは すごい ぎょうそうで どなった。	Anh ta quát lên với vẻ mặt dữ tợn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14606	48962	祖父母は二人とも健在です。	そふぼは ににんとも けんざいです。	Ông bà tôi cả hai vẫn khỏe mạnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14607	48963	初心という原点に立ち返る。	しょしんという げんてんに たちかえる。	Quay về điểm xuất phát là tâm thế ban đầu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14608	48964	彼は引退を公言した。	かれは いんたいを こうげん した。	Anh ấy đã tuyên bố công khai giải nghệ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14609	48965	温かいお心遣いに感謝いたします。	あたたかい お こころづかいに かんしゃいたします。	Xin cảm ơn sự quan tâm chu đáo của quý vị.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14610	48966	警察沙汰になるのは避けたい。	けいさつ さたに なるのは さけたい。	Muốn tránh để thành chuyện phải đến cảnh sát.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14611	48967	駅前の雑踏の中で友人を見失った。	えきまえの ざっとうのなかで ゆうじんを みうしなった。	Lạc mất bạn trong đám đông trước ga.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14612	48968	お盆に里帰りする。	おぼんに さとがえり する。	Về quê dịp lễ Obon.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14613	48969	子どもの仕草がかわいい。	こどもの しぐさが かわいい。	Cử chỉ của đứa trẻ thật đáng yêu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14614	48970	人間関係のしがらみから逃れたい。	にんげん かんけいの しがらみから のがれたい。	Muốn thoát khỏi những ràng buộc trong quan hệ con người.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14615	48971	時宜にかなった提案だ。	じぎに かなった ていあんだ。	Đây là đề xuất đúng thời điểm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14616	48972	この研修は実践に主眼を置いている。	この けんしゅうは じっせんに しゅがんを おいている。	Khóa đào tạo này đặt trọng tâm vào thực hành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14617	48973	新社長の手腕が問われる。	しん しゃちょうの しゅわんが とわれる。	Năng lực của tân giám đốc đang bị thử thách.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14618	48974	彼は処世術に長けている。	かれは しょせいじゅつに たけている。	Anh ấy giỏi thuật xử thế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14619	48975	困難な時にこそ人の真価が問われる。	こんなんなときにこそ ひとの しんかが とわれる。	Chính lúc khó khăn mới thử thách giá trị thực của con người.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14620	48976	君に文句を言われる筋合いはない。	きみに もんくを いわれる すじあいはない。	Cậu không có tư cách phàn nàn tôi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14621	48977	彼の素性は誰も知らない。	かれの すじょうは だれも しらない。	Không ai biết lai lịch của anh ta.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14622	48978	誠意をもって対応する。	せいいを もって たいおう する。	Ứng xử với thành ý.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14623	48979	節度を守ってお酒を楽しむ。	せつどを まもって お さけを たのしむ。	Thưởng thức rượu có chừng mực.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14624	48980	彼には先見の明があった。	かれには せんけんの めいが あった。	Ông ấy có tầm nhìn xa trông rộng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14625	48981	大義のために戦う。	たいぎのために たたかう。	Chiến đấu vì đại nghĩa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14626	48982	打算的な付き合いはしたくない。	ださんてきな つきあいは したくない。	Không muốn kết giao vụ lợi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14627	48983	指導者としての力量が問われる。	しどうしゃとしての りきりょうが とわれる。	Năng lực lãnh đạo đang bị thử thách.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14628	48984	問題を解決する手立てがない。	もんだいを かいけつ する てだてが ない。	Không có cách nào giải quyết vấn đề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14629	48985	思いがけない申し出に当惑した。	おもいがけない もうしでに とうわく した。	Bối rối trước lời đề nghị bất ngờ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14630	48986	人前で話すには度胸がいる。	ひとまえで はなすには どきょうが いる。	Nói trước đám đông cần sự can đảm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14631	48987	今は待つのが得策だ。	いまは まつのが とくさくだ。	Bây giờ chờ đợi là thượng sách.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14632	48988	ここは私の馴染みの店です。	ここは わたしの なじみの みせです。	Đây là quán quen của tôi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14633	48989	この部屋は駅から遠いのが難点だ。	この へやは えきから とおいのが なんてんだ。	Nhược điểm của căn phòng này là xa ga.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14634	48990	念願のマイホームを手に入れた。	ねんがんの マイホームを てに いれた。	Đã có được căn nhà riêng như tâm nguyện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14635	48991	破格の値段で販売された。	はかくの ねだんで はんばい された。	Được bán với giá rẻ bất thường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14636	48992	少子化に歯止めをかける。	しょうしかに はどめを かける。	Kìm hãm tình trạng giảm sinh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14637	48993	負けた腹いせに物に当たった。	まけた はらいせに ものに あたった。	Trút giận vì thua cuộc lên đồ vật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14638	48994	学歴に引け目を感じている。	がくれきに ひけめを かんじている。	Cảm thấy mặc cảm về học vấn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14639	48995	健康の秘訣は早寝早起きだ。	けんこうの ひけつは はやね はやおきだ。	Bí quyết sức khỏe là ngủ sớm dậy sớm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14640	48996	当方の不手際でご迷惑をおかけしました。	とうほうの ふてぎわで ご めいわくを おかけ しました。	Do sơ suất của chúng tôi đã gây phiền phức cho quý khách.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14641	48997	今月は懐が寂しい。	こんげつは ふところが さびしい。	Tháng này túi tiền eo hẹp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14642	48998	彼女は自分の身の上を語り始めた。	かのじょは じぶんの みのうえを かたりはじめた。	Cô ấy bắt đầu kể về hoàn cảnh của mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14643	48999	見栄を張って高い服を買った。	みえを はって たかい ふくを かった。	Vì sĩ diện mà mua quần áo đắt tiền.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14644	49000	彼は物腰が柔らかい。	かれは ものごしが やわらかい。	Anh ấy có phong thái nhã nhặn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14645	49001	由緒ある寺を訪ねた。	ゆいしょ ある てらを たずねた。	Đến thăm ngôi chùa có lịch sử lâu đời.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14646	49002	彼の巧みな話術に引き込まれた。	かれの たくみな わじゅつに ひきこまれた。	Bị cuốn vào tài ăn nói khéo léo của anh ấy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14647	49003	彼の迫力に圧倒された。	かれの はくりょくに あっとう された。	Bị áp đảo bởi khí thế của anh ấy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14648	49004	運動でストレスを解消する。	うんどうで ストレスを かいしょう する。	Giải tỏa căng thẳng bằng vận động.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14649	49005	彼が犯人だと確信している。	かれが はんにんだと かくしん している。	Tôi tin chắc anh ta là thủ phạm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14650	49006	画面を凝視した。	がめんを ぎょうし した。	Nhìn chằm chằm vào màn hình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14651	49007	記憶に空白の時間がある。	きおくに くうはくの じかんが ある。	Có một khoảng trống trong ký ức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14652	49008	大敗という屈辱を味わった。	たいはいという くつじょくを あじわった。	Nếm trải nỗi nhục thua đậm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14653	49009	責任感の欠如が問題だ。	せきにんかんの けつじょが もんだいだ。	Vấn đề là thiếu tinh thần trách nhiệm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14654	49010	目を酷使すると視力が落ちる。	めを こくし すると しりょくが おちる。	Dùng mắt quá mức thì thị lực sẽ giảm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14655	49011	一度の挫折で諦めるな。	いちどの ざせつで あきらめるな。	Đừng bỏ cuộc vì một lần vấp ngã.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14656	49012	恋愛成就のお守りを買った。	れんあい じょうじゅの おまもりを かった。	Mua bùa cầu tình duyên thành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14657	49013	返事を保留にしておく。	へんじを ほりゅうに しておく。	Tạm hoãn câu trả lời.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14658	49014	そろそろ本腰を入れて勉強しよう。	そろそろ ほんごしを いれて べんきょう しよう。	Đã đến lúc dốc sức học thật sự.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14659	49015	休暇を満喫した。	きゅうかを まんきつ した。	Đã tận hưởng trọn vẹn kỳ nghỉ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14660	49016	彼は百年に一人の逸材だ。	かれは ひゃくねんに ひとりの いつざいだ。	Anh ấy là nhân tài trăm năm có một.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14661	49017	茶道の真髄に触れた。	さどうの しんずいに ふれた。	Chạm đến tinh túy của trà đạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14662	49018	彼の辞任が取り沙汰されている。	かれの じにんが とりざた されている。	Đang có đồn đại về việc ông ấy từ chức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14663	49019	メモに走り書きをした。	メモに はしりがきを した。	Viết vội vào tờ ghi chú.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14664	49020	意地を張らずに謝りなさい。	いじを はらずに あやまりなさい。	Đừng bướng nữa, hãy xin lỗi đi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14665	49021	言葉とは裏腹に、彼は寂しそうだった。	ことばとは うらはらに、 かれは さびしそうだった。	Trái ngược với lời nói, anh ấy trông có vẻ cô đơn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14666	49022	彼には昔助けてもらった負い目がある。	かれには むかし たすけてもらった おいめが ある。	Tôi mang ơn anh ấy vì ngày xưa được giúp đỡ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14667	49023	交渉は大詰めを迎えた。	こうしょうは おおづめを むかえた。	Cuộc đàm phán đã bước vào giai đoạn cuối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14668	49024	最近、体力の衰えを感じる。	さいきん、 たいりょくの おとろえを かんじる。	Gần đây tôi cảm thấy thể lực suy giảm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14669	49025	観客は固唾をのんで試合を見守った。	かんきゃくは かたずを のんで しあいを みまもった。	Khán giả nín thở theo dõi trận đấu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14670	49026	やる気が空回りしている。	やるきが からまわり している。	Nhiệt huyết đang trở nên vô ích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14671	49027	子どもの将来が気がかりだ。	こどもの しょうらいが きがかりだ。	Tương lai của con là điều tôi lo lắng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14672	49028	仕事と私生活のけじめをつける。	しごとと しせいかつの けじめを つける。	Phân định rõ công việc và đời tư.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14673	49029	これは誰の仕業だ。	これは だれの しわざだ。	Đây là trò của ai?	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14674	49030	難しい仕事に尻込みする。	むずかしい しごとに しりごみ する。	Chùn bước trước công việc khó.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14675	49031	すべて筋書きどおりに進んだ。	すべて すじがきどおりに すすんだ。	Mọi thứ diễn ra đúng như kịch bản.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14676	49032	暗闇の中を手探りで進む。	くらやみのなかを てさぐりで すすむ。	Mò mẫm tiến lên trong bóng tối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14677	49033	捜査は手詰まりの状態だ。	そうさは てづまりの じょうたいだ。	Cuộc điều tra đang trong tình trạng bế tắc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14678	49034	品質にばらつきがある。	ひんしつに ばらつきが ある。	Chất lượng không đồng đều.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14679	49035	急速な成長が社会にひずみを生んだ。	きゅうそくな せいちょうが しゃかいに ひずみを うんだ。	Tăng trưởng nhanh đã tạo ra sự lệch lạc trong xã hội.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14680	49036	不意打ちの質問に答えられなかった。	ふいうちの しつもんに こたえられなかった。	Không trả lời được câu hỏi bất ngờ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14681	49037	自分の手柄を吹聴して回る。	じぶんの てがらを ふいちょう してまわる。	Đi rêu rao công trạng của mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14682	49038	見せしめのために厳しく罰した。	みせしめのために きびしく ばっした。	Phạt nặng để răn đe làm gương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14683	49039	事故の現場を目の当たりにした。	じこの げんばを まのあたりに した。	Tận mắt chứng kiến hiện trường tai nạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14684	49040	彼女は物怖じしない性格だ。	かのじょは ものおじ しない せいかくだ。	Cô ấy có tính cách không rụt rè.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14685	49041	社長が批判の矢面に立った。	しゃちょうが ひはんの やおもてに たった。	Giám đốc đứng ở đầu sóng ngọn gió của sự chỉ trích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14686	49042	彼は失敗を取り返そうと躍起になっている。	かれは しっぱいを とりかえそうと やっきに なっている。	Anh ấy cuống cuồng muốn gỡ lại thất bại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14687	49043	少ない給料でやりくりする。	すくない きゅうりょうで やりくり する。	Xoay xở với đồng lương ít ỏi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14688	49044	家族は心のよりどころだ。	かぞくは こころのよりどころだ。	Gia đình là chỗ dựa tinh thần.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14689	49045	二人の間にはまだわだかまりが残っている。	ににんの まには まだ わだかまりが のこっている。	Giữa hai người vẫn còn khúc mắc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14690	49046	彼は好奇心が旺盛だ。	かれは こうきしんが おうせいだ。	Anh ấy có trí tò mò dồi dào.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14691	49047	この件は穏便に済ませたい。	この けんは おんびんに すませたい。	Tôi muốn giải quyết việc này một cách êm thấm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14692	49048	都会では近所付き合いが希薄だ。	とかいでは きんじょ つきあいが きはくだ。	Ở thành phố, quan hệ hàng xóm khá mờ nhạt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14693	49049	会議の雰囲気が険悪になった。	かいぎの ふんいきが けんあくに なった。	Bầu không khí cuộc họp trở nên căng thẳng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14694	49050	恣意的な判断は避けるべきだ。	しいてきな はんだんは さけるべきだ。	Nên tránh những phán đoán tùy tiện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14695	49051	彼女は繊細な感性を持っている。	かのじょは せんさいな かんせいを もっている。	Cô ấy có cảm quan tinh tế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14696	49052	手続きが煩雑で時間がかかる。	てつづきが はんざつで じかんが かかる。	Thủ tục rườm rà nên tốn thời gian.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14697	49053	装備なしで冬山に登るのは無謀だ。	そうび なしで ふゆやまに のぼるのは むぼうだ。	Leo núi mùa đông không có trang bị là liều lĩnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14698	49054	計画は中止を余儀なくされた。	けいかくは ちゅうしを よぎなく された。	Kế hoạch buộc phải hủy bỏ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14699	49055	大まかな予定を立てる。	おおまかな よていを たてる。	Lập kế hoạch sơ lược.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14700	49056	彼の恩着せがましい態度が嫌だ。	かれの おん きせが ましい たいどが いやだ。	Tôi ghét thái độ kể ơn của anh ta.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14701	49057	些細なことでけんかをした。	ささいなことで けんかを した。	Cãi nhau vì chuyện vụn vặt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14702	49058	二人の考えは相容れない。	ににんの かんがえは あいいれない。	Suy nghĩ của hai người không thể dung hòa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14703	49059	恥ずかしくていたたまれなかった。	はずかしくて いたたまれなかった。	Xấu hổ đến mức không thể chịu nổi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14704	49060	うさんくさい儲け話には乗らない。	うさんくさい もうけばなしには のらない。	Không tham gia những vụ kiếm tiền mờ ám.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14705	49061	私は機械に疎い。	わたしは きかいに うとい。	Tôi mù tịt về máy móc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14706	49062	うやうやしく頭を下げた。	うやうやしく あたまを さげた。	Cúi đầu một cách cung kính.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14707	49063	おぼつかない足取りで歩く。	おぼつかない あしどりで あるく。	Bước đi với những bước chân chập chững.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15049	49405	洗濯物をよくすすぐ。	せんたくぶつを よく すすぐ。	Xả kỹ quần áo đã giặt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14708	49064	検査の結果が思わしくない。	けんさの けっかが おもわしくない。	Kết quả xét nghiệm không như mong muốn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14709	49065	家族はかけがえのない存在だ。	かぞくは かけがえの ない そんざいだ。	Gia đình là sự tồn tại không gì thay thế được.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14710	49066	仰々しい挨拶は不要だ。	ぎょうぎょうしい あいさつは ふようだ。	Không cần những lời chào khoa trương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14711	49067	際どいところで電車に間に合った。	きわどいところで でんしゃに まにあった。	Kịp chuyến tàu trong gang tấc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14712	49068	屈強な男たちが荷物を運んだ。	くっきょうな おとこたちが にもつを はこんだ。	Những người đàn ông vạm vỡ đã khuân hành lý.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14713	49069	けたたましいサイレンの音で目が覚めた。	けたたましい サイレンの おとで めが さめた。	Tỉnh giấc vì tiếng còi inh ỏi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14714	49070	一人で行かせるのは心許ない。	ひとりで いかせるのは こころもとない。	Để đi một mình thì không yên tâm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14715	49071	小賢しいことを言うな。	こざかしいことを いうな。	Đừng nói những lời khôn vặt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14716	49072	彼はさりげなく席を譲った。	かれは さりげなく せきを ゆずった。	Anh ấy nhường ghế một cách tự nhiên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14717	49073	彼女は淑やかな女性だ。	かのじょは しとやかな じょせいだ。	Cô ấy là một phụ nữ thùy mị.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14718	49074	年末はせわしい毎日が続く。	ねんまつは せわしい まいにちが つづく。	Cuối năm ngày nào cũng tất bật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14719	49075	彼は何をやらせてもそつがない。	かれは なにを やらせても そつが ない。	Giao việc gì anh ấy cũng làm chu toàn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14720	49076	たどたどしい日本語で話す。	たどたどしい にほんごで はなす。	Nói bằng tiếng Nhật còn ấp úng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14721	49077	病院で手厚い看護を受けた。	びょういんで てあつい かんごを うけた。	Được chăm sóc tận tình ở bệnh viện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14722	49078	次の相手は手ごわい。	つぎの あいては てごわい。	Đối thủ tiếp theo rất đáng gờm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14723	49079	とめどなく涙があふれた。	とめどなく なみだが あふれた。	Nước mắt tuôn trào không ngừng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14724	49080	彼の無責任な発言を苦々しく思う。	かれの むせきにんな はつげんを にがにがしく おもう。	Cảm thấy khó chịu trước phát ngôn vô trách nhiệm của anh ta.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14725	49081	友人の成功がねたましい。	ゆうじんの せいこうが ねたましい。	Đố kỵ với thành công của bạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14726	49082	彼のひたむきな努力に心を打たれた。	かれの ひたむきな どりょくに こころを うたれた。	Xúc động trước nỗ lực hết lòng của anh ấy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14727	49083	不躾な質問で恐縮ですが…	ぶしつけな しつもんで きょうしゅくですが…	Xin lỗi vì câu hỏi thất lễ nhưng…	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14728	49084	まばゆい日差しに目を細めた。	まばゆい ひざしに めを ほそめた。	Nheo mắt trước ánh nắng chói lóa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14729	49085	彼はまめに日記をつけている。	かれは まめに にっきを つけている。	Anh ấy siêng năng viết nhật ký.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14730	49086	みずみずしい野菜が並んでいる。	みずみずしい やさいが ならんでいる。	Những loại rau tươi mọng được bày bán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14731	49087	子どもは目ざとくお菓子を見つけた。	こどもは めざとく おかしを みつけた。	Đứa trẻ tinh mắt tìm ra bánh kẹo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14732	49088	最近、彼の態度がよそよそしい。	さいきん、 かれの たいどが よそよそしい。	Gần đây thái độ của anh ấy xa cách.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14733	49089	弱々しい声で返事をした。	よわよわしい こえで へんじを した。	Trả lời bằng giọng yếu ớt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14734	49090	彼は頑なに意見を変えなかった。	かれは かたくなに いけんを かえなかった。	Anh ta cố chấp không đổi ý kiến.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14735	49091	母は気丈に振る舞っていた。	ははは きじょうに ふるまっていた。	Mẹ tỏ ra cứng cỏi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14736	49092	強靭な精神力を持つ選手。	きょうじんな せいしんりょくを もつ せんしゅ。	Vận động viên có tinh thần bền bỉ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14737	49093	軽薄な言動は慎むべきだ。	けいはくな げんどうは つつしむべきだ。	Nên tránh lời nói và hành động hời hợt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14738	49094	高尚な趣味を持っている。	こうしょうな しゅみを もっている。	Có sở thích thanh cao.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14739	49095	細心の注意を払う。	さいしんの ちゅういを はらう。	Hết sức cẩn trọng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14740	49096	この魚は味が淡白だ。	この さかなは あじが たんぱくだ。	Loại cá này vị thanh đạm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14741	49097	丁重にお断りした。	ていちょうに おことわり した。	Đã từ chối một cách lịch sự.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14742	49098	彼は知識に貪欲だ。	かれは ちしきに どんよくだ。	Anh ấy ham học hỏi kiến thức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14743	49099	困っている友を見捨てるとは薄情だ。	こまっている ともを みすてるとは はくじょうだ。	Bỏ rơi bạn đang khó khăn thật là vô tâm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14744	49100	不審な人物を見かけたら通報してください。	ふしんな じんぶつを みかけたら つうほう してください。	Nếu thấy người khả nghi hãy báo cảnh sát.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14745	49101	そんなことを聞くのは無粋だ。	そんなことを きくのは ぶすいだ。	Hỏi chuyện như vậy là thiếu tế nhị.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14746	49102	凡庸な作品に終わった。	ぼんような さくひんに おわった。	Kết thúc bằng một tác phẩm tầm thường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14747	49103	冷徹な判断を下す。	れいてつな はんだんを くだす。	Đưa ra phán đoán lạnh lùng sắc bén.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14748	49104	老練な職人の技に感心した。	ろうれんな しょくにんの わざに かんしん した。	Thán phục tay nghề của người thợ lão luyện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14749	49105	いびつな形のりんご。	いびつな かたちの りんご。	Quả táo có hình méo mó.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14750	49106	この暑さにはかなわない。	この あつさには かなわない。	Không chịu nổi cái nóng này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14751	49107	地道な努力が実を結んだ。	じみちな どりょくが みを むすんだ。	Nỗ lực bền bỉ đã đơm hoa kết trái.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14752	49108	手痛い敗北を喫した。	ていたい はいぼくを きっした。	Chịu một thất bại nặng nề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14753	49109	基本をなおざりにしてはいけない。	きほんを なおざりに してはいけない。	Không được lơ là những điều cơ bản.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14754	49110	この地方には古い習慣が根強く残っている。	この ちほうには ふるい しゅうかんが ねづよく のこっている。	Ở vùng này các tập quán cũ vẫn còn ăn sâu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14755	49111	無断欠勤などもってのほかだ。	むだん けっきんなど もってのほかだ。	Nghỉ làm không xin phép là điều không thể chấp nhận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14756	49112	進捗を逐一報告してください。	しんちょくを ちくいち ほうこく してください。	Hãy báo cáo tiến độ một cách chi tiết.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14757	49113	あわよくば優勝も狙いたい。	あわよくば ゆうしょうも ねらいたい。	Nếu may mắn thì cũng muốn nhắm tới chức vô địch.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14758	49114	その意見にはいささか疑問がある。	その いけんには いささか ぎもんが ある。	Tôi có chút nghi ngờ về ý kiến đó.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14759	49115	薬を飲んでも一向に良くならない。	くすりを のんでも いっこうに よく ならない。	Uống thuốc mà hoàn toàn không khá hơn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14760	49116	その事件は未だに解決していない。	その じけんは いまだに かいけつ していない。	Vụ án đó đến giờ vẫn chưa được giải quyết.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14761	49117	否応なしに会議に参加させられた。	いやおうなしに かいぎに さんか させられた。	Bị buộc tham gia cuộc họp dù muốn hay không.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14762	49118	計画はおおむね順調に進んでいる。	けいかくは おおむね じゅんちょうに すすんでいる。	Kế hoạch nhìn chung đang tiến triển thuận lợi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14763	49119	試験は思いのほか簡単だった。	しけんは おもいの ほか かんたんだった。	Bài thi dễ hơn dự đoán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14764	49120	仮に失敗しても後悔はしない。	かりに しっぱい しても こうかいは しない。	Giả sử có thất bại thì cũng không hối hận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14765	49121	無駄な出費は極力控えている。	むだな しゅっぴは きょくりょく ひかえている。	Tôi hết sức hạn chế chi tiêu lãng phí.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14766	49122	部屋の中をくまなく探した。	へやのなかを くま なく さがした。	Đã tìm khắp mọi ngóc ngách trong phòng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14767	49123	彼は殊更に大きな声で話した。	かれは ことさらに おおきな こえで はなした。	Anh ta cố tình nói thật to.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14768	49124	一人で引っ越しとは、さぞ大変だったでしょう。	ひとりで ひっこしとは、 さぞ たいへんだったでしょう。	Chuyển nhà một mình chắc hẳn là vất vả lắm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14769	49125	所詮、人は一人では生きられない。	しょせん、 ひとは ひとりでは いきられない。	Rốt cuộc thì con người không thể sống một mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14770	49126	質問されると、彼はすかさず答えた。	しつもん されると、 かれは すかさず こたえた。	Vừa được hỏi, anh ấy trả lời ngay.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14771	49127	今年の新入社員は総じて優秀だ。	ことしの しんにゅう しゃいんは そうじて ゆうしゅうだ。	Nhân viên mới năm nay nhìn chung đều giỏi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14772	49128	そもそもこの計画には無理があった。	そもそも この けいかくには むりが あった。	Ngay từ đầu kế hoạch này đã có điểm bất hợp lý.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14773	49129	そんなことは断じて許されない。	そんなことは だんじて ゆるされない。	Chuyện như vậy tuyệt đối không được phép.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14774	49130	工事は着々と進んでいる。	こうじは ちゃくちゃくと すすんでいる。	Công trình đang tiến triển từng bước vững chắc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14775	49131	とっさにブレーキを踏んだ。	とっさに ブレーキを ふんだ。	Theo phản xạ tôi đạp phanh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14776	49132	なにとぞよろしくお願い申し上げます。	なにとぞ よろしく おねがい もうしあげます。	Kính mong được quý vị giúp đỡ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14777	49133	成功はひとえに皆様のおかげです。	せいこうは ひとえに みなさまの おかげです。	Thành công hoàn toàn là nhờ mọi người.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14778	49134	ひょっとして、田中さんですか。	ひょっと して、 たなかさんですか。	Có phải là anh Tanaka không ạ?	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14779	49135	不意に名前を呼ばれて驚いた。	ふいに なまえを よばれて おどろいた。	Bất thình lình bị gọi tên nên tôi giật mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14780	49136	地元の野菜をふんだんに使った料理。	じもとの やさいを ふんだんに つかった りょうり。	Món ăn dùng dồi dào rau củ địa phương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14781	49137	彼の話はまるきり嘘だった。	かれの はなしは まるきり うそだった。	Câu chuyện của anh ta hoàn toàn là dối trá.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14782	49138	今日はやけに静かだね。	きょうは やけに しずかだね。	Hôm nay yên ắng lạ thường nhỉ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14783	49139	雨のため、やむを得ず中止した。	あめのため、 やむをえず ちゅうし した。	Vì mưa nên đành phải hủy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14784	49140	ゆくゆくは自分の店を持ちたい。	ゆくゆくは じぶんの みせを もちたい。	Sau này tôi muốn có cửa hàng của riêng mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14785	49141	あんなに喜ぶなんて、よほど嬉しかったのだろう。	あんなに よろこぶなんて、 よほど うれしかったのだろう。	Vui đến thế thì hẳn là rất hạnh phúc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14786	49142	たかが一回の失敗で落ち込むな。	たかが いちかいの しっぱいで おちこむな。	Đừng buồn chỉ vì một lần thất bại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14787	49143	好みは十人十色だ。	このみは じゅうにんといろだ。	Sở thích thì mỗi người một vẻ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14788	49144	運動しながら通勤できて一石二鳥だ。	うんどう しながら つうきん できて いっせきにちょうだ。	Vừa đi làm vừa vận động, đúng là một công đôi việc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14789	49145	語学力は一朝一夕には身につかない。	ごがくりょくは いっちょういっせきには みに つかない。	Năng lực ngoại ngữ không thể có được trong một sớm một chiều.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14790	49146	どの方法にも一長一短がある。	どの ほうほうにも いっちょういったんが ある。	Phương pháp nào cũng có ưu có nhược.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14791	49147	株価の変動に一喜一憂する。	かぶかの へんどうに いっきいちゆう する。	Lúc mừng lúc lo theo biến động giá cổ phiếu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14792	49148	参加者は異口同音に賛成した。	さんかしゃは いくどうおんに さんせい した。	Người tham gia đồng thanh tán thành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14793	49149	長年の夫婦は以心伝心だ。	ながねんの ふうふは いしんでんしんだ。	Vợ chồng lâu năm hiểu ý nhau không cần nói.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14794	49150	突然の停電に人々は右往左往した。	とつぜんの ていでんに ひとびとは うおうさおう した。	Mọi người cuống cuồng vì mất điện đột ngột.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14795	49151	紆余曲折を経て、ようやく完成した。	うよきょくせつを へて、 ようやく かんせい した。	Trải qua bao trắc trở, cuối cùng cũng hoàn thành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14796	49152	温故知新の精神で歴史を学ぶ。	おんこちしんの せいしんで れきしを まなぶ。	Học lịch sử với tinh thần ôn cũ biết mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14797	49153	最後の仕上げを怠るのは画竜点睛を欠く。	さいごの しあげを おこたるのは がりょうてんせいを かく。	Lơ là khâu hoàn thiện cuối cùng thì thiếu nét chấm phá.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14798	49154	危機一髪のところで助かった。	ききいっぱつのところで たすかった。	Được cứu trong tình thế nghìn cân treo sợi tóc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14799	49155	起死回生のホームランを打った。	きしかいせいの ホームランを うった。	Đánh cú home run lội ngược dòng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14800	49156	彼は喜怒哀楽が激しい。	かれは きどあいらくが はげしい。	Anh ấy bộc lộ cảm xúc hỉ nộ ái lạc rất mạnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14801	49157	一度だまされて疑心暗鬼になった。	いちど だまされて ぎしんあんきに なった。	Bị lừa một lần nên trở nên nghi thần nghi quỷ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14802	49158	飲酒運転は言語道断だ。	いんしゅ うんてんは ごんごどうだんだ。	Lái xe khi say rượu là không thể chấp nhận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14803	49159	遊んでばかりで落第したのは自業自得だ。	あそんでばかりで らくだい したのは じごうじとくだ。	Chỉ lo chơi rồi thi trượt là gieo gió gặt bão.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14804	49160	自分の作品を自画自賛する。	じぶんの さくひんを じが じさん する。	Tự khen tác phẩm của mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14805	49161	資金集めに四苦八苦している。	しきん あつめに しくはっく している。	Đang vô cùng vất vả với việc gom vốn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14806	49162	ビジネスの世界は弱肉強食だ。	ビジネスの せかいは じゃくにくきょうしょくだ。	Thế giới kinh doanh là cá lớn nuốt cá bé.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14807	49163	情報を取捨選択する力が必要だ。	じょうほうを しゅしゃせんたく する ちからが ひつようだ。	Cần năng lực chọn lọc thông tin.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14808	49164	人の考え方は千差万別だ。	ひとの かんがえかたは せんさばんべつだ。	Cách nghĩ của con người muôn hình vạn trạng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14809	49165	前代未聞の事件が起きた。	ぜんだいみもんの じけんが おきた。	Một vụ việc chưa từng có tiền lệ đã xảy ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14810	49166	どの案も大同小異だ。	どの あんも だいどうしょういだ。	Phương án nào cũng đại đồng tiểu dị.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14811	49167	単刀直入に言うと、反対です。	たんとうちょくにゅうに いうと、 はんたいです。	Nói thẳng vào vấn đề thì tôi phản đối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14812	49168	適材適所の人事を行う。	てきざいてきしょの じんじを おこなう。	Bố trí nhân sự đúng người đúng việc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14813	49169	資金集めに東奔西走した。	しきん あつめに とうほんせいそう した。	Chạy ngược chạy xuôi để gom vốn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14814	49170	二者択一を迫られた。	にしゃたくいつを せまられた。	Bị buộc phải chọn một trong hai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14815	49171	その話を半信半疑で聞いた。	その はなしを はんしんはんぎで きいた。	Nghe câu chuyện đó với tâm thế nửa tin nửa ngờ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14816	49172	付和雷同せず自分の意見を持つ。	ふわらいどう せず じぶんの いけんを もつ。	Không a dua, hãy có ý kiến riêng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14817	49173	健康のための運動でけがをしては本末転倒だ。	けんこうのための うんどうで けがを しては ほんまつてんとうだ。	Tập thể dục vì sức khỏe mà bị thương thì thật là đầu đuôi lộn ngược.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14818	49174	無我夢中で走った。	むがむちゅうで はしった。	Chạy say mê quên cả bản thân.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14819	49175	試験直前こそ油断大敵だ。	しけん ちょくぜんこそ ゆだんたいてきだ。	Chính sát ngày thi thì càng không được chủ quan.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14820	49176	取引先とアポイントを取る。	とりひきさきと アポイントを とる。	Hẹn gặp với đối tác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14821	49177	このホテルはアメニティが充実している。	この ホテルは アメニティが じゅうじつ している。	Khách sạn này có đầy đủ đồ tiện nghi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14822	49178	企業の成長にはイノベーションが欠かせない。	きぎょうの せいちょうには イノベーションが かかせない。	Đổi mới sáng tạo là không thể thiếu cho sự tăng trưởng của doanh nghiệp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14823	49179	地方のインフラ整備が遅れている。	ちほうの インフラ せいびが おくれている。	Việc xây dựng cơ sở hạ tầng địa phương đang chậm trễ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14824	49180	この治療法には十分なエビデンスがない。	この ちりょうほうには じゅうぶんな エビデンスが ない。	Phương pháp điều trị này chưa có đủ bằng chứng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14825	49181	オーソドックスな方法で解決する。	オーソドックスな ほうほうで かいけつ する。	Giải quyết bằng phương pháp truyền thống.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14826	49182	政府が新しいガイドラインを発表した。	せいふが あたらしい ガイドラインを はっぴょう した。	Chính phủ đã công bố hướng dẫn mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14827	49183	会場のキャパシティを超えてしまった。	かいじょうの キャパシティを こえてしまった。	Đã vượt quá sức chứa của hội trường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14828	49184	社内のコンセンサスを得る。	しゃないの コンセンサスを える。	Đạt được sự đồng thuận trong công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14829	49185	コンプライアンスの研修を受けた。	コンプライアンスの けんしゅうを うけた。	Đã tham gia khóa đào tạo về tuân thủ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14830	49186	仕事と家庭の間でジレンマに陥る。	しごとと かていの まで ジレンマに おちいる。	Rơi vào tình thế lưỡng nan giữa công việc và gia đình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14831	49187	新しい資金調達のスキームを考える。	あたらしい しきん ちょうたつの スキームを かんがえる。	Suy nghĩ cơ chế huy động vốn mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14832	49188	ステレオタイプな見方を捨てるべきだ。	ステレオ タイプな みかたを すてるべきだ。	Nên vứt bỏ cách nhìn rập khuôn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14833	49189	長年のノウハウを生かす。	ながねんの ノウハウを いかす。	Tận dụng bí quyết tích lũy nhiều năm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14834	49190	調査結果にはバイアスがかかっている。	ちょうさ けっかには バイアスが かかっている。	Kết quả khảo sát bị sai lệch.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14835	49191	豊かさが不幸を生むというパラドックス。	ゆたかさが ふこうを うむという パラドックス。	Nghịch lý rằng sự giàu có sinh ra bất hạnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14836	49192	会社の将来のビジョンを示す。	かいしゃの しょうらいの ビジョンを しめす。	Trình bày tầm nhìn tương lai của công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14837	49193	顧客からのフィードバックを集める。	こきゃくからの フィードバックを あつめる。	Thu thập phản hồi từ khách hàng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14838	49194	結果だけでなくプロセスも大切だ。	けっかだけでなく プロセスも たいせつだ。	Không chỉ kết quả mà quá trình cũng quan trọng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14839	49195	この地域は観光地としてのポテンシャルが高い。	この ちいきは かんこうちとしての ポテンシャルが たかい。	Khu vực này có tiềm năng cao để làm điểm du lịch.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14840	49196	各党がマニフェストを発表した。	かくとうが マニフェストを はっぴょう した。	Các đảng đã công bố cương lĩnh tranh cử.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14841	49197	地震が起こるメカニズムを解明する。	じしんが おこる メカニズムを かいめい する。	Làm sáng tỏ cơ chế xảy ra động đất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14842	49198	モチベーションを維持するのは難しい。	モチベーションを いじ するのは むずかしい。	Duy trì động lực là điều khó.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14843	49199	情報リテラシーを身につける。	じょうほう リテラシーを みに つける。	Trang bị năng lực sử dụng thông tin.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14844	49200	巧みなレトリックで聴衆を引きつけた。	たくみな レトリックで ちょうしゅうを ひきつけた。	Thu hút khán giả bằng thuật hùng biện khéo léo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14845	49201	この形容詞は名詞を修飾している。	この けいようしは めいしを しゅうしょく している。	Tính từ này bổ nghĩa cho danh từ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14846	49202	彼の著作は多くの言語に翻訳された。	かれの ちょさくは おおくの げんごに ほんやく された。	Tác phẩm của ông được dịch ra nhiều thứ tiếng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14847	49203	主張の論拠を明確に示す。	しゅちょうの ろんきょを めいかくに しめす。	Trình bày rõ luận cứ cho chủ trương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14848	49204	この詩は韻を踏んでいる。	この しは いんを ふんでいる。	Bài thơ này có gieo vần.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14849	49205	日本語の詩は押韻が少ない。	にほんごの しは おういんが すくない。	Thơ tiếng Nhật ít gieo vần.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14850	49206	イソップの寓話を子どもに読み聞かせた。	イソップの ぐうわを こどもに よみ きかせた。	Đọc truyện ngụ ngôn Aesop cho trẻ nghe.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14851	49207	事件の経過を客観的に叙述する。	じけんの けいかを きゃっかんてきに じょじゅつ する。	Mô tả diễn biến sự việc một cách khách quan.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14852	49208	抒情的な詩が好きだ。	じょじょうてきな しが すきだ。	Tôi thích những bài thơ trữ tình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14853	49209	読解問題に時間がかかる。	どっかい もんだいに じかんが かかる。	Bài đọc hiểu tốn thời gian.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14854	49210	外国の小説を翻案した映画。	がいこくの しょうせつを ほんあん した えいが。	Bộ phim chuyển thể từ tiểu thuyết nước ngoài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14855	49211	それは現代社会の大きな命題だ。	それは げんだい しゃかいの おおきな めいだいだ。	Đó là vấn đề lớn của xã hội hiện đại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14856	49212	映画の余韻に浸る。	えいがの よいんに ひたる。	Đắm chìm trong dư âm của bộ phim.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14857	49213	筆者の論旨をまとめなさい。	ひっしゃの ろんしを まとめなさい。	Hãy tóm tắt luận điểm chính của tác giả.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14858	49214	相手の主張を論破した。	あいての しゅちょうを ろんぱ した。	Đã bác bỏ chủ trương của đối phương bằng lý lẽ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14859	49215	両国の間に軋轢が生じている。	りょうこくの まに あつれきが しょうじている。	Giữa hai nước đang nảy sinh xích mích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14860	49216	その決定に異議を唱える人はいなかった。	その けっていに いぎを となえる ひとはいなかった。	Không ai lên tiếng phản đối quyết định đó.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14861	49217	先方の意向を確認してから返事します。	せんぽうの いこうを かくにん してから へんじ します。	Tôi sẽ trả lời sau khi xác nhận ý định của phía bên kia.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14862	49218	在庫を一掃するためにセールを行う。	ざいこを いっそう するために セールを おこなう。	Tổ chức đợt giảm giá để thanh lý sạch hàng tồn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14863	49219	彼は計画の一翼を担っている。	かれは けいかくの いちよくを になっている。	Anh ấy đảm nhận một phần vai trò trong kế hoạch.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14864	49220	会社の沿革をホームページで紹介する。	かいしゃの えんかくを ホームページで しょうかい する。	Giới thiệu lịch sử phát triển công ty trên trang web.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14865	49221	新しい工場が来月から稼働する。	あたらしい こうじょうが らいげつから かどう する。	Nhà máy mới sẽ đi vào vận hành từ tháng sau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14866	49222	住民に避難勧告が出された。	じゅうみんに ひなん かんこくが だされた。	Lệnh khuyến cáo sơ tán đã được ban hành cho người dân.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14867	49223	業界の慣行を見直す必要がある。	ぎょうかいの かんこうを みなおす ひつようが ある。	Cần xem xét lại thông lệ của ngành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14868	49224	この辞書は有名な学者が監修した。	この じしょは ゆうめいな がくしゃが かんしゅう した。	Cuốn từ điển này do một học giả nổi tiếng biên tập chỉ đạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14869	49225	この土地の帰属をめぐって争いが続く。	この とちの きぞくをめぐって あらそいが つづく。	Tranh chấp quanh việc mảnh đất này thuộc về ai vẫn tiếp diễn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14870	49226	不正を糾弾する声が高まった。	ふせいを きゅうだん する こえが たかまった。	Tiếng nói lên án sai phạm ngày càng lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14871	49227	温暖化は人類にとって大きな脅威だ。	おんだんかは じんるいにとって おおきな きょういだ。	Nóng lên toàn cầu là mối đe dọa lớn với loài người.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14872	49228	最新技術を駆使して開発した。	さいしん ぎじゅつを くし して かいはつ した。	Đã phát triển bằng cách tận dụng công nghệ mới nhất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14873	49229	学費を何とか工面した。	がくひを なんとか くめん した。	Bằng cách nào đó đã xoay xở được học phí.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14874	49230	交通安全の啓発活動を行う。	こうつう あんぜんの けいはつ かつどうを おこなう。	Tiến hành hoạt động nâng cao nhận thức về an toàn giao thông.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14875	49231	故意に事実を隠した疑いがある。	こいに じじつを かくした うたがいが ある。	Có nghi ngờ đã cố ý che giấu sự thật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14876	49232	原油価格が高騰している。	げんゆ かかくが こうとう している。	Giá dầu thô đang tăng vọt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14877	49233	新聞を定期購読している。	しんぶんを ていき こうどく している。	Tôi đặt mua báo định kỳ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14878	49234	保護者との懇談会が開かれた。	ほごしゃとの こんだんかいが ひらかれた。	Buổi tọa đàm với phụ huynh đã được tổ chức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14879	49235	この件は担当者の裁量に任せる。	この けんは たんとうしゃの さいりょうに まかせる。	Việc này giao cho người phụ trách tự quyết.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14880	49236	車を売る前に査定してもらう。	くるまを うる まえに さてい してもらう。	Nhờ thẩm định giá trước khi bán xe.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14881	49237	彼は国政に参与している。	かれは こくせいに さんよ している。	Ông ấy tham gia vào chính sự quốc gia.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14882	49238	外出の自粛が呼びかけられた。	がいしゅつの じしゅくが よびかけられた。	Người dân được kêu gọi tự hạn chế ra ngoài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14883	49239	慈善団体に寄付をした。	じぜん だんたいに きふを した。	Tôi đã quyên góp cho tổ chức từ thiện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14884	49240	大臣が審議会に諮問した。	だいじんが しんぎかいに しもん した。	Bộ trưởng đã trưng cầu ý kiến hội đồng thẩm định.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14885	49241	斜陽産業と言われる分野。	しゃよう さんぎょうと いわれる ぶんや。	Lĩnh vực được gọi là ngành công nghiệp xế chiều.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14886	49242	混乱を収拾するのに時間がかかった。	こんらんを しゅうしゅう するのに じかんが かかった。	Mất thời gian để kiểm soát tình trạng hỗn loạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14887	49243	法令を遵守する。	ほうれいを じゅんしゅ する。	Tuân thủ pháp luật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14888	49244	在庫状況を照会する。	ざいこ じょうきょうを しょうかい する。	Hỏi thông tin tình trạng tồn kho.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14889	49245	所轄の警察署に届け出る。	しょかつの けいさつしょに とどけでる。	Trình báo với đồn cảnh sát sở tại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14890	49246	過度な規制は不正を助長しかねない。	かどな きせいは ふせいを じょちょう しかねない。	Quy định quá mức có thể làm gia tăng gian lận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14891	49247	利益と損失が相殺された。	りえきと そんしつが そうさい された。	Lợi nhuận và khoản lỗ đã bù trừ nhau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14892	49248	減刑を求める嘆願書を提出した。	げんけいを もとめる たんがんしょを ていしゅつ した。	Đã nộp đơn thỉnh cầu giảm án.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14893	49249	彼は懲戒処分を受けた。	かれは ちょうかい しょぶんを うけた。	Anh ta đã bị xử lý kỷ luật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14894	49250	他社の追随を許さない技術力。	たしゃの ついずいを ゆるさない ぎじゅつりょく。	Năng lực công nghệ không cho công ty khác theo kịp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14895	49251	その行為は法律に抵触するおそれがある。	その こういは ほうりつに ていしょく する お それが ある。	Hành vi đó có nguy cơ vi phạm pháp luật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14896	49252	大臣は発言を撤回した。	だいじんは はつげんを てっかい した。	Bộ trưởng đã rút lại phát ngôn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14897	49253	資料をメールに添付して送ります。	しりょうを メールに てんぷ して おくります。	Tôi sẽ đính kèm tài liệu vào email và gửi đi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14898	49254	彼は営業部門を統括している。	かれは えいぎょう ぶもんを とうかつ している。	Anh ấy quản lý chung bộ phận kinh doanh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14899	49255	競争に負けた企業は淘汰される。	きょうそうに まけた きぎょうは とうた される。	Doanh nghiệp thua cạnh tranh sẽ bị đào thải.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14900	49256	家賃の督促状が届いた。	やちんの とくそくじょうが とどいた。	Thư đôn đốc trả tiền nhà đã được gửi đến.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14901	49257	内需の拡大が景気回復の鍵だ。	ないじゅの かくだいが けいき かいふくの かぎだ。	Mở rộng nhu cầu nội địa là chìa khóa phục hồi kinh tế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14902	49258	交渉は難航している。	こうしょうは なんこう している。	Cuộc đàm phán đang gặp khó khăn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14903	49259	大雨で川が氾濫した。	おおあめで かわが はんらん した。	Sông bị tràn bờ vì mưa lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14904	49260	ネット上の誹謗中傷が問題になっている。	ネットじょうの ひぼう ちゅうしょうが もんだいに なっている。	Phỉ báng, vu khống trên mạng đang trở thành vấn đề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14905	49261	業績不振で店を閉めた。	ぎょうせき ふしんで みせを しめた。	Đóng cửa hàng vì kết quả kinh doanh sa sút.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14906	49262	社員に新たな権限を付与する。	しゃいんに あらたな けんげんを ふよ する。	Trao quyền hạn mới cho nhân viên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14907	49263	彼は相続を放棄した。	かれは そうぞくを ほうき した。	Anh ấy đã từ bỏ quyền thừa kế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14908	49264	登録を抹消する手続きをした。	とうろくを まっしょう する てつづきを した。	Đã làm thủ tục xóa đăng ký.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14909	49265	感染症の蔓延を防ぐ。	かんせんしょうの まんえんを ふせぐ。	Ngăn chặn sự lây lan của bệnh truyền nhiễm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14910	49266	支払いを一か月猶予してもらった。	しはらいを いちかげつ ゆうよ してもらった。	Được gia hạn thanh toán một tháng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14911	49267	市は企業の誘致に力を入れている。	しは きぎょうの ゆうちに ちからを いれている。	Thành phố đang dồn sức thu hút doanh nghiệp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14912	49268	人権を擁護する活動。	じんけんを ようご する かつどう。	Hoạt động bảo vệ nhân quyền.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14913	49269	契約を履行する義務がある。	けいやくを りこう する ぎむが ある。	Có nghĩa vụ thực hiện hợp đồng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14914	49270	廉価版のソフトが発売された。	れんかばんの ソフトが はつばい された。	Phiên bản phần mềm giá rẻ đã được phát hành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14915	49271	この店は百年以上商いを続けている。	この みせは ひゃくねんいじょう あきないを つづけている。	Cửa hàng này đã buôn bán hơn trăm năm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14916	49272	改革の機運が高まっている。	かいかくの きうんが たかまっている。	Xu thế cải cách đang dâng cao.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14917	49273	本の返却が延滞している。	ほんの へんきゃくが えんたい している。	Việc trả sách đang quá hạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14918	49274	費用を概算で出す。	ひようを がいさんで だす。	Đưa ra chi phí ước tính sơ bộ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14919	49275	裏で何かを画策している。	うらで なにかを かくさく している。	Đang mưu đồ điều gì đó sau lưng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14920	49276	けがのため試合を棄権した。	けがのため しあいを きけん した。	Bỏ cuộc vì chấn thương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14921	49277	容疑者は詐欺罪で起訴された。	ようぎしゃは さぎざいで きそ された。	Nghi phạm bị khởi tố tội lừa đảo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14922	49278	アジアに新たな拠点を設ける。	アジアに あらたな きょてんを もうける。	Thiết lập cơ sở mới ở châu Á.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14923	49279	被告は判決を不服として控訴した。	ひこくは はんけつを ふふくとして こうそ した。	Bị cáo không phục phán quyết nên đã kháng cáo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14924	49280	派閥間の抗争が激化した。	はばつかんの こうそうが げきか した。	Đấu đá giữa các phe phái trở nên gay gắt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14925	49281	この仕事は拘束時間が長い。	この しごとは こうそく じかんが ながい。	Công việc này thời gian bị ràng buộc dài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14926	49282	差別の根絶を目指す。	さべつの こんぜつを めざす。	Hướng tới xóa bỏ tận gốc sự phân biệt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14927	49283	労働者を搾取する企業。	ろうどうしゃを さくしゅ する きぎょう。	Doanh nghiệp bóc lột người lao động.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14928	49284	不祥事で信用が失墜した。	ふしょうじで しんようが しっつい した。	Mất uy tín vì vụ bê bối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14929	49285	受賞を辞退した。	じゅしょうを じたい した。	Đã từ chối nhận giải.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14930	49286	経済の指標が改善した。	けいざいの しひょうが かいぜん した。	Các chỉ số kinh tế đã cải thiện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14931	49287	プライバシーの侵害にあたる。	プライバシーの しんがいに あたる。	Tương đương với xâm phạm quyền riêng tư.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14932	49288	確定申告の期限が迫っている。	かくてい しんこくの きげんが せまっている。	Hạn khai báo thuế quyết toán đang đến gần.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14933	49289	社員の親睦を深めるために旅行をした。	しゃいんの しんぼくを ふかめるために りょこうを した。	Tổ chức du lịch để gắn kết nhân viên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14934	49290	父は大阪に単身赴任している。	ちちは おおさかに たんしん ふにん している。	Bố tôi đang công tác một mình ở Osaka.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14935	49291	資金を調達する。	しきんを ちょうたつ する。	Huy động vốn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14936	49292	証人が法廷で陳述した。	しょうにんが ほうていで ちんじゅつ した。	Nhân chứng đã trình bày trước tòa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14937	49293	天災は忘れたころにやってくる。	てんさいは わすれたころに やってくる。	Thiên tai đến khi ta đã quên mất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14938	49294	第一志望の会社から内定をもらった。	だい いち しぼうの かいしゃから ないていを もらった。	Đã nhận được quyết định tuyển dụng từ công ty mong muốn nhất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14939	49295	容疑者は犯行を否認している。	ようぎしゃは はんこうを ひにん している。	Nghi phạm phủ nhận hành vi phạm tội.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14940	49296	災害に備えて水を備蓄する。	さいがいに そなえて みずを びちく する。	Dự trữ nước để phòng thiên tai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14941	49297	家は妻の名義になっている。	いえは つまの めいぎに なっている。	Ngôi nhà đứng tên vợ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14942	49298	修理は有償となります。	しゅうりは ゆうしょうと なります。	Việc sửa chữa sẽ có tính phí.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14943	49299	暴力は決して容認できない。	ぼうりょくは けっして ようにん できない。	Bạo lực tuyệt đối không thể dung thứ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14944	49300	交渉は暗礁に乗り上げた。	こうしょうは あんしょうに のりあげた。	Cuộc đàm phán đã đi vào bế tắc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14945	49301	この寺は世界遺産に登録されている。	この てらは せかい いさんに とうろく されている。	Ngôi chùa này được công nhận là di sản thế giới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14946	49302	政府転覆の陰謀が発覚した。	せいふ てんぷくの いんぼうが はっかく した。	Âm mưu lật đổ chính phủ đã bị phát hiện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14947	49303	彼は騒動の渦中にいる。	かれは そうどうの かちゅうに いる。	Anh ấy đang ở giữa tâm điểm vụ ồn ào.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14948	49304	国債の格付けが引き下げられた。	こくさいの かくづけが ひきさげられた。	Xếp hạng tín nhiệm trái phiếu chính phủ bị hạ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14949	49305	市場は数社による寡占状態だ。	しじょうは すうしゃによる かせん じょうたいだ。	Thị trường đang ở tình trạng độc quyền nhóm của vài công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14950	49306	株価が大幅に下落した。	かぶかが おおはばに げらく した。	Giá cổ phiếu đã giảm mạnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14951	49307	大学在学中に起業した。	だいがく ざいがくちゅうに きぎょう した。	Đã khởi nghiệp khi còn đang học đại học.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14952	49308	災害支援の基金を設立した。	さいがい しえんの ききんを せつりつ した。	Đã thành lập quỹ hỗ trợ thiên tai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14953	49309	彼は日本に帰化した。	かれは にっぽんに きか した。	Anh ấy đã nhập quốc tịch Nhật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14954	49310	容疑者の供述に矛盾がある。	ようぎしゃの きょうじゅつに むじゅんが ある。	Lời khai của nghi phạm có mâu thuẫn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14955	49311	各国が資金を拠出した。	かっこくが しきんを きょしゅつ した。	Các nước đã đóng góp tiền vốn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14956	49312	禁錮三年の判決が下った。	きんこ さんねんの はんけつが くだった。	Bản án ba năm tù giam đã được tuyên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14957	49313	検察は被告に懲役五年を求刑した。	けんさつは ひこくに ちょうえき ごねんを きゅうけい した。	Viện kiểm sát đề nghị mức án năm năm tù cho bị cáo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14958	49314	裁判で原告側が勝訴した。	さいばんで げんこくがわが しょうそ した。	Phía nguyên đơn đã thắng kiện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14959	49315	当選したら公約を守るべきだ。	とうせん したら こうやくを まもるべきだ。	Nếu trúng cử thì phải giữ cam kết.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14960	49316	政府は新たに国債を発行した。	せいふは あらたに こくさいを はっこう した。	Chính phủ đã phát hành thêm trái phiếu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14961	49317	裁判官が判決を言い渡した。	さいばんかんが はんけつを いいわたした。	Thẩm phán đã tuyên án.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14962	49318	会社は多額の債務を抱えている。	かいしゃは たがくの さいむを かかえている。	Công ty đang gánh khoản nợ lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14963	49319	失業率が過去最低を記録した。	しつぎょうりつが かこ さいていを きろく した。	Tỷ lệ thất nghiệp ghi nhận mức thấp nhất từ trước tới nay.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14964	49320	その会社は来年上場する予定だ。	その かいしゃは らいねん じょうじょう する よていだ。	Công ty đó dự định niêm yết vào năm sau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14965	49321	職権を乱用してはならない。	しょっけんを らんよう してはならない。	Không được lạm dụng quyền hạn chức vụ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14966	49322	政府は公式な声明を発表した。	せいふは こうしきな せいめいを はっぴょう した。	Chính phủ đã ra tuyên bố chính thức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14967	49323	彼はこの選挙区から立候補した。	かれは この せんきょくから りっこうほ した。	Ông ấy ra ứng cử ở khu vực bầu cử này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14968	49324	租税は国の重要な財源だ。	そぜいは くにの じゅうような ざいげんだ。	Thuế là nguồn tài chính quan trọng của quốc gia.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14969	49325	議会は大統領を弾劾した。	ぎかいは だいとうりょうを だんがい した。	Quốc hội đã luận tội tổng thống.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14970	49326	住民が市に道路整備を陳情した。	じゅうみんが しに どうろ せいびを ちんじょう した。	Người dân kiến nghị thành phố sửa đường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14971	49327	家を抵当に入れて借金した。	いえを ていとうに いれて しゃっきん した。	Thế chấp nhà để vay tiền.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14972	49328	官僚の天下りが批判されている。	かんりょうの あまくだりが ひはん されている。	Việc quan chức chuyển sang doanh nghiệp liên quan đang bị chỉ trích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14973	49329	党首討論が行われた。	とうしゅ とうろんが おこなわれた。	Cuộc tranh luận giữa các lãnh đạo đảng đã diễn ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14974	49330	ロンドン特派員が現地から報告した。	ロンドン とくはいんが げんちから ほうこく した。	Phóng viên thường trú tại London tường thuật từ hiện trường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14975	49331	市長の任期は四年だ。	しちょうの にんきは よんねんだ。	Nhiệm kỳ thị trưởng là bốn năm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14976	49332	被告は無罪を主張した。	ひこくは むざいを しゅちょう した。	Bị cáo khẳng định mình vô tội.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14977	49333	被災地に物資を送る。	ひさいちに ぶっしを おくる。	Gửi hàng cứu trợ đến vùng bị thiên tai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14978	49334	国会が条約を批准した。	こっかいが じょうやくを ひじゅん した。	Quốc hội đã phê chuẩn hiệp ước.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14979	49335	補正予算が成立した。	ほせい よさんが せいりつ した。	Ngân sách bổ sung đã được thông qua.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14980	49336	二つの党が連立政権を組んだ。	ふたつの とうが れんりつ せいけんを くんだ。	Hai đảng đã lập chính phủ liên minh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14981	49337	今日の天気の概況をお伝えします。	きょうの てんきの がいきょうを おつたえ します。	Xin thông báo tình hình thời tiết chung hôm nay.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14982	49338	社員全体の能力の底上げを図る。	しゃいん ぜんたいの のうりょくの そこあげを はかる。	Nhằm nâng mặt bằng năng lực của toàn bộ nhân viên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14983	49339	彼はよく成功例を引き合いに出す。	かれは よく せいこう れいを ひきあいに だす。	Anh ấy thường đưa các ví dụ thành công ra làm dẫn chứng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14984	49340	法案が骨抜きにされた。	ほうあんが ほねぬきに された。	Dự luật đã bị làm cho mất hiệu lực.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14985	49341	祖父は小さな旅館を営んでいる。	そふは ちいさな りょかんを いとなんでいる。	Ông tôi điều hành một nhà trọ nhỏ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14986	49342	彼は世界記録に挑んだ。	かれは せかい きろくに いどんだ。	Anh ấy đã thử thách kỷ lục thế giới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14987	49343	彼の努力は否めない事実だ。	かれの どりょくは いなめない じじつだ。	Sự nỗ lực của anh ấy là sự thật không thể phủ nhận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14988	49344	自分の甘さを戒める。	じぶんの あまさを いましめる。	Tự răn mình về sự dễ dãi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14989	49345	観光客が増えて町が潤った。	かんこう きゃくが ふえて まちが うるおった。	Khách du lịch tăng nên thị trấn trở nên sung túc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14990	49346	確認を怠ったせいでミスが起きた。	かくにんを おこたったせいで ミスが おきた。	Lỗi xảy ra vì đã lơ là khâu kiểm tra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14991	49347	彼は単身で海外へ赴いた。	かれは たんしんで かいがいへ おもむいた。	Anh ấy một mình sang nước ngoài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14992	49348	無理をして健康を害した。	むりを して けんこうを がいした。	Cố quá sức nên đã tổn hại sức khỏe.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14993	49349	栄養が偏らないように気をつける。	えいようが かたよらないように きを つける。	Chú ý để dinh dưỡng không bị mất cân đối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14994	49350	彼は茶道を極めた。	かれは さどうを きわめた。	Ông ấy đã tinh thông trà đạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14995	49351	彼らは脱走を企てた。	かれらは だっそうを くわだてた。	Bọn họ đã âm mưu đào tẩu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14996	49352	彼は取材を拒んだ。	かれは しゅざいを こばんだ。	Anh ấy đã từ chối phỏng vấn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14997	49353	彼は私の話を遮った。	かれは わたしの はなしを さえぎった。	Anh ấy đã ngắt lời tôi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14998	49354	彼女の気持ちを察して黙っていた。	かのじょの きもちを さっして だまっていた。	Thấu hiểu cảm xúc của cô ấy nên tôi im lặng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+14999	49355	先生は生徒を優しく諭した。	せんせいは せいとを やさしく さとした。	Thầy giáo nhẹ nhàng khuyên bảo học sinh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15000	49356	彼を新しい部長に据えた。	かれを あたらしい ぶちょうに すえた。	Đã bổ nhiệm anh ấy làm trưởng phòng mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15001	49357	気持ちが弛んでいると事故が起きる。	きもちが たるんでいると じこが おきる。	Tinh thần lơi lỏng thì tai nạn sẽ xảy ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15002	49358	研究に十年を費やした。	けんきゅうに じゅうねんを ついやした。	Đã dành mười năm cho nghiên cứu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15003	49359	彼は最後まで信念を貫いた。	かれは さいごまで しんねんを つらぬいた。	Anh ấy đã giữ vững niềm tin đến cùng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15004	49360	彼からの連絡が途絶えた。	かれからの れんらくが とだえた。	Liên lạc từ anh ấy đã bị đứt quãng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15005	49361	支払いが滞っている。	しはらいが とどこおっている。	Việc thanh toán đang bị chậm trễ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15006	49362	悪天候が登山隊の行く手を阻んだ。	あくてんこうが とざんたいの ゆくてを はばんだ。	Thời tiết xấu đã cản đường đoàn leo núi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15007	49363	言葉を紡いで物語を作る。	ことばを つむいで ものがたりを つくる。	Dệt lời thành câu chuyện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15008	49364	上司の指示を仰ぐ。	じょうしの しじを あおぐ。	Xin chỉ thị của cấp trên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15009	49365	敵を欺くにはまず味方から。	てきを あざむくには まず みかたから。	Muốn lừa địch thì trước hết phải lừa phe mình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15010	49366	結婚式のためにスーツを誂えた。	けっこんしきのために スーツを あつらえた。	Đã đặt may bộ vest cho lễ cưới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15011	49367	相手を侮ってはいけない。	あいてを あなどってはいけない。	Không được coi thường đối thủ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15012	49368	彼は五か国語を自在に操る。	かれは ごかこくごを じざいに あやつる。	Anh ấy sử dụng thành thạo năm thứ tiếng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15013	49369	計画の実現が危ぶまれている。	けいかくの じつげんが あやぶまれている。	Việc thực hiện kế hoạch đang bị lo ngại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15014	49370	彼は研究者としての道を歩んできた。	かれは けんきゅうしゃとしての みちを あゆんできた。	Ông ấy đã bước trên con đường của một nhà nghiên cứu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15015	49371	母は息子の身を案じている。	ははは むすこの みを あんじている。	Người mẹ lo lắng cho con trai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15016	49372	彼の急な態度の変化を訝った。	かれの きゅうな たいどの へんかを いぶかった。	Tôi lấy làm lạ trước sự thay đổi thái độ đột ngột của anh ta.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15017	49373	彼女は恥ずかしそうにうつむいた。	かのじょは はずかしそうに うつむいた。	Cô ấy cúi mặt vẻ ngượng ngùng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15018	49374	遅れた分は残業で埋め合わせる。	おくれたぶんは ざんぎょうで うめあわせる。	Bù phần bị chậm bằng cách làm thêm giờ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15019	49375	年長者を敬う。	ねんちょうしゃを うやまう。	Kính trọng người lớn tuổi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15020	49376	冷たい水でのどを潤した。	つめたい みずで のどを うるおした。	Làm dịu cổ họng bằng nước mát.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15021	49377	計画が現実味を帯びてきた。	けいかくが げんじつみを おびてきた。	Kế hoạch đã bắt đầu mang tính thực tế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15022	49378	被害は広い範囲に及んだ。	ひがいは ひろい はんいに およんだ。	Thiệt hại đã lan ra phạm vi rộng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15023	49379	新しい目標を掲げる。	あたらしい もくひょうを かかげる。	Đề ra mục tiêu mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15024	49380	修理費が予想以上に嵩んだ。	しゅうりひが よそういじょうに かさんだ。	Chi phí sửa chữa tăng hơn dự kiến.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15025	49381	この荷物はかさばって持ちにくい。	この にもつは かさばって もちにくい。	Hành lý này cồng kềnh khó mang.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15026	49382	涙で目が霞んだ。	なみだで めが かすんだ。	Mắt mờ đi vì nước mắt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15027	49383	長年の夢が叶った。	ながねんのゆめが かなった。	Giấc mơ nhiều năm đã thành hiện thực.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15028	49384	趣味と実益を兼ねる。	しゅみと じつえきを かねる。	Vừa là sở thích vừa có lợi ích thực tế.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15029	49385	この事件には政治家が絡んでいる。	この じけんには せいじかが からんでいる。	Chính trị gia có dính líu tới vụ việc này.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15030	49386	古い床が歩くたびにきしむ。	ふるい ゆかが あるくたびに きしむ。	Sàn cũ kêu cót két mỗi bước chân.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15031	49387	信頼関係を築くには時間がかかる。	しんらい かんけいを きずくには じかんが かかる。	Xây dựng quan hệ tin cậy cần thời gian.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15032	49388	毎朝走って体を鍛えている。	まいあさ はしって からだを きたえている。	Mỗi sáng chạy bộ để rèn luyện cơ thể.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15033	49389	古い橋は朽ちて危険だ。	ふるい はしは くちて きけんだ。	Cây cầu cũ đã mục nát và nguy hiểm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15034	49390	判決が覆った。	はんけつが くつがえった。	Phán quyết đã bị đảo ngược.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15035	49391	相手の気持ちを汲んで対応する。	あいての きもちを くんで たいおう する。	Ứng xử có thấu hiểu tâm tư đối phương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15036	49392	話がこじれてしまった。	はなしが こじれてしまった。	Câu chuyện đã trở nên rắc rối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15037	49393	素材にこだわったパン屋。	そざいに こだわった パンや。	Tiệm bánh chăm chút từng nguyên liệu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15038	49394	工夫を凝らした展示。	くふうを こらした てんじ。	Cuộc triển lãm được dồn nhiều tâm huyết sáng tạo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15039	49395	最近、料理に凝っている。	さいきん、 りょうりに こっている。	Gần đây tôi đang say mê nấu ăn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15040	49396	古い布を二つに裂いて雑巾にした。	ふるい ぬのを ふたつに さいて ぞうきんに した。	Xé đôi tấm vải cũ để làm giẻ lau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15041	49397	彼は一生を研究に捧げた。	かれは いっしょうを けんきゅうに ささげた。	Ông ấy đã dâng hiến cả đời cho nghiên cứu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15042	49398	師匠が弟子に秘伝を授けた。	ししょうが でしに ひでんを さずけた。	Sư phụ đã truyền bí kíp cho đệ tử.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15043	49399	スープが冷めないうちに飲んでください。	スープが さめないうちに のんでください。	Hãy uống súp khi còn nóng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15044	49400	無理な残業を強いられた。	むりな ざんぎょうを しいられた。	Bị ép làm thêm giờ quá sức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15045	49401	大事な面接でしくじった。	だいじな めんせつで しくじった。	Tôi đã làm hỏng buổi phỏng vấn quan trọng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15046	49402	扇風機で暑さをしのぐ。	せんぷうきで あつさを しのぐ。	Chống chọi với cái nóng bằng quạt máy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15047	49403	彼は支払いを渋っている。	かれは しはらいを しぶっている。	Anh ta đang ngần ngại không chịu trả tiền.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15048	49404	彼は第一線から退いた。	かれは だいいっせんから しりぞいた。	Ông ấy đã rút khỏi tuyến đầu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15050	49406	耳を澄ませて鳥の声を聞く。	みみを すませて とりの こえを きく。	Lắng tai nghe tiếng chim.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15051	49407	そんなに急かさないでください。	そんなに せかさないでください。	Xin đừng hối thúc như vậy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15052	49408	プレゼントに手紙を添えた。	プレゼントに てがみを そえた。	Đã kèm một lá thư vào món quà.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15053	49409	親の期待に背いてしまった。	おやの きたいに そむいてしまった。	Tôi đã làm trái kỳ vọng của bố mẹ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15054	49410	その村では人通りが絶えた。	その むらでは ひとどおりが たえた。	Ở ngôi làng đó không còn ai qua lại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15055	49411	父はお酒を少したしなむ程度だ。	ちちは お さけを すこし たしなむ ていどだ。	Bố tôi chỉ uống rượu ở mức thưởng thức chút ít.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15056	49412	両国は手を携えて問題に取り組む。	りょうこくは てを たずさえて もんだいに とりくむ。	Hai nước chung tay giải quyết vấn đề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15057	49413	選手たちの健闘を称えた。	せんしゅたちの けんとうを たたえた。	Đã ca ngợi sự thi đấu hết mình của các tuyển thủ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15058	49414	会場に緊張感が漂っていた。	かいじょうに きんちょうかんが ただよっていた。	Bầu không khí căng thẳng lan tỏa khắp hội trường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15059	49415	昼食代を立て替えておきます。	ちゅうしょくだいを たてかえておきます。	Tôi sẽ trả trước tiền bữa trưa hộ bạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15060	49416	優勝の夢は潰えた。	ゆうしょうの ゆめは ついえた。	Giấc mơ vô địch đã tan biến.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15061	49417	脳は体の働きを司っている。	のうは からだの はたらきを つかさどっている。	Não cai quản hoạt động của cơ thể.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15062	49418	犯した罪を償う。	おかした つみを つぐなう。	Chuộc lại tội đã gây ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15063	49419	言葉を慎みなさい。	ことばを つつしみなさい。	Hãy thận trọng lời nói.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15064	49420	ボランティアを募っている。	ボランティアを つのっている。	Đang chiêu mộ tình nguyện viên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15065	49421	嘘をついて良心がとがめた。	うそを ついて りょうしんが とがめた。	Nói dối nên lương tâm cắn rứt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15066	49422	会話が途切れて気まずくなった。	かいわが とぎれて きまずく なった。	Cuộc trò chuyện bị đứt quãng nên trở nên ngượng ngùng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15067	49423	包丁を研ぐ。	ほうちょうを とぐ。	Mài dao.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15068	49424	その国は急速な発展を遂げた。	その くには きゅうそくな はってんを とげた。	Đất nước đó đã đạt được sự phát triển nhanh chóng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15069	49425	失敗をその場で取り繕った。	しっぱいを その ばで とりつくろった。	Đã che đậy thất bại ngay tại chỗ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15070	49426	彼は約束を破った友人を詰った。	かれは やくそくを やぶった ゆうじんを なじった。	Anh ấy trách móc người bạn đã thất hứa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15071	49427	前例に倣って手続きを進める。	ぜんれいに ならって てつづきを すすめる。	Tiến hành thủ tục theo tiền lệ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15072	49428	子どもがおもちゃをねだる。	こどもが おもちゃを ねだる。	Đứa trẻ vòi đồ chơi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15073	49429	作戦をじっくり練る。	さくせんを じっくり ねる。	Trau chuốt kỹ lưỡng chiến lược.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15074	49430	万全の態勢で試合に臨む。	ばんぜんの たいせいで しあいに のぞむ。	Bước vào trận đấu với sự chuẩn bị chu đáo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15075	49431	大声で相手を罵った。	おおごえで あいてを ののしった。	Đã lớn tiếng chửi rủa đối phương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15076	49432	業務の効率化を図る。	ぎょうむの こうりつかを はかる。	Nhằm nâng cao hiệu quả công việc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15077	49433	この件は会議に諮って決める。	この けんは かいぎに はかって きめる。	Việc này sẽ hỏi ý kiến cuộc họp rồi quyết định.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15078	49434	彼は毎日練習に励んでいる。	かれは まいにち れんしゅうに はげんでいる。	Anh ấy chăm chỉ luyện tập mỗi ngày.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15079	49435	この子は大きな可能性を秘めている。	この こは おおきな かのうせいを ひめている。	Đứa trẻ này ẩn chứa tiềm năng lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15080	49436	相手の勢いにひるまなかった。	あいての いきおいに ひるまなかった。	Đã không chùn bước trước khí thế đối phương.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15081	49437	夜遅くまで読書に耽った。	よる おそくまで どくしょに ふけった。	Đắm chìm trong đọc sách đến khuya.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15082	49438	川を隔てて二つの町がある。	かわを へだてて ふたつの まちが ある。	Có hai thị trấn ngăn cách bởi dòng sông.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15083	49439	期待に報いるよう努力します。	きたいに むくいるよう どりょく します。	Tôi sẽ nỗ lực để đáp lại kỳ vọng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15084	49440	今日は蒸し暑い。	きょうは むしあつい。	Hôm nay trời oi bức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15085	49441	蟻が砂糖に群がっている。	ありが さとうに むらがっている。	Kiến đang bu đầy đường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15086	49442	犯人は人込みに紛れて逃げた。	はんにんは ひとごみに まぎれて にげた。	Hung thủ trà trộn vào đám đông và trốn thoát.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15087	49443	健康に勝るものはない。	けんこうに まさるものはない。	Không có gì hơn sức khỏe.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15088	49444	初めての駅でまごついた。	はじめての えきで まごついた。	Tôi lúng túng ở nhà ga lần đầu đến.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15089	49445	頃合いを見計らって話を切り出した。	ころあい いを みはからって はなしを きりだした。	Canh đúng lúc rồi mở lời.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15090	49446	相談窓口を設けた。	そうだん まどぐちを もうけた。	Đã thiết lập quầy tư vấn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15091	49447	彼は会社の乗っ取りを目論んでいた。	かれは かいしゃの のっとりを もくろんでいた。	Hắn đã mưu tính chiếm đoạt công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15092	49448	台風は大きな被害をもたらした。	たいふうは おおきな ひがいを もたらした。	Cơn bão đã gây ra thiệt hại lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15093	49449	人の気持ちを弄ぶな。	ひとの きもちを もてあそぶな。	Đừng đùa giỡn với tình cảm của người khác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15094	49450	退屈な講義に眠気を催した。	たいくつな こうぎに ねむけを もよおした。	Cảm thấy buồn ngủ vì bài giảng nhàm chán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15095	49451	社外秘の情報を漏らしてはいけない。	しゃがいひの じょうほうを もらしてはいけない。	Không được để lộ thông tin mật của công ty.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15096	49452	音楽は緊張を和らげる。	おんがくは きんちょうを やわらげる。	Âm nhạc làm dịu đi sự căng thẳng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15097	49453	最終判断は社長に委ねる。	さいしゅう はんだんは しゃちょうに ゆだねる。	Giao phó phán quyết cuối cùng cho giám đốc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15098	49454	写真を見て記憶が蘇った。	しゃしんを みて きおくが よみがえった。	Nhìn bức ảnh ký ức sống lại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15099	49455	思い煩うことはない。	おもいわずらうことはない。	Không cần phải lo phiền.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15100	49456	遅刻したことを心から詫びた。	ちこく したことを こころから わびた。	Thành thật xin lỗi vì đã đến muộn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15101	49457	突然の質問にうろたえた。	とつぜんの しつもんに うろたえた。	Hoảng hốt trước câu hỏi đột ngột.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15102	49458	本番直前におじけづいてしまった。	ほんばん ちょくぜんに おじけづいてしまった。	Ngay trước giờ diễn tôi đã nhụt chí.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15103	49459	彼はおどけてみんなを笑わせた。	かれは おどけて みんなを わらわせた。	Anh ấy pha trò làm mọi người cười.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15104	49460	恐怖におののく。	きょうふに おののく。	Run sợ vì kinh hãi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15105	49461	仕事にかこつけて旅行を楽しむ。	しごとに かこつけて りょこうを たのしむ。	Lấy cớ công việc để đi du lịch.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15106	49462	フランス語を少しかじったことがある。	ふらんすごを すこし かじったことが ある。	Tôi đã từng học sơ qua tiếng Pháp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15107	49463	彼は後輩をかばって叱られた。	かれは こうはいを かばって しかられた。	Anh ấy bị mắng vì bênh vực đàn em.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15108	49464	自尊心をくすぐる言葉。	じそんしんを くすぐる ことば。	Lời nói kích thích lòng tự tôn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15109	49465	どうぞ、ごゆっくりおくつろぎください。	どうぞ、 ご ゆっくり お くつろぎください。	Xin hãy thư giãn thoải mái.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15110	49466	人の作品をけなすのは簡単だ。	ひとの さくひんを けなすのは かんたんだ。	Chê bai tác phẩm của người khác thì dễ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15111	49467	社員を安い給料でこきつかう。	しゃいんを やすい きゅうりょうで こきつかう。	Sai khiến nhân viên với lương rẻ mạt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15112	49468	彼は笑ってごまかした。	かれは わらって ごまかした。	Anh ta cười để lấp liếm.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15113	49469	朝から小鳥がさえずっている。	あさから ことりが さえずっている。	Từ sáng chim nhỏ đã hót líu lo.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15114	49470	あてもなく旅をしてさすらう。	あても なく たびを して さすらう。	Phiêu bạt du hành không mục đích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15115	49471	水をやらなかったので花がしおれた。	みずを やらなかったので はなが しおれた。	Không tưới nước nên hoa đã héo rũ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15116	49472	子どもを厳しくしつける。	こどもを きびしく しつける。	Dạy dỗ con cái nghiêm khắc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15117	49473	おもちゃを買ってもらえず、子どもがすねている。	おもちゃを かってもらえず、 こどもが すねている。	Không được mua đồ chơi nên đứa trẻ đang dỗi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15118	49474	弟が小遣いをせびってきた。	おとうとが こづかいを せびってきた。	Em trai đến vòi tiền tiêu vặt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15119	49475	友達にそそのかされて授業をさぼった。	ともだちに そそのかされて じゅぎょうを さぼった。	Bị bạn xúi giục nên trốn học.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15120	49476	鋭い視線にたじろいだ。	するどい しせんに たじろいだ。	Chùn lại trước ánh nhìn sắc lạnh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15121	49477	彼女は海辺にひとりたたずんでいた。	かのじょは うみべに ひとり たたずんでいた。	Cô ấy đứng lặng một mình bên bờ biển.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15122	49478	雪がちらついてきた。	ゆきが ちらついてきた。	Tuyết bắt đầu rơi lất phất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15123	49479	石につまずいて転んだ。	いしに つまずいて ころんだ。	Vấp phải hòn đá và bị ngã.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15124	49480	口の中でとろけるチーズ。	くちのなかで とろける チーズ。	Phô mai tan chảy trong miệng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15125	49481	泣いている子をなだめる。	ないている こを なだめる。	Dỗ dành đứa trẻ đang khóc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15126	49482	額に汗がにじんだ。	がくに あせが にじんだ。	Mồ hôi rịn ra trên trán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15127	49483	雨で道がぬかるんでいる。	あめで みちが ぬかるんでいる。	Đường lầy lội vì mưa.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15128	49484	子どもたちが公園ではしゃいでいる。	こどもたちが こうえんで はしゃいでいる。	Bọn trẻ đang vui đùa ầm ĩ ở công viên.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15129	49485	暑さでばててしまった。	あつさで ばててしまった。	Mệt lả vì nắng nóng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15130	49486	知識をひけらかすのはよくない。	ちしきを ひけらかすのは よくない。	Khoe khoang kiến thức là không tốt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15131	49487	父は給料が安いとぼやいている。	ちちは きゅうりょうが やすいと ぼやいている。	Bố càu nhàu rằng lương thấp.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15132	49488	彼女は早口でまくしたてた。	かのじょは はやくちで まくしたてた。	Cô ấy nói tuôn xối xả rất nhanh.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15133	49489	煙にむせて咳が出た。	けむりに むせて せきが でた。	Bị sặc khói nên ho.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15134	49490	水の中で必死にもがいた。	みずのなかで ひっしに もがいた。	Vùng vẫy tuyệt vọng dưới nước.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15135	49491	糸がもつれてほどけない。	いとが もつれて ほどけない。	Sợi chỉ bị rối không gỡ được.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15136	49492	食後に口をゆすぐ。	しょくごに くちを ゆすぐ。	Súc miệng sau khi ăn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15137	49493	疲れて足がよろめいた。	つかれて あしが よろめいた。	Mệt nên chân loạng choạng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15138	49494	彼は自分は悪くないと言い張った。	かれは じぶんは わるくないと いいはった。	Anh ta khăng khăng mình không có lỗi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15139	49495	彼は研究に打ち込んでいる。	かれは けんきゅうに うちこんでいる。	Anh ấy đang dốc sức vào nghiên cứu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15140	49496	新商品を海外に売り込む。	しん しょうひんを かいがいに うりこむ。	Chào hàng sản phẩm mới ra nước ngoài.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15141	49497	親の反対を押し切って結婚した。	おやの はんたいを おしきって けっこん した。	Bất chấp bố mẹ phản đối mà kết hôn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15142	49498	思い立ったが吉日。	おもいたったが きちじつ。	Nghĩ ra lúc nào làm luôn lúc ấy.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15143	49499	生活費を切り詰める。	せいかつひを きりつめる。	Thắt chặt chi tiêu sinh hoạt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15144	49500	なかなか別れ話を切り出せない。	なかなか わかればなしを きりだせない。	Mãi không mở lời chuyện chia tay được.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15145	49501	残りの予算を来年度に繰り越す。	のこりの よさんを らいねんどに くりこす。	Chuyển phần ngân sách còn lại sang năm sau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15146	49502	喜びが込み上げてきた。	よろこびが こみあげてきた。	Niềm vui trào dâng.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15147	49503	明日の仕事に差し支えるので早く寝る。	あしたの しごとに さしつかえるので はやく ねる。	Đi ngủ sớm vì sẽ ảnh hưởng công việc ngày mai.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15148	49504	失恋から立ち直った。	しつれんから たちなおった。	Đã vực dậy sau thất tình.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15149	49505	今週は仕事が立て込んでいる。	こんしゅうは しごとが たてこんでいる。	Tuần này công việc dồn dập.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15150	49506	事故の原因を突き止めた。	じこの げんいんを つきとめた。	Đã truy ra nguyên nhân tai nạn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15151	49507	警察が違法駐車を取り締まる。	けいさつが いほう ちゅうしゃを とりしまる。	Cảnh sát trấn áp việc đỗ xe trái phép.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15152	49508	この理論は成り立たない。	この りろんは なりたたない。	Lý thuyết này không đứng vững.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15153	49509	計画を一から練り直す。	けいかくを いちから ねりなおす。	Soạn lại kế hoạch từ đầu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15154	49510	政府が問題の解決に乗り出した。	せいふが もんだいの かいけつに のりだした。	Chính phủ đã bắt tay vào giải quyết vấn đề.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15155	49511	二人は何かと張り合っている。	ににんは なにかと はりあっている。	Hai người ganh đua với nhau đủ chuyện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15156	49512	金利を引き下げる。	きんりを ひきさげる。	Hạ lãi suất.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15157	49513	過去の失敗を引きずっている。	かこの しっぱいを ひきずっている。	Vẫn còn vương vấn thất bại trong quá khứ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15158	49514	会社は値上げに踏み切った。	かいしゃは ねあげに ふみきった。	Công ty đã quyết định tăng giá.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15159	49515	仕事に見合った給料がほしい。	しごとに みあった きゅうりょうが ほしい。	Muốn có mức lương tương xứng với công việc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15160	49516	新しい時計を見せびらかす。	あたらしい とけいを みせびらかす。	Khoe chiếc đồng hồ mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15161	49517	結論は次回に持ち越された。	けつろんは じかいに もちこされた。	Kết luận được chuyển sang lần sau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15162	49518	会社は何とか不況を持ちこたえた。	かいしゃは なんとか ふきょうを もちこたえた。	Công ty bằng cách nào đó đã trụ vững qua suy thoái.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15163	49519	列に割り込むのはマナー違反だ。	れつに わりこむのは マナー いはんだ。	Chen ngang hàng là vi phạm phép lịch sự.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15164	49520	今月は事故が相次いでいる。	こんげつは じこが あいついでいる。	Tháng này tai nạn liên tiếp xảy ra.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15165	49521	不安をあおるような報道は避けるべきだ。	ふあんを あおるような ほうどうは さけるべきだ。	Nên tránh những bản tin kích động sự bất an.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15166	49522	彼はついに本心を明かした。	かれは ついに ほんしんを あかした。	Cuối cùng anh ấy đã tiết lộ suy nghĩ thật.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15167	49523	人の失敗をあざけるのはよくない。	ひとの しっぱいを あざけるのは よくない。	Chế nhạo thất bại của người khác là không tốt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15168	49524	彼の勇気は称賛に値する。	かれの ゆうきは しょうさんに あたいする。	Lòng dũng cảm của anh ấy xứng đáng được ca ngợi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15169	49525	判断を誤って大きな損失を出した。	はんだんを あやまって おおきな そんしつを だした。	Phán đoán sai nên gây ra tổn thất lớn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15170	49526	両者が歩み寄って合意に至った。	りょうしゃが あゆみよって ごういに いたった。	Hai bên nhượng bộ lẫn nhau và đi đến thỏa thuận.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15171	49527	裁判長が判決を言い渡した。	さいばんちょうが はんけつを いいわたした。	Chánh án đã tuyên án.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15172	49528	注意されると彼は居直った。	ちゅうい されると かれは いなおった。	Bị nhắc nhở, anh ta quay ra lấn lướt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15173	49529	入り組んだ路地で道に迷った。	いりくんだ ろじで みちに まよった。	Lạc đường trong những con hẻm chằng chịt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15174	49530	彼はうわさを強く打ち消した。	かれは うわさを つよく うちけした。	Anh ấy kịch liệt phủ nhận tin đồn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15175	49531	少し褒められたくらいでうぬぼれるな。	すこし ほめられたくらいで うぬぼれるな。	Đừng tự mãn chỉ vì được khen một chút.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15176	49532	売り上げが予想を上回った。	うりあげが よそうを うわまわった。	Doanh thu đã vượt quá dự đoán.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15177	49533	彼は辞任に追い込まれた。	かれは じにんに おいこまれた。	Ông ấy bị dồn đến chỗ phải từ chức.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15178	49534	彼は臆することなく意見を述べた。	かれは おくすること なく いけんを のべた。	Anh ấy trình bày ý kiến không chút e sợ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15179	49535	面倒な仕事を後輩に押し付ける。	めんどうな しごとを こうはいに おしつける。	Đùn đẩy việc phiền phức cho đàn em.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15180	49536	かいつまんで説明してください。	かいつまんで せつめい してください。	Hãy giải thích ngắn gọn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15181	49537	二人の証言が食い違っている。	ににんの しょうげんが くいちがっている。	Lời khai của hai người không khớp nhau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15182	49538	一度の失敗でくじけてはいけない。	いちどの しっぱいで くじけてはいけない。	Không được nản lòng vì một lần thất bại.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15183	49539	好きな歌を口ずさむ。	すきな うたを くちずさむ。	Ngân nga bài hát yêu thích.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15184	49540	彼は失敗を苦にして眠れなかった。	かれは しっぱいを くに して ねむれなかった。	Anh ấy bận tâm vì thất bại đến mất ngủ.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15185	49541	風邪をこじらせて入院した。	かぜを こじらせて にゅういん した。	Để cảm cúm trở nặng nên phải nhập viện.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15186	49542	彼が転勤するという話を小耳にはさんだ。	かれが てんきん するという はなしを こみみに はさんだ。	Tôi nghe lỏm chuyện anh ấy sắp chuyển công tác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15187	49543	医者もさじを投げるほどの難病だった。	いしゃも さじを なげるほどの なんびょうだった。	Đó là bệnh hiểm nghèo đến bác sĩ cũng bó tay.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15188	49544	工事は最終段階に差し掛かった。	こうじは さいしゅう だんかいに さしかかった。	Công trình đã bước vào giai đoạn cuối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15189	49545	社長の挨拶で会を締めくくった。	しゃちょうの あいさつで かいを しめくくった。	Buổi lễ kết thúc bằng lời phát biểu của giám đốc.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15190	49546	靴の底が擦り減った。	くつの そこが こすり へった。	Đế giày đã mòn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15191	49547	期待と不安がせめぎ合う。	きたいと ふあんが せめぎあう。	Kỳ vọng và bất an giằng co nhau.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15192	49548	彼は私から目をそらした。	かれは わたしから めを そらした。	Anh ấy quay mặt tránh ánh mắt tôi.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15193	49549	彼女はいつも笑顔を絶やさない。	かのじょは いつも えがおを たやさない。	Cô ấy lúc nào cũng giữ nụ cười.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15194	49550	遅刻の理由を問い詰められた。	ちこくの りゆうを といつめられた。	Bị chất vấn dồn dập về lý do đến muộn.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15195	49551	被害を最小限にとどめる。	ひがいを さいしょうげんに とどめる。	Giới hạn thiệt hại ở mức tối thiểu.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15196	49552	彼は一命を取り留めた。	かれは いちめいを とりとめた。	Anh ấy đã giữ được mạng sống.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15197	49553	犯人が自ら名乗り出た。	はんにんが みずから なのりでた。	Hung thủ đã tự đứng ra nhận tội.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15198	49554	悪がのさばる世の中。	あくが のさばる よのなか。	Một thế giới nơi cái ác hoành hành.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15199	49555	静かな場所だと勉強がはかどる。	しずかな ばしょだと べんきょうが はかどる。	Ở nơi yên tĩnh việc học tiến triển tốt.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15200	49556	人の好意を踏みにじるな。	ひとの こういを ふみにじるな。	Đừng chà đạp lòng tốt của người khác.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15201	49557	彼は新しい職場で手腕を振るった。	かれは あたらしい しょくばで しゅわんを ふるった。	Anh ấy đã phát huy năng lực ở nơi làm việc mới.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15202	49558	へりくだった言い方をする。	へりくだった いいかたを する。	Dùng cách nói khiêm nhường.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15203	49559	見るに見かねて手を貸した。	みるに みかねて てを かした。	Không thể đứng nhìn nên đã giúp một tay.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15204	49560	相手を見くびって負けた。	あいてを みくびって まけた。	Xem thường đối thủ nên đã thua.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15205	49561	ストレスが心身をむしばむ。	ストレスが しんしんを むしばむ。	Căng thẳng gặm nhấm cả thể xác lẫn tinh thần.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
+15206	49562	不祥事をもみ消そうとした。	ふしょうじを もみけそうと した。	Đã cố ém nhẹm vụ bê bối.	0	2026-11-02 01:06:36.402	2026-11-02 01:06:36.402
 \.
 
 
@@ -145454,6 +153206,7 @@ b0b5969f-7001-4357-ac01-a51cc8272986	0e4a817c4f77e127deeafbb3fe115c67d6b3aff5d51
 1663307b-3028-4204-8747-2d8c2f1beb42	6017e019f92e58298bd6e7e323b306c075a88038a39c24aa42d6a1f15b02fd4a	2026-10-22 03:58:51.120686+00	20261021090000_payout_claim_refresh_reuse_cron_run	\N	\N	2026-10-22 03:58:51.105764+00	1
 30eebf83-eed7-4b8b-9011-3dc186f8b63e	3db7b6043e3940a4cc1d6669b4052ca9580ea8bb9a74846d29d1c4a31eb5ddab	2026-10-27 02:40:46.655422+00	20261027100000_vocabulary_example	\N	\N	2026-10-27 02:40:46.499901+00	1
 6d106a69-89e1-4d2a-ad9c-6bde5c36837d	0646bc5193da0e17a4ed2cecf1cb7e627e5321ff41e4248048e53a9e46546d93	2026-11-01 13:53:53.9822+00	20261101090000_kanji_component	\N	\N	2026-11-01 13:53:53.97205+00	1
+d58de2ab-df5f-4c67-8aca-965e40acb81f	ec4a2ee839ac7270f52d76aae2203f65199033c75501323ffc6dd5b335682007	2026-11-02 00:47:10.590572+00	20261102090000_content_unique_views	\N	\N	2026-11-02 00:47:10.578663+00	1
 \.
 
 
@@ -145580,7 +153333,7 @@ SELECT pg_catalog.setval('public."CountryRegion_id_seq"', 6, true);
 -- Name: DailyActivity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."DailyActivity_id_seq"', 174, true);
+SELECT pg_catalog.setval('public."DailyActivity_id_seq"', 176, true);
 
 
 --
@@ -145685,14 +153438,14 @@ SELECT pg_catalog.setval('public."Example_id_seq"', 19401, true);
 -- Name: ExerciseOption_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."ExerciseOption_id_seq"', 66132, true);
+SELECT pg_catalog.setval('public."ExerciseOption_id_seq"', 68840, true);
 
 
 --
 -- Name: Exercise_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."Exercise_id_seq"', 26783, true);
+SELECT pg_catalog.setval('public."Exercise_id_seq"', 27460, true);
 
 
 --
@@ -145853,7 +153606,7 @@ SELECT pg_catalog.setval('public."LearnerChatRoom_id_seq"', 3, true);
 -- Name: Lesson_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."Lesson_id_seq"', 17001, true);
+SELECT pg_catalog.setval('public."Lesson_id_seq"', 17035, true);
 
 
 --
@@ -145888,21 +153641,21 @@ SELECT pg_catalog.setval('public."MindMapLevel_id_seq"', 15, true);
 -- Name: MockExamQuestionOption_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."MockExamQuestionOption_id_seq"', 272, true);
+SELECT pg_catalog.setval('public."MockExamQuestionOption_id_seq"', 2452, true);
 
 
 --
 -- Name: MockExamQuestion_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."MockExamQuestion_id_seq"', 68, true);
+SELECT pg_catalog.setval('public."MockExamQuestion_id_seq"', 613, true);
 
 
 --
 -- Name: MockExamTemplate_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."MockExamTemplate_id_seq"', 13, true);
+SELECT pg_catalog.setval('public."MockExamTemplate_id_seq"', 24, true);
 
 
 --
@@ -145944,7 +153697,7 @@ SELECT pg_catalog.setval('public."Payout_id_seq"', 1, false);
 -- Name: PodcastResource_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."PodcastResource_id_seq"', 5, true);
+SELECT pg_catalog.setval('public."PodcastResource_id_seq"', 13, true);
 
 
 --
@@ -145986,21 +153739,21 @@ SELECT pg_catalog.setval('public."ReadingAttempt_id_seq"', 2, true);
 -- Name: ReadingPassage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."ReadingPassage_id_seq"', 70, true);
+SELECT pg_catalog.setval('public."ReadingPassage_id_seq"', 83, true);
 
 
 --
 -- Name: ReadingQuestionOption_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."ReadingQuestionOption_id_seq"', 1064, true);
+SELECT pg_catalog.setval('public."ReadingQuestionOption_id_seq"', 1220, true);
 
 
 --
 -- Name: ReadingQuestion_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."ReadingQuestion_id_seq"', 266, true);
+SELECT pg_catalog.setval('public."ReadingQuestion_id_seq"', 305, true);
 
 
 --
@@ -146112,7 +153865,7 @@ SELECT pg_catalog.setval('public."VocabSuffixItem_id_seq"', 52, true);
 -- Name: VocabularyExample_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."VocabularyExample_id_seq"', 13932, true);
+SELECT pg_catalog.setval('public."VocabularyExample_id_seq"', 15206, true);
 
 
 --
@@ -146126,7 +153879,7 @@ SELECT pg_catalog.setval('public."VocabularyKanjiLink_id_seq"', 2534, true);
 -- Name: Vocabulary_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nihongo
 --
 
-SELECT pg_catalog.setval('public."Vocabulary_id_seq"', 48288, true);
+SELECT pg_catalog.setval('public."Vocabulary_id_seq"', 49562, true);
 
 
 --
@@ -148886,5 +156639,5 @@ REFRESH MATERIALIZED VIEW public.learner_progress_summary;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xO6SBcZ8D3DUmSdvgFO7S37hlWyQjXYOvCvE0bYyj28Ypl2bKnvXYGdEY5vMqZP
+\unrestrict pbcmbCImrtTH0xJJQGgtbKGfvCMqkmV0HeGQJsDVfge4wEaapeSOa2nxpIzseiL
 

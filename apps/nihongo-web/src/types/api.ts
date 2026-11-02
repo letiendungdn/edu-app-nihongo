@@ -16,6 +16,13 @@ export interface Lesson {
   };
 }
 
+/** Một bài ở sách khác đang chứa cùng mục. */
+export interface AlsoInTextbook {
+  book: string;
+  lessonNumber: number;
+  title: string | null;
+}
+
 export interface KatakanaVocabulary {
   id: number;
   kanji: string | null;
@@ -46,8 +53,8 @@ export interface Vocabulary {
   exampleKana?: string | null;
   exampleVi?: string | null;
   examples?: VocabularyExample[];
-  /** Sách khác cũng có mục này. MINNA, KLL, JLPT, SOUMATOME, SHINKANZEN, TRY. */
-  alsoInTextbooks?: string[];
+  /** Sách khác cũng có mục này, kèm bài để mở. */
+  alsoInTextbooks?: AlsoInTextbook[];
 }
 
 /** Một câu ví dụ của từ (bảng VocabularyExample). */
@@ -82,8 +89,8 @@ export interface Grammar {
   explanation: string | null;
   lessonId: number;
   examples?: GrammarExample[];
-  /** Sách khác cũng có mẫu này. */
-  alsoInTextbooks?: string[];
+  /** Sách khác cũng có mẫu này, kèm bài để mở. */
+  alsoInTextbooks?: AlsoInTextbook[];
 }
 
 export interface Exercise {
@@ -134,8 +141,8 @@ export interface KanjiEntry {
   imageUrl?: string | null;
   sortOrder?: number;
   lesson?: { lessonNumber: number; title: string | null; jlptLevel: string | null };
-  /** Sách khác cũng có chữ này. */
-  alsoInTextbooks?: string[];
+  /** Sách khác cũng có chữ này, kèm bài để mở. */
+  alsoInTextbooks?: AlsoInTextbook[];
   vocabularies?: Array<{
     id: number;
     word: string;

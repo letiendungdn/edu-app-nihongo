@@ -37,16 +37,26 @@ export function bookCode(textbook: string | null | undefined): string {
   return textbook || JLPT_POOL;
 }
 
-function sortBooks(books: string[]): string[] {
-  return [...books].sort(
+export type BookPlacement = {
+  book: string;
+  lessonNumber: number;
+  title: string | null;
+};
+
+function bookRank(book: string): number {
+  const index = BOOK_ORDER.indexOf(book);
+  return index === -1 ? 99 : index;
+}
+
+function sortPlacements(items: BookPlacement[]): BookPlacement[] {
+  return [...items].sort(
     (a, b) =>
-      (BOOK_ORDER.indexOf(a) === -1 ? 99 : BOOK_ORDER.indexOf(a)) -
-      (BOOK_ORDER.indexOf(b) === -1 ? 99 : BOOK_ORDER.indexOf(b)),
+      bookRank(a.book) - bookRank(b.book) || a.lessonNumber - b.lessonNumber,
   );
 }
 
 /**
- * Sách khác đang chứa cùng một mục (cùng cách đọc / mẫu / chữ).
+ * Sách khác đang chứa cùng một mục (cùng cách đọc / mẫu / chữ), kèm số bài để mở đúng bài.
  * Không tính bài khác của chính sách đang học.
  */
 export async function alsoInTextbooks(
@@ -54,17 +64,26 @@ export async function alsoInTextbooks(
   kind: OverlapKind,
   keys: string[],
   currentTextbook: string | null | undefined,
-): Promise<Map<string, string[]>> {
+): Promise<Map<string, BookPlacement[]>> {
   const mine = bookCode(currentTextbook);
   const unique = [...new Set(keys.map(overlapKey).filter(Boolean))];
-  const map = new Map<string, string[]>();
+  const map = new Map<string, BookPlacement[]>();
   if (unique.length === 0) return map;
 
   const source = SOURCE[kind];
-  const rows = await prisma.$queryRaw<Array<{ key: string; book: string }>>(
+  const rows = await prisma.$queryRaw<
+    Array<{
+      key: string;
+      book: string;
+      lessonNumber: number;
+      title: string | null;
+    }>
+  >(
     Prisma.sql`
       SELECT lower(regexp_replace(${Prisma.raw(source.column)}, ${STRIP}, '', 'g')) AS key,
-             COALESCE(l.textbook::text, ${JLPT_POOL}) AS book
+             COALESCE(l.textbook::text, ${JLPT_POOL}) AS book,
+             l."lessonNumber" AS "lessonNumber",
+             l.title AS title
       FROM ${Prisma.raw(source.table)} v
       JOIN ${Prisma.raw(source.lesson)} l ON l.id = v."lessonId"
       WHERE lower(regexp_replace(${Prisma.raw(source.column)}, ${STRIP}, '', 'g'))
@@ -72,13 +91,18 @@ export async function alsoInTextbooks(
     `,
   );
 
+  const seen = new Set<string>();
   for (const row of rows) {
     if (row.book === mine) continue;
+    const lessonNumber = Number(row.lessonNumber);
+    const mark = `${row.key}:${row.book}:${lessonNumber}`;
+    if (seen.has(mark)) continue;
+    seen.add(mark);
     const list = map.get(row.key) ?? [];
-    if (!list.includes(row.book)) list.push(row.book);
+    list.push({ book: row.book, lessonNumber, title: row.title });
     map.set(row.key, list);
   }
-  for (const [key, books] of map) map.set(key, sortBooks(books));
+  for (const [key, places] of map) map.set(key, sortPlacements(places));
   return map;
 }
 
@@ -88,7 +112,7 @@ export async function withAlsoIn<T>(
   rows: T[],
   keyOf: (row: T) => string | null | undefined,
   currentTextbook: string | null | undefined,
-): Promise<Array<T & { alsoInTextbooks: string[] }>> {
+): Promise<Array<T & { alsoInTextbooks: BookPlacement[] }>> {
   const books = await alsoInTextbooks(
     prisma,
     kind,

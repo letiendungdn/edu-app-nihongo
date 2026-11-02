@@ -134,6 +134,8 @@ const SECTION_NAMES: Record<string, string> = {
   reading: "Đọc hiểu",
 };
 
+const SECTION_ORDER = ["vocab", "kanji", "grammar", "reading", "listening"];
+
 function resolveScope(row: MockExamTemplate): string {
   if (row.scope.trim()) return row.scope;
   if (row.sourceMode === "CUSTOM") return "Đề tự soạn";
@@ -984,18 +986,17 @@ export class MockExamsService {
     const passThreshold = session.passThreshold ?? 65;
     const passed = percent >= passThreshold;
 
-    const sectionScores = ["vocab", "grammar", "kanji", "listening"].map(
-      (sectionId) => {
-        const items = review.filter((r) => r.sectionId === sectionId);
-        const sectionCorrect = items.filter((r) => r.isCorrect).length;
-        return {
-          sectionId,
-          sectionName: items[0]?.sectionName ?? sectionId,
-          correct: sectionCorrect,
-          total: items.length,
-        };
-      },
-    );
+    // Chỉ các phần có câu hỏi trong đề (đề tự soạn có Đọc hiểu, đề sinh tự động có Kanji…)
+    const sectionScores = SECTION_ORDER.map((sectionId) => {
+      const items = review.filter((r) => r.sectionId === sectionId);
+      const sectionCorrect = items.filter((r) => r.isCorrect).length;
+      return {
+        sectionId,
+        sectionName: items[0]?.sectionName ?? SECTION_NAMES[sectionId] ?? sectionId,
+        correct: sectionCorrect,
+        total: items.length,
+      };
+    }).filter((section) => section.total > 0);
 
     await this.cacheManager.del(sessionKey(examId));
 

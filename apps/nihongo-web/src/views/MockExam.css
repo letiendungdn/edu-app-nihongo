@@ -760,3 +760,71 @@
     text-align: center;
   }
 }
+
+/* Bài đọc 【文章】 và dòng hướng dẫn trong đề tự soạn */
+.mock-exam-passage {
+  margin: 0 0 1rem;
+  padding: 1rem 1.15rem;
+  max-height: 46vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.85rem;
+  background: var(--surface-color);
+  color: var(--text-primary);
+  font-size: 1.02rem;
+  line-height: 1.95;
+  white-space: pre-line;
+}
+
+.mock-exam-passage:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.mock-exam-instruction {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.mock-exam-prompt {
+  white-space: pre-line;
+}
+
+/* Câu chọn tranh: 4 tranh xếp lưới 2×2 */
+.quiz-options.quiz-options--pictures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.quiz-options--pictures .quiz-option {
+  padding: 0.6rem;
+}
+
+.quiz-options--pictures .mock-exam-option-image {
+  max-width: 100%;
+  max-height: 140px;
+  margin: 0 auto;
+  background: transparent;
+}
+
+.mock-exam-question-card .mock-exam-question-image {
+  max-width: min(100%, 460px);
+  max-height: 290px;
+  margin: 0.25rem auto 1rem;
+  background: transparent;
+}
+
+.mock-exam-credit {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.mock-exam-credit a {
+  color: inherit;
+}

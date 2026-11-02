@@ -2152,9 +2152,67 @@ select {
   line-height: 1.35;
   width: fit-content;
   max-width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .also-in-books__mark {
   font-size: 0.95rem;
   line-height: 1;
+}
+
+.also-in-books-pop {
+  position: fixed;
+  z-index: 400;
+  width: min(280px, calc(100vw - 16px));
+  padding: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.also-in-books-pop__title {
+  margin: 0;
+  padding: 0.25rem 0.55rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.also-in-books-pop__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.also-in-books-pop__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.also-in-books-pop__link:hover {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.also-in-books-pop__book {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.also-in-books-pop__lesson {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
 }

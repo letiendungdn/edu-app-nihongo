@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { playAudio, stopAudio } from '../utils/speech';
+import { listeningLines } from '../utils/mockExam';
+import { playAudio, playAudioSequence, stopAudio } from '../utils/speech';
 
 const MAX_REPLAYS = 2;
 
@@ -35,7 +36,10 @@ export default function ListeningPlayer({
       return;
     }
     if (audioText) {
-      playAudio(audioText);
+      // Hội thoại nhiều dòng: đọc nối tiếp từng câu (tránh Chrome cắt câu đọc quá dài)
+      const lines = listeningLines(audioText);
+      if (lines.length > 1) void playAudioSequence(lines, { pauseMs: 550 });
+      else playAudio(lines[0] ?? audioText);
     }
   };
 
