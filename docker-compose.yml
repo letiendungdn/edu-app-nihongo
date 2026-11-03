@@ -412,6 +412,10 @@ services:
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     container_name: edu-nihongo-web
     restart: unless-stopped
+    # Mở thẳng Next.js ra máy (Docker Desktop hiện cột Port(s)); đường chính vẫn qua nginx :8080.
+    # 5173 đã nằm sẵn trong ALLOWED_ORIGINS của gateway và CORS của signaling.
+    ports:
+      - '${NIHONGO_WEB_PORT:-5173}:8080'
     environment:
       API_URL: http://api-gateway:3000
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
