@@ -97,10 +97,14 @@ describe("predictJlpt", () => {
   });
 
   it("predicts from practice alone, with low confidence", () => {
-    const p = predictJlpt("n3", [], [
-      { section: "vocab", correct: 80, total: 100, source: "SRS" },
-      { section: "reading", correct: 12, total: 20, source: "Đọc hiểu" },
-    ]);
+    const p = predictJlpt(
+      "n3",
+      [],
+      [
+        { section: "vocab", correct: 80, total: 100, source: "SRS" },
+        { section: "reading", correct: 12, total: 20, source: "Đọc hiểu" },
+      ],
+    );
     expect(p.confidence).toBe("low");
     expect(p.passProbability).toBeGreaterThan(0);
     expect(p.missingSections).toEqual(["Nghe"]);
@@ -123,11 +127,15 @@ describe("predictJlpt", () => {
 });
 
 describe("grammarFragments", () => {
-  const { grammarFragments } = jest.requireActual("./jlpt-prediction") as typeof import("./jlpt-prediction");
+  const { grammarFragments } =
+    jest.requireActual<typeof import("./jlpt-prediction")>("./jlpt-prediction");
 
   it("keeps the fixed Japanese part of a pattern", () => {
     expect(grammarFragments("〜うちに")).toEqual(["うちに"]);
-    expect(grammarFragments("〜に関して／〜に関する")).toEqual(["に関して", "に関する"]);
+    expect(grammarFragments("〜に関して／〜に関する")).toEqual([
+      "に関して",
+      "に関する",
+    ]);
     expect(grammarFragments("Vたとたん（に）")).toEqual(["たとたん"]);
   });
 
@@ -141,20 +149,31 @@ describe("grammarFragments", () => {
     expect(grammarFragments("V(て) + ある")).toEqual([]);
     expect(grammarFragments("〜って")).toEqual([]);
     expect(grammarFragments("〜末（に）")).toEqual([]);
-    expect(grammarFragments("〜べきだ／〜べきでは ない")).toEqual(["べきだ", "べきではない"]);
+    expect(grammarFragments("〜べきだ／〜べきでは ない")).toEqual([
+      "べきだ",
+      "べきではない",
+    ]);
   });
 });
 
 describe("grammarMatchers", () => {
-  const { grammarMatchers } = jest.requireActual("./jlpt-prediction") as typeof import("./jlpt-prediction");
+  const { grammarMatchers } =
+    jest.requireActual<typeof import("./jlpt-prediction")>("./jlpt-prediction");
   const finds = (pattern: string, sentence: string) =>
     grammarMatchers(pattern).some((r) => r.test(sentence));
 
   it("matches conjugated verbs for placeholder-only patterns", () => {
     expect(finds("V(て) + おく", "資料を読んでおきました。")).toBe(true);
     expect(finds("V(て) + ある", "窓が開けてあります。")).toBe(true);
-    expect(finds("V(sai khiến) — させる / せる", "子どもに野菜を食べさせた。")).toBe(true);
-    expect(finds("V(た) + り + V(た) + り + する", "本を読んだり音楽を聞いたりします。")).toBe(true);
+    expect(
+      finds("V(sai khiến) — させる / せる", "子どもに野菜を食べさせた。"),
+    ).toBe(true);
+    expect(
+      finds(
+        "V(た) + り + V(た) + り + する",
+        "本を読んだり音楽を聞いたりします。",
+      ),
+    ).toBe(true);
   });
 
   it("matches one-kanji cores only in their grammatical use", () => {
@@ -184,21 +203,36 @@ describe("grammarMatchers", () => {
 });
 
 describe("sameGrammarFunction", () => {
-  const { sameGrammarFunction } = jest.requireActual("./jlpt-prediction") as typeof import("./jlpt-prediction");
+  const { sameGrammarFunction } =
+    jest.requireActual<typeof import("./jlpt-prediction")>("./jlpt-prediction");
 
   it("keeps honorific and passive られます apart", () => {
-    expect(sameGrammarFunction("V れます／V られます（tôn kính）", "N1 は N2 に N3 を V られます")).toBe(false);
+    expect(
+      sameGrammarFunction(
+        "V れます／V られます（tôn kính）",
+        "N1 は N2 に N3 を V られます",
+      ),
+    ).toBe(false);
   });
 
   it("allows merging two spellings of the same point", () => {
-    expect(sameGrammarFunction("〜結果", "V(た) + 結果 / N + の結果")).toBe(true);
-    expect(sameGrammarFunction("〜ため（に）（nguyên nhân）", "N + のため（nguyên nhân）")).toBe(true);
+    expect(sameGrammarFunction("〜結果", "V(た) + 結果 / N + の結果")).toBe(
+      true,
+    );
+    expect(
+      sameGrammarFunction(
+        "〜ため（に）（nguyên nhân）",
+        "N + のため（nguyên nhân）",
+      ),
+    ).toBe(true);
   });
 });
 
 describe("honorific vs passive", () => {
-  const { grammarMatchers } = jest.requireActual("./jlpt-prediction") as typeof import("./jlpt-prediction");
-  const finds = (pattern: string, sentence: string) => grammarMatchers(pattern).some((r) => r.test(sentence));
+  const { grammarMatchers } =
+    jest.requireActual<typeof import("./jlpt-prediction")>("./jlpt-prediction");
+  const finds = (pattern: string, sentence: string) =>
+    grammarMatchers(pattern).some((r) => r.test(sentence));
   const honorific = "V れます／V られます（tôn kính）";
   const passive = "N1 は N2 に N3 を V られます";
 
@@ -217,8 +251,15 @@ describe("honorific vs passive", () => {
     expect(finds(oni, "先生はもうお帰りになりました。")).toBe(true);
     expect(finds(oni, "お客様はご利用になりますか。")).toBe(true);
     expect(finds(oni, "部屋が静かになりました。")).toBe(false);
-    expect(finds("Thể bị động（V れる／V られる）", "お客様は駐車場をご利用になれます。")).toBe(false);
-    expect(finds("Thể bị động（V れる／V られる）", "子どものころ、犬に死なれた。")).toBe(true);
+    expect(
+      finds(
+        "Thể bị động（V れる／V られる）",
+        "お客様は駐車場をご利用になれます。",
+      ),
+    ).toBe(false);
+    expect(
+      finds("Thể bị động（V れる／V られる）", "子どものころ、犬に死なれた。"),
+    ).toBe(true);
     expect(finds(oni, "それはお金になります。")).toBe(false);
     expect(finds(oni, "お金持ちになったら家を買いたい。")).toBe(false);
     expect(finds(oni, "将来はお医者さんになりたい。")).toBe(false);
@@ -233,7 +274,9 @@ describe("honorific vs passive", () => {
     expect(finds(cp, "先生に名前を呼ばれた。")).toBe(false);
     expect(finds(cp, "友達に写真を見せられた。")).toBe(false);
     expect(finds(cp, "作文を三回も書かせられました。")).toBe(true);
-    expect(finds("V(使役受身)", "子どものころ、ピアノを習わされた。")).toBe(true);
+    expect(finds("V(使役受身)", "子どものころ、ピアノを習わされた。")).toBe(
+      true,
+    );
   });
 
   it("does not count lexical せる verbs as causative", () => {
@@ -263,9 +306,13 @@ describe("honorific vs passive", () => {
     expect(finds(passive, "社長、明日は何時に来られますか。")).toBe(false);
     expect(finds(honorific, "田中さんは先生に褒められました。")).toBe(false);
     expect(finds(honorific, "部長は社長に呼ばれました。")).toBe(false);
-    expect(finds(honorific, "大きなミスをして、課長から降格された。")).toBe(false);
+    expect(finds(honorific, "大きなミスをして、課長から降格された。")).toBe(
+      false,
+    );
     expect(finds(honorific, "新社長の手腕が問われる。")).toBe(false);
-    expect(finds(honorific, "先生は来月から新しい授業を始められます。")).toBe(true);
+    expect(finds(honorific, "先生は来月から新しい授業を始められます。")).toBe(
+      true,
+    );
     expect(finds(honorific, "社長は午後から出かけられる予定です。")).toBe(true);
   });
 
@@ -276,14 +323,18 @@ describe("honorific vs passive", () => {
 });
 
 describe("look-alike patterns stay apart", () => {
-  const { grammarMatchers, sameGrammarFunction } = jest.requireActual("./jlpt-prediction") as typeof import("./jlpt-prediction");
-  const finds = (pattern: string, sentence: string) => grammarMatchers(pattern).some((r) => r.test(sentence));
+  const { grammarMatchers, sameGrammarFunction } =
+    jest.requireActual<typeof import("./jlpt-prediction")>("./jlpt-prediction");
+  const finds = (pattern: string, sentence: string) =>
+    grammarMatchers(pattern).some((r) => r.test(sentence));
   const key = (p: string) => grammarMatchers(p).map(String).join("|");
 
   it("does not treat から、 or なら、 as たら", () => {
     expect(key("〜から、〜")).not.toBe(key("V たら、～（sau khi）"));
     expect(key("N なら、～")).not.toBe(key("〜たら"));
-    expect(finds("V たら、～（sau khi）", "雨が降ったら、行きません。")).toBe(true);
+    expect(finds("V たら、～（sau khi）", "雨が降ったら、行きません。")).toBe(
+      true,
+    );
   });
 
   it("separates choice questions, concessive もし/いくら and polite requests", () => {
@@ -291,7 +342,9 @@ describe("look-alike patterns stay apart", () => {
     expect(finds("S1 か、S2 か", "これは本ですか。")).toBe(false);
     expect(finds("もし／いくら", "いくら高くても買います。")).toBe(true);
     expect(finds("もし／いくら", "これはいくらですか。")).toBe(false);
-    expect(finds("お V（ます bỏ）／ご N ＋ ください", "少々お待ちください。")).toBe(true);
+    expect(
+      finds("お V（ます bỏ）／ご N ＋ ください", "少々お待ちください。"),
+    ).toBe(true);
   });
 
   it("separates 'just did' ばかり from 'nothing but' ばかり", () => {
@@ -300,8 +353,18 @@ describe("look-alike patterns stay apart", () => {
   });
 
   it("keeps different uses of the same form apart", () => {
-    expect(sameGrammarFunction("V て います（đang diễn ra）", "V て います（nghề nghiệp, công việc thường xuyên）")).toBe(false);
-    expect(sameGrammarFunction("V(ます bỏ) + そうです (nhìn thấy)", "V(普通形) + そうです (nghe nói)")).toBe(false);
+    expect(
+      sameGrammarFunction(
+        "V て います（đang diễn ra）",
+        "V て います（nghề nghiệp, công việc thường xuyên）",
+      ),
+    ).toBe(false);
+    expect(
+      sameGrammarFunction(
+        "V(ます bỏ) + そうです (nhìn thấy)",
+        "V(普通形) + そうです (nghe nói)",
+      ),
+    ).toBe(false);
   });
 
   it("separates は〜が〜A, もう〜ました and らしい (đúng chất)", () => {
@@ -309,6 +372,11 @@ describe("look-alike patterns stay apart", () => {
     expect(finds("N1 は N2 が A です", "私は学生です。")).toBe(false);
     expect(finds("もう V ました", "もう昼ご飯を食べました。")).toBe(true);
     expect(finds("もう V ました", "昨日映画を見ました。")).toBe(false);
-    expect(sameGrammarFunction("〜らしい（đúng chất）", "V/A/N(thể thường) + らしい")).toBe(false);
+    expect(
+      sameGrammarFunction(
+        "〜らしい（đúng chất）",
+        "V/A/N(thể thường) + らしい",
+      ),
+    ).toBe(false);
   });
 });
