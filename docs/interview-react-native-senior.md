@@ -2129,3 +2129,21 @@ async function checkUpdate() {
 | [interview-devops.md](./interview-devops.md) | Câu hỏi DevOps / infra |
 | [system-design.md](./system-design.md) | Kiến trúc EDU App |
 | [security-owasp-mobile.md](./security-owasp-mobile.md) | OWASP Mobile Top 10 + thực tế trong app |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
+
+- [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
+- [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
+- [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -384,4 +384,18 @@ Thuật toán SM-2 port song song: `srs.ts` · `SrsAlgorithm.kt` · `srs_algorit
 | [roadmap-flutter.md](./roadmap-flutter.md) | Roadmap Flutter |
 | [roadmap-swift.md](./roadmap-swift.md) | Roadmap Swift |
 | [roadmap-reactjs.md](./roadmap-reactjs.md) | Roadmap ReactJS (web `nihongo-web`) |
-| [nginx.md](./nginx.md) | Vì sao Android hay dùng `:8080` |
+| [learn-nginx.md](./learn-nginx.md) | Vì sao Android hay dùng `:8080` |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 1/8.
+
+- **Bài tiếp: [run-mobile.md](./run-mobile.md)** — Chạy các app mobile
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

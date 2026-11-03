@@ -160,7 +160,22 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 |------|----------|
 | [run-local.md](./run-local.md) | Chạy backend + web local |
 | [docker.md](./docker.md) | Full stack trong Docker |
-| [nginx.md](./nginx.md) | Nginx reverse proxy — cổng `:8080`, route API/web/Keycloak |
+| [learn-nginx.md](./learn-nginx.md) | Nginx reverse proxy — cổng `:8080`, route API/web/Keycloak |
 | [apps/nihongo-mobile/README.md](../apps/nihongo-mobile/README.md) | Chi tiết app Expo |
 | [apps/nihongo-android/README.md](../apps/nihongo-android/README.md) | Chi tiết app Kotlin |
 | [apps/nihongo_flutter/README.md](../apps/nihongo_flutter/README.md) | Chi tiết app Flutter |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 2/8.
+
+- Bài trước: [mobile-tech-stacks.md](./mobile-tech-stacks.md) — Tech stack từng app mobile
+- **Bài tiếp: [learn-android-fundamentals.md](./learn-android-fundamentals.md)** — Nền tảng Android qua code nihongo-android
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

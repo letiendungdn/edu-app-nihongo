@@ -38,8 +38,8 @@ Frontend là **thin client** (Next.js, mobile). Không Route Handler gọi DB tr
    External: Stripe │ Brevo │ AWS S3 │ Google OAuth
 ```
 
-> Chat & notification: REST + React Query polling (5–8s). Chi tiết: [`cursor-chat.md`](./cursor-chat.md) *(archival prompt — API đã ship)*.  
-> Nginx routing: [nginx.md](./nginx.md). Docker services: [docker.md](./docker.md).
+> Chat & notification: REST + React Query polling (5–8s).. Luồng chi tiết: [core-flows.md](./core-flows.md).  
+> Nginx routing: [learn-nginx.md](./learn-nginx.md). Docker services: [docker.md](./docker.md).
 
 ---
 
@@ -274,3 +274,17 @@ CI/CD: `.github/workflows/`
 | ✅ Chat hỗ trợ file/image | Presign S3 upload → `fileUrl`/`fileType` trong `SupportMessage`, `LearnerChatMessage`, `ChatMessage` |
 | ✅ Realtime chat | SSE (`/api/support/stream`, `/api/community/rooms/:id/stream`) — poll fallback 30s |
 | ✅ Coaching session chat | `GET/POST /api/marketplace/sessions/:id/messages` + `SessionChatPanel` floating button |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 1/6.
+
+- **Bài tiếp: [core-flows.md](./core-flows.md)** — Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm…
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -956,3 +956,18 @@ async function getValidToken() {
 | [docker.md](./docker.md) | Containers / Jaeger |
 | [roadmap-reactjs.md](./roadmap-reactjs.md) | React/Next.js roadmap chi tiết |
 | [roadmap-flutter.md](./roadmap-flutter.md) | Flutter roadmap chi tiết |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **14. Định hướng lên Senior**. Cùng nhóm:
+
+- [senior-roadmap.md](./senior-roadmap.md) — Lộ trình lên Senior (backend, system design)
+- [learn-mobile-senior.md](./learn-mobile-senior.md) — Checklist kỹ năng Senior Mobile
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

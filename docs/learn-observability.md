@@ -285,3 +285,18 @@ Tắt trace khi chỉ dev nhanh: `OTEL_SDK_DISABLED=true` (tracing.ts đã hỗ 
    down liên tục 5 phút — trạng thái đi *inactive → pending → firing*.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **6. DevOps và hạ tầng** — bài 6/7.
+
+- Bài trước: [learn-release-cicd.md](./learn-release-cicd.md) — CI/CD: migrate khi deploy, canary, feature flag, rollback
+- **Bài tiếp: [learn-incident-postmortem.md](./learn-incident-postmortem.md)** — Xử lý sự cố, runbook, postmortem (có postmortem thật)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

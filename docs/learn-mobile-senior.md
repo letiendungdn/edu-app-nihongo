@@ -742,3 +742,18 @@ A: Custom scheme (myapp://) dễ implement nhưng dễ bị hijack.
    App Link (https://) cần verify domain ownership nhưng an toàn hơn,
    và fallback về browser nếu app chưa cài.
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **14. Định hướng lên Senior**. Cùng nhóm:
+
+- [senior-roadmap.md](./senior-roadmap.md) — Lộ trình lên Senior (backend, system design)
+- [notes-senior-study.md](./notes-senior-study.md) — Ghi chú cá nhân: học gì để lên Senior
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -205,3 +205,18 @@ Cố tình gây lỗi trong môi trường dev để kiểm tra runbook và giá
    thiếu migration khi deploy → SEV1 (500 toàn hệ thống); 271 kanji thiếu → SEV3 (nội dung).
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **6. DevOps và hạ tầng** — bài 7/7.
+
+- Bài trước: [learn-observability.md](./learn-observability.md) — Log, metric, trace với Prometheus, Grafana, Jaeger
+- Xong nhóm này. **Nhóm tiếp: 7. Cloud** — bắt đầu bằng [learn-localstack.md](./learn-localstack.md) (Giả lập AWS trên máy bằng LocalStack)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

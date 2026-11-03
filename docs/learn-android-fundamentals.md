@@ -544,3 +544,18 @@ Tự trả lời thành tiếng trước, rồi mới đối chiếu với mục
 19. `minSdk`, `compileSdk`, `targetSdk` khác nhau thế nào? (mục 12)
 20. Gradle wrapper giải quyết vấn đề gì? Vì sao build lỗi khi đổi JDK? (mục 12)
 21. Kể một vấn đề nền tảng bạn đã tìm và sửa trong app của mình. (mục 13)
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 3/8.
+
+- Bài trước: [run-mobile.md](./run-mobile.md) — Chạy các app mobile
+- **Bài tiếp: [learn-android-kotlin.md](./learn-android-kotlin.md)** — Android Kotlin từ code thật, lộ trình 8 tuần
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

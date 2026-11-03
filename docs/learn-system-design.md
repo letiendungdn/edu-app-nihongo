@@ -339,3 +339,18 @@ Step 5: Scale consideration
    → Có cần Kafka không? Tại sao?
    → Có ảnh hưởng subscription plan không?
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 5/6.
+
+- Bài trước: [media-storage.md](./media-storage.md) — Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container
+- **Bài tiếp: [learn-adr-design-docs.md](./learn-adr-design-docs.md)** — Viết ADR và design doc (ví dụ: thư mục adr/)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

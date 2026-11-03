@@ -9,8 +9,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 5173
-      targetPort: 5173
+    - port: 8080
+      targetPort: 8080
       name: http
   selector:
     app: nihongo-web
@@ -48,11 +48,16 @@ spec:
           image: ghcr.io/letiendungdn/edu_app/nihongo-web:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 5173
+            - containerPort: 8080
               name: http
           envFrom:
             - configMapRef:
                 name: edu-app-config
+          env:
+            # ConfigMap chung có PORT=3000 (của gateway). Biến trong `env` thắng `envFrom`,
+            # nên phải đặt lại, nếu không Next.js nghe 3000 trong khi probe/Service gọi 8080.
+            - name: PORT
+              value: "8080"
           resources:
             requests:
               cpu: 100m
@@ -67,14 +72,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 5173
+              port: 8080
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
-              port: 5173
+              port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3

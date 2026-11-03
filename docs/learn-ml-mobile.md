@@ -482,3 +482,18 @@ A: SM-2: công thức cố định cho mọi user
    Adaptive: học từ pattern cá nhân — thời gian review, error rate theo loại vocab,
    điều chỉnh interval theo context (giờ trong ngày, chuỗi learning streak)
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 7/8.
+
+- Bài trước: [learn-swift-ios.md](./learn-swift-ios.md) — Swift/SwiftUI qua nihongo-ios
+- **Bài tiếp: [security-owasp-mobile.md](./security-owasp-mobile.md)** — Bảo mật mobile theo OWASP
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

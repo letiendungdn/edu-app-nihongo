@@ -4,7 +4,7 @@ Hướng dẫn dùng `docker compose` cho monorepo `edu_app`: mỗi container l�
 
 > **Học Docker từ đầu (khái niệm + lệnh + stack này):** [learn-docker.md](./learn-docker.md).  
 > Dev hàng ngày (nhẹ hơn Docker full app): [run-local.md](./run-local.md) — chỉ Docker infra + `npm run dev:*`.  
-> Mobile emulator gọi API qua nginx `:8080`: [run-mobile.md](./run-mobile.md), [nginx.md](./nginx.md).  
+> Mobile emulator gọi API qua nginx `:8080`: [run-mobile.md](./run-mobile.md), [learn-nginx.md](./learn-nginx.md).  
 > Tài khoản mặc định: [accounts.md](./accounts.md).
 
 Compose file: [`docker-compose.yml`](../docker-compose.yml) · Env mẫu: [`.env.docker.example`](../.env.docker.example)
@@ -172,6 +172,7 @@ flowchart TB
 | **postgres-keycloak** | `edu-postgres-keycloak` | — | DB riêng Keycloak. Volume `postgres_keycloak_data`. |
 | **redis** | `edu-redis` | 6379 | Cache, session, rate-limit, signaling. |
 | **mongodb** | `edu-mongodb` | 27017 | Audit DB `nihongo_audit`. Gateway phụ thuộc khi chạy Docker. |
+| **s3** | `edu-s3` | qua nginx `/s3/` | S3 giả lập (S3Mock) cho ảnh upload: chat, admin. File nằm trong volume `s3_data`. Chi tiết: [media-storage.md](./media-storage.md). |
 | **zookeeper** | `edu-zookeeper` | nội bộ | Điều phối Kafka. |
 | **kafka** | `edu-kafka` | 9092 | Event async; exam + gateway cần. |
 
@@ -196,7 +197,7 @@ flowchart TB
 | Container | Tên Docker | Port host | Vai trò |
 | --- | --- | --- | --- |
 | **nihongo-web** | `edu-nihongo-web` | qua nginx | Next.js học tiếng Nhật. |
-| **nginx** | `edu-nginx` | **8080** → 80 | Reverse proxy theo host/path. Chi tiết: [nginx.md](./nginx.md). |
+| **nginx** | `edu-nginx` | **8080** → 80 | Reverse proxy theo host/path. Chi tiết: [learn-nginx.md](./learn-nginx.md). |
 
 ### Monitoring (tùy chọn)
 
@@ -370,7 +371,7 @@ docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/re
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 
-**Media (KanjiVG, OpenMoji)** nằm trong image `nihongo-web` nếu build sau `media:sync`. Nếu thiếu `apps/nihongo-web/public/media`:
+**Media (KanjiVG, OpenMoji)** nằm trong image `nihongo-web` nếu build sau `media:sync`. Toàn bộ chỗ lưu ảnh/file: [media-storage.md](./media-storage.md). Nếu thiếu `apps/nihongo-web/public/media`:
 
 ```powershell
 npm install
@@ -463,7 +464,7 @@ docker run --rm -v nihongo-app_postgres_data:/data -v ${PWD}:/backup alpine `
 | **Port 8080 đã dùng** | `NGINX_HTTP_PORT=8888` trong `.env`, `docker compose up -d nginx` |
 | **CORS / login lỗi** | `ALLOWED_ORIGINS` khớp URL trình duyệt (`:8080`, `auth.localhost`) |
 | **Keycloak không mở** | Thêm hosts `auth.localhost`; kiểm `docker ps` có `edu-keycloak` |
-| **OIDC mobile lỗi** | Emulator dùng `10.0.2.2:8080` qua nginx — xem [nginx.md](./nginx.md) |
+| **OIDC mobile lỗi** | Emulator dùng `10.0.2.2:8080` qua nginx — xem [learn-nginx.md](./learn-nginx.md) |
 | **Live / LiveKit lỗi** | Kiểm `edu-livekit` + `LIVEKIT_PUBLIC_URL` (`ws://10.0.2.2:7880` trên emulator) |
 | **Thiếu ảnh / KanjiVG** | `npm run media:setup` rồi rebuild `nihongo-web` |
 | **Gateway restart loop** | `docker compose logs api-gateway` — thiếu DB, Kafka, Mongo, Keycloak hoặc LiveKit |
@@ -477,9 +478,24 @@ docker run --rm -v nihongo-app_postgres_data:/data -v ${PWD}:/backup alpine `
 | --- | --- |
 | [run-local.md](./run-local.md) | Dev hybrid (infra Docker + `npm run dev:*`) |
 | [run-mobile.md](./run-mobile.md) | Chạy 4 app mobile + API base URL |
-| [nginx.md](./nginx.md) | Routing hostname / path / emulator |
+| [learn-nginx.md](./learn-nginx.md) | Routing hostname / path / emulator |
 | [accounts.md](./accounts.md) | User/password local |
 | [mongodb.md](./mongodb.md) | Audit MongoDB |
 | [infra/backups/README.md](../infra/backups/README.md) | Backup / restore SQL |
 | [system-design.md](./system-design.md) | Kiến trúc tổng thể |
 | `.env.docker.example` | Biến môi trường Compose |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 2/5.
+
+- Bài trước: [run-local.md](./run-local.md) — Chạy EDU APP Nihongo trên máy từng bước
+- **Bài tiếp: [accounts.md](./accounts.md)** — Tài khoản dev đang dùng
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

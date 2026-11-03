@@ -71,3 +71,18 @@ POSTGRES_PASSWORD / KEYCLOAK_DB_PASSWORD
 | [keycloak-setup.md](./keycloak-setup.md) | Realm, clients, demo users |
 | [run-local.md](./run-local.md) | URL đăng nhập khi dev |
 | [docker.md](./docker.md) | Env vars của từng container |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 3/5.
+
+- Bài trước: [docker.md](./docker.md) — Chạy full stack bằng Docker, danh sách container, chuyển sang máy khác
+- **Bài tiếp: [dev-tools-connect.md](./dev-tools-connect.md)** — Kết nối DB, Redis, Mongo, Kafka từ máy host
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

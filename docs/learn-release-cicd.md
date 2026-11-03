@@ -229,3 +229,18 @@ main: CI xanh ──▶ build image :sha ──▶ migrate job ──▶ set ima
    một endpoint `/api/flags` để ẩn/hiện ô tra từ.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **6. DevOps và hạ tầng** — bài 5/7.
+
+- Bài trước: [learn-kubernetes.md](./learn-kubernetes.md) — Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update
+- **Bài tiếp: [learn-observability.md](./learn-observability.md)** — Log, metric, trace với Prometheus, Grafana, Jaeger
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

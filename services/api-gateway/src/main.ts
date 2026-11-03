@@ -29,6 +29,10 @@ async function bootstrap() {
     bufferLogs: true,
     rawBody: true,
   });
+  // Gateway đứng sau đúng MỘT proxy (nginx, hoặc Ingress trên K8s). Không bật thì req.ip là IP của
+  // nginx với MỌI người dùng: throttler (120 request/phút theo IP) bị chia chung cho cả hệ thống.
+  // Giá trị 1 = chỉ tin một lớp proxy: lấy IP mà nginx thấy, client không giả được qua X-Forwarded-For.
+  app.set("trust proxy", 1);
   // Chặn body > 1 MB theo Content-Length TRƯỚC khi parse, trừ route soạn nội dung (xem body-limit.middleware.ts)
   app.use(bodyLimitMiddleware);
   // Route soạn nội dung gửi ảnh data URL — parser cho phép tới 8 MB

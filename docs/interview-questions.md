@@ -420,3 +420,20 @@ async syncInventoryToRedis() {
 
 **Senior answer:** Luôn bắt đầu bằng Atomic UPDATE — đơn giản nhất, đúng nhất. Chỉ leo thang lên Redis khi thực sự có throughput problem đã đo được, không phải vì "có thể sẽ cần".
 
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
+
+- [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
+- [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+- [interview-react-native-senior.md](./interview-react-native-senior.md) — Senior React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

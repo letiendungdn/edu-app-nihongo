@@ -28,7 +28,7 @@ Internet ─▶ Ingress (nihongo.example.com)
               │                                                           ├─▶ Service exam-service:50052   ─▶ Pod
               │                                                           ├─▶ Service postgres:5432 ─▶ StatefulSet (PVC 5Gi)
               │                                                           └─▶ Service redis:6379    ─▶ Pod
-              └─ /             ─▶ Service nihongo-web:5173 ─▶ Pod
+              └─ /             ─▶ Service nihongo-web:8080 ─▶ Pod
 ```
 
 ---
@@ -240,3 +240,18 @@ Nên chọn **một** nguồn (Helm) và cho `deploy.yml` dùng `helm upgrade --
    `--wait` thay cho `rollout status`; lỗi → `helm rollback`.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **6. DevOps và hạ tầng** — bài 4/7.
+
+- Bài trước: [learn-infra.md](./learn-infra.md) — Thư mục infra/, cổng, healthcheck và các sự cố thật
+- **Bài tiếp: [learn-release-cicd.md](./learn-release-cicd.md)** — CI/CD: migrate khi deploy, canary, feature flag, rollback
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

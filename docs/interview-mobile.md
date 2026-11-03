@@ -226,3 +226,21 @@ Project thực tế: bản Flutter sync **một chiều** (chỉ đẩy lên, ch
 - CI/CD hiện tại dùng gì?
 - Feature lớn nhất đang làm là gì?
 - Codebase có test coverage không?
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
+
+- [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
+- [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
+- [interview-react-native-senior.md](./interview-react-native-senior.md) — Senior React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -38,3 +38,18 @@ LOCAL_AI_MODEL=qwen2.5:7b
 - Gateway: `services/.env` hoặc Docker compose (mặc định `host.docker.internal:11434`)
 
 Đổi model: `ollama pull llama3.2` rồi `LOCAL_AI_MODEL=llama3.2`.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **8. Frontend web và desktop** — bài 3/4.
+
+- Bài trước: [canvas-tools.md](./canvas-tools.md) — Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web
+- **Bài tiếp: [learn-electron.md](./learn-electron.md)** — Electron: app desktop Nihongo
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

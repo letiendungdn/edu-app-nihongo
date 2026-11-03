@@ -93,7 +93,7 @@ Tài khoản: xem [accounts.md](./accounts.md). Cách chạy chi tiết: [run-lo
 ## Đọc theo thứ tự
 
 1. `README.md`
-2. [nginx.md](./nginx.md)
+2. [learn-nginx.md](./learn-nginx.md)
 3. [system-design.md](./system-design.md)
 4. [bao-cao-phan-tich-thiet-ke.md](./bao-cao-phan-tich-thiet-ke.md)
 
@@ -666,7 +666,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 
 - Join livestream LiveKit; token từ gateway.
 - Presence / reconnect.
-- Đọc [cursor-mobile-livestream.md](./cursor-mobile-livestream.md).
+- Đọc [run-mobile.md](./run-mobile.md) (URL `10.0.2.2`, cleartext HTTP) và [system-design.md](./system-design.md) (livekit, signaling-service).
 
 **Đầu ra:** join một room test; note lỗi thường gặp (cleartext HTTP, URL `10.0.2.2`).
 
@@ -763,3 +763,17 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 - Đọc log/metric/trace để tìm lỗi.
 - Trình bày kiến trúc bằng BFD/DFD/ERD/UML và bảo vệ trade-off.
 
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 5/5.
+
+- Bài trước: [dev-tools-connect.md](./dev-tools-connect.md) — Kết nối DB, Redis, Mongo, Kafka từ máy host
+- Xong nhóm này. **Nhóm tiếp: 2. Kiến trúc hệ thống** — bắt đầu bằng [system-design.md](./system-design.md) (Kiến trúc tổng thể, các service, route map)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

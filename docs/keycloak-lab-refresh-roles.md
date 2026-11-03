@@ -65,3 +65,18 @@ docker compose up -d postgres-keycloak keycloak
 ```bash
 docker compose up -d --build api-gateway nihongo-web
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 3/7.
+
+- Bài trước: [keycloak-lab-30m.md](./keycloak-lab-30m.md) — Lab Keycloak 30 phút
+- **Bài tiếp: [google-oauth-setup.md](./google-oauth-setup.md)** — Đăng nhập bằng Google
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

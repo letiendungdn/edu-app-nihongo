@@ -1471,3 +1471,18 @@ erDiagram
 | `LearnerChatRoomType` | `DIRECT` · `GROUP` |
 | `LearnerChatMemberRole` | `MEMBER` · `ADMIN` |
 | `MindMapKind` | `GRAMMAR` · `VOCAB` · `KANJI` |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 6/6.
+
+- Bài trước: [db-design.md](./db-design.md) — Thiết kế DB Nihongo: bảng, quan hệ, quyết định
+- Xong nhóm này. **Nhóm tiếp: 5. Kiểm thử** — bắt đầu bằng [learn-testing.md](./learn-testing.md) (Phân loại test, unit và integration test trên code thật)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

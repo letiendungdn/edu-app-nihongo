@@ -84,3 +84,18 @@ db.audit_logs.find({ success: false }).limit(20)
 | [docker.md](./docker.md) | Danh sách container, port |
 | [db-design.md](./db-design.md) | Thiết kế PostgreSQL (dữ liệu nghiệp vụ) |
 | [`packages/nest-common/src/audit/`](../packages/nest-common/src/audit/) | Schema, service, interceptor |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 3/8.
+
+- Bài trước: [redis.md](./redis.md) — Redis dùng vào việc gì trong project
+- **Bài tiếp: [learn-kafka.md](./learn-kafka.md)** — Kafka: vì sao dùng, producer/consumer
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

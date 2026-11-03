@@ -400,3 +400,18 @@ Kiểm tra tài nguyên còn sót ở **mọi region** (dễ lỡ tay tạo ở 
 7. Dựng SNS topic `edu-exam-submitted` + 2 SQS queue (fan-out) + DLQ; nộp bài thi thử → 2 consumer đều nhận.
 8. (Nâng cao) Viết lại mục 10 thành Terraform chạy được, `terraform apply` rồi `terraform destroy`.
 9. Dọn toàn bộ theo mục 11, xem Cost Explorer vài ngày sau để chắc không còn phát sinh.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **7. Cloud** — bài 2/3.
+
+- Bài trước: [learn-localstack.md](./learn-localstack.md) — Giả lập AWS trên máy bằng LocalStack
+- **Bài tiếp: [learn-google-cloud.md](./learn-google-cloud.md)** — Google Cloud: Cloud Run, Cloud SQL, GCS, Pub/Sub, GKE
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

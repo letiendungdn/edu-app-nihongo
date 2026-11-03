@@ -293,3 +293,18 @@ idempotent (`WebhookEvent.eventId UNIQUE`).
 7. Sự kiện `breaker.on("open" | "halfOpen" | "close", …)` để log; export trạng thái thành metric gauge để thấy trên Grafana.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 6/8.
+
+- Bài trước: [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) — MQTT, RxJS, Flyway, view và DDD
+- **Bài tiếp: [learn-stripe-idempotency.md](./learn-stripe-idempotency.md)** — Thanh toán Stripe không trừ tiền hai lần
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

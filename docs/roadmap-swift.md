@@ -670,3 +670,19 @@ Giai đoạn 4 — Senior:
 - **Videos**: Sean Allen, Stewart Lynch (YouTube)
 - **Architecture**: Point-Free (functional Swift — nâng cao)
 - **Testing**: Testing Swift (Paul Hudson)
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **11. Lộ trình theo framework mobile**. Cùng nhóm:
+
+- [roadmap-android.md](./roadmap-android.md) — Android (Kotlin + Jetpack)
+- [roadmap-flutter.md](./roadmap-flutter.md) — Flutter
+- [roadmap-react-native.md](./roadmap-react-native.md) — React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

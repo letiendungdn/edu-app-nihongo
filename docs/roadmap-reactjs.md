@@ -1,7 +1,7 @@
 # Lộ trình ReactJS — `apps/nihongo-web`
 
 > **Lộ trình học** (React 19 + Next.js + TanStack Query), không phải bảng status feature.  
-> App thật: `nihongo-web` (Next 15, port **5173**).  
+> App thật: `nihongo-web` (Next 15). Chạy dev (`npm run dev:nihongo-web`): cổng **5173**. Chạy bằng Docker: vào qua nginx ở **8080** (container web nghe cổng 8080, không mở ra máy).  
 > Chạy: [run-local.md](./run-local.md) · Docker: [docker.md](./docker.md) · Mobile RN: [roadmap-react-native.md](./roadmap-react-native.md).
 
 ---
@@ -170,7 +170,7 @@ const review = useMutation({
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['srs'] }),
 });
 
-// Chat / notifications — poll thay socket (xem cursor-chat.md)
+// Chat / notifications — poll thay socket (xem core-flows.md)
 useQuery({ queryKey: ['support'], queryFn: fetchThread, refetchInterval: 5000 });
 ```
 
@@ -299,7 +299,20 @@ npm run docker:up:nihongo   # → http://localhost:8080
 | [run-local.md](./run-local.md) | `dev:nihongo-web` :5173 |
 | [roadmap-react-native.md](./roadmap-react-native.md) | React Native (Expo mobile) |
 | [system-design.md](./system-design.md) | Thin client, gateway, auth |
-| [cursor-chat.md](./cursor-chat.md) | Chat REST + poll |
 | [keycloak-setup.md](./keycloak-setup.md) | OIDC client web |
 | [learn-edu-app.md](./learn-edu-app.md) | Lộ trình monorepo tổng |
 | [React docs](https://react.dev/) · [Next.js docs](https://nextjs.org/docs) · [TanStack Query](https://tanstack.com/query/latest) | Official |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **8. Frontend web và desktop** — bài 1/4.
+
+- **Bài tiếp: [canvas-tools.md](./canvas-tools.md)** — Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

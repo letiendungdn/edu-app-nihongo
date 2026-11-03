@@ -274,8 +274,22 @@ Chi tiết: [infra/backups/README.md](../infra/backups/README.md)
 |------|----------|
 | [docker.md](./docker.md) | Full stack Docker, Keycloak, LiveKit |
 | [run-mobile.md](./run-mobile.md) | 4 app mobile |
-| [nginx.md](./nginx.md) | Routing `:8080` |
+| [learn-nginx.md](./learn-nginx.md) | Routing `:8080` |
 | [accounts.md](./accounts.md) | User/password |
 | [roadmap-reactjs.md](./roadmap-reactjs.md) | Lộ trình học ReactJS/Next |
 | [google-oauth-setup.md](./google-oauth-setup.md) | Google Sign-In |
 | [system-design.md](./system-design.md) | Kiến trúc / flows |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 1/5.
+
+- **Bài tiếp: [docker.md](./docker.md)** — Chạy full stack bằng Docker, danh sách container, chuyển sang máy khác
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

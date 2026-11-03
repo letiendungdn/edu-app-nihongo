@@ -66,3 +66,18 @@ Mọi app đều dùng **nút chính thức** của Apple Pay / Google Pay. Appl
 Gói Premium là nội dung số. Theo App Store Review Guideline 3.1.1, Apple yêu cầu nội dung số mở khóa trong app phải mua bằng **In-App Purchase**. Google Play cũng yêu cầu Play Billing cho hàng số. Bản dùng Apple Pay / Google Pay này phù hợp để demo, học tập, hoặc phân phối ngoài store. Muốn lên App Store / Google Play với gói Premium thì phải thêm StoreKit / Play Billing. Apple Pay / Google Pay vẫn dùng hợp lệ cho dịch vụ 1-1 thời gian thực, như đặt buổi học với coach (guideline 3.1.3(d)).
 
 Web (`nihongo-web`) dùng Stripe Payment Element: Apple Pay / Google Pay tự hiện khi bật trong Stripe Dashboard và đã đăng ký domain (Settings → Payment method domains). Không cần sửa code.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 6/7.
+
+- Bài trước: [brevo-mail.md](./brevo-mail.md) — Gửi mail qua Brevo
+- **Bài tiếp: [payment-checklist.md](./payment-checklist.md)** — Việc cần làm để thanh toán chạy được
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

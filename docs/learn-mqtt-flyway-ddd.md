@@ -551,3 +551,18 @@ Bài học chung:
 6. **Chuyển view sang `R__learner_progress_views.sql`** và so cách làm với V1/V2.
 
 Xong mục 8 là nói được trọn vòng: thiết kế, viết, đo, sửa, deploy.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 5/8.
+
+- Bài trước: [learn-kafka.md](./learn-kafka.md) — Kafka: vì sao dùng, producer/consumer
+- **Bài tiếp: [learn-reliability-patterns.md](./learn-reliability-patterns.md)** — Outbox, timeout, retry, consumer idempotent, circuit breaker
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

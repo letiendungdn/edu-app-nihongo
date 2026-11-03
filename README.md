@@ -89,14 +89,12 @@ edu-app-nihongo/
 │   └── prisma-nihongo/        # Schema + migrations (DB nihongo)
 ├── infra/                     # K8s, Helm, Nginx, k6, backups
 │   └── backups/               # backup.ps1 + SQL dumps (restore DB)
-├── docs/
+├── docs/                      # Mục lục: docs/README.md
 │   ├── system-design.md       # Kiến trúc chi tiết, request flows
 │   ├── db-design.md           # Thiết kế DB, schema reference, backup
 │   ├── db-erd.md              # Sơ đồ ER Mermaid DB nihongo (tự sinh)
 │   ├── run-local.md           # Hướng dẫn chạy local
 │   ├── google-oauth-setup.md  # Cấu hình Google Sign-In
-│   ├── cursor-everfit-prep.md # Cursor prompt: Payment + Marketplace
-│   ├── cursor-chat.md         # Cursor: REST chat + notification
 │   ├── sql/chat-schema.sql    # DDL chat (gộp migrations)
 │   └── senior-roadmap.md      # Lộ trình lên Senior + Q&A
 ├── docker-compose.yml
@@ -237,34 +235,6 @@ npm test -- --coverage -w @edu/nihongo-services
 
 ## Tài liệu
 
-| File | Nội dung |
-|------|----------|
-| [docs/accounts.md](docs/accounts.md) | Tài khoản dev (app, Keycloak, DB) |
-| [docs/dev-tools-connect.md](docs/dev-tools-connect.md) | pgAdmin / Redis Insight / Mongo / port map |
-| [docs/system-design.md](docs/system-design.md) | Kiến trúc, request flows, auth |
-| [docs/db-design.md](docs/db-design.md) | Thiết kế DB, schema reference, backup |
-| [docs/db-erd.md](docs/db-erd.md) | Sơ đồ ER đầy đủ DB nihongo (Mermaid, 8 phân hệ) — tự sinh, đừng sửa tay |
-| [docs/run-local.md](docs/run-local.md) | Hướng dẫn chạy local từng bước |
-| [docs/docker.md](docs/docker.md) | Full stack Docker (~14 container) |
-| [docs/learn-docker.md](docs/learn-docker.md) | Học Docker trên stack EDU APP |
-| [docs/learn-electron.md](docs/learn-electron.md) | Học Electron trên `apps/nihongo-desktop`: main, preload, IPC |
-| [docs/learn-observability.md](docs/learn-observability.md) | Log / metric / trace, RED, SLO, alert, health check — soát Prometheus/Jaeger của project |
-| [docs/learn-security-backend.md](docs/learn-security-backend.md) | OWASP API Top 10 trên code api-gateway: IDOR, JWT, CORS, rate limit, injection |
-| [docs/learn-reliability-patterns.md](docs/learn-reliability-patterns.md) | Outbox, timeout, retry, idempotent consumer, circuit breaker, saga — luồng nộp bài → Kafka |
-| [docs/learn-release-cicd.md](docs/learn-release-cicd.md) | CI/CD, migrate khi deploy, expand–contract, canary, feature flag, rollback |
-| [docs/learn-performance-k6.md](docs/learn-performance-k6.md) | Load test k6, đọc kết quả, tìm nút thắt, capacity planning |
-| [docs/learn-kubernetes.md](docs/learn-kubernetes.md) | Kubernetes qua `infra/k8s` + Helm: probe, HPA, rolling update, gỡ lỗi pod |
-| [docs/learn-adr-design-docs.md](docs/learn-adr-design-docs.md) · [docs/adr/](docs/adr) | Viết ADR & design doc; 5 ADR thật của project |
-| [docs/learn-incident-postmortem.md](docs/learn-incident-postmortem.md) | Xử lý sự cố, runbook, postmortem không đổ lỗi (có postmortem thật) |
-| [docs/learn-sql.md](docs/learn-sql.md) | Học SQL (PostgreSQL) trên DB thật của project: SELECT → JOIN → CTE → window → UPSERT → JSONB |
-| [docs/learn-db-design.md](docs/learn-db-design.md) | Phân tích & thiết kế CSDL: yêu cầu → ERD → chuẩn hoá → ràng buộc → index → migration |
-| [docs/learn-localstack.md](docs/learn-localstack.md) | Học LocalStack: giả lập S3/SQS/SES, nối luồng upload presigned URL |
-| [docs/learn-aws.md](docs/learn-aws.md) | Học AWS: S3 (đang dùng), ECS Fargate, RDS, SQS/SNS, VPC, IAM role, chi phí |
-| [docs/learn-google-cloud.md](docs/learn-google-cloud.md) | Học Google Cloud: chuyển stack sang Cloud Run, Cloud SQL, GCS, Pub/Sub, GKE |
-| [docs/roadmap-reactjs.md](docs/roadmap-reactjs.md) | Lộ trình học ReactJS/Next |
-| [docs/learn-edu-app.md](docs/learn-edu-app.md) | Lộ trình 10 tuần học và làm chủ codebase |
-| [docs/google-oauth-setup.md](docs/google-oauth-setup.md) | Cấu hình Google Sign-In |
-| [docs/cursor-everfit-prep.md](docs/cursor-everfit-prep.md) | Cursor: Payment + Marketplace |
-| [docs/cursor-chat.md](docs/cursor-chat.md) | Cursor: REST chat + notification |
-| [docs/sql/chat-schema.sql](docs/sql/chat-schema.sql) | DDL chat (gộp migrations) |
-| [docs/senior-roadmap.md](docs/senior-roadmap.md) | Lộ trình Senior + 43 Q&A |
+Toàn bộ tài liệu đã chia nhóm theo lộ trình học trong **[docs/README.md](docs/README.md)**: bắt đầu → kiến trúc → backend → cơ sở dữ liệu → kiểm thử → DevOps → cloud → frontend → mobile → tích hợp, cùng các nhóm tham khảo (phỏng vấn, báo cáo phân tích thiết kế, định hướng Senior).
+
+Cuối mỗi tài liệu có mục **Đi tiếp** dẫn sang bài kế tiếp. Mới bắt đầu: mở [docs/run-local.md](docs/run-local.md).

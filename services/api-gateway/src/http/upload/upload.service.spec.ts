@@ -42,6 +42,11 @@ describe("buildS3ClientConfig", () => {
     expect(cfg.endpoint).toBe("http://localhost.localstack.cloud:4566");
     expect(cfg.forcePathStyle).toBe(true);
   });
+
+  it("S3 giả lập không có key → gắn key giả (server giả lập không kiểm)", () => {
+    const cfg = buildS3ClientConfig(config({ AWS_ENDPOINT_URL: "http://s3:9090" }));
+    expect(cfg.credentials).toEqual({ accessKeyId: "local", secretAccessKey: "local" });
+  });
 });
 
 describe("resolvePublicBase", () => {
@@ -84,6 +89,20 @@ describe("UploadService.getPresignedUploadUrl", () => {
     expect(out.url).toContain("http://localhost:4566/edu-app-dev/vocab/");
     expect(out.url).toContain("X-Amz-Signature=");
     expect(out.publicUrl).toBe(`http://localhost:4566/edu-app-dev/${out.key}`);
+  });
+
+  it("có AWS_PUBLIC_ENDPOINT_URL → ký URL theo địa chỉ trình duyệt thấy (qua nginx), không theo địa chỉ nội bộ", async () => {
+    const svc = new UploadService(
+      config({
+        AWS_S3_BUCKET: "edu-app-dev",
+        AWS_ENDPOINT_URL: "http://s3:9090",
+        AWS_PUBLIC_ENDPOINT_URL: "http://localhost:8080/s3",
+      }),
+    );
+    const out = await svc.getPresignedUploadUrl("image/jpeg", "chat");
+    expect(out.url.startsWith("http://localhost:8080/s3/edu-app-dev/chat/")).toBe(true);
+    expect(out.url).not.toContain("s3:9090");
+    expect(out.publicUrl).toBe(`http://localhost:8080/s3/edu-app-dev/${out.key}`);
   });
 });
 

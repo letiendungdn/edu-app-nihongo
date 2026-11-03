@@ -552,7 +552,21 @@ mindmap
 | [core-flows.md](./core-flows.md) | Luồng chi tiết theo code của các tính năng lõi + rủi ro đã thấy |
 | [db-design.md](./db-design.md) | ER / schema PostgreSQL |
 | [accounts.md](./accounts.md) | Tài khoản demo theo role |
-| [nginx.md](./nginx.md) | Cổng vào reverse proxy |
+| [learn-nginx.md](./learn-nginx.md) | Cổng vào reverse proxy |
 | [mongodb.md](./mongodb.md) | Audit log |
 | [brevo-mail.md](./brevo-mail.md) | Email |
 | [keycloak-setup.md](./keycloak-setup.md) | OIDC roles |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **12. Báo cáo phân tích thiết kế**. Cùng nhóm:
+
+- [bao-cao-phan-tich-thiet-ke.md](./bao-cao-phan-tich-thiet-ke.md) — Báo cáo đầy đủ (hướng cấu trúc + hướng đối tượng)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

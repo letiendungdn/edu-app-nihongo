@@ -272,3 +272,18 @@ await prisma.$queryRawUnsafe(`SELECT * FROM "Vocabulary" WHERE "kana" = '${input
    ```
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 8/8.
+
+- Bài trước: [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) — Thanh toán Stripe không trừ tiền hai lần
+- Xong nhóm này. **Nhóm tiếp: 4. Cơ sở dữ liệu** — bắt đầu bằng [learn-sql.md](./learn-sql.md) (SQL trên DB thật: SELECT → JOIN → CTE → window → UPSERT → JSONB)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

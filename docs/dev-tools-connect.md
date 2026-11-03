@@ -199,3 +199,18 @@ localhost:9092
 | [run-local.md](./run-local.md) | Chạy stack local |
 | [docker.md](./docker.md) | Compose chi tiết |
 | [db-design.md](./db-design.md) | Schema / ER |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 4/5.
+
+- Bài trước: [accounts.md](./accounts.md) — Tài khoản dev đang dùng
+- **Bài tiếp: [learn-edu-app.md](./learn-edu-app.md)** — Lộ trình 10 tuần học cả project
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

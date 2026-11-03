@@ -64,3 +64,18 @@ npx prisma migrate deploy
 ```
 
 Migration: `20260718150000_password_reset_token`.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 5/7.
+
+- Bài trước: [google-oauth-setup.md](./google-oauth-setup.md) — Đăng nhập bằng Google
+- **Bài tiếp: [payment-wallets.md](./payment-wallets.md)** — Apple Pay / Google Pay: cách hoạt động
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -277,3 +277,18 @@ FROM pg_class WHERE relname = 'Vocabulary';
    SELECT reltuples::bigint FROM pg_class WHERE relname = 'Vocabulary';
    → Kết quả sai lệch bao nhiêu?
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 2/6.
+
+- Bài trước: [learn-sql.md](./learn-sql.md) — SQL trên DB thật: SELECT → JOIN → CTE → window → UPSERT → JSONB
+- **Bài tiếp: [learn-pgadmin.md](./learn-pgadmin.md)** — Dùng pgAdmin với DB của project
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

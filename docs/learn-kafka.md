@@ -367,3 +367,18 @@ docker exec edu-kafka kafka-consumer-groups.sh \
    edu.payment.succeeded → key = userId hay stripeCustomerId?
    → Giải thích lý do chọn
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 4/8.
+
+- Bài trước: [mongodb.md](./mongodb.md) — MongoDB chỉ dùng cho audit log
+- **Bài tiếp: [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md)** — MQTT, RxJS, Flyway, view và DDD
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

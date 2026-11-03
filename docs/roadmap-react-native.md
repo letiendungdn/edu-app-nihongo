@@ -569,3 +569,19 @@ Giai đoạn 6 — Senior:
 - **YouTube**: Catalin Miron, William Candillon (animations)
 - **Book**: React Native in Action (Manning)
 - **Newsletter**: React Native Weekly
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **11. Lộ trình theo framework mobile**. Cùng nhóm:
+
+- [roadmap-android.md](./roadmap-android.md) — Android (Kotlin + Jetpack)
+- [roadmap-swift.md](./roadmap-swift.md) — Swift / iOS
+- [roadmap-flutter.md](./roadmap-flutter.md) — Flutter
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

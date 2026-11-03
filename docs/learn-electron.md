@@ -218,3 +218,18 @@ Lộ `window.nihongoDesktop.version()` trả `app.getVersion()` từ `package.js
 4. `did-fail-load` bỏ qua lỗi ảnh nhờ cờ nào?
 
 Đáp án nằm ở mục 4 và 5 của file này.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **8. Frontend web và desktop** — bài 4/4.
+
+- Bài trước: [learn-ollama-local.md](./learn-ollama-local.md) — Chạy AI local bằng Ollama
+- Xong nhóm này. **Nhóm tiếp: 9. Mobile** — bắt đầu bằng [mobile-tech-stacks.md](./mobile-tech-stacks.md) (Tech stack từng app mobile)
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

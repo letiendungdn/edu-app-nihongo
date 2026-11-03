@@ -432,3 +432,17 @@ describe('AuditInterceptor', () => {
    Guard throw UnauthorizedException?
    → Vẽ lại pipeline, chỉ ra execution stops ở đâu
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 1/8.
+
+- **Bài tiếp: [redis.md](./redis.md)** — Redis dùng vào việc gì trong project
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

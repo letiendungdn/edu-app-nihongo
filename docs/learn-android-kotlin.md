@@ -1464,3 +1464,18 @@ App không thấy mật khẩu, dùng lại SSO, Google cấm WebView. PKCE ch�
 Cookie `Secure` qua HTTP (Phần H). Bài học: dữ liệu giả phải lấy từ hệ thống thật; và luôn chạy thử với backend và thiết bị thật sau khi unit test đã xanh.
 
 Thêm câu hỏi mobile: [interview-mobile.md](./interview-mobile.md) · Android trong [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 4/8.
+
+- Bài trước: [learn-android-fundamentals.md](./learn-android-fundamentals.md) — Nền tảng Android qua code nihongo-android
+- **Bài tiếp: [learn-android-features.md](./learn-android-features.md)** — 9 tính năng Android mới và bài học
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

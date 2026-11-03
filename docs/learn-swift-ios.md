@@ -989,3 +989,18 @@ Dùng Keychain (được mã hóa, có `kSecAttrAccessibleAfterFirstUnlockThisDe
 | Luồng sự kiện           | `AsyncStream`                         | `callbackFlow` / `Channel`                |
 | Khóa tránh race         | `actor` / `@MainActor`                | `Mutex` / `Dispatchers.Main`              |
 | Việc nền đúng giờ       | Không có (hẹn thông báo trước)        | `WorkManager`                             |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 6/8.
+
+- Bài trước: [learn-android-features.md](./learn-android-features.md) — 9 tính năng Android mới và bài học
+- **Bài tiếp: [learn-ml-mobile.md](./learn-ml-mobile.md)** — Machine learning trong app mobile: on-device, LLM, SRS thông minh
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

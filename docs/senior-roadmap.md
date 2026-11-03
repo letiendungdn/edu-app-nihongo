@@ -1347,3 +1347,18 @@ Tháng 7-9:  Leadership — code review thực tế, ADR writing, mock interview
 | stripe.com/blog/engineering | Payment engineering |
 | martinfowler.com | Patterns, refactoring, microservices |
 | highscalability.com | Case studies scaling các hệ thống lớn |
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **14. Định hướng lên Senior**. Cùng nhóm:
+
+- [notes-senior-study.md](./notes-senior-study.md) — Ghi chú cá nhân: học gì để lên Senior
+- [learn-mobile-senior.md](./learn-mobile-senior.md) — Checklist kỹ năng Senior Mobile
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

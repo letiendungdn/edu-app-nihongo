@@ -2,9 +2,9 @@
 
 Tài liệu đi theo đường chạy thật trong code: request đi qua file nào, dữ liệu nằm ở đâu, chỗ nào bất đồng bộ. Sơ đồ use case và kiến trúc tổng quan có ở [analysis-design.md](./analysis-design.md); tài liệu này là tầng chi tiết hơn.
 
-Mỗi tính năng gồm: sơ đồ luồng → file chính → điểm thiết kế đáng nói (hay bị hỏi khi phỏng vấn) → rủi ro đã thấy trong code. Các rủi ro tìm thấy lúc viết tài liệu đã được sửa, ghi ở [mục 11](#11-rủi-ro-đã-sửa).
+Mỗi tính năng gồm: **nói ngắn gọn** (luồng bằng lời thường, đọc trước) → sơ đồ luồng → file chính → điểm thiết kế đáng nói (hay bị hỏi khi phỏng vấn) → rủi ro đã thấy trong code. Các rủi ro tìm thấy lúc viết tài liệu đã được sửa, ghi ở [mục 17](#17-rủi-ro-đã-sửa).
 
-Viết ngày 21/10/2026, cập nhật sau đợt sửa 12 rủi ro cùng ngày.
+Viết ngày 21/10/2026, cập nhật sau đợt sửa 12 rủi ro cùng ngày. Bổ sung 03/11/2026: phần "Nói ngắn gọn" ở đầu mỗi tính năng, và các mục 11–16 (dự đoán đề thi, phát âm, sơ đồ tư duy, từ điển hình ảnh, cấu tạo kanji, hành trình đặt lịch coach).
 
 **Mục lục**
 - [0. Bản đồ hệ thống](#0-bản-đồ-hệ-thống)
@@ -19,7 +19,13 @@ Viết ngày 21/10/2026, cập nhật sau đợt sửa 12 rủi ro cùng ngày.
 - [9. AI](#9-ai)
 - [10. Nhắc ôn (push, email)](#10-nhắc-ôn-push-email)
 - [10b. Học viên sắp bỏ học (Airflow)](#10b-học-viên-sắp-bỏ-học-airflow)
-- [11. Rủi ro đã sửa](#11-rủi-ro-đã-sửa)
+- [11. Dự đoán đề thi JLPT](#11-dự-đoán-đề-thi-jlpt)
+- [12. Phát âm (TTS)](#12-phát-âm-tts)
+- [13. Sơ đồ tư duy](#13-sơ-đồ-tư-duy)
+- [14. Từ điển hình ảnh](#14-từ-điển-hình-ảnh)
+- [15. Phân tích cấu tạo kanji](#15-phân-tích-cấu-tạo-kanji)
+- [16. Đặt lịch học với coach: đầu đến cuối](#16-đặt-lịch-học-với-coach-đầu-đến-cuối)
+- [17. Rủi ro đã sửa](#17-rủi-ro-đã-sửa)
 
 ---
 
@@ -69,6 +75,13 @@ flowchart LR
 ---
 
 ## 1. Đăng nhập và phiên
+
+> **Nói ngắn gọn**
+> 1. Người dùng đăng nhập bằng email/mật khẩu, Google hoặc Keycloak.
+> 2. Dù vào bằng cách nào, gateway cũng **tự phát** cho app một vé ngắn hạn (access token, sống 15 phút) và một vé dài hạn (refresh token, 7 ngày, nằm trong cookie).
+> 3. Mỗi request gửi kèm vé ngắn hạn. Hết 15 phút, server trả 401.
+> 4. App lặng lẽ đổi vé dài hạn lấy cặp vé mới, rồi gửi lại request vừa lỗi. Người dùng không thấy gì.
+> 5. Vé dài hạn chỉ dùng được một lần. Ai dùng lại vé cũ (dấu hiệu bị đánh cắp) thì mọi phiên của tài khoản bị thu hồi.
 
 Có ba cách vào (email/mật khẩu, Google, Keycloak OIDC). Cả ba cùng kết thúc bằng một cặp token **do gateway tự phát**: app không bao giờ dùng thẳng token của Keycloak/Google để gọi API.
 
@@ -130,6 +143,15 @@ sequenceDiagram
 ---
 
 ## 2. Thanh toán
+
+> **Nói ngắn gọn**
+> 1. Người dùng chọn gói (hoặc chọn buổi học với coach). App báo cho server.
+> 2. Server nhờ Stripe tạo một "phiếu thu" (intent), rồi trả cho app một mã bí mật của phiếu đó.
+> 3. App đưa mã cho Stripe cùng thẻ hoặc ví (Apple Pay / Google Pay). **Số thẻ đi thẳng tới Stripe**, không qua server mình.
+> 4. Stripe trừ tiền xong thì **tự gọi về server** (webhook). Chỉ lúc này DB mới ghi "đã trả" và mở gói Premium hoặc xác nhận buổi học.
+> 5. App hỏi lại trạng thái tới khi thấy đã kích hoạt.
+>
+> Vì sao không tin app báo "thanh toán xong"? App có thể bị sửa, mạng có thể đứt giữa chừng. Webhook có chữ ký của Stripe nên server biết chắc tiền đã về.
 
 Stripe làm hết phần tiền. Server tạo intent, client xác nhận intent (thẻ không đi qua server mình), **webhook là nguồn sự thật**: DB chỉ chuyển sang "đã trả" khi webhook về.
 
@@ -278,6 +300,13 @@ sequenceDiagram
 
 ## 3. Video call 1-1
 
+> **Nói ngắn gọn**
+> 1. Đến giờ học, học viên và coach bấm "Vào phòng". Mỗi người xin gateway một **vé vào phòng**. Gateway chỉ cấp khi đúng người của buổi đó, buổi đã thanh toán, và đang trong khung giờ.
+> 2. Hai bên kết nối tới **signaling-service** và trình vé. Signaling giống "tổng đài": chỉ giúp hai máy tìm thấy nhau.
+> 3. Người vào sau làm người vào trước nhận tín hiệu "có người vào". Người vào trước gửi lời mời (offer), người kia trả lời (answer), hai bên trao địa chỉ mạng (ICE).
+> 4. Từ đó **hình và tiếng đi thẳng giữa hai máy** (P2P), không qua server. Nếu mạng chặn đường thẳng (4G, mạng công ty), media đi vòng qua máy chủ TURN (coturn).
+> 5. Một người rời phòng thì người kia được báo.
+
 Media đi **thẳng giữa hai máy** (WebRTC P2P). Server chỉ chuyển "tín hiệu" để hai bên tìm thấy nhau: SDP offer/answer và ICE candidate.
 
 ```mermaid
@@ -323,6 +352,12 @@ sequenceDiagram
 
 ## 4. Livestream
 
+> **Nói ngắn gọn**
+> 1. Coach bấm "Phát trực tiếp". Gateway tạo phòng trên LiveKit và đưa coach một token **được phép phát**.
+> 2. Coach gửi một luồng hình và tiếng duy nhất lên LiveKit.
+> 3. Người xem bấm vào phòng, nhận token **chỉ được xem**. LiveKit nhân luồng của coach ra cho từng người xem (tối đa 200).
+> 4. Coach kết thúc, hoặc phòng trống quá 5 phút, thì phòng bị đóng và buổi live chuyển sang ENDED.
+
 Một coach phát, nhiều người xem: P2P không chịu nổi (coach phải gửi N luồng), nên dùng **SFU** là LiveKit. Coach gửi một luồng lên LiveKit, LiveKit nhân ra cho người xem.
 
 ```mermaid
@@ -361,6 +396,12 @@ sequenceDiagram
 
 ## 5. Chat cộng đồng realtime
 
+> **Nói ngắn gọn**
+> 1. Mở phòng chat thì app giữ một kết nối "nghe" (SSE) tới gateway.
+> 2. Gửi tin là một request POST bình thường. Gateway lưu tin vào DB.
+> 3. Gateway phát tin lên MQTT. Mọi máy gateway đang có người nghe phòng đó đều nhận được, rồi đẩy xuống app qua kết nối SSE.
+> 4. Nhờ MQTT, người gửi và người nhận nối vào hai máy gateway khác nhau vẫn thấy tin của nhau ngay.
+
 ```mermaid
 sequenceDiagram
   participant A as Người gửi
@@ -392,6 +433,14 @@ sequenceDiagram
 ---
 
 ## 6. Ôn SRS và đồng bộ offline
+
+> **Nói ngắn gọn**
+> 1. Người học lật thẻ và tự chấm nhớ hay quên.
+> 2. App tính ngay lần ôn tiếp theo (thuật toán SM-2) và lưu vào DB **trên máy**. Thẻ tiếp theo hiện ra liền, không chờ mạng.
+> 3. Lần chấm được xếp vào hàng đợi. Khi có mạng, app gửi cả hàng đợi lên server và chỉ xóa những dòng đã gửi thành công.
+> 4. Server chỉ nhận bản **mới hơn** bản đang lưu. Máy offline lâu ngày đẩy dữ liệu cũ lên cũng không đè được tiến độ mới.
+>
+> Trên web, mỗi thẻ còn tự đọc to từ tiếng Nhật: xem [mục 12](#12-phát-âm-tts).
 
 Ôn tập phải chạy **không cần mạng**, nên mọi app ghi local trước rồi đồng bộ sau (offline-first, outbox ở client).
 
@@ -439,6 +488,13 @@ sequenceDiagram
 
 ## 7. Thi thử JLPT
 
+> **Nói ngắn gọn**
+> 1. Người dùng bấm "Bắt đầu". Server bốc đề, cất **đáp án** vào Redis, chỉ gửi câu hỏi xuống app.
+> 2. Người dùng làm bài: từ vựng, ngữ pháp, đọc hiểu, nghe (nghe do máy đọc từng câu thoại, xem [mục 12](#12-phát-âm-tts)), có câu chọn tranh.
+> 3. Bấm "Nộp bài". Server lấy đáp án trong Redis ra chấm từng phần, rồi xóa phiên.
+> 4. Điểm được lưu cùng một "sự kiện đã nộp bài" trong **cùng một** giao dịch DB. Sau đó sự kiện được đẩy lên Kafka để cập nhật tiến độ.
+> 5. Các kết quả này là đầu vào của tính năng [dự đoán điểm](#11-dự-đoán-đề-thi-jlpt).
+
 ```mermaid
 sequenceDiagram
   participant U as Người thi
@@ -479,6 +535,8 @@ sequenceDiagram
 
 ## 8. Nội dung học
 
+> **Nói ngắn gọn:** app xin danh sách từ vựng / kanji / ngữ pháp của một bài. Gateway hỏi content-service. Content-service xem cache Redis trước, không có mới đọc Postgres rồi cất vào cache cho lần sau.
+
 `GET /api/vocabularies?lessonNumber=…` (tương tự cho kanji, ngữ pháp, bài đọc, nghe):
 
 1. Gateway nhận request và gọi gRPC `Dispatch` sang **content-service**.
@@ -492,6 +550,8 @@ sequenceDiagram
 ---
 
 ## 9. AI
+
+> **Nói ngắn gọn:** người dùng hỏi AI hoặc nhờ sửa câu. App gửi lên gateway, gateway gắn lời dặn hệ thống (system prompt) rồi gọi Ollama trên máy hoặc Gemini, sau đó trả câu trả lời về. Key AI chỉ nằm ở server, mỗi người bị giới hạn 30 lần / 10 phút.
 
 ```mermaid
 sequenceDiagram
@@ -517,6 +577,8 @@ sequenceDiagram
 
 ## 10. Nhắc ôn (push, email)
 
+> **Nói ngắn gọn:** 9 giờ sáng mỗi ngày, server đếm số thẻ đến hạn của từng người và gửi thông báo đẩy (iOS qua APNs, Android qua FCM) hoặc email. Nhiều máy gateway cùng chạy lịch này, nhưng chỉ một máy được gửi. Bấm thông báo thì app mở thẳng màn ôn tập.
+
 | Việc | Lịch (giờ VN) | File |
 |---|---|---|
 | Push "Bạn có N thẻ cần ôn" | 9:00 mỗi ngày | `services/api-gateway/src/push/push.scheduler.ts` → `push.service.ts` (APNs) |
@@ -537,6 +599,8 @@ App Android native nhắc ôn bằng thông báo **local** (`SrsReminderWorker`,
 ---
 
 ## 10b. Học viên sắp bỏ học (Airflow)
+
+> **Nói ngắn gọn:** mỗi đêm Airflow tính xem học viên nào có dấu hiệu sắp bỏ học. Số liệu phải qua bước kiểm tra chất lượng, rồi Airflow nhờ gateway gửi email mời quay lại. Mỗi người nhận tối đa một email mỗi ngày, kể cả khi pipeline chạy lại.
 
 Pipeline `learner_insights` (Airflow 3, chạy 2:00 sáng giờ VN) tính số liệu của ngày hôm trước và gửi email kéo học viên quay lại. Chi tiết, cách chạy và test: [infra/airflow/README.md](../infra/airflow/README.md).
 
@@ -570,7 +634,158 @@ sequenceDiagram
   - **Backfill không gửi email:** lần chạy cho ngày cũ hơn 2 ngày tự bỏ qua bước gửi.
   - **Chống gửi trùng hai lớp:** Airflow giành dòng `pending`, gateway chặn theo (học viên, ngày). Đã thử thật: gateway nhận 4 request (lần chạy đầu + retry), học viên nhận đúng 1 email.
 
-## 11. Rủi ro đã sửa
+## 11. Dự đoán đề thi JLPT
+
+Trang `/jlpt/du-doan` có hai phần: **dự đoán điểm** của chính người học, và **nội dung dễ ra** của từng cấp.
+
+> **Nói ngắn gọn**
+> 1. Người học chọn cấp (N5–N1).
+> 2. **Dự đoán điểm:** server lấy tối đa 10 bài thi thử gần nhất (bài mới nặng ký hơn), cộng thêm bằng chứng từ luyện tập (thẻ SRS, bài đọc, bài chép chính tả). Sau đó nó "thi thử ảo" 4.000 lần để ra **xác suất đỗ**, điểm dự kiến từng phần và phần yếu nhất.
+> 3. **Nội dung dễ ra:** server xếp hạng từ vựng, kanji, ngữ pháp của cấp đó theo độ phổ biến trên báo chí, số giáo trình có chúng, và số lần chúng xuất hiện trong kho ~15.500 câu tiếng Nhật của app.
+> 4. Web hiện xác suất đỗ, mức tin cậy, và danh sách "Rất hay ra / Hay ra / Có thể ra". Mỗi mục có lý do và link tới bài học.
+
+```mermaid
+sequenceDiagram
+  participant U as Người học (web)
+  participant GW as /api/jlpt-prediction
+  participant DB as Postgres
+
+  U->>GW: GET /score?level=n3 (cần đăng nhập)
+  GW->>DB: ExamResult của user ở cấp đó (10 bài gần nhất)
+  GW->>DB: bằng chứng luyện tập: SrsCard (kiến thức ngôn ngữ),<br/>ReadingAttempt (đọc), DictationAttempt (nghe)
+  GW->>GW: predictJlpt: phân phối Beta mỗi phần (trọng số 0,8^i theo độ mới)<br/>+ luyện tập (tối đa 40 câu × 0,25) → Monte Carlo 4.000 lần
+  GW-->>U: xác suất đỗ, điểm kỳ vọng ± khoảng, phần yếu, độ tin cậy
+  U->>GW: GET /likely?level=n3&limit=40 (không cần đăng nhập)
+  GW->>DB: từ vựng / kanji / ngữ pháp của cấp + tần suất (JMdict, KANJIDIC2)
+  GW->>DB: kho câu: câu ví dụ từ vựng + bài đọc + đề thi (cache 30 phút)
+  GW->>GW: khớp từng mẫu ngữ pháp với kho câu, gộp mẫu trùng, chấm điểm
+  GW-->>U: danh sách xếp hạng + lý do + link bài học
+```
+
+- **File:**
+  - server: `services/api-gateway/src/http/jlpt-prediction.ts` (mô hình, khớp ngữ pháp), `jlpt-prediction.service.ts` (SQL, kho câu), `jlpt-prediction.controller.ts`; test `jlpt-prediction.spec.ts`;
+  - web: `apps/nihongo-web/src/views/ExamPredictionView.tsx`, route `app/(main)/jlpt/du-doan/`;
+  - dữ liệu tần suất: `packages/prisma-nihongo/scripts/import-frequency.mjs`.
+- **Điểm thiết kế:**
+  - **Đỗ phải đạt cả tổng điểm lẫn điểm sàn từng phần** (ví dụ N3: tổng ≥ 95/180 và mỗi phần ≥ 19). Mô phỏng Monte Carlo kiểm cả hai điều kiện trong cùng một lần thi ảo, nên ra đúng xác suất đỗ, không chỉ "điểm trung bình đủ chưa".
+  - **Ít dữ liệu thì nói rõ là ít:** chưa thi bài nào thì độ tin cậy `none`, có ít bài thì khoảng điểm rộng ra. Luyện tập được tính nhưng nhẹ ký, và bị chặn trần, để ôn thẻ dễ không làm điểm dự đoán phồng lên.
+  - **Seed cố định cho bộ sinh số ngẫu nhiên** (mulberry32): cùng dữ liệu thì luôn ra cùng kết quả, test được.
+  - **Khớp ngữ pháp với kho câu:** mỗi mẫu được chuyển thành biểu thức chính quy (lấy phần chữ Nhật đặc trưng, hoặc dùng luật riêng). Các mẫu dễ nhầm có luật riêng: tôn kính và bị động cùng dạng れる/られる, sai khiến bị động, お〜になる, động từ tôn kính đặc biệt. Mẫu không đo được thì ghi rõ thay vì đoán.
+
+---
+
+## 12. Phát âm (TTS)
+
+Dùng ở thẻ SRS (loa + tự đọc), từ điển hình ảnh, ví dụ ngữ pháp, và phần nghe của đề thi thử.
+
+> **Nói ngắn gọn**
+> 1. Người dùng bấm loa, hoặc thẻ SRS tự đọc khi lật sang mặt tiếng Nhật.
+> 2. Nếu máy có sẵn giọng tiếng Nhật, trình duyệt **tự đọc** bằng Web Speech API. Không tốn gì của server.
+> 3. Nếu máy không có giọng phù hợp (và luôn luôn với tiếng Việt), web gửi câu lên `POST /api/tts`. Gateway đọc thành file mp3 (giọng Nanami / HoaiMy) bằng **Azure Speech** (nếu có khóa), không thì thử **Edge TTS**, rồi trả về cho web phát.
+> 3b. Server không đọc được thì trả **503** ngay. Web nhớ điều đó 5 phút và trong thời gian đó đọc luôn bằng giọng của máy, không chờ.
+> 4. Phần nghe của đề thi: đoạn hội thoại được tách thành từng câu và đọc lần lượt, nghỉ khoảng 0,5 giây giữa các câu.
+
+```mermaid
+sequenceDiagram
+  participant U as Người dùng
+  participant W as nihongo-web (utils/speech.ts)
+  participant BR as Web Speech API (trình duyệt)
+  participant GW as POST /api/tts
+  participant AZ as Azure Speech / Edge TTS
+
+  U->>W: bấm loa / lật thẻ (tự đọc bật)
+  alt máy có giọng ja-JP (và server không bắt buộc)
+    W->>BR: speechSynthesis.speak(utterance)
+  else không có giọng, hoặc tiếng Việt, và server không bị đánh dấu hỏng
+    W->>GW: {text, lang} (timeout 8 giây)
+    GW->>AZ: Azure Speech (có AZURE_SPEECH_KEY) → lỗi thì Edge TTS (trừ khi đang nghỉ 10 phút)
+    alt đọc được
+      AZ-->>GW: mp3
+      GW-->>W: audio/mpeg (Cache-Control 1 giờ)
+      W->>W: new Audio(blob).play()
+    else không ai đọc được
+      GW-->>W: 503 + Retry-After 300
+      W->>W: đánh dấu server hỏng 5 phút
+      W->>BR: đọc bằng giọng của máy (nếu có)
+    end
+  end
+```
+
+- **File:** `apps/nihongo-web/src/utils/speech.ts` (`playAudio`, `playAudioSequence`, `isServerTtsDown`), `config/speech.ts` (thứ tự ưu tiên giọng, tốc độ), `views/SrsView.tsx` (nút loa, công tắc tự đọc, phím tắt R), `components/ListeningPlayer.tsx`, `utils/mockExam.ts` (`listeningLines`); server `services/api-gateway/src/http/tts.controller.ts`, `tts.service.ts`; test `tts.service.spec.ts`.
+- **Điểm thiết kế:**
+  - **Ưu tiên đọc trên máy:** nhanh, không tốn băng thông, không tạo tải cho server. Server chỉ là đường dự phòng.
+  - **Azure Speech trước, Edge TTS sau:** Azure là dịch vụ chính thức (cần `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`, gói F0 miễn phí 500.000 ký tự/tháng). Edge TTS là endpoint nội bộ của trình duyệt Edge, không có hợp đồng sử dụng; từ 11/2026 Microsoft trả 403 cho nó. Edge lỗi thì gateway nghỉ 10 phút mới thử lại, để không request nào phải chờ 10 giây.
+  - **Hỏng thì báo nhanh:** server trả 503 kèm `Retry-After`, web nhớ 5 phút. Trước đây web chờ hết 8 giây ở **mỗi** câu rồi mới chuyển sang giọng của máy.
+  - **Mỗi lần phát có mã phiên** (`playSessionId`): bấm sang thẻ khác thì âm thanh cũ bị bỏ, không chồng tiếng.
+  - **Công tắc tự đọc lưu trong `localStorage`:** chỉ là tiện ích của từng máy, không cần lưu lên server.
+  - **Giới hạn 60 lần/phút theo IP** (`@Throttle` trên `tts.controller.ts`): endpoint công khai và mỗi lần gọi tốn một lượt Edge TTS. Web luôn phát tuần tự (đọc xong câu này mới gọi câu sau), nên mức này dư cho người dùng thật.
+  - **Giới hạn tính theo IP thật của người dùng:** gateway bật `trust proxy` (một lớp, là nginx), nên mỗi người có bộ đếm riêng. Trước 03/11/2026 chưa bật, nên mọi người dùng đi qua nginx chung **một** bộ đếm 120 request/phút của throttler toàn cục.
+
+---
+
+## 13. Sơ đồ tư duy
+
+Trang sơ đồ tư duy từ vựng / kanji / ngữ pháp theo cấp N5–N1.
+
+> **Nói ngắn gọn**
+> 1. Người dùng mở sơ đồ của một loại (từ vựng, kanji, ngữ pháp).
+> 2. Web gọi `GET /api/mind-maps/data?kind=VOCAB`. Gateway **tự dựng sơ đồ từ toàn bộ dữ liệu trong DB**: chia theo cấp, rồi gom nhóm (theo từ loại, theo bài…), mỗi cấp tối đa 8 nhánh.
+> 3. Kết quả được nhớ trong RAM của gateway. Lần sau chỉ dựng lại khi dữ liệu đổi (số dòng hoặc thời điểm sửa gần nhất khác đi).
+> 4. Admin vẫn có thể lưu sơ đồ soạn tay qua `POST /api/mind-maps/bulk-upsert`.
+
+- **File:** `services/api-gateway/src/http/mind-maps.controller.ts`, `mind-map-data.service.ts` (`build`, `version`), `mind-maps.service.ts`; web `apps/nihongo-web/src/views/VocabMindMapView.tsx`, `KanjiMindMapView.tsx`, `data/jlpt-mind-map-shared.ts` (bố trí nhánh: quá 8 nhánh thì so le bán kính); dữ liệu soạn sẵn: `packages/prisma-nihongo/scripts/build-mind-maps.mjs`. Quyết định đưa sơ đồ xuống DB: [ADR-0002](./adr/0002-mind-map-content-in-db.md).
+- **Điểm thiết kế:**
+  - **Cache theo "phiên bản dữ liệu"** (`count:maxUpdatedAt`) thay vì hẹn giờ: thêm từ mới là sơ đồ cập nhật ngay ở lần gọi sau, không phải đợi cache hết hạn.
+  - **Route `data` đặt trước `:id`:** nếu không, NestJS hiểu chữ `data` là một `id` và báo lỗi parse số.
+
+---
+
+## 14. Từ điển hình ảnh
+
+> **Nói ngắn gọn**
+> 1. Người dùng chọn bài. Web tải danh sách từ vựng của bài như bình thường ([mục 8](#8-nội-dung-học)).
+> 2. **Ngay trên trình duyệt**, mỗi từ được tra trong gói `@edu/vocab-images` để tìm ảnh minh họa: ưu tiên ảnh gán riêng cho từ, rồi khớp theo nghĩa tiếng Việt.
+> 3. Từ nào không có ảnh phù hợp thì bị loại khỏi từ điển hình ảnh, thay vì hiện ảnh sai.
+> 4. Bấm từ để nghe phát âm ([mục 12](#12-phát-âm-tts)) và xem thứ tự nét.
+
+- **File:** `apps/nihongo-web/src/views/PictureDictionaryView.tsx`; `packages/vocab-images/src/index.ts` (`resolveVocabImage`, `isPictureEligible`, `WORD_OVERRIDES`, `viMeaningSegments`); ảnh nằm ở `packages/vocab-images/media/{openmoji,exam}`, được đồng bộ sang `apps/nihongo-web/public/media`.
+- **Điểm thiết kế:**
+  - **Khớp nghĩa chặt:** tách nghĩa tiếng Việt thành từng cụm và chỉ nhận khi khớp trọn cụm, để "bàn" không ăn nhầm vào "bàn tay". Từ có kanji thì không tra theo kana / romaji, tránh hai từ đồng âm dùng chung một ảnh.
+  - **Ảnh là file tĩnh** do Next.js phục vụ (đi qua nginx), không qua gateway.
+  - **Câu hỏi chọn tranh trong đề thi thử** dùng chung kho ảnh nhưng theo cách khác: câu hỏi lưu sẵn `imageUrl` (thư mục `/media/exam/`) trong DB. Phương án chỉ có tranh được đánh dấu `［図］`: lúc làm bài chỉ hiện tranh, lúc xem đáp án mới hiện chữ (`utils/mockExam.ts` → `pictureOption`, `views/MockExamTakePage.tsx`).
+
+---
+
+## 15. Phân tích cấu tạo kanji
+
+Bảng "cấu tạo" ở trang kanji: một chữ gồm những bộ nào, mỗi bộ nghĩa là gì.
+
+> **Nói ngắn gọn**
+> 1. Người dùng mở một chữ kanji.
+> 2. Web tải **cây cấu tạo** của chữ (sinh sẵn từ dữ liệu nét KanjiVG, nằm ở `/media/kanji-components.json`, là file tĩnh).
+> 3. Web tải **thông tin các bộ** (tên Hán Việt, nghĩa) từ `GET /api/kanji-components`. Request đi gateway → content-service → bảng `KanjiComponent`.
+> 4. Web ghép cây với thông tin bộ để vẽ bảng cấu tạo. Cả hai được tải một lần rồi giữ lại cho các chữ khác.
+
+- **File:** web `apps/nihongo-web/src/utils/kanji-structure-fetch.ts`, `utils/kanji-structure.ts`, `api/index.ts` (`fetchKanjiComponents`); server `services/api-gateway/src/http/kanji.controller.ts` (`kanji-components`), `services/content-service/src/content.ms.controller.ts` (`GET_KANJI_COMPONENTS`); dữ liệu `packages/prisma-nihongo/scripts/kanji-components.sql`, migration `20261101090000_kanji_component`.
+- **Điểm thiết kế:**
+  - **Tách hai loại dữ liệu:** cây nét (lớn, không đổi) là file tĩnh; thông tin bộ (nhỏ, cần sửa được) nằm trong DB. Sửa nghĩa một bộ không cần build lại web.
+  - **Promise dùng chung** (`indexPromise ??=`, `infoPromise ??=`): mở nhiều chữ liên tiếp cũng chỉ tải mỗi thứ một lần.
+
+---
+
+## 16. Đặt lịch học với coach: đầu đến cuối
+
+Ghép các mục ở trên thành một hành trình hoàn chỉnh, để thấy các phần nối với nhau thế nào:
+
+1. **Đặt buổi:** học viên chọn coach và giờ, rồi trả tiền bằng thẻ ([2c](#2c-đặt-buổi-học-với-coach)). Buổi ở trạng thái PENDING.
+2. **Stripe báo đã thu tiền** qua webhook ([2b](#2b-webhook-stripe)). Buổi chuyển sang CONFIRMED, học viên và coach nhận thông báo.
+3. **Trước giờ học:** hủy sớm hơn 24 giờ thì được hoàn tiền tự động ([2d](#2d-hoàn-tiền)).
+4. **Đến giờ học** (từ 15 phút trước): hai bên xin vé và vào phòng gọi video ([3](#3-video-call-1-1)).
+5. **24 giờ sau khi buổi kết thúc:** buổi thành COMPLETED. Thứ Hai tuần sau, lúc 3 giờ sáng, coach nhận tiền qua Stripe Connect, đã trừ phí nền tảng ([2e](#2e-trả-tiền-cho-coach-payout)).
+
+---
+
+## 17. Rủi ro đã sửa
 
 Tìm thấy khi viết tài liệu này, sửa cùng ngày 21/10/2026. Phần lớn có test chạy trên **Postgres / Redis / Socket.IO thật** (`*.db-spec.ts`, `npm run test:db` trong `services/`, CI chạy ở job `backend`). Với các chỗ dễ đua nhau, từng test đã được chạy trên code lỗi để chắc nó **đỏ** (bỏ điều kiện / khóa thì test fail).
 
@@ -589,7 +804,17 @@ Tìm thấy khi viết tài liệu này, sửa cùng ngày 21/10/2026. Phần l�
 | R11 | Thấp | 2 pod → 2 push / 2 email | Bảng `CronRun` (mỗi lượt một pod) | `cron-run.db-spec.ts` |
 | R12 | Thấp | `edu.payment.succeeded` gửi thẳng Kafka, lỗi là mất | Ghi `OutboxEvent` cùng transaction với `Payment` | `webhook.service.spec.ts` |
 
-**Lỗi khác tìm thấy trong lúc sửa:**
-- **Chạy dev load code cũ.** `packages/nest-*/src` có 123 file `.js` / `.d.ts` biên dịch bị commit nhầm cạnh `.ts`. Khi chạy dev (ts-node + tsconfig-paths), Node chọn `.js` trước `.ts`, nên sửa code trong `packages/*` không có tác dụng khi chạy `npm run dev:gateway`. Đã gỡ các file đó và thêm vào `.gitignore`.
-- **signaling-service không đóng kết nối Redis khi tắt**, và lỗi dọn kết nối lúc tắt thành rejection không ai bắt. Đã sửa.
-- **DB dev local lệch lịch sử migration** (bảng `OutboxEvent` có sẵn nhưng migration `20260929120000` chưa được ghi nhận), nên `prisma migrate deploy` trên DB dev dừng giữa chừng. Chưa sửa vì là DB của bạn. Migration mới (`20261021090000_payout_claim_refresh_reuse_cron_run`) đã được kiểm tra áp sạch trên DB trống.
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 2/6.
+
+- Bài trước: [system-design.md](./system-design.md) — Kiến trúc tổng thể, các service, route map
+- **Bài tiếp: [microservices-communication.md](./microservices-communication.md)** — Các service nói chuyện với nhau bằng gì, vì sao
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

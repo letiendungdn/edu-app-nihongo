@@ -463,3 +463,18 @@ Chi tiết: [learn-performance-k6.md](./learn-performance-k6.md).
 6. **Sửa lỗi #1 ở mục 11** và chạy `bash infra/backups/backup.sh` trong Git Bash. File sinh ra có lỗi font không?
    (Gợi ý: bash `>` ghi byte nguyên vẹn.)
 7. **Restore an toàn.** Tạo DB `restoretest`, nạp bản backup mới nhất vào đó theo mục 6.3, đếm số user, rồi xoá DB.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **6. DevOps và hạ tầng** — bài 3/7.
+
+- Bài trước: [learn-nginx.md](./learn-nginx.md) — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
+- **Bài tiếp: [learn-kubernetes.md](./learn-kubernetes.md)** — Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

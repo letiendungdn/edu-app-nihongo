@@ -24,7 +24,7 @@
     "docker:build": "docker compose build",
     "docker:up:build": "docker compose up -d --build",
     "docker:up:infra": "docker compose up -d postgres-nihongo redis mongodb zookeeper kafka",
-    "docker:up:nihongo": "docker compose up -d postgres-nihongo redis mongodb zookeeper kafka content-service exam-service api-gateway nihongo-web nginx",
+    "docker:up:nihongo": "docker compose up -d postgres-nihongo redis mongodb zookeeper kafka s3 content-service exam-service api-gateway nihongo-web nginx",
     "ai:ollama": "open -a Ollama && echo 'Ollama đang chạy — nếu chưa có model: ollama pull qwen2.5:7b'",
     "ai:ollama:pull": "ollama pull qwen2.5:7b",
     "stripe": "stripe.cmd",

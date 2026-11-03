@@ -119,3 +119,18 @@ Máy thật không gọi được `localhost` / `10.0.2.2`: đổi base URL sang
   - Flutter: chưa khai báo trang quản lý (bảng Apple Pay chỉ hiện khoản định kỳ).
 - [ ] **RN CLI:** đổi bundle ID và `applicationId` (`com.nihongocli`) sang ID thật. Khi nâng Stripe RN lên bản bỏ cờ `$StripeDisableSPM`, chuyển app sang dynamic framework (ghi chú trong `ios/Podfile`).
 - [ ] **Web:** Stripe Dashboard → Settings → Payment method domains → thêm domain của nihongo-web, để Apple Pay / Google Pay hiện ở trang thanh toán web (không cần sửa code).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 7/7.
+
+- Bài trước: [payment-wallets.md](./payment-wallets.md) — Apple Pay / Google Pay: cách hoạt động
+- Xong lộ trình chính. Xem thêm các nhóm tham khảo (lộ trình framework, phỏng vấn, định hướng Senior) trong [mục lục](./README.md).
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

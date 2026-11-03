@@ -451,3 +451,18 @@ docker compose up -d postgres-nihongo
 npm run migrate:deploy -w @edu/prisma-nihongo
 npm run generate -w @edu/prisma-nihongo
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 5/6.
+
+- Bài trước: [learn-db-design.md](./learn-db-design.md) — Thiết kế CSDL: yêu cầu → ERD → chuẩn hoá → ràng buộc → index → migration
+- **Bài tiếp: [db-erd.md](./db-erd.md)** — Sơ đồ ER của DB nihongo
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

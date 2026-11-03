@@ -845,3 +845,18 @@ Toàn bộ chuỗi request thật: routing, guard, `ValidationPipe` (DTO sai tr�
 **14. Viết test cho một guard rate limit thế nào?**
 
 Giả Redis vừa đủ (`pipeline` với các lệnh nối chuỗi và `exec`), cố định thời gian bằng `setSystemTime`, rồi test các biên: dưới giới hạn cho qua, **đúng bằng** giới hạn thì chặn với 429, route không có cấu hình thì không gọi Redis. Kiểm tra cả khóa Redis được tạo đúng (theo IP, controller, handler). Xem [sliding-window.guard.spec.ts](../packages/nest-common/src/rate-limit/sliding-window.guard.spec.ts).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **5. Kiểm thử** — bài 2/3.
+
+- Bài trước: [learn-testing.md](./learn-testing.md) — Phân loại test, unit và integration test trên code thật
+- **Bài tiếp: [learn-performance-k6.md](./learn-performance-k6.md)** — Load test bằng k6, đọc kết quả
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

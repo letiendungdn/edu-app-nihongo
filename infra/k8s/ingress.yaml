@@ -37,4 +37,4 @@ spec:
               service:
                 name: nihongo-web
                 port:
-                  number: 5173
+                  number: 8080

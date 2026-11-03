@@ -532,3 +532,19 @@ Giai đoạn 4 — Senior:
 - **Coroutines**: Kotlin Coroutines Deep Dive (book)
 - **Architecture**: Now in Android (Google sample app — production quality)
 - **YouTube**: Philipp Lackner (best Android channel tiếng Anh)
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **11. Lộ trình theo framework mobile**. Cùng nhóm:
+
+- [roadmap-swift.md](./roadmap-swift.md) — Swift / iOS
+- [roadmap-flutter.md](./roadmap-flutter.md) — Flutter
+- [roadmap-react-native.md](./roadmap-react-native.md) — React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

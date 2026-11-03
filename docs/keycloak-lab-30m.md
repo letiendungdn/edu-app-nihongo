@@ -168,3 +168,18 @@ Thấy mảng `keys` (RSA). Gateway dùng các key này verify chữ ký token �
 2. Đọc [PKCE](https://oauth.net/2/pkce/)  
 3. So sánh login **Dev email** vs **Keycloak** trên cùng trang `/login` — hai đường vào, một JWT local  
 4. Làm tiếp [Lab #1 — Refresh / Logout / Roles](./keycloak-lab-refresh-roles.md)
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 2/7.
+
+- Bài trước: [keycloak-setup.md](./keycloak-setup.md) — Cài Keycloak (local/Docker)
+- **Bài tiếp: [keycloak-lab-refresh-roles.md](./keycloak-lab-refresh-roles.md)** — Lab refresh token, logout, roles
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

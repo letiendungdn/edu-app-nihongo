@@ -1056,7 +1056,7 @@ stateDiagram-v2
 | [db-design.md](./db-design.md) | Chi tiết ER / bảng |
 | [accounts.md](./accounts.md) | Tài khoản demo theo role |
 | [mongodb.md](./mongodb.md) | Audit (ngoài ER quan hệ) |
-| [nginx.md](./nginx.md) | Cổng vào hệ thống |
+| [learn-nginx.md](./learn-nginx.md) | Cổng vào hệ thống |
 | [interview-questions.md](./interview-questions.md) | Bộ Q&A senior sâu (Postgres, Nest, Kafka, Stripe…) |
 
 ---
@@ -1135,7 +1135,7 @@ Phần này phục vụ **bảo vệ đồ án / phỏng vấn** dựa trên bá
 
 **E15. Nginx trong hệ thống đóng vai trò gì?**
 
-> Reverse proxy cổng `:8080`: route theo Host/path tới web, `/api` → gateway, `auth.localhost` → Keycloak; hỗ trợ emulator `10.0.2.2`. Không chứa business logic. Xem [nginx.md](./nginx.md).
+> Reverse proxy cổng `:8080`: route theo Host/path tới web, `/api` → gateway, `auth.localhost` → Keycloak; hỗ trợ emulator `10.0.2.2`. Không chứa business logic. Xem [learn-nginx.md](./learn-nginx.md).
 
 **E16. Cache vocab/lesson: key, TTL, khi nào invalidate?**
 
@@ -1200,3 +1200,17 @@ Phần này phục vụ **bảo vệ đồ án / phỏng vấn** dựa trên bá
 ---
 
 *Hết báo cáo.*
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **12. Báo cáo phân tích thiết kế**. Cùng nhóm:
+
+- [analysis-design.md](./analysis-design.md) — Sơ đồ phân tích và thiết kế
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

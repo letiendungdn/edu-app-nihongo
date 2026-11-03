@@ -1304,3 +1304,19 @@ Giai đoạn 4 — Senior:
 - **Book**: Flutter in Action (Manning)
 - **Newsletter**: Flutter Weekly
 - **Project thực tế**: apps/nihongo_flutter/ trong repo này
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **11. Lộ trình theo framework mobile**. Cùng nhóm:
+
+- [roadmap-android.md](./roadmap-android.md) — Android (Kotlin + Jetpack)
+- [roadmap-swift.md](./roadmap-swift.md) — Swift / iOS
+- [roadmap-react-native.md](./roadmap-react-native.md) — React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

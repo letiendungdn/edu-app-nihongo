@@ -694,3 +694,17 @@ thông dụng như 列 可 才 忙 晴 箱 誤 誰 陽. Đây là cách dùng SQ
 chính là việc cần bổ sung tiếp cho nội dung kanji.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 1/6.
+
+- **Bài tiếp: [learn-postgres.md](./learn-postgres.md)** — Query plan, index, tối ưu truy vấn
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -166,6 +166,23 @@ function shouldUseServerTts(
 
 const SERVER_TTS_TIMEOUT_MS = 8_000;
 
+/**
+ * Server báo không đọc được (503) hoặc quá giờ → tạm bỏ qua server trong một lúc và đọc bằng
+ * giọng của máy ngay, thay vì câu nào cũng chờ 8 giây rồi mới chuyển.
+ */
+let serverTtsDownUntil = 0;
+const SERVER_TTS_DOWN_DEFAULT_MS = 5 * 60_000;
+const SERVER_TTS_DOWN_TIMEOUT_MS = 60_000;
+
+function markServerTtsDown(ms: number): void {
+  serverTtsDownUntil = Date.now() + ms;
+}
+
+/** Server TTS đang được coi là hỏng (dùng cho test và chẩn đoán). */
+export function isServerTtsDown(): boolean {
+  return Date.now() < serverTtsDownUntil;
+}
+
 async function fetchServerTts(text: string, lang: string, sessionId: number): Promise<Response> {
   const request = () => {
     const controller = new AbortController();
@@ -180,8 +197,14 @@ async function fetchServerTts(text: string, lang: string, sessionId: number): Pr
 
   try {
     const first = await request();
-    // Edge TTS đôi lúc không trả audio khi bị gọi dồn (phát tất cả). Gửi lại một lần.
-    if (first.ok || (first.status !== 400 && first.status !== 429 && first.status !== 503)) {
+    if (first.status === 503) {
+      // Không nhà cung cấp nào đọc được: thử lại ngay cũng vô ích.
+      const retryAfter = Number(first.headers.get('Retry-After'));
+      markServerTtsDown(retryAfter > 0 ? retryAfter * 1000 : SERVER_TTS_DOWN_DEFAULT_MS);
+      return first;
+    }
+    // Đôi lúc không trả audio khi bị gọi dồn (phát tất cả). Gửi lại một lần.
+    if (first.ok || (first.status !== 400 && first.status !== 429)) {
       return first;
     }
     await new Promise((resolve) => window.setTimeout(resolve, 800));
@@ -189,6 +212,7 @@ async function fetchServerTts(text: string, lang: string, sessionId: number): Pr
     return request();
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
+      markServerTtsDown(SERVER_TTS_DOWN_TIMEOUT_MS);
       throw new Error('Server TTS timed out');
     }
     throw err;
@@ -318,12 +342,12 @@ async function speakText(
   const voice = pickVoiceForLang(voices, lang);
   const preferServer = shouldUseServerTts(lang, voices, forceServer);
 
-  if (preferServer || !voice) {
+  if ((preferServer || !voice) && !isServerTtsDown()) {
     try {
       await playServerAudio(text, lang);
       return;
     } catch {
-      // Edge TTS hay bị 403/timeout — fallback giọng trình duyệt nếu có.
+      // Server không đọc được (503 / quá giờ) → giọng trình duyệt nếu có.
       if (!voice) return;
     }
   }

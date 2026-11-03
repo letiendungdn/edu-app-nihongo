@@ -357,3 +357,17 @@ chữ ký, CORS, Content-Type… những thứ mock không bắt được.
    queue, in key ra rồi `delete-message`. Thử không xoá → message quay lại sau visibility timeout.
 6. Viết integration test mục 7 cho `UploadService` (Testcontainers), chạy trong `npm test` của `services`.
 7. (Nâng cao) Gửi email xác thực tài khoản qua SES LocalStack thay vì SMTP, xem nội dung ở `/_aws/ses`.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **7. Cloud** — bài 1/3.
+
+- **Bài tiếp: [learn-aws.md](./learn-aws.md)** — AWS: S3 (đang dùng), ECS Fargate, RDS, SQS/SNS, IAM
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

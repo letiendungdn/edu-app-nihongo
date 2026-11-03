@@ -234,3 +234,18 @@ Làm trên server **edu-app nihongo**, database `nihongo`:
 4. Tab Indexes của `Vocabulary`: chỉ ra index nào phục vụ `WHERE "lessonId" = … ORDER BY "sortOrder"`.
 5. Explain Analyze câu ở mục 6. Chụp hoặc chép dòng plan có tên index.
 6. `BEGIN` → `UPDATE` một dòng nghĩa (ví dụ thêm dấu cách) → `SELECT` thấy đổi → `ROLLBACK` → `SELECT` lại thấy nghĩa cũ.
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 3/6.
+
+- Bài trước: [learn-postgres.md](./learn-postgres.md) — Query plan, index, tối ưu truy vấn
+- **Bài tiếp: [learn-db-design.md](./learn-db-design.md)** — Thiết kế CSDL: yêu cầu → ERD → chuẩn hoá → ràng buộc → index → migration
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

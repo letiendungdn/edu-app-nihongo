@@ -405,3 +405,18 @@ stripe trigger invoice.payment_failed
    → status mới: PARTIALLY_REFUNDED
    → Đảm bảo không refund quá 100%
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **3. Backend (NestJS)** — bài 7/8.
+
+- Bài trước: [learn-reliability-patterns.md](./learn-reliability-patterns.md) — Outbox, timeout, retry, consumer idempotent, circuit breaker
+- **Bài tiếp: [learn-security-backend.md](./learn-security-backend.md)** — Bảo mật API theo OWASP API Top 10
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

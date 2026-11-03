@@ -259,10 +259,19 @@ services:
       # Airflow (learner_insights) gọi /api/internal/insights/* bằng token này
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-dev-internal-token-change-me}
       STRIPE_MERCHANT_COUNTRY: ${STRIPE_MERCHANT_COUNTRY:-US}
+      # Đọc tiếng qua server (/api/tts): Azure Speech chính thức, gói F0 miễn phí 500.000 ký tự/tháng.
+      # Không đặt thì thử Edge TTS (không chính thức, đang bị chặn) → web tự đọc bằng giọng của máy.
+      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
+      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-southeastasia}
       AWS_REGION: ${AWS_REGION:-ap-southeast-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-edu-app-dev}
+      # Mặc định dùng S3 giả lập (service s3 bên dưới). Dùng S3 thật: đặt AWS_ENDPOINT_URL= và
+      # AWS_PUBLIC_ENDPOINT_URL= (để trống) trong .env. Không có dấu ":" nên giá trị rỗng được giữ.
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL-http://s3:9090}
+      # Địa chỉ trình duyệt dùng để PUT/GET file: đi qua nginx (/s3/ → s3:9090), cùng origin với web.
+      AWS_PUBLIC_ENDPOINT_URL: ${AWS_PUBLIC_ENDPOINT_URL-http://localhost:8080/s3}
       LIVEKIT_URL: ${LIVEKIT_URL:-http://livekit:7880}
       LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
@@ -510,6 +519,20 @@ services:
       - mailpit
 
   # Hộp thư giả cho dev: bắt mọi mail SMTP, xem ở http://localhost:8025 (không gửi ra Internet)
+  # S3 giả lập cho dev: ảnh upload (chat, admin). Ghi file vào volume nên còn sau khi restart
+  # (LocalStack bản miễn phí mất hết khi restart). Không mở cổng ra máy: vào qua nginx /s3/.
+  # Chi tiết: docs/media-storage.md
+  s3:
+    image: adobe/s3mock:3.12.0
+    container_name: edu-s3
+    restart: unless-stopped
+    environment:
+      initialBuckets: ${AWS_S3_BUCKET:-edu-app-dev}
+      retainFilesOnExit: 'true'
+      root: /data
+    volumes:
+      - s3_data:/data
+
   mailpit:
     image: axllent/mailpit:v1.20
     container_name: edu-mailpit
@@ -542,6 +565,7 @@ services:
 
 volumes:
   airflow_db_data:
+  s3_data:
   mori_hls_cache:
   mosquitto_data:
   # Giữ data từ stack cũ `nihongo-app` (chỉ DB tiếng Nhật)

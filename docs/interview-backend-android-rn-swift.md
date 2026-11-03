@@ -984,3 +984,21 @@ struct Vocabulary: Codable, Identifiable {
 // Decode — tương đương Vocabulary.fromJson() trong Flutter
 let vocabs = try JSONDecoder().decode([Vocabulary].self, from: responseData)
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
+
+- [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
+- [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+- [interview-react-native-senior.md](./interview-react-native-senior.md) — Senior React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

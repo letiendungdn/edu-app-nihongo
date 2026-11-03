@@ -533,3 +533,18 @@ Tách composable khỏi ViewModel để truyền dữ liệu giả vào; tìm no
 
 **8. Kể một lỗi mà unit test không bắt được.**
 Mục 10, chọn lỗi SSE: nói được triệu chứng (200 OK nhưng im lặng), cách tìm (logcat), nguyên nhân (interceptor đọc hết body), cách sửa và test tái hiện (body chảy chậm, đỏ trước khi sửa).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **9. Mobile** — bài 5/8.
+
+- Bài trước: [learn-android-kotlin.md](./learn-android-kotlin.md) — Android Kotlin từ code thật, lộ trình 8 tuần
+- **Bài tiếp: [learn-swift-ios.md](./learn-swift-ios.md)** — Swift/SwiftUI qua nihongo-ios
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

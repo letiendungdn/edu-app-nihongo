@@ -493,3 +493,17 @@ it('should mark payment as succeeded', async () => {
    → Create subscription → cancel → verify status=CANCELED
    → Cancel lần 2 → verify nhận lỗi 409 (không cancel lần 2)
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **5. Kiểm thử** — bài 1/3.
+
+- **Bài tiếp: [learn-jest.md](./learn-jest.md)** — Jest qua các test thật của repo
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

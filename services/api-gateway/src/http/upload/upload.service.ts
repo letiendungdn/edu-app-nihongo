@@ -13,29 +13,44 @@ import { randomUUID } from "crypto";
  * Cấu hình S3 client từ env:
  * - Chỉ dùng key tĩnh khi CÓ cấu hình; không có thì để SDK tự lấy quyền (IAM role của ECS/EC2, SSO…).
  *   Truyền key rỗng làm SDK bỏ qua credential chain → ký bằng key rỗng → 403.
- * - AWS_ENDPOINT_URL (vd LocalStack http://localhost.localstack.cloud:4566) → path-style.
+ * - AWS_ENDPOINT_URL (S3 giả lập: S3Mock http://s3:9090, LocalStack…) → path-style.
+ *   Dùng S3 giả lập mà không có key thì gắn key giả: server giả lập không kiểm, còn SDK
+ *   không có key sẽ đi tìm credential chain và báo lỗi.
+ * - `endpointOverride`: endpoint dùng để KÝ URL cho trình duyệt (xem AWS_PUBLIC_ENDPOINT_URL).
  */
-export function buildS3ClientConfig(config: ConfigService): S3ClientConfig {
+export function buildS3ClientConfig(
+  config: ConfigService,
+  endpointOverride?: string,
+): S3ClientConfig {
   const accessKeyId = config.get<string>("AWS_ACCESS_KEY_ID");
   const secretAccessKey = config.get<string>("AWS_SECRET_ACCESS_KEY");
-  const endpoint = config.get<string>("AWS_ENDPOINT_URL");
+  const endpoint = endpointOverride || config.get<string>("AWS_ENDPOINT_URL");
+  const credentials =
+    accessKeyId && secretAccessKey
+      ? { accessKeyId, secretAccessKey }
+      : endpoint
+        ? { accessKeyId: "local", secretAccessKey: "local" }
+        : undefined;
   return {
     region: config.get<string>("AWS_REGION") ?? "ap-southeast-1",
-    ...(accessKeyId && secretAccessKey
-      ? { credentials: { accessKeyId, secretAccessKey } }
-      : {}),
+    ...(credentials ? { credentials } : {}),
     ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
   };
 }
 
-/** Gốc URL công khai của file: ASSET_BASE_URL (vd CloudFront) > endpoint LocalStack > S3 mặc định. */
+/**
+ * Gốc URL công khai của file: ASSET_BASE_URL (vd CloudFront) > endpoint công khai
+ * (AWS_PUBLIC_ENDPOINT_URL) > endpoint S3 giả lập > S3 mặc định.
+ */
 export function resolvePublicBase(
   config: ConfigService,
   bucket: string,
 ): string {
   const assetBase = config.get<string>("ASSET_BASE_URL");
   if (assetBase) return assetBase.replace(/\/+$/, "");
-  const endpoint = config.get<string>("AWS_ENDPOINT_URL");
+  const endpoint =
+    config.get<string>("AWS_PUBLIC_ENDPOINT_URL") ||
+    config.get<string>("AWS_ENDPOINT_URL");
   if (endpoint) return `${endpoint.replace(/\/+$/, "")}/${bucket}`;
   return `https://${bucket}.s3.amazonaws.com`;
 }
@@ -43,11 +58,21 @@ export function resolvePublicBase(
 @Injectable()
 export class UploadService {
   private readonly s3: S3Client;
+  /**
+   * Client chỉ dùng để KÝ URL upload. Ký URL không gọi mạng, nên client này dùng được
+   * endpoint mà trình duyệt thấy (vd http://localhost:8080/s3 qua nginx), trong khi
+   * `s3` gọi S3 bằng địa chỉ nội bộ của Docker (http://s3:9090). Với AWS thật hai cái trùng nhau.
+   */
+  private readonly presigner: S3Client;
   private readonly bucket: string;
   private readonly publicBase: string;
 
   constructor(private readonly config: ConfigService) {
     this.s3 = new S3Client(buildS3ClientConfig(config));
+    const publicEndpoint = config.get<string>("AWS_PUBLIC_ENDPOINT_URL");
+    this.presigner = publicEndpoint
+      ? new S3Client(buildS3ClientConfig(config, publicEndpoint))
+      : this.s3;
     this.bucket = config.get("AWS_S3_BUCKET") ?? "edu-app-dev";
     this.publicBase = resolvePublicBase(config, this.bucket);
   }
@@ -56,7 +81,7 @@ export class UploadService {
     const ext = contentType.split("/")[1] ?? "jpg";
     const key = `${folder}/${randomUUID()}.${ext}`;
     const url = await getSignedUrl(
-      this.s3,
+      this.presigner,
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,

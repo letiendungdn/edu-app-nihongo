@@ -83,3 +83,17 @@ docker compose up -d --build nginx api-gateway nihongo-web
 ```
 
 Realm import: `infra/keycloak/realm-edu-app.json` (chỉ import lần đầu khi volume Keycloak trống).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 1/7.
+
+- **Bài tiếp: [keycloak-lab-30m.md](./keycloak-lab-30m.md)** — Lab Keycloak 30 phút
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

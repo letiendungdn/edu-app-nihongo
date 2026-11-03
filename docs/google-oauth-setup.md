@@ -74,3 +74,18 @@ Browser (Google button) → ID token (JWT)
 ## API (Swagger)
 
 `POST /api/auth/google` — body: `{ "credential": "<google_id_token>" }`
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **10. Tích hợp: đăng nhập, mail, thanh toán** — bài 4/7.
+
+- Bài trước: [keycloak-lab-refresh-roles.md](./keycloak-lab-refresh-roles.md) — Lab refresh token, logout, roles
+- **Bài tiếp: [brevo-mail.md](./brevo-mail.md)** — Gửi mail qua Brevo
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -341,3 +341,18 @@ exam-service ──(EventBus in-process)──► ExamSubmittedHandler
 
 Xem thêm: `docs/interview-questions.md` (Q11–Q14, Q27 về Kafka; phần "gRPC vs REST"),
 `docs/learn-kafka.md`, `docs/learn-edu-app.md` (Tuần 4 — Microservices).
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 3/6.
+
+- Bài trước: [core-flows.md](./core-flows.md) — Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm…
+- **Bài tiếp: [media-storage.md](./media-storage.md)** — Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

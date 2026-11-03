@@ -652,3 +652,21 @@ kubectl set resources deployment/api-gateway --limits=memory=512Mi
 # Profile memory — AiService giữ conversation history có thể tích lũy
 # ai.service.ts: history.slice(-10) → giới hạn 10 messages, tránh leak
 ```
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
+
+- [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
+- [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
+- [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+- [interview-react-native-senior.md](./interview-react-native-senior.md) — Senior React Native
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

@@ -15,7 +15,8 @@ export class RoomService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.redis.quit(); // bản cũ không đóng kết nối: tắt app không sạch
+    // quit() bị reject nếu kết nối đã đứt; khi đó cắt hẳn thay vì để rejection không ai bắt.
+    await this.redis.quit().catch(() => this.redis.disconnect());
   }
 
   private key(sessionId: number) {

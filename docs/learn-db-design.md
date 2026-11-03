@@ -786,3 +786,18 @@ trực tiếp — nếu không, học lúc 6 giờ sáng sẽ bị tính vào ng
 Nhớ làm tương tự cho `DailyGoal.date`, `DailyNote.date`, `StudyStreak.lastStudyDate`.
 
 </details>
+
+<!-- nav:start -->
+
+---
+
+## Đi tiếp
+
+Bạn đang ở **4. Cơ sở dữ liệu** — bài 4/6.
+
+- Bài trước: [learn-pgadmin.md](./learn-pgadmin.md) — Dùng pgAdmin với DB của project
+- **Bài tiếp: [db-design.md](./db-design.md)** — Thiết kế DB Nihongo: bảng, quan hệ, quyết định
+
+Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
+
+<!-- nav:end -->

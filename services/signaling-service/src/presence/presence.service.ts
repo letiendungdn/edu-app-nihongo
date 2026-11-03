@@ -25,7 +25,8 @@ export class PresenceService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.redis.quit();
+    // quit() bị reject nếu kết nối đã đứt; khi đó cắt hẳn thay vì để rejection không ai bắt.
+    await this.redis.quit().catch(() => this.redis.disconnect());
   }
 
   private expiry() {
