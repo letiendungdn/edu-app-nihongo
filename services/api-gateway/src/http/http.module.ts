@@ -38,6 +38,8 @@ import { LiveService } from "./live.service";
 import { BannersController } from "./banners.controller";
 import { BannersService } from "./banners.service";
 import { MindMapsController } from "./mind-maps.controller";
+import { JlptPredictionController } from "./jlpt-prediction.controller";
+import { JlptPredictionService } from "./jlpt-prediction.service";
 import { MindMapsService } from "./mind-maps.service";
 import { MindMapDataService } from "./mind-map-data.service";
 import { FeatureFlagsController } from "./feature-flags/feature-flags.controller";
@@ -82,6 +84,7 @@ const httpImports: Array<Type | DynamicModule> = [
     LiveController,
     BannersController,
     MindMapsController,
+    JlptPredictionController,
   ],
   providers: [
     FeatureFlagsService,
@@ -93,6 +96,7 @@ const httpImports: Array<Type | DynamicModule> = [
     LiveService,
     BannersService,
     MindMapsService,
+    JlptPredictionService,
     MindMapDataService,
   ],
 })

@@ -1,0 +1,370 @@
+.pred-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 3rem;
+}
+
+.pred-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pred-subtitle {
+  margin: 0.35rem 0 0;
+  max-width: 46rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.pred-levels,
+.pred-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-color);
+}
+
+.pred-level,
+.pred-tab {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pred-level.is-active,
+.pred-tab.is-active {
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+}
+
+.pred-card {
+  padding: 1.4rem 1.5rem;
+  border-radius: 1.1rem;
+}
+
+.pred-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.pred-card__title {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.pred-card__head .pred-card__title {
+  margin: 0;
+}
+
+.pred-muted {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pred-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pred-empty p {
+  margin: 0;
+}
+
+/* ── Điểm */
+
+.pred-score__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pred-score__big {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.pred-score__max {
+  margin-left: 0.3rem;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.pred-pass {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 8.5rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.pred-pass__value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pred-pass__label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.pred-pass--good .pred-pass__value {
+  color: var(--color-success, #16a34a);
+}
+
+.pred-pass--mid .pred-pass__value {
+  color: var(--color-warning, #d97706);
+}
+
+.pred-pass--bad .pred-pass__value {
+  color: var(--color-error, #dc2626);
+}
+
+.pred-bar {
+  position: relative;
+  height: 0.75rem;
+  margin: 1.6rem 0 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+}
+
+.pred-bar--small {
+  height: 0.5rem;
+  margin: 1.3rem 0 0.3rem;
+}
+
+.pred-bar__range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 35%, transparent);
+}
+
+.pred-bar__dot {
+  position: absolute;
+  top: 50%;
+  width: 1rem;
+  height: 1rem;
+  border: 3px solid var(--surface-color);
+  border-radius: 50%;
+  background: var(--primary-color);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.pred-bar__mark {
+  position: absolute;
+  top: -0.5rem;
+  bottom: -0.5rem;
+  width: 2px;
+  background: var(--text-primary);
+}
+
+.pred-bar__mark span {
+  position: absolute;
+  bottom: calc(100% + 0.15rem);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.pred-bar__mark--min {
+  background: var(--color-error, #dc2626);
+}
+
+.pred-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.6rem 0 1.2rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pred-confidence {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
+  color: var(--text-primary);
+}
+
+.pred-confidence--high {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 18%, transparent);
+}
+
+.pred-confidence--low {
+  background: color-mix(in srgb, var(--color-warning, #d97706) 20%, transparent);
+}
+
+.pred-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.pred-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pred-section__name {
+  font-weight: 600;
+}
+
+.pred-section__foot {
+  font-size: 0.78rem;
+}
+
+.pred-advice {
+  margin: 1.2rem 0 0.6rem;
+  padding: 0.9rem 1rem 0.9rem 2rem;
+  border-left: 3px solid var(--primary-color);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--primary-color) 7%, transparent);
+  line-height: 1.6;
+}
+
+.pred-note {
+  font-size: 0.78rem;
+}
+
+/* ── Nội dung dễ ra */
+
+.pred-likely {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pred-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.8rem;
+  background: var(--surface-color);
+}
+
+.pred-item__rank {
+  flex-shrink: 0;
+  width: 1.8rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.pred-item__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pred-item__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pred-item__text {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pred-item__reading {
+  color: var(--text-secondary);
+}
+
+.pred-item__meaning {
+  margin: 0.15rem 0 0;
+}
+
+.pred-item__reasons {
+  margin: 0.2rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.pred-tier {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pred-tier--high {
+  background: var(--brand-grad);
+  color: #fff;
+}
+
+.pred-tier--mid {
+  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  color: var(--primary-color);
+}
+
+.pred-tier--low {
+  background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
+  color: var(--text-secondary);
+}
+
+.pred-method {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pred-method summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pred-method ul {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .pred-card {
+    padding: 1.1rem 1rem;
+  }
+
+  .pred-item {
+    flex-wrap: wrap;
+  }
+}

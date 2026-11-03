@@ -68,6 +68,7 @@ export const NAV_GROUPS = [
       { href: '/vocab-review',      icon: '誤', label: 'Từ sai' },
       { href: '/quiz',              icon: '答', label: 'Quiz' },
       { href: '/mock-exam',         icon: '試', label: 'Thi thử JLPT' },
+      { href: '/jlpt/du-doan',      icon: '予', label: 'Dự đoán đề thi' },
       { href: '/jlpt',              icon: '道', label: 'Lộ trình JLPT' },
       { href: '/analytics',         icon: '進', label: 'Tiến độ' },
     ],

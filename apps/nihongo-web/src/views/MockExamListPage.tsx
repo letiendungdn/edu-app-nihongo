@@ -18,6 +18,9 @@ export default function MockExamListPage() {
               Làm bài theo format thi thật — có giới hạn thời gian, nộp bài một lần, sau đó xem đáp án chi tiết.
             </p>
           </div>
+          <Link href="/jlpt/du-doan" className="btn btn-outline">
+            Dự đoán điểm của tôi
+          </Link>
         </div>
       </header>
 
