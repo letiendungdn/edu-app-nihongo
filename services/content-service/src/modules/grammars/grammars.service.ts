@@ -75,7 +75,13 @@ export class GrammarsService {
         this.prisma.grammar.count({ where }),
       ]);
       const dataWithBooks = lessonNumber
-        ? await withAlsoIn(this.prisma, "grammar", data, (row) => row.pattern, lessonTextbook)
+        ? await withAlsoIn(
+            this.prisma,
+            "grammar",
+            data,
+            (row) => row.pattern,
+            lessonTextbook,
+          )
         : data;
       return { data: dataWithBooks, total, page, limit };
     }
@@ -116,7 +122,13 @@ export class GrammarsService {
     ]);
 
     const dataWithBooks = lessonId
-      ? await withAlsoIn(this.prisma, "grammar", data, (row) => row.pattern, lessonTextbook)
+      ? await withAlsoIn(
+          this.prisma,
+          "grammar",
+          data,
+          (row) => row.pattern,
+          lessonTextbook,
+        )
       : data;
     const result = { data: dataWithBooks, total, page, limit };
     if (lessonId) {

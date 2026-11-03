@@ -10,7 +10,7 @@
  * JLPT chấm điểm quy đổi (scaled) chứ không tuyến tính — đây là ước lượng, không phải điểm thật.
  */
 
-export type JlptLevelKey = 'n1' | 'n2' | 'n3' | 'n4' | 'n5';
+export type JlptLevelKey = "n1" | "n2" | "n3" | "n4" | "n5";
 
 /**
  * Kết quả luyện tập ngoài đề thi thử (ôn SRS, bài đọc, nghe chép), cùng tên phần như đề.
@@ -43,7 +43,7 @@ interface LevelRule {
   sections: SectionRule[];
 }
 
-const LANGUAGE = ['vocab', 'kanji', 'grammar'];
+const LANGUAGE = ["vocab", "kanji", "grammar"];
 
 export const JLPT_RULES: Record<JlptLevelKey, LevelRule> = {
   n1: { passMark: 100, sections: threeSections() },
@@ -55,16 +55,51 @@ export const JLPT_RULES: Record<JlptLevelKey, LevelRule> = {
 
 function threeSections(): SectionRule[] {
   return [
-    { id: 'language', name: 'Kiến thức ngôn ngữ', nameJa: '言語知識（文字・語彙・文法）', max: 60, minPass: 19, parts: LANGUAGE },
-    { id: 'reading', name: 'Đọc hiểu', nameJa: '読解', max: 60, minPass: 19, parts: ['reading'] },
-    { id: 'listening', name: 'Nghe', nameJa: '聴解', max: 60, minPass: 19, parts: ['listening'] },
+    {
+      id: "language",
+      name: "Kiến thức ngôn ngữ",
+      nameJa: "言語知識（文字・語彙・文法）",
+      max: 60,
+      minPass: 19,
+      parts: LANGUAGE,
+    },
+    {
+      id: "reading",
+      name: "Đọc hiểu",
+      nameJa: "読解",
+      max: 60,
+      minPass: 19,
+      parts: ["reading"],
+    },
+    {
+      id: "listening",
+      name: "Nghe",
+      nameJa: "聴解",
+      max: 60,
+      minPass: 19,
+      parts: ["listening"],
+    },
   ];
 }
 
 function twoSections(): SectionRule[] {
   return [
-    { id: 'language', name: 'Ngôn ngữ & Đọc hiểu', nameJa: '言語知識・読解', max: 120, minPass: 38, parts: [...LANGUAGE, 'reading'] },
-    { id: 'listening', name: 'Nghe', nameJa: '聴解', max: 60, minPass: 19, parts: ['listening'] },
+    {
+      id: "language",
+      name: "Ngôn ngữ & Đọc hiểu",
+      nameJa: "言語知識・読解",
+      max: 120,
+      minPass: 38,
+      parts: [...LANGUAGE, "reading"],
+    },
+    {
+      id: "listening",
+      name: "Nghe",
+      nameJa: "聴解",
+      max: 60,
+      minPass: 19,
+      parts: ["listening"],
+    },
   ];
 }
 
@@ -94,7 +129,7 @@ export interface JlptPrediction {
   maxTotal: number;
   total: { estimate: number; low: number; high: number };
   passProbability: number;
-  confidence: 'none' | 'low' | 'medium' | 'high';
+  confidence: "none" | "low" | "medium" | "high";
   sections: SectionPrediction[];
   missingSections: string[];
   weakestSection: string | null;
@@ -116,7 +151,10 @@ export function predictJlpt(
 ): JlptPrediction {
   const rule = JLPT_RULES[level];
   const recent = [...attempts]
-    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+    )
     .slice(0, MAX_ATTEMPTS);
 
   const posteriors = rule.sections.map((s) => {
@@ -132,9 +170,13 @@ export function predictJlpt(
         questions += part.total;
       }
     });
-    const evidence = practice.filter((p) => s.parts.includes(p.section) && p.total > 0);
+    const evidence = practice.filter(
+      (p) => s.parts.includes(p.section) && p.total > 0,
+    );
     const practiceTotal = evidence.reduce((a, p) => a + p.total, 0);
-    const scale = practiceTotal ? Math.min(1, PRACTICE_CAP / practiceTotal) * PRACTICE_WEIGHT : 0;
+    const scale = practiceTotal
+      ? Math.min(1, PRACTICE_CAP / practiceTotal) * PRACTICE_WEIGHT
+      : 0;
     for (const p of evidence) {
       alpha += scale * p.correct;
       beta += scale * (p.total - p.correct);
@@ -182,17 +224,26 @@ export function predictJlpt(
       estimate: Math.round(mean * p.rule.max),
       low: Math.round(quantile(scores, 0.1)),
       high: Math.round(quantile(scores, 0.9)),
-      belowMinRisk: round(scores.filter((s) => s < p.rule.minPass).length / scores.length, 3),
+      belowMinRisk: round(
+        scores.filter((s) => s < p.rule.minPass).length / scores.length,
+        3,
+      ),
     };
   });
 
   totals.sort((a, b) => a - b);
   const maxTotal = rule.sections.reduce((a, s) => a + s.max, 0);
-  const missingSections = sections.filter((s) => s.questions === 0 && s.practiceQuestions === 0).map((s) => s.name);
-  const answered = sections.filter((s) => s.questions > 0 || s.practiceQuestions > 0);
+  const missingSections = sections
+    .filter((s) => s.questions === 0 && s.practiceQuestions === 0)
+    .map((s) => s.name);
+  const answered = sections.filter(
+    (s) => s.questions > 0 || s.practiceQuestions > 0,
+  );
   const hasData = recent.length > 0 || practice.some((p) => p.total > 0);
   const weakest = answered.length
-    ? answered.reduce((w, s) => (s.estimate / s.max < w.estimate / w.max ? s : w))
+    ? answered.reduce((w, s) =>
+        s.estimate / s.max < w.estimate / w.max ? s : w,
+      )
     : null;
 
   return {
@@ -210,18 +261,29 @@ export function predictJlpt(
     sections,
     missingSections,
     weakestSection: weakest?.name ?? null,
-    advice: adviceFor(level, rule, sections, missingSections, recent.length, hasData),
+    advice: adviceFor(
+      level,
+      rule,
+      sections,
+      missingSections,
+      recent.length,
+      hasData,
+    ),
   };
 }
 
-function confidenceOf(attempts: number, sections: SectionPrediction[], hasData: boolean): JlptPrediction['confidence'] {
-  if (!hasData) return 'none';
+function confidenceOf(
+  attempts: number,
+  sections: SectionPrediction[],
+  hasData: boolean,
+): JlptPrediction["confidence"] {
+  if (!hasData) return "none";
   // Chỉ có luyện tập, chưa thi thử: luôn tin cậy thấp
-  if (!attempts) return 'low';
+  if (!attempts) return "low";
   const minQuestions = Math.min(...sections.map((s) => s.questions));
-  if (minQuestions === 0 || attempts < 2) return 'low';
-  if (minQuestions >= 60 && attempts >= 4) return 'high';
-  return 'medium';
+  if (minQuestions === 0 || attempts < 2) return "low";
+  if (minQuestions >= 60 && attempts >= 4) return "high";
+  return "medium";
 }
 
 function adviceFor(
@@ -232,30 +294,45 @@ function adviceFor(
   attempts: number,
   hasData: boolean,
 ): string[] {
-  if (!hasData) return [`Làm ít nhất một đề thi thử ${level.toUpperCase()} để có dự đoán.`];
+  if (!hasData)
+    return [`Làm ít nhất một đề thi thử ${level.toUpperCase()} để có dự đoán.`];
   const out: string[] = [];
   if (!attempts) {
-    out.push(`Đây là dự đoán chỉ dựa trên kết quả luyện tập — làm một đề thi thử ${level.toUpperCase()} để biết sát hơn.`);
+    out.push(
+      `Đây là dự đoán chỉ dựa trên kết quả luyện tập — làm một đề thi thử ${level.toUpperCase()} để biết sát hơn.`,
+    );
   }
   if (missing.length) {
-    out.push(`Chưa có dữ liệu phần ${missing.join(', ')} — hãy làm đề "đầy đủ" hoặc "luyện nghe" để dự đoán chính xác hơn.`);
+    out.push(
+      `Chưa có dữ liệu phần ${missing.join(", ")} — hãy làm đề "đầy đủ" hoặc "luyện nghe" để dự đoán chính xác hơn.`,
+    );
   }
   for (const s of sections) {
     if ((s.questions || s.practiceQuestions) && s.belowMinRisk >= 0.3) {
-      out.push(`Phần ${s.name} có nguy cơ dưới điểm sàn (${s.minPass}/${s.max}) — dù tổng điểm đủ vẫn trượt.`);
+      out.push(
+        `Phần ${s.name} có nguy cơ dưới điểm sàn (${s.minPass}/${s.max}) — dù tổng điểm đủ vẫn trượt.`,
+      );
     }
   }
   const answered = sections.filter((s) => s.questions || s.practiceQuestions);
   if (answered.length) {
-    const weakest = answered.reduce((w, s) => (s.estimate / s.max < w.estimate / w.max ? s : w));
-    const need = Math.max(0, rule.passMark - sections.reduce((a, s) => a + s.estimate, 0));
+    const weakest = answered.reduce((w, s) =>
+      s.estimate / s.max < w.estimate / w.max ? s : w,
+    );
+    const need = Math.max(
+      0,
+      rule.passMark - sections.reduce((a, s) => a + s.estimate, 0),
+    );
     out.push(
       need > 0
         ? `Còn thiếu khoảng ${need} điểm để đạt mốc ${rule.passMark}. Phần nên ưu tiên: ${weakest.name} (${weakest.estimate}/${weakest.max}).`
         : `Điểm ước lượng đã qua mốc ${rule.passMark}. Giữ phong độ và củng cố phần ${weakest.name}.`,
     );
   }
-  if (attempts > 0 && attempts < 3) out.push('Mới có ít bài nên khoảng dao động còn rộng — làm thêm đề để dự đoán ổn định hơn.');
+  if (attempts > 0 && attempts < 3)
+    out.push(
+      "Mới có ít bài nên khoảng dao động còn rộng — làm thêm đề để dự đoán ổn định hơn.",
+    );
   return out;
 }
 
@@ -319,7 +396,8 @@ function sampleBeta(alpha: number, beta: number, rand: () => number) {
 
 // ── Ngữ pháp: phần cố định của mẫu để đếm trong kho câu
 
-const PLACEHOLDER = /(?:^|(?<=[\s～〜~／/＋+]))(?:N|V|A|Adj|Vる|Vた|Vて|Vない|Vます|普通形|名詞)(?=[ぁ-んァ-ン一-龯])/g;
+const PLACEHOLDER =
+  /(?:^|(?<=[\s～〜~／/＋+]))(?:N|V|A|Adj|Vる|Vた|Vて|Vない|Vます|普通形|名詞)(?=[ぁ-んァ-ン一-龯])/g;
 
 /**
  * Các đoạn tiếng Nhật cố định của một mẫu (đủ dài để tìm trong câu):
@@ -328,13 +406,16 @@ const PLACEHOLDER = /(?:^|(?<=[\s～〜~／/＋+]))(?:N|V|A|Adj|Vる|Vた|Vて|V
  */
 export function grammarFragments(pattern: string): string[] {
   const cleaned = pattern
-    .replace(/[（(][^）)]*[）)]/g, '')
-    .replace(/［[^］]*］|\[[^\]]*\]/g, '')
-    .replace(PLACEHOLDER, '');
+    .replace(/[（(][^）)]*[）)]/g, "")
+    .replace(/［[^］]*］|\[[^\]]*\]/g, "")
+    .replace(PLACEHOLDER, "");
   const out = new Set<string>();
   for (const variant of cleaned.split(/[／/、,]/)) {
     // 「から こそ」→「からこそ」: dấu cách giữa hai phần tiếng Nhật chỉ là cách trình bày
-    const joined = variant.replace(/(?<=[ぁ-んァ-ヶー一-龯々])\s+(?=[ぁ-んァ-ヶー一-龯々])/g, '');
+    const joined = variant.replace(
+      /(?<=[ぁ-んァ-ヶー一-龯々])\s+(?=[ぁ-んァ-ヶー一-龯々])/g,
+      "",
+    );
     const runs = joined.match(/[ぁ-んァ-ヶー一-龯々]+/g) ?? [];
     const longest = runs.sort((a, b) => b.length - a.length)[0];
     if (longest && isDistinctive(longest)) out.add(longest);
@@ -343,7 +424,18 @@ export function grammarFragments(pattern: string): string[] {
 }
 
 /** Động từ phụ / đuôi quá chung — đếm trong câu sẽ ra hàng nghìn kết quả vô nghĩa. */
-const GENERIC_FRAGMENTS = new Set(['する', 'ある', 'いる', 'なる', 'れる', 'られる', 'させる', 'たす', 'です', 'ます']);
+const GENERIC_FRAGMENTS = new Set([
+  "する",
+  "ある",
+  "いる",
+  "なる",
+  "れる",
+  "られる",
+  "させる",
+  "たす",
+  "です",
+  "ます",
+]);
 
 /**
  * Đủ đặc trưng để đếm: ≥3 ký tự, hoặc 2 ký tự có kanji. Bỏ đoạn 1 chữ (「末」 khớp cả 週末, 月末)
@@ -351,11 +443,14 @@ const GENERIC_FRAGMENTS = new Set(['する', 'ある', 'いる', 'なる', 'れ�
  */
 function isDistinctive(fragment: string) {
   if (GENERIC_FRAGMENTS.has(fragment)) return false;
-  return fragment.length >= 3 || (fragment.length === 2 && /[一-龯々]/.test(fragment));
+  return (
+    fragment.length >= 3 ||
+    (fragment.length === 2 && /[一-龯々]/.test(fragment))
+  );
 }
 
 // Cột chữ đứng trước đuôi ます (連用形) — dùng cho mẫu "V(ます bỏ) + …"
-const STEM = '[いきしちにひみりぎじびえけせてねへめれげべ]';
+const STEM = "[いきしちにひみりぎじびえけせてねへめれげべ]";
 
 /**
  * Luật cho mẫu không có đoạn cố định đủ dài (toàn chỗ trống V/N, hoặc lõi chỉ 1–2 chữ):
@@ -366,7 +461,10 @@ const GRAMMAR_RULES: Array<[RegExp, RegExp[]]> = [
   // ── động từ ghép sau thể て
   [/て\)?\s*\+?\s*ある/, [/[てで]あ(?:る|り|っ)/]],
   [/て\)?\s*\+?\s*おく/, [/[てで]お(?:く|き|い|か|け)/]],
-  [/て\)?\s*\+?\s*(?:くる|いく)/, [/[てで](?:く(?:る|れ)|き(?:た|ま|て))/, /[てで]い(?:く|き|っ)/]],
+  [
+    /て\)?\s*\+?\s*(?:くる|いく)/,
+    [/[てで](?:く(?:る|れ)|き(?:た|ま|て))/, /[てで]い(?:く|き|っ)/],
+  ],
   [/て\)?\s*\+?\s*みる/, [/[てで]み(?:る|た|ま|て|よ)/]],
   [/て\)?\s*\+?\s*こそ/, [/[てで]こそ/]],
   [/て\)?\s*\+?\s*まで/, [/[てで]まで/]],
@@ -376,14 +474,20 @@ const GRAMMAR_RULES: Array<[RegExp, RegExp[]]> = [
   // ── thể chia
   [/使役受身/, [/(?:させ|[わかさたなばまらが]され)(?:る|た|ま|て)/]],
   // 合わせる, 欠かせない, 済ませる, 知らせる, 任せる là động từ riêng, không phải thể sai khiến.
-  [/sai khiến|使役/, [/(?:させ|(?<![合欠済知任])[わかさたなばまらが]せ)(?:る|た|ま|て|な)/]],
+  [
+    /sai khiến|使役/,
+    [/(?:させ|(?<![合欠済知任])[わかさたなばまらが]せ)(?:る|た|ま|て|な)/],
+  ],
   [/bị động|受身/, [/(?:られ|[わかさたなばまらが]れ)(?:る|た|ま|て)/]],
   [/khả năng|可能/, [/(?:でき|られ)(?:る|ま|た|な)/]],
   [/ý chí|意向/, [/(?:よう|[おこそとのぼもろご]う)と(?:思|する|し)/]],
   [/たり.*たり|り\s*\+.*り\s*\+?\s*する/, [/[たっだ]り.{1,10}[たっだ]り/]],
   [/ば\s*[＋+～〜]?\s*.*ほど/, [/ば.{1,8}ほど/]],
   [/たら|\(た\)\s*\+\s*ら|quá khứ\s*＋\s*ら/, [/[たっだ]ら/]],
-  [/つ\s*[＋+〜]?\s*.*つ$|〜つ〜つ/, [/(?:行きつ戻りつ|浮きつ沈みつ|持ちつ持たれつ|差しつ差されつ)/]],
+  [
+    /つ\s*[＋+〜]?\s*.*つ$|〜つ〜つ/,
+    [/(?:行きつ戻りつ|浮きつ沈みつ|持ちつ持たれつ|差しつ差されつ)/],
+  ],
   [/つつ/, [/つつ/]],
   [/ます bỏ.*方|\+ 方/, [new RegExp(`${STEM}方`)]],
   [/ます bỏ.*かけ/, [new RegExp(`${STEM}かけ(?:の|て|た|だ)`)]],
@@ -455,19 +559,21 @@ const GRAMMAR_RULES: Array<[RegExp, RegExp[]]> = [
 ];
 
 /** Người bề trên — có mặt trong câu (không phải làm tác nhân 「…に」) thì đuôi れる/られる là tôn kính. */
-const HONORED = '(?:先生|社長|会長|部長|課長|店長|校長|教授|先輩|お客様|皆様|皆さん|お父様|お母様|奥様|ご主人)';
+const HONORED =
+  "(?:先生|社長|会長|部長|課長|店長|校長|教授|先輩|お客様|皆様|皆さん|お父様|お母様|奥様|ご主人)";
 /** Một câu (không vượt qua dấu kết câu). */
-const IN_SENTENCE = '[^。！？!?\\n]';
+const IN_SENTENCE = "[^。！？!?\\n]";
 /** に chỉ thời gian (何時に, 3日に, 前に…) không phải tác nhân của câu bị động. */
-const AGENT_NI = '(?<![時日年月分週頃前後中間度])(?:に|によって)';
+const AGENT_NI = "(?<![時日年月分週頃前後中間度])(?:に|によって)";
 /** Tác nhân bị động kể cả 「…から」 (課長から叱られた) — trừ から chỉ thời gian (来月から, 午後から). */
-const AGENT_ANY = '(?<![時日年月分週頃前後中間度])(?:に|によって|から)';
+const AGENT_ANY = "(?<![時日年月分週頃前後中間度])(?:に|によって|から)";
 /** Đuôi れる/られる đã chia (dùng chung cho tôn kính và bị động). */
 // 「〜になれます」 là thể khả năng của なる, không phải bị động.
-const PASSIVE_END = '(?:ます|ました|ません|る|た|て|ない|なかった)';
-const PASSIVE_FORM = '(?:られ|(?<!に)なれ|[わかさたばまらが]れ)(?:ます|ました|る|た|て)';
+const PASSIVE_END = "(?:ます|ました|ません|る|た|て|ない|なかった)";
+const PASSIVE_FORM =
+  "(?:られ|(?<!に)なれ|[わかさたばまらが]れ)(?:ます|ました|る|た|て)";
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Luật xét TRƯỚC đoạn cố định: mẫu chỉ khác mẫu khác ở trợ từ đứng trước nên đoạn cố định
@@ -475,7 +581,10 @@ const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * 「N が あります」 (tồn tại) cùng có 「があります」 nhưng là hai điểm ngữ pháp khác nhau.
  */
 const PRIORITY_RULES: Array<[RegExp, RegExp[]]> = [
-  [/で\s*N2[^が]*が\s*あります/, [/で[^。、]{1,15}が(?:あります|ありました|ある)/]],
+  [
+    /で\s*N2[^が]*が\s*あります/,
+    [/で[^。、]{1,15}が(?:あります|ありました|ある)/],
+  ],
   // Tôn kính và bị động cùng dạng れる/られる — tách theo ngữ cảnh: tôn kính có chủ ngữ là
   // người bề trên, bị động có tác nhân 「…に / …によって」 đứng trước động từ.
   // Tôn kính: trong câu có người bề trên không đứng ngay trước 「に」, chủ ngữ có thể lược
@@ -485,14 +594,38 @@ const PRIORITY_RULES: Array<[RegExp, RegExp[]]> = [
   // sở hữu (「社長の手腕」) hay tác nhân (「社長に」「課長から」).
   // Sai khiến bị động: させられる luôn đúng; dạng rút gọn 〜される chỉ nhận với động từ quen thuộc
   // (待たされる, 聞かされる…) vì 減らされる, 動かされる là bị động thường của động từ đuôi す.
-  [/sai khiến bị động|使役受身|させられる/, [new RegExp(`(?:[かがさたなばまらわ]せられ|(?:待た|聞か|飲ま|行か|書か|読ま|歌わ|買わ|言わ|立た|驚か|歩か|働か|習わ|払わ|持た|作ら|座ら|走ら|帰ら|泣か|笑わ|思わ|手伝わ|やら|吸わ)され)${PASSIVE_END}`)]],
+  [
+    /sai khiến bị động|使役受身|させられる/,
+    [
+      new RegExp(
+        `(?:[かがさたなばまらわ]せられ|(?:待た|聞か|飲ま|行か|書か|読ま|歌わ|買わ|言わ|立た|驚か|歩か|働か|習わ|払わ|持た|作ら|座ら|走ら|帰ら|泣か|笑わ|思わ|手伝わ|やら|吸わ)され)${PASSIVE_END}`,
+      ),
+    ],
+  ],
   // お＋V(ます bỏ)＋になる / ご＋N＋になる — cần đủ お/ご và gốc động từ, không chỉ 「になります」.
-  [/お\s*\+?\s*V.*に\s*な(?:り|る)/, [/(?:お(?!金持)[一-龯]{1,2}[ぁ-ん]?[いきしちにひみりぎじびえけせてねめれげべ]|ご[一-龯]{2})に(?:なり|なる|なっ|なら|なれ)/]],
+  [
+    /お\s*\+?\s*V.*に\s*な(?:り|る)/,
+    [
+      /(?:お(?!金持)[一-龯]{1,2}[ぁ-ん]?[いきしちにひみりぎじびえけせてねめれげべ]|ご[一-龯]{2})に(?:なり|なる|なっ|なら|なれ)/,
+    ],
+  ],
   // Động từ tôn kính đặc biệt (いらっしゃる, 召し上がる…) là từ riêng, không phải dạng れる/られる.
   // なさい đứng một mình là mệnh lệnh (選びなさい) nên không tính.
-  [/tôn kính đặc biệt|特別尊敬/, [/いらっしゃ|召し上が|めしあが|おっしゃ|(?:ご|御)覧に|ごらんに|なさ(?:いま|る|った|って|らない)/]],
+  [
+    /tôn kính đặc biệt|特別尊敬/,
+    [
+      /いらっしゃ|召し上が|めしあが|おっしゃ|(?:ご|御)覧に|ごらんに|なさ(?:いま|る|った|って|らない)/,
+    ],
+  ],
   // 「V(受身/使役) trong văn viết trang trọng」 là kính ngữ dạng られる, không phải bị động.
-  [/tôn kính|尊敬|受身\/使役/, [new RegExp(`(?=${IN_SENTENCE}*${HONORED}(?:は|が|も|、|,))(?!${IN_SENTENCE}*${AGENT_ANY}[^。、]{0,15}${PASSIVE_FORM})${IN_SENTENCE}*${PASSIVE_FORM}`)]],
+  [
+    /tôn kính|尊敬|受身\/使役/,
+    [
+      new RegExp(
+        `(?=${IN_SENTENCE}*${HONORED}(?:は|が|も|、|,))(?!${IN_SENTENCE}*${AGENT_ANY}[^。、]{0,15}${PASSIVE_FORM})${IN_SENTENCE}*${PASSIVE_FORM}`,
+      ),
+    ],
+  ],
   // 「N1 は N2 が A です」 (象は鼻が長いです) khác câu 「N1 は N2 です」
   [/は\s*N2\s*が\s*A/, [/は[^。、]{1,10}が[^。、]{1,10}です/]],
   // 「もう V ました」 (đã … rồi) khác thì quá khứ thường
@@ -506,7 +639,10 @@ const PRIORITY_RULES: Array<[RegExp, RegExp[]]> = [
   // 「V(た) + ばかり」 (vừa mới) khác 「V(て) + ばかりいる」 (toàn là)
   [/\(た\)\s*\+\s*ばかり/, [/[たっだ]ばかり/]],
   [/\(て\)\s*\+\s*ばかり/, [/[てで]ばかり(?:い|だ|で)/]],
-  [/bị động|受身|によって\s*V\s*られ|に\s*(?:N\d\s*を\s*)?V\s*られ/, [new RegExp(`${AGENT_NI}[^。、]{0,15}${PASSIVE_FORM}`)]],
+  [
+    /bị động|受身|によって\s*V\s*られ|に\s*(?:N\d\s*を\s*)?V\s*られ/,
+    [new RegExp(`${AGENT_NI}[^。、]{0,15}${PASSIVE_FORM}`)],
+  ],
 ];
 
 /**
@@ -518,17 +654,47 @@ export function grammarMatchers(pattern: string): RegExp[] {
   const priority = PRIORITY_RULES.find(([test]) => test.test(pattern));
   if (priority) return priority[1];
   const fragments = grammarFragments(pattern);
-  if (fragments.length) return fragments.map((f) => new RegExp(escapeRegExp(f)));
+  if (fragments.length)
+    return fragments.map((f) => new RegExp(escapeRegExp(f)));
   return GRAMMAR_RULES.find(([test]) => test.test(pattern))?.[1] ?? [];
 }
 
 /** Nhãn chức năng ghi trong mẫu — cùng hình thức nhưng khác chức năng thì không phải một mẫu. */
 const FUNCTION_TAGS = [
-  'tôn kính', 'khiêm nhường', 'bị động', 'sai khiến', 'khả năng', 'nguyên nhân', 'mục đích',
-  'lý do', 'trình tự', 'đối chiếu', 'tỷ lệ', 'bất ngờ', 'giới hạn', 'điều kiện', 'nhượng bộ',
-  'đang diễn ra', 'thói quen', 'trạng thái', 'nghề nghiệp', 'kết quả', 'nhìn thấy', 'nghe nói',
-  'dáng vẻ', 'truyền đạt', 'có vẻ', 'biến đổi', 'quyết định', 'sau khi', 'đúng chất',
-  '受身', '使役', '可能', '尊敬', '謙譲',
+  "tôn kính",
+  "khiêm nhường",
+  "bị động",
+  "sai khiến",
+  "khả năng",
+  "nguyên nhân",
+  "mục đích",
+  "lý do",
+  "trình tự",
+  "đối chiếu",
+  "tỷ lệ",
+  "bất ngờ",
+  "giới hạn",
+  "điều kiện",
+  "nhượng bộ",
+  "đang diễn ra",
+  "thói quen",
+  "trạng thái",
+  "nghề nghiệp",
+  "kết quả",
+  "nhìn thấy",
+  "nghe nói",
+  "dáng vẻ",
+  "truyền đạt",
+  "có vẻ",
+  "biến đổi",
+  "quyết định",
+  "sau khi",
+  "đúng chất",
+  "受身",
+  "使役",
+  "可能",
+  "尊敬",
+  "謙譲",
 ];
 
 /**
@@ -536,6 +702,9 @@ const FUNCTION_TAGS = [
  * 「V られます（tôn kính）」 và 「N1 は N2 に V られます」 (bị động) cùng dạng られます nhưng khác nhau.
  */
 export function sameGrammarFunction(a: string, b: string): boolean {
-  const tags = (text: string) => FUNCTION_TAGS.filter((t) => text.toLowerCase().includes(t)).sort().join('|');
+  const tags = (text: string) =>
+    FUNCTION_TAGS.filter((t) => text.toLowerCase().includes(t))
+      .sort()
+      .join("|");
   return tags(a) === tags(b);
 }

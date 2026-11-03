@@ -68,7 +68,8 @@ export class JlptPredictionService {
    * phổ biến của mẫu ngữ pháp. Không gồm câu ví dụ của chính các mẫu ngữ pháp.
    */
   private async loadCorpus(): Promise<string[]> {
-    if (this.corpus && Date.now() - this.corpus.loadedAt < 30 * 60 * 1000) return this.corpus.sentences;
+    if (this.corpus && Date.now() - this.corpus.loadedAt < 30 * 60 * 1000)
+      return this.corpus.sentences;
     const rows = await this.prisma.$queryRawUnsafe<Array<{ text: string }>>(
       `SELECT ja AS text FROM "VocabularyExample"
        UNION ALL SELECT content FROM "ReadingPassage"
@@ -83,7 +84,9 @@ export class JlptPredictionService {
   private levelKey(level: string | undefined): JlptLevelKey {
     const key = (level ?? "").toLowerCase() as JlptLevelKey;
     if (!LEVELS.includes(key)) {
-      throw new BadRequestException("level phải là một trong n5, n4, n3, n2, n1");
+      throw new BadRequestException(
+        "level phải là một trong n5, n4, n3, n2, n1",
+      );
     }
     return key;
   }
@@ -104,7 +107,10 @@ export class JlptPredictionService {
   }
 
   /** Kết quả luyện tập cùng cấp: ôn SRS (ngôn ngữ), bài đọc hiểu, nghe chép từ (nghe). */
-  private async practiceEvidence(userId: number, jlpt: string): Promise<PracticeEvidence[]> {
+  private async practiceEvidence(
+    userId: number,
+    jlpt: string,
+  ): Promise<PracticeEvidence[]> {
     const rows = await this.prisma.$queryRawUnsafe<
       Array<{ section: string; source: string; correct: number; total: number }>
     >(
@@ -182,13 +188,26 @@ export class JlptPredictionService {
 
     const vocab = vocabRows
       .map((r): LikelyItem => {
-        const freqScore = r.freq == null ? 0.1 : Math.max(0, 1 - r.freq / 24000);
-        const score = 0.75 * freqScore + 0.25 * Math.min(1, (r.sources - 1) / 3);
+        const freqScore =
+          r.freq == null ? 0.1 : Math.max(0, 1 - r.freq / 24000);
+        const score =
+          0.75 * freqScore + 0.25 * Math.min(1, (r.sources - 1) / 3);
         const reasons: string[] = [];
-        if (r.freq != null && r.freq <= 10000) reasons.push(`Top ${fmt(Math.ceil(r.freq / 1000) * 1000)} từ hay gặp trên báo`);
+        if (r.freq != null && r.freq <= 10000)
+          reasons.push(
+            `Top ${fmt(Math.ceil(r.freq / 1000) * 1000)} từ hay gặp trên báo`,
+          );
         else if (r.freq != null) reasons.push("Từ thông dụng (JMdict)");
         if (r.sources >= 2) reasons.push(`Có trong ${r.sources} giáo trình`);
-        return { text: r.word, reading: r.reading === r.word ? null : r.reading, meaning: r.meaning, lessonNumber: r.lesson, score: round(score), tier: tierOf(score), reasons };
+        return {
+          text: r.word,
+          reading: r.reading === r.word ? null : r.reading,
+          meaning: r.meaning,
+          lessonNumber: r.lesson,
+          score: round(score),
+          tier: tierOf(score),
+          reasons,
+        };
       })
       .sort(byScore)
       .slice(0, take);
@@ -198,19 +217,32 @@ export class JlptPredictionService {
         const freqScore = r.freq == null ? 0.1 : Math.max(0, 1 - r.freq / 2500);
         const score = 0.6 * freqScore + 0.4 * Math.min(1, r.usage / 15);
         const reasons: string[] = [];
-        if (r.freq != null) reasons.push(`Hạng ${fmt(r.freq)}/2.500 kanji trên báo`);
+        if (r.freq != null)
+          reasons.push(`Hạng ${fmt(r.freq)}/2.500 kanji trên báo`);
         if (r.usage) reasons.push(`Có trong ${r.usage} từ vựng đến ${jlpt}`);
-        return { text: r.character, reading: r.hv ? r.hv.toUpperCase() : null, meaning: r.meaning, lessonNumber: r.lesson, score: round(score), tier: tierOf(score), reasons };
+        return {
+          text: r.character,
+          reading: r.hv ? r.hv.toUpperCase() : null,
+          meaning: r.meaning,
+          lessonNumber: r.lesson,
+          score: round(score),
+          tier: tierOf(score),
+          reasons,
+        };
       })
       .sort(byScore)
       .slice(0, take);
 
-    const matchers = new Map(grammarRows.map((r) => [r.pattern, grammarMatchers(r.pattern)] as const));
+    const matchers = new Map(
+      grammarRows.map((r) => [r.pattern, grammarMatchers(r.pattern)] as const),
+    );
     const usage = new Map(
       grammarRows.map((r) => {
         const m = matchers.get(r.pattern)!;
         // Trợ từ một chữ (で, の, と…) khớp mọi cách dùng — đếm không phân biệt được, coi như không đo
-        const hits = isDistinctive(m) ? corpus.filter((t) => m.some((re) => re.test(t))).length : null;
+        const hits = isDistinctive(m)
+          ? corpus.filter((t) => m.some((re) => re.test(t))).length
+          : null;
         return [r.pattern, hits] as const;
       }),
     );
@@ -220,15 +252,30 @@ export class JlptPredictionService {
         const hits = usage.get(r.pattern) ?? null;
         // Mẫu không đo được trong kho câu (chỉ có chỗ trống V/N…) tính ở mức trung bình
         // 0 câu: kho câu của app thiếu ví dụ (vd tôn kính られる), chưa chắc là mẫu hiếm — điểm thấp-vừa
-        const usageScore = hits == null ? 0.5 : hits === 0 ? 0.3 : Math.log1p(hits) / Math.log1p(maxHits);
+        const usageScore =
+          hits == null
+            ? 0.5
+            : hits === 0
+              ? 0.3
+              : Math.log1p(hits) / Math.log1p(maxHits);
         const coverage = Math.min(1, r.sources / 4 + (r.core ? 0.15 : 0));
         const score = 0.4 * coverage + 0.6 * usageScore;
         const reasons: string[] = [];
-        if (hits) reasons.push(`Gặp trong ${fmt(hits)} câu ví dụ, bài đọc, đề thi`);
+        if (hits)
+          reasons.push(`Gặp trong ${fmt(hits)} câu ví dụ, bài đọc, đề thi`);
         else if (hits === 0) reasons.push("Chưa gặp trong kho câu của app");
-        if (r.sources >= 2) reasons.push(`Có trong ${r.sources} giáo trình luyện thi`);
+        if (r.sources >= 2)
+          reasons.push(`Có trong ${r.sources} giáo trình luyện thi`);
         if (r.core) reasons.push(`Có trong bộ ngữ pháp ${jlpt} của app`);
-        return { text: r.pattern, reading: null, meaning: r.meaning, lessonNumber: r.lesson, score: round(score), tier: tierOf(score), reasons };
+        return {
+          text: r.pattern,
+          reading: null,
+          meaning: r.meaning,
+          lessonNumber: r.lesson,
+          score: round(score),
+          tier: tierOf(score),
+          reasons,
+        };
       })
       .sort(byScore);
     const grammar = mergeSameGrammar(scoredGrammar, matchers).slice(0, take);
@@ -244,7 +291,8 @@ export class JlptPredictionService {
         `Ngữ pháp: 60% theo số câu trong kho ${fmt(corpus.length)} câu tiếng Nhật của app (câu ví dụ từ vựng, bài đọc, đề thi thử) có dùng mẫu đó, 40% theo số giáo trình luyện thi có mẫu đó.`,
         "JLPT không công bố toàn bộ đề cũ, nên đây là ước lượng mức độ quan trọng — không phải đề thi thật.",
       ],
-      attribution: "Tần suất từ JMdict và KANJIDIC2 © EDRDG, giấy phép CC BY-SA 4.0.",
+      attribution:
+        "Tần suất từ JMdict và KANJIDIC2 © EDRDG, giấy phép CC BY-SA 4.0.",
     };
   }
 }
@@ -257,7 +305,10 @@ function round(x: number) {
  * Gộp các cách ghi khác nhau của cùng một mẫu (「〜結果」 và 「V(た) + 結果」) — cùng bộ biểu
  * thức tìm trong câu nghĩa là cùng một điểm ngữ pháp. Giữ mục điểm cao nhất (danh sách đã sắp).
  */
-function mergeSameGrammar(items: LikelyItem[], matchers: Map<string, RegExp[]>): LikelyItem[] {
+function mergeSameGrammar(
+  items: LikelyItem[],
+  matchers: Map<string, RegExp[]>,
+): LikelyItem[] {
   const out: Array<{ item: LikelyItem; sources: Set<string> | null }> = [];
   for (const item of items) {
     const m = matchers.get(item.text) ?? [];
@@ -282,7 +333,11 @@ function mergeSameGrammar(items: LikelyItem[], matchers: Map<string, RegExp[]>):
     for (const reason of item.reasons) {
       // Giữ số câu của mục chính và một dòng "Có trong N giáo trình" — không lặp lại
       if (reason.startsWith("Gặp trong")) continue;
-      if (/giáo trình luyện thi$/.test(reason) && kept.reasons.some((r) => /giáo trình luyện thi$/.test(r))) continue;
+      if (
+        /giáo trình luyện thi$/.test(reason) &&
+        kept.reasons.some((r) => /giáo trình luyện thi$/.test(r))
+      )
+        continue;
       if (!kept.reasons.includes(reason)) kept.reasons.push(reason);
     }
   }

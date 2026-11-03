@@ -114,7 +114,7 @@ export class KanjiService {
         baseChar: true,
         isRadical: true,
       },
-      orderBy: { component: 'asc' },
+      orderBy: { component: "asc" },
     });
   }
 

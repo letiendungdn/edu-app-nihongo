@@ -61,7 +61,8 @@ function firstExampleWrite(vocabularyId: number, dto: ExampleDto) {
       },
     };
   }
-  if (dto.exampleKana === undefined && dto.exampleVi === undefined) return undefined;
+  if (dto.exampleKana === undefined && dto.exampleVi === undefined)
+    return undefined;
   return {
     updateMany: {
       where: { sortOrder: 0 },
@@ -261,7 +262,13 @@ export class VocabulariesService {
         this.prisma.vocabulary.count({ where }),
       ]);
       const dataWithBooks = lessonNumber
-        ? await withAlsoIn(this.prisma, "vocab", data.map(withExampleFields), (row) => row.kana, lessonTextbook)
+        ? await withAlsoIn(
+            this.prisma,
+            "vocab",
+            data.map(withExampleFields),
+            (row) => row.kana,
+            lessonTextbook,
+          )
         : data.map(withExampleFields);
       return { data: dataWithBooks, total, page, limit };
     }
@@ -303,7 +310,13 @@ export class VocabulariesService {
 
     const mapped = rows.map(withExampleFields);
     const data = lessonId
-      ? await withAlsoIn(this.prisma, "vocab", mapped, (row) => row.kana, lessonTextbook)
+      ? await withAlsoIn(
+          this.prisma,
+          "vocab",
+          mapped,
+          (row) => row.kana,
+          lessonTextbook,
+        )
       : mapped;
     const result = { data, total, page, limit };
     if (lessonId) {

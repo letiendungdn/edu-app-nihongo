@@ -83,7 +83,9 @@ export class KanjiController {
 
   @Get("kanji-components")
   @Public()
-  @ApiOperation({ summary: "List kanji components / radicals (structure panel)" })
+  @ApiOperation({
+    summary: "List kanji components / radicals (structure panel)",
+  })
   findComponents() {
     return firstValueFrom(
       this.contentClient.send(CONTENT_PATTERNS.GET_KANJI_COMPONENTS, {}),

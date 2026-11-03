@@ -992,7 +992,8 @@ export class MockExamsService {
       const sectionCorrect = items.filter((r) => r.isCorrect).length;
       return {
         sectionId,
-        sectionName: items[0]?.sectionName ?? SECTION_NAMES[sectionId] ?? sectionId,
+        sectionName:
+          items[0]?.sectionName ?? SECTION_NAMES[sectionId] ?? sectionId,
         correct: sectionCorrect,
         total: items.length,
       };

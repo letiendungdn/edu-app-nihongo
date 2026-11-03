@@ -147,13 +147,19 @@ describe("MockExamsService", () => {
         ],
         answerKey: { ...baseSession.answerKey, q3: "C" },
       });
-      const result = await service.submit("exam-1", { q1: "A", q2: "B", q3: "C" });
+      const result = await service.submit("exam-1", {
+        q1: "A",
+        q2: "B",
+        q3: "C",
+      });
       expect(result.sectionScores.map((s) => s.sectionId)).toEqual([
         "vocab",
         "grammar",
         "reading",
       ]);
-      expect(result.sectionScores.find((s) => s.sectionId === "reading")).toEqual({
+      expect(
+        result.sectionScores.find((s) => s.sectionId === "reading"),
+      ).toEqual({
         sectionId: "reading",
         sectionName: "Đọc hiểu",
         correct: 1,
