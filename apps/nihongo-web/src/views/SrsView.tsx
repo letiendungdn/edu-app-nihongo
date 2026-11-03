@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest } from '@/lib/api-client';
-import { playAudio } from '@/utils/speech';
+import { playAudio, stopAudio } from '@/utils/speech';
+import SpeakerIcon from '@/components/SpeakerIcon';
 import { normalizeTypedJp } from '@/utils/conjugate';
 import './SrsView.css';
 
@@ -99,6 +100,16 @@ const SRS_MODES: { id: SrsMode; label: string; hint: string }[] = [
   { id: 'listen-type', label: 'Nghe → gõ', hint: 'Nghe phát âm, gõ kana' },
 ];
 
+const AUTO_SPEAK_KEY = 'nihongo-srs-auto-speak';
+
+function readAutoSpeak(): boolean {
+  try {
+    return localStorage.getItem(AUTO_SPEAK_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
 export default function SrsView() {
   const { isAuthenticated, authReady } = useAuth();
   const [phase, setPhase] = useState<Phase>('loading');
@@ -118,6 +129,38 @@ export default function SrsView() {
   const [mode, setMode] = useState<SrsMode>('jp-vi');
   const [typed, setTyped] = useState('');
   const [typedChecked, setTypedChecked] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+
+  useEffect(() => setAutoSpeak(readAutoSpeak()), []);
+
+  const toggleAutoSpeak = () => {
+    setAutoSpeak((on) => {
+      try {
+        localStorage.setItem(AUTO_SPEAK_KEY, on ? '0' : '1');
+      } catch {
+        /* chế độ riêng tư: chỉ nhớ trong phiên */
+      }
+      if (on) stopAudio();
+      return !on;
+    });
+  };
+
+  const speakCurrent = useCallback(() => {
+    const current = queue[index];
+    if (current?.kana) playAudio(current.kana);
+  }, [queue, index]);
+
+  // Tự đọc: JP → VN đọc ngay khi thẻ hiện; VN → JP đọc khi lật (đọc trước sẽ lộ đáp án)
+  useEffect(() => {
+    if (phase !== 'review' || !autoSpeak) return;
+    if (mode === 'jp-vi' && !flipped) speakCurrent();
+    if (mode === 'vi-jp' && flipped) speakCurrent();
+  }, [phase, mode, index, flipped, autoSpeak, speakCurrent]);
+
+  // Rời phiên ôn thì dừng giọng đọc
+  useEffect(() => {
+    if (phase !== 'review') stopAudio();
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'review' || mode !== 'listen-type') return;
@@ -149,6 +192,11 @@ export default function SrsView() {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        speakCurrent();
+        return;
+      }
       if (e.key === ' ' && !flipped && mode !== 'listen-type') {
         e.preventDefault();
         setFlipped(true);
@@ -329,6 +377,16 @@ export default function SrsView() {
               <div className="progress-bar__fill" style={{ width: `${progress}%` }} />
             </div>
           </div>
+          <button
+            type="button"
+            className={`srs-autospeak${autoSpeak ? ' is-on' : ''}`}
+            aria-pressed={autoSpeak}
+            title={autoSpeak ? 'Tắt tự đọc' : 'Bật tự đọc'}
+            onClick={toggleAutoSpeak}
+          >
+            <SpeakerIcon size={15} />
+            Tự đọc
+          </button>
           <span className="srs-session__count">{index + 1}/{queue.length}</span>
         </div>
 
@@ -344,6 +402,17 @@ export default function SrsView() {
           <div className="srs-card__inner">
             <div className="srs-card__face srs-card__front">
               <span className="srs-card__lesson">Bài {card.lessonNumber}</span>
+              {mode === 'jp-vi' && (
+                <button
+                type="button"
+                className="srs-card__speak"
+                aria-label={`Nghe ${card.kana}`}
+                title="Nghe phát âm (R)"
+                onClick={(e) => { e.stopPropagation(); speakCurrent(); }}
+              >
+                <SpeakerIcon size={20} />
+              </button>
+              )}
               {mode === 'jp-vi' && (
                 <>
                   <div className="srs-card__word japanese-text">{card.kanji || card.kana}</div>
@@ -373,6 +442,15 @@ export default function SrsView() {
 
             <div className="srs-card__face srs-card__back">
               <span className="srs-card__lesson">Bài {card.lessonNumber}</span>
+              <button
+                type="button"
+                className="srs-card__speak"
+                aria-label={`Nghe ${card.kana}`}
+                title="Nghe phát âm (R)"
+                onClick={(e) => { e.stopPropagation(); speakCurrent(); }}
+              >
+                <SpeakerIcon size={20} />
+              </button>
               <div className="srs-card__word japanese-text">{card.kanji || card.kana}</div>
               {card.kanji && <div className="srs-card__kana japanese-text">{card.kana}</div>}
               <div className="srs-card__meaning">{card.meaning}</div>
@@ -420,12 +498,14 @@ export default function SrsView() {
         )}
 
         {mode !== 'listen-type' && !flipped && (
-          <p className="srs-hint">Nhấn <kbd>Space</kbd> để lật thẻ</p>
+          <p className="srs-hint">
+            Nhấn <kbd>Space</kbd> để lật thẻ{mode === 'jp-vi' ? <> &nbsp;·&nbsp; <kbd>R</kbd> nghe lại</> : null}
+          </p>
         )}
         {canRate && !lastResult && (
           <p className="srs-hint">
             <kbd>1</kbd> Lại &nbsp;·&nbsp; <kbd>2</kbd> Khó &nbsp;·&nbsp;
-            <kbd>3</kbd> Ổn &nbsp;·&nbsp; <kbd>4</kbd> Dễ
+            <kbd>3</kbd> Ổn &nbsp;·&nbsp; <kbd>4</kbd> Dễ &nbsp;·&nbsp; <kbd>R</kbd> nghe lại
           </p>
         )}
       </div>

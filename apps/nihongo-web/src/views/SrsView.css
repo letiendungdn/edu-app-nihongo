@@ -575,3 +575,58 @@
   align-items: center;
   min-height: 30vh;
 }
+
+/* ── Phát âm ─────────────────────────────────────────────────── */
+
+.srs-card__speak {
+  position: absolute;
+  top: 0.85rem;
+  left: 1rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: #fff;
+  box-shadow: var(--brand-grad-shadow);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.srs-card__speak:hover {
+  transform: scale(1.06);
+}
+
+.srs-card__speak:active {
+  transform: scale(0.96);
+}
+
+.srs-card__speak:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.srs-autospeak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--surface-color);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.srs-autospeak.is-on {
+  border-color: transparent;
+  background: var(--brand-grad);
+  color: #fff;
+}
