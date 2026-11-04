@@ -135,7 +135,7 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 |-----|------|----------------|
 | Expo | `cd apps/nihongo-mobile && npm test` / `npm run test:run` | SM-2 (`srs.ts`), OCR overlay map |
 | Android | `cd apps/nihongo-android && .\gradlew.bat testDebugUnitTest` | `SrsAlgorithmTest` (JUnit) |
-| Flutter | `cd apps/nihongo_flutter && flutter test` | `srs_algorithm_test.dart` + smoke widget |
+| Flutter | `cd apps/nihongo_flutter && flutter test` | Thuật toán SRS, đồng bộ offline, refresh token, widget, thanh toán |
 | iOS | `xcodegen generate` rồi Xcode Test / `xcodebuild test` *(macOS)* | `SRSAlgorithmTests` |
 
 ---
@@ -171,7 +171,7 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 2/8.
+Bạn đang ở **9. Mobile** — bài 2/9.
 
 - Bài trước: [mobile-tech-stacks.md](./mobile-tech-stacks.md) — Tech stack từng app mobile
 - **Bài tiếp: [learn-android-fundamentals.md](./learn-android-fundamentals.md)** — Nền tảng Android qua code nihongo-android

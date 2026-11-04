@@ -215,7 +215,7 @@ code_challenge_method=plain ← reject ngay
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 8/8.
+Bạn đang ở **9. Mobile** — bài 9/9.
 
 - Bài trước: [learn-ml-mobile.md](./learn-ml-mobile.md) — Machine learning trong app mobile: on-device, LLM, SRS thông minh
 - Xong nhóm này. **Nhóm tiếp: 10. Tích hợp: đăng nhập, mail, thanh toán** — bắt đầu bằng [keycloak-setup.md](./keycloak-setup.md) (Cài Keycloak (local/Docker))

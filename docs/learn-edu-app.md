@@ -433,10 +433,10 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 | 2    | go_router, Riverpod providers | `lib/presentation/`, `providers.dart`         |
 | 3    | Drift DB + repository         | `lib/data/local/`, `lib/data/repository/`     |
 | 4    | Use case SRS; sync status     | `lib/domain/`, `lib/utils/srs_algorithm.dart` |
-| 5    | camera + google_mlkit         | màn translate                                 |
+| 5    | camera (nhận chữ đang tạm tắt, ML Kit đã gỡ) | `lib/presentation/camera/`      |
 
 
-**Đọc thêm:** [roadmap-flutter.md](./roadmap-flutter.md) (Giai đoạn 2–4 bám code thật của `apps/nihongo_flutter`)
+**Đọc thêm:** [learn-flutter.md](./learn-flutter.md) (lộ trình 8 tuần + bài tập trên code thật), [roadmap-flutter.md](./roadmap-flutter.md) (tra kiến thức theo chiều rộng)
 
 **Sản phẩm tuần:** `flutter test` xanh; sửa một widget vocab.
 

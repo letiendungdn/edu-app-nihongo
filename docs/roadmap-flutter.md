@@ -4,6 +4,8 @@
 
 Dùng project Nihongo (`apps/nihongo_flutter/`) làm ví dụ xuyên suốt.
 
+> Muốn đường đi ngắn hơn, học thẳng trên code thật với bài tập đã chạy thử: [learn-flutter.md](./learn-flutter.md) (8 tuần). File này dùng để tra kiến thức theo chiều rộng.
+
 ---
 
 ## GIAI ĐOẠN 1 — DART + FLUTTER NỀN TẢNG (tháng 1–2)

@@ -551,7 +551,7 @@ Tự trả lời thành tiếng trước, rồi mới đối chiếu với mục
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 3/8.
+Bạn đang ở **9. Mobile** — bài 3/9.
 
 - Bài trước: [run-mobile.md](./run-mobile.md) — Chạy các app mobile
 - **Bài tiếp: [learn-android-kotlin.md](./learn-android-kotlin.md)** — Android Kotlin từ code thật, lộ trình 8 tuần

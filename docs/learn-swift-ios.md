@@ -996,10 +996,10 @@ Dùng Keychain (được mã hóa, có `kSecAttrAccessibleAfterFirstUnlockThisDe
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 6/8.
+Bạn đang ở **9. Mobile** — bài 6/9.
 
 - Bài trước: [learn-android-features.md](./learn-android-features.md) — 9 tính năng Android mới và bài học
-- **Bài tiếp: [learn-ml-mobile.md](./learn-ml-mobile.md)** — Machine learning trong app mobile: on-device, LLM, SRS thông minh
+- **Bài tiếp: [learn-flutter.md](./learn-flutter.md)** — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

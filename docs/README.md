@@ -156,8 +156,9 @@ Các app mobile của project, từ nền tảng đến tính năng và bảo m�
 | 4 | [learn-android-kotlin.md](./learn-android-kotlin.md) | Android Kotlin từ code thật, lộ trình 8 tuần |
 | 5 | [learn-android-features.md](./learn-android-features.md) | 9 tính năng Android mới và bài học |
 | 6 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
-| 7 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
-| 8 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
+| 7 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
+| 8 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
+| 9 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
 
 ---
 

@@ -489,9 +489,9 @@ A: SM-2: công thức cố định cho mọi user
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 7/8.
+Bạn đang ở **9. Mobile** — bài 8/9.
 
-- Bài trước: [learn-swift-ios.md](./learn-swift-ios.md) — Swift/SwiftUI qua nihongo-ios
+- Bài trước: [learn-flutter.md](./learn-flutter.md) — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter
 - **Bài tiếp: [security-owasp-mobile.md](./security-owasp-mobile.md)** — Bảo mật mobile theo OWASP
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
