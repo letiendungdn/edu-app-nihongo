@@ -53,6 +53,8 @@ flutter run -d chrome                       # chạy trên web
 
 Trong lúc app chạy: bấm `r` để hot reload (giữ trạng thái), `R` để hot restart (chạy lại từ đầu).
 
+Chạy trên máy ảo Android từng bước, kèm cách kiểm tra app đã nối được backend: xem [run-mobile.md](./run-mobile.md#chạy-trên-máy-ảo-android-từng-bước).
+
 App gọi thẳng gateway ở cổng 3000, không qua nginx. Địa chỉ phụ thuộc nơi chạy ([api_config.dart](../apps/nihongo_flutter/lib/data/remote/api_config.dart)):
 
 | Chạy trên | Địa chỉ | Vì sao |

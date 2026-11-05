@@ -132,18 +132,118 @@ class _FlipCardState extends State<FlipCard> {
 
 ### 1. Chọn loại component/state
 
-| Nhu cầu | Dùng | Vì sao / ví dụ repo |
-|---------|------|----------------------|
-| Chỉ render từ constructor props | `StatelessWidget` | Nhẹ, dễ test. `_NavCard`, `_SectionLabel` trong `home_screen.dart` |
-| State UI cục bộ + lifecycle/controller | `StatefulWidget` | Có `initState`, `dispose`, `setState`. Flip card, animation |
-| Đọc Riverpod, không local state | `ConsumerWidget` | Có `WidgetRef`; `HomeScreen` đọc `isOnlineProvider` |
-| Riverpod + local state/lifecycle | `ConsumerStatefulWidget` | `ref` + `setState` + lifecycle. `VocabScreen`, `SrsScreen`, camera |
-| Logic dùng lại, không có UI | Dart class/service/provider | `TtsService`, repository, use case; đừng tạo widget |
+Trả lời hai câu hỏi là chọn được:
 
-**Quy tắc:**
-- Server/DB state → Riverpod (`ref.watch`), không copy sang `setState`.
-- State tạm chỉ thuộc màn hình (flipped, submitting, controller) → local state.
-- State nhiều màn cùng dùng → Provider/Notifier, không truyền props xuyên 5 tầng.
+1. Widget có **tự giữ** dữ liệu thay đổi được, hoặc có tài nguyên phải dọn (controller, animation) không?
+2. Widget có **đọc provider** của Riverpod không?
+
+| | Không đọc provider | Có đọc provider |
+|---|---|---|
+| **Không tự giữ gì** (UI tĩnh) | `StatelessWidget` | `ConsumerWidget` |
+| **Có tự giữ** (UI động) | `StatefulWidget` | `ConsumerStatefulWidget` |
+
+Logic không có giao diện thì không phải widget: viết class Dart thường.
+
+#### `StatelessWidget`: UI tĩnh
+
+- **Là gì:** widget chỉ hiển thị những gì được truyền vào. Nó không tự nhớ gì.
+- **Dùng khi:** thẻ, nhãn, nút, dòng danh sách. Dữ liệu và hàm xử lý đều do widget cha truyền xuống.
+- **Trong repo:** `_NavCard`, `_SectionLabel` (Home); `_FlashCard`, `_RatingBtn`, `_ProgressBar` (SRS).
+
+```dart
+class _NavCard extends StatelessWidget {
+  const _NavCard({required this.title, required this.onTap});
+
+  final String title;          // dữ liệu từ cha, luôn là final
+  final VoidCallback onTap;    // bấm vào thì báo cho cha
+
+  @override
+  Widget build(BuildContext context) =>
+      ListTile(title: Text(title), onTap: onTap);
+}
+```
+
+**"Tĩnh" không có nghĩa là giao diện không bao giờ đổi.** Nó nghĩa là widget không tự đổi được. `_FlashCard` vẫn lật từ mặt hỏi sang mặt đáp, nhưng biến `_showAnswer` nằm ở `_SrsScreenState`. Màn cha đổi biến rồi truyền `showAnswer: _showAnswer` xuống, thẻ chỉ vẽ lại theo.
+
+#### `StatefulWidget`: UI động, tự giữ trạng thái
+
+- **Là gì:** widget đi kèm một đối tượng `State`. `State` tồn tại qua các lần vẽ lại, nên nhớ được dữ liệu.
+- **Dùng khi:** cần `setState`, cần `initState` / `dispose`, hoặc có controller, animation, timer.
+- **Trong repo:**
+  - `KanjiDrawScreen`: nhớ các nét đang vẽ.
+  - `_FeedbackCard`: nhớ đang mở hay đóng (`_open`).
+  - `_Dot`: giữ `AnimationController`, tạo trong `initState`, dọn trong `dispose`.
+
+```dart
+class _FeedbackCardState extends State<_FeedbackCard> {
+  late bool _open;                                  // dữ liệu thay đổi được
+
+  // Trong build: bấm vào thì đổi biến và vẽ lại
+  // onTap: () => setState(() => _open = !_open),
+}
+```
+
+Đổi biến mà không gọi `setState` thì màn hình không cập nhật.
+
+#### `ConsumerWidget`: UI tĩnh có đọc provider
+
+- **Là gì:** giống `StatelessWidget`, nhưng `build` có thêm `WidgetRef ref`.
+- **Dùng khi:** chỉ cần hiển thị dữ liệu từ provider, không tự giữ gì.
+- **Trong repo:** `HomeScreen` đọc `isOnlineProvider`.
+
+```dart
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(isOnlineProvider); // provider đổi thì tự vẽ lại
+    // ...
+  }
+}
+```
+
+#### `ConsumerStatefulWidget`: UI động có đọc provider
+
+- **Là gì:** giống `StatefulWidget`. Trong `State` dùng được `ref` ở mọi hàm, không chỉ trong `build`.
+- **Dùng khi:** vừa đọc provider, vừa có trạng thái riêng hoặc tài nguyên phải dọn.
+- **Trong repo:**
+  - `SrsScreen`: đọc `reviewQueueProvider`, tự giữ `_showAnswer`, `_submitting`.
+  - `VocabScreen`: đọc `vocabByLessonProvider`, tự giữ `_syncing`.
+  - `LoginScreen`: giữ `TextEditingController`, dọn trong `dispose`.
+
+```dart
+class SrsScreen extends ConsumerStatefulWidget {
+  const SrsScreen({super.key});
+
+  @override
+  ConsumerState<SrsScreen> createState() => _SrsScreenState();
+}
+
+class _SrsScreenState extends ConsumerState<SrsScreen> {
+  bool _showAnswer = false;                         // trạng thái riêng
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = ref.watch(reviewQueueProvider);   // dữ liệu từ provider
+    // ...
+  }
+}
+```
+
+#### Không có giao diện: class Dart thường
+
+Logic dùng lại được không cần là widget: `TtsService`, repository, use case, `SrsAlgorithm`. Cần dùng chung thì cung cấp qua provider.
+
+#### Dữ liệu này đặt ở đâu?
+
+| Dữ liệu | Đặt ở | Ví dụ |
+|---------|-------|-------|
+| Từ server hoặc DB | Provider, đọc bằng `ref.watch`. Đừng chép sang biến `setState` | Danh sách thẻ, từ vựng |
+| Tạm thời, chỉ một màn hình cần | Biến trong `State` | Đã lật thẻ chưa, đang gửi, `TextEditingController` |
+| Nhiều màn hình cùng dùng | Provider / Notifier. Đừng truyền qua nhiều tầng widget | Bài đang chọn, trạng thái đăng nhập |
+
+**Mẹo:** luôn bắt đầu bằng `StatelessWidget`. Chỉ đổi loại khi thật sự cần `setState`, `dispose` hoặc `ref`.
 
 ### 2. Layout: Row, Column, Wrap, Stack
 

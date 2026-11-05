@@ -108,6 +108,45 @@ flutter devices             # xem device khả dụng
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000/api
 ```
 
+### Chạy trên máy ảo Android, từng bước
+
+Đã chạy thật ngày 05/11/2026 trên macOS (Apple Silicon), Flutter 3.47.6, máy ảo `pixel_api_35` (Android 15).
+
+```bash
+# 1. Bật backend (ở thư mục gốc repo), rồi kiểm tra: phải ra 200
+npm run docker:up:nihongo
+curl -s -o /dev/null -w "%{http_code}\n" localhost:3000/health
+
+# 2. Kiểm tra môi trường và tìm máy ảo
+flutter doctor
+flutter emulators
+
+# 3. Bật máy ảo
+flutter emulators --launch pixel_api_35
+adb wait-for-device
+adb shell getprop sys.boot_completed      # ra 1 là khởi động xong
+flutter devices                           # phải thấy emulator-5554
+
+# 4. Chạy app
+cd apps/nihongo_flutter
+flutter pub get
+flutter run -d emulator-5554
+```
+
+Lần build đầu mất khoảng 4–5 phút, các lần sau nhanh hơn nhiều. Khi app đang chạy, bấm `r` (hot reload), `R` (hot restart) hoặc `q` (thoát) trong terminal.
+
+**Kiểm tra app đã nối được backend:**
+
+1. Trên Home, góc phải phải hiện **Online**.
+2. Vào **Từ vựng**, bấm biểu tượng tải về ở góc phải. Phải hiện "Đã tải bài 1".
+3. Xem gateway có nhận request không:
+
+   ```bash
+   docker logs --tail 60 edu-gateway | grep "vocabularies"
+   ```
+
+Từ vựng hiện ra chưa chứng minh được đã nối backend, vì dữ liệu có thể là bản đã lưu sẵn trong máy ảo. Hãy dựa vào bước 2 và 3.
+
 ---
 
 ## 4. Nihongo iOS — SwiftUI
@@ -150,6 +189,8 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 | Expo build lỗi sau khi đổi native config | Xóa `android/` rồi `npx expo prebuild --platform android --clean` |
 | Gradle `SDK location not found` | Tạo `apps/nihongo-android/local.properties` với `sdk.dir=C:\\Users\\<user>\\AppData\\Local\\Android\\Sdk` |
 | Flutter lỗi generated file | Chạy lại `dart run build_runner build --delete-conflicting-outputs` |
+| Flutter build Android: `relies on ... InternalProblems, a Gradle internal API that was removed in Gradle 9.6.0` | Gradle mới hơn mức AGP hỗ trợ. AGP đang là 8.11.1, nên `android/gradle/wrapper/gradle-wrapper.properties` phải dùng Gradle dưới 9.6 (hiện là 9.3.1). Muốn dùng Gradle mới hơn thì nâng AGP trong `android/settings.gradle.kts` trước |
+| Flutter cảnh báo Kotlin 2.2.20 "will soon be dropped" | Chỉ là cảnh báo, app vẫn build được. Sau này phải nâng Kotlin lên từ 2.3.20 trong `android/settings.gradle.kts` |
 | Máy thật không vào được API | Điện thoại và máy host phải cùng WiFi; mở firewall cho port 3000/8080 |
 
 ---
