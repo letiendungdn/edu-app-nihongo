@@ -28,6 +28,10 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # cosign ký keyless bằng token OIDC của GitHub, không cần giữ khóa riêng
     strategy:
       fail-fast: false
       matrix:
@@ -43,40 +47,81 @@ jobs:
           - name: migrator
             dockerfile: packages/prisma-nihongo/Dockerfile.migrate
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ env.DEPLOY_SHA }} # build đúng commit CI đã kiểm tra
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        id: build
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
+          # Chuỗi cung ứng: đính kèm SBOM (danh sách thành phần) và provenance (build từ commit nào, workflow nào)
+          sbom: true
+          provenance: mode=max
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:${{ env.DEPLOY_SHA }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
+      # Ký image theo digest (không theo tag, vì tag đổi được). Keyless: chữ ký gắn với danh tính workflow này,
+      # ghi vào log minh bạch Rekor. Bước deploy kiểm chữ ký trước khi chạy.
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - name: Sign image (cosign keyless)
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "$IMAGE"
+
+      # Lưu SBOM ra artifact để đọc / tra CVE mới sau này mà không cần build lại
+      - name: Export SBOM
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect "$IMAGE" --format '{{ json .SBOM }}' > "sbom-${{ matrix.name }}.spdx.json"
+          test -s "sbom-${{ matrix.name }}.spdx.json"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.spdx.json
+          retention-days: 90
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-24.04
     environment: production
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ env.DEPLOY_SHA }}
 
+      # Chỉ deploy image do CHÍNH workflow này ký, từ repo này. Image bị thay trên registry → dừng.
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - name: Verify image signatures
+        run: |
+          for name in api-gateway content-service exam-service nihongo-web migrator; do
+            cosign verify "${IMAGE_PREFIX}/${name}:${DEPLOY_SHA}" \
+              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\.github/workflows/deploy\.yml@" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null
+            echo "✓ ${name} đã ký hợp lệ"
+          done
+
       - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
 
       - name: Configure kubeconfig
         id: kubeconfig
@@ -104,23 +149,46 @@ jobs:
         if: steps.kubeconfig.outputs.has_cluster == 'true'
         run: kubectl apply -f infra/k8s/namespace.yaml
 
+      # Bảo mật: secret đi qua env, KHÔNG chèn ${{ secrets.X }} thẳng vào script (giá trị có " hoặc $(...) sẽ
+      # phá lệnh / chạy lệnh lạ), và không nằm trên dòng lệnh (--from-literal lộ qua `ps`). Ghi ra file
+      # quyền 600 trong RUNNER_TEMP rồi xóa ngay. Xem docs/adr/0008-secrets-management.md.
       - name: Sync secrets from GitHub Secrets
         if: steps.kubeconfig.outputs.has_cluster == 'true'
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL_NIHONGO: ${{ secrets.DATABASE_URL_NIHONGO }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
+          # Kubelet kéo image bất cứ lúc nào (scale, node mới) → cần token SỐNG LÂU, chỉ quyền read:packages.
+          # GITHUB_TOKEN hết hạn ngay khi job xong nên chỉ dùng tạm khi chưa tạo GHCR_PULL_TOKEN (ADR-0008).
+          GHCR_PULL_USER: ${{ vars.GHCR_PULL_USER || github.repository_owner }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          GHCR_FALLBACK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_FALLBACK_USER: ${{ github.actor }}
         run: |
+          umask 077
+          env_file="$RUNNER_TEMP/edu-app-secrets.env"
+          trap 'rm -f "$env_file"' EXIT
+          for k in POSTGRES_PASSWORD DATABASE_URL_NIHONGO JWT_SECRET ADMIN_PASSWORD MQTT_PASSWORD; do
+            printf '%s=%s\n' "$k" "${!k}" >> "$env_file"
+          done
           kubectl create secret generic edu-app-secrets \
             --namespace edu-app \
-            --from-literal=POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-            --from-literal=DATABASE_URL_NIHONGO="${{ secrets.DATABASE_URL_NIHONGO }}" \
-            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            --from-literal=ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
-            --from-literal=MQTT_PASSWORD="${{ secrets.MQTT_PASSWORD }}" \
+            --from-env-file="$env_file" \
             --dry-run=client -o yaml | kubectl apply -f -
 
+          if [ -n "$GHCR_PULL_TOKEN" ]; then
+            pull_user="$GHCR_PULL_USER"; pull_token="$GHCR_PULL_TOKEN"
+          else
+            echo "::warning::Chưa có secret GHCR_PULL_TOKEN: dùng tạm GITHUB_TOKEN, hết hạn khi job xong → pod tạo sau có thể ImagePullBackOff. Tạo PAT (classic) chỉ quyền read:packages."
+            pull_user="$GHCR_FALLBACK_USER"; pull_token="$GHCR_FALLBACK_TOKEN"
+          fi
           kubectl create secret docker-registry ghcr-pull-secret \
             --namespace edu-app \
             --docker-server=ghcr.io \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --docker-username="$pull_user" \
+            --docker-password="$pull_token" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       # Postgres/Redis phải có trước khi migrate (lần deploy đầu tiên).
@@ -180,7 +248,7 @@ jobs:
     environment: production
     steps:
       - name: Deploy via SSH (fallback)
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}

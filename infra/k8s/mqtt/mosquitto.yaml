@@ -41,9 +41,16 @@ spec:
       labels:
         app: mosquitto
     spec:
+      # Bảo mật: image bên thứ ba (entrypoint cần root lúc khởi động để chown thư mục dữ liệu), nên chỉ bật
+      # những gì không làm hỏng image: seccomp mặc định, chặn leo quyền. Ngoại lệ còn lại: .trivyignore.yaml.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2
+          securityContext:
+            allowPrivilegeEscalation: false
           command: ['/bin/sh', '/mosquitto/scripts/entrypoint.sh']
           env:
             - name: MQTT_GATEWAY_PASSWORD

@@ -33,9 +33,16 @@ spec:
       labels:
         app: redis
     spec:
+      # Bảo mật: image bên thứ ba (entrypoint cần root lúc khởi động để chown thư mục dữ liệu), nên chỉ bật
+      # những gì không làm hỏng image: seccomp mặc định, chặn leo quyền. Ngoại lệ còn lại: .trivyignore.yaml.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis
           image: redis:7-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 6379
               name: redis

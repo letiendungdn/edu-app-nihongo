@@ -32,6 +32,7 @@ export class LiveService {
   private get publicWsUrl(): string {
     return (
       process.env.LIVEKIT_PUBLIC_URL ??
+      // nosemgrep: detect-insecure-websocket -- giữ đúng scheme cấu hình: https → wss; ws chỉ khi LIVEKIT_URL là http (dev)
       process.env.LIVEKIT_URL?.replace("http://", "ws://").replace(
         "https://",
         "wss://",

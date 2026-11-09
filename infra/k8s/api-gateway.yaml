@@ -43,10 +43,32 @@ spec:
         - name: ghcr-pull-secret
       # SIGTERM → app đóng gọn (enableShutdownHooks); preStop chờ Service/Ingress gỡ pod khỏi danh sách
       terminationGracePeriodSeconds: 30
+      # Bảo mật (Trivy KSV-0118, KSV-0014): chạy bằng user thường, chặn leo quyền, bỏ mọi capability,
+      # hệ thống file gốc chỉ đọc. Image đã đặt USER node (uid 1000). Xem docs/learn-devsecops.md.
+      # App không gọi Kubernetes API: không gắn token ServiceAccount vào pod (lọt container cũng không dò được cluster)
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
       containers:
         - name: api-gateway
           image: ghcr.io/letiendungdn/edu_app/api-gateway:latest
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           ports:
             - containerPort: 3000
               name: http

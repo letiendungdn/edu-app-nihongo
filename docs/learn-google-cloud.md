@@ -168,7 +168,7 @@ npm run migrate:deploy -w @edu/prisma-nihongo
 DATABASE_URL=postgresql://nihongo:<mật khẩu>@localhost/nihongo?host=/cloudsql/edu-app-dev:asia-southeast1:edu-pg
 ```
 
-Nạp dữ liệu có sẵn: dùng file backup của project (`infra/backups/nihongo_*.sql`) — `psql` qua proxy, hoặc
+Nạp dữ liệu có sẵn: dùng seed nội dung `infra/postgres/nihongo-content-seed.sql` (hoặc backup trên máy, `infra/backups/nihongo_*.sql`) — `psql` qua proxy, hoặc
 đẩy file lên Cloud Storage rồi `gcloud sql import sql edu-pg gs://<bucket>/nihongo.sql --database=nihongo`.
 
 > Cloud Run scale nhiều instance × mỗi instance một pool Prisma → dễ vượt giới hạn kết nối của
@@ -354,7 +354,7 @@ Cách dọn sạch nhất: **xoá cả project** — `gcloud projects delete edu
 1. Tạo project `edu-app-dev`, đặt budget alert, bật các API ở mục 3.
 2. Build và đẩy image `api-gateway` lên Artifact Registry; deploy lên Cloud Run chỉ với endpoint `/health`
    (chưa cần DB). Mở URL `*.run.app` thành công.
-3. Tạo Cloud SQL, chạy `migrate:deploy` qua Cloud SQL Auth Proxy, import file backup `infra/backups/nihongo_*.sql`.
+3. Tạo Cloud SQL, chạy `migrate:deploy` qua Cloud SQL Auth Proxy, import seed nội dung `infra/postgres/nihongo-content-seed.sql`.
    Deploy lại `api-gateway` + `content-service` nối vào Cloud SQL, mở trang từ vựng qua API.
 4. Chuyển `JWT_SECRET` và mật khẩu DB sang Secret Manager; kiểm tra lệnh deploy không còn chứa giá trị bí mật.
 5. Viết `getSignedUploadUrl` bằng Cloud Storage (mục 6), cấu hình CORS, upload ảnh từ trang admin.

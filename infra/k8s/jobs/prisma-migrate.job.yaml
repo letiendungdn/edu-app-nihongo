@@ -21,10 +21,37 @@ spec:
       restartPolicy: Never
       imagePullSecrets:
         - name: ghcr-pull-secret
+      # Bảo mật (Trivy KSV-0118, KSV-0014): chạy bằng user thường, chặn leo quyền, bỏ mọi capability,
+      # hệ thống file gốc chỉ đọc. Image đã đặt USER node (uid 1000). Xem docs/learn-devsecops.md.
+      # App không gọi Kubernetes API: không gắn token ServiceAccount vào pod (lọt container cũng không dò được cluster)
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
       containers:
         - name: migrate
           image: ghcr.io/letiendungdn/edu_app/migrator:__IMAGE_TAG__
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           env:
+            # Hệ thống file chỉ đọc: Prisma CLI ghi cache vào $HOME, trỏ sang /tmp (emptyDir, ghi được)
+            - name: HOME
+              value: /tmp
+            - name: CHECKPOINT_DISABLE # tắt việc Prisma gọi ra ngoài kiểm tra phiên bản
+              value: "1"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

@@ -655,6 +655,7 @@ export function grammarMatchers(pattern: string): RegExp[] {
   if (priority) return priority[1];
   const fragments = grammarFragments(pattern);
   if (fragments.length)
+    // nosemgrep: detect-non-literal-regexp -- đã escapeRegExp, chỉ còn chuỗi so khớp nguyên văn
     return fragments.map((f) => new RegExp(escapeRegExp(f)));
   return GRAMMAR_RULES.find(([test]) => test.test(pattern))?.[1] ?? [];
 }

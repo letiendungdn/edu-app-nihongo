@@ -8,7 +8,7 @@ jobs:
   security:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0 # gitleaks cần lịch sử để quét đúng khoảng commit
       # Quét secret trong các commit MỚI của push/PR (lịch sử cũ đã soát; ngoại lệ có lý do trong .gitleaks.toml)
@@ -27,12 +27,75 @@ jobs:
           fi
           echo "Quét khoảng commit: $RANGE"
           docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1             git /repo --config /repo/.gitleaks.toml --log-opts="$RANGE" --redact --no-banner --exit-code 1
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
       # Chặn khi có lỗ hổng HIGH/CRITICAL ở dependency production (ngoại lệ có lý do trong audit-ci.jsonc)
       - name: Dependency audit (high+ blocks)
         run: npx --yes audit-ci@7 --config audit-ci.jsonc
+      # Quét cấu hình (Dockerfile, K8s, Helm, Terraform): chặn HIGH/CRITICAL. Ngoại lệ có lý do trong .trivyignore.yaml
+      - name: IaC / Dockerfile scan (trivy config)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo aquasec/trivy:0.69.3 config . \
+            --ignorefile .trivyignore.yaml --severity HIGH,CRITICAL --exit-code 1 \
+            --skip-dirs node_modules --skip-dirs apps/nihongo-web/.next
+      # SAST: lỗi bảo mật trong code (TS/JS, Python, nginx, Terraform, workflow). Đường dẫn bỏ qua: .semgrepignore;
+      # chỗ báo nhầm đơn lẻ ghi `nosemgrep` kèm lý do ngay tại dòng code. Ba luật tắt hẳn:
+      #  - dynamic-proxy-host, missing-internal: proxy_pass dùng biến nhưng giá trị gán cứng (để Docker DNS cập nhật IP)
+      #  - exported_activity: activity mở app và activity nhận redirect OAuth bắt buộc exported
+      - name: SAST (semgrep)
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.140.0 semgrep scan \
+            --config p/default --config p/typescript --config p/nodejs --config p/secrets \
+            --severity ERROR --severity WARNING --metrics=off --error \
+            --exclude-rule generic.nginx.security.dynamic-proxy-host.dynamic-proxy-host \
+            --exclude-rule generic.nginx.security.missing-internal.missing-internal \
+            --exclude-rule java.android.security.exported_activity.exported_activity
+      # Chính sách cluster (Kyverno) chạy offline trên manifest: workload thật phải qua, pod root cố ý phải bị chặn
+      - name: K8s policy check (kyverno)
+        run: bash infra/k8s/policies/test.sh
+
+  # Quét image thật sẽ chạy production. Deploy chỉ chạy khi CI xanh nên image có CVE CRITICAL đã có bản vá sẽ không lên.
+  image-scan:
+    name: image-scan (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api-gateway
+            dockerfile: services/api-gateway/Dockerfile
+          - name: content-service
+            dockerfile: services/content-service/Dockerfile
+          - name: exam-service
+            dockerfile: services/exam-service/Dockerfile
+          - name: signaling-service
+            dockerfile: services/signaling-service/Dockerfile
+          - name: nihongo-web
+            dockerfile: apps/nihongo-web/Dockerfile
+          - name: migrator
+            dockerfile: packages/prisma-nihongo/Dockerfile.migrate
+          - name: nginx
+            dockerfile: infra/nginx/Dockerfile
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          outputs: type=docker,dest=${{ runner.temp }}/image.tar
+          cache-from: type=gha,scope=scan-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=scan-${{ matrix.name }}
+      # Quét file tar (không mount docker.sock vào container Trivy). Chỉ chặn CVE đã có bản vá (--ignore-unfixed).
+      - name: Trivy image scan (${{ matrix.name }})
+        run: |
+          docker run --rm -v "${{ runner.temp }}:/scan" -v "$PWD/.trivyignore.yaml:/.trivyignore.yaml:ro" \
+            aquasec/trivy:0.69.3 image --input /scan/image.tar --ignorefile /.trivyignore.yaml \
+            --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress
+          docker run --rm -v "${{ runner.temp }}:/scan" aquasec/trivy:0.69.3 image --input /scan/image.tar \
+            --severity HIGH --ignore-unfixed --exit-code 0 --no-progress --quiet
 
   backend:
     runs-on: ubuntu-24.04
@@ -55,8 +118,8 @@ jobs:
         ports:
           - '6379:6379'
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
           cache: npm
@@ -116,7 +179,7 @@ jobs:
         run: |
           node -r tsconfig-paths/register -r ts-node/register content-service/src/main.ts > /tmp/content-grpc.log 2>&1 &
           node -r tsconfig-paths/register -r ts-node/register exam-service/src/main.ts > /tmp/exam-grpc.log 2>&1 &
-          for i in $(seq 1 40); do
+          for _ in $(seq 1 40); do
             if grep -q "Content service listening" /tmp/content-grpc.log && grep -q "Exam service listening" /tmp/exam-grpc.log; then
               exit 0
             fi
@@ -146,8 +209,8 @@ jobs:
   nihongo-web:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
           cache: npm
@@ -168,13 +231,13 @@ jobs:
       run:
         working-directory: apps/nihongo-android
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       # AGP 8.7 / Kotlin 2.0 cần JDK 17 (JDK mới hơn làm Kotlin không đọc được phiên bản)
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       - run: chmod +x gradlew
       - name: Unit test
         run: ./gradlew testDebugUnitTest
@@ -183,7 +246,7 @@ jobs:
         run: ./gradlew assembleRelease
       - name: Test report
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: android-unit-test-report
           path: apps/nihongo-android/app/build/reports/tests/
@@ -193,12 +256,12 @@ jobs:
     runs-on: ubuntu-24.04
     needs: android
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
       # Runner Linux có KVM nhưng mặc định không cho user dùng: thiếu bước này emulator chạy cực chậm
       - name: Enable KVM
         run: |
@@ -206,7 +269,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Instrumented test
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
           api-level: 34
           arch: x86_64
@@ -216,7 +279,7 @@ jobs:
           script: chmod +x gradlew && ./gradlew connectedDebugAndroidTest
       - name: Test report
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: android-instrumented-report
           path: apps/nihongo-android/app/build/reports/androidTests/
@@ -228,8 +291,8 @@ jobs:
       run:
         working-directory: apps/nihongo_flutter
     steps:
-      - uses: actions/checkout@v5
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.47.6'
           channel: stable
@@ -251,7 +314,7 @@ jobs:
       run:
         working-directory: apps/nihongo-ios
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       # Sinh lại .xcodeproj từ project.yml: CI luôn build đúng cấu hình trong project.yml,
       # kể cả khi ai đó quên chạy xcodegen trước khi commit file project
       - run: brew install xcodegen

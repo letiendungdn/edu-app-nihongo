@@ -261,7 +261,7 @@ $env:DATABASE_URL="postgresql://nihongo:<mật khẩu>@localhost:5434/nihongo"
 npm run migrate:deploy -w @edu/prisma-nihongo
 ```
 
-Nạp dữ liệu có sẵn bằng file backup của project (`infra/backups/nihongo_*.sql`) qua cùng đường hầm đó.
+Nạp dữ liệu: dùng seed nội dung `infra/postgres/nihongo-content-seed.sql` (hoặc file backup trên máy bạn, `infra/backups/nihongo_*.sql`) qua cùng đường hầm đó.
 
 > Nhiều task × pool Prisma dễ cạn kết nối trên instance nhỏ → giới hạn `connection_limit`, hoặc dùng **RDS Proxy**.
 

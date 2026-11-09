@@ -1,0 +1,34 @@
+# Chỉ chạy image do workflow deploy.yml của repo này ký (cosign keyless, Sigstore).
+# Image bị đẩy lại lên registry bởi người khác → không có chữ ký đúng danh tính → pod bị từ chối.
+# Kyverno còn đổi tag thành digest đã kiểm (mutateDigest) để image không bị tráo sau khi kiểm.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: edu-app-verify-image-signatures
+  annotations:
+    policies.kyverno.io/title: Chỉ chạy image đã ký
+spec:
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: ghcr-edu-app-signed
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [edu-app]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/letiendungdn/edu_app/*"
+          failureAction: Enforce
+          mutateDigest: true
+          verifyDigest: true
+          # Registry private: Kyverno dùng pull secret này để đọc chữ ký
+          imageRegistryCredentials:
+            secrets: [ghcr-pull-secret]
+          attestors:
+            - entries:
+                - keyless:
+                    issuer: https://token.actions.githubusercontent.com
+                    subjectRegExp: "^https://github\\.com/letiendungdn/edu-app-nihongo/\\.github/workflows/deploy\\.yml@.*$"
+                    rekor:
+                      url: https://rekor.sigstore.dev

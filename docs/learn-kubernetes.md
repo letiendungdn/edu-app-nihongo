@@ -16,7 +16,7 @@
 | cả file `docker-compose.yml` | **Namespace** gom tài nguyên | `namespace.yaml` (`edu-app`) |
 | một service chạy container | **Deployment** → ReplicaSet → **Pod** | `api-gateway.yaml`, `content-service.yaml`… |
 | tên service làm DNS (`content-service:50051`) | **Service** (ClusterIP) | phần `kind: Service` đầu mỗi file |
-| `ports: 8080:80` + nginx | **Ingress** (+ ingress controller) | `ingress.yaml` |
+| `ports: 8080:8080` + nginx | **Ingress** (+ ingress controller) | `ingress.yaml` |
 | `environment:` | **ConfigMap** / **Secret** | `configmap.yaml`, `secret.yaml` |
 | volume của Postgres | **StatefulSet** + PersistentVolumeClaim | `postgres.yaml` (5Gi) |
 | `restart: unless-stopped` | K8s tự khởi động lại Pod, dời sang node khác | (mặc định) |
@@ -247,7 +247,7 @@ Nên chọn **một** nguồn (Helm) và cho `deploy.yml` dùng `helm upgrade --
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 4/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 5/9.
 
 - Bài trước: [learn-infra.md](./learn-infra.md) — Thư mục infra/, cổng, healthcheck và các sự cố thật
 - **Bài tiếp: [learn-release-cicd.md](./learn-release-cicd.md)** — CI/CD: migrate khi deploy, canary, feature flag, rollback

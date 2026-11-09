@@ -49,7 +49,7 @@ Trên Mac và Windows, Docker Desktop chạy ngầm **một** máy ảo Linux nh
 
 - **Là gì:** một gói **chỉ đọc**, chứa hệ điều hành nhỏ, runtime, code và lệnh khởi động. Image không chạy; nó chỉ là khuôn.
 - **Ví dụ trong project:**
-  - Image có sẵn, tải về từ Docker Hub: `postgres:16-alpine`, `nginx:1.27-alpine`.
+  - Image có sẵn, tải về từ Docker Hub: `postgres:16-alpine`, `nginx:1.30-alpine`.
   - Image tự build từ code: `edu-app-nihongo-web:latest` (~590 MB), `edu-app-api-gateway:latest`.
 - **Tên image** có dạng `tên:tag`. Tag thường là phiên bản; `latest` chỉ là tag mặc định, **không** tự hiểu là "mới nhất".
 - **Tiền tố `edu-app-`** đến từ dòng `name: edu-app` đầu file compose. Image được đặt tên theo kiểu `<tên project>-<tên service>`.
@@ -556,8 +556,9 @@ Mọi nhóm khác (backend, cloud, mobile…) xem [mục lục tài liệu](./RE
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 1/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 2/9.
 
+- Bài trước: [learn-devops-roadmap.md](./learn-devops-roadmap.md) — Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự
 - **Bài tiếp: [learn-nginx.md](./learn-nginx.md)** — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

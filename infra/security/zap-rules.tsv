@@ -1,0 +1,17 @@
+# Luật OWASP ZAP baseline. Cột: mã luật <TAB> IGNORE|WARN|FAIL <TAB> lý do. Xem docs/learn-devsecops.md mục 9.
+# FAIL: header đã sửa, mất lại là lỗi (chặn hồi quy).
+10020	FAIL	(Chống clickjacking: X-Frame-Options / frame-ancestors, next.config.ts)
+10021	FAIL	(X-Content-Type-Options: nosniff)
+10036	FAIL	(nginx server_tokens off: không lộ phiên bản)
+10037	FAIL	(Next poweredByHeader: false: không lộ X-Powered-By)
+10038	FAIL	(Phải có header Content-Security-Policy)
+10063	FAIL	(Permissions-Policy: web và gateway)
+# WARN: biết rồi, sẽ sửa sau.
+10055	WARN	(script-src đã dùng nonce + strict-dynamic. Còn: img/media/connect/frame-src cho 'https:' vì ảnh, audio, video, YouTube, Stripe đến từ nhiều nguồn; style-src 'unsafe-inline' cho React style và Mapbox)
+90004	WARN	(Cô lập Spectre đầy đủ cần COEP require-corp, sẽ chặn ảnh/video từ nguồn khác)
+# IGNORE: chỉ là thông tin, không phải lỗ hổng.
+10027	IGNORE	(Comment chứa chữ như 'select', 'user' trong bundle JS của thư viện)
+10049	IGNORE	(Trang động có Cache-Control no-store là đúng ý)
+10096	IGNORE	(Số giống timestamp trong bundle JS, không phải dữ liệu nhạy cảm)
+10109	IGNORE	(Chỉ báo app là SPA hiện đại)
+10116	IGNORE	(Bản ZAP đã ghim phiên bản có chủ đích)

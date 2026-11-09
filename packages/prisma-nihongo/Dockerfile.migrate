@@ -6,7 +6,12 @@ RUN apk add --no-cache openssl
 WORKDIR /migrate
 # Cùng phiên bản với packages/prisma-nihongo/package.json
 RUN npm install --global prisma@6.19.3 && npm cache clean --force
+# Bảo mật: app chạy bằng `node`, không cần npm. npm đi kèm image gốc mang theo lỗ hổng
+# (brace-expansion, pacote, ip-address… — Trivy quét 09/11/2026) và là công cụ có sẵn cho kẻ tấn công.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY packages/prisma-nihongo/schema.prisma ./schema.prisma
 COPY packages/prisma-nihongo/migrations ./migrations
 # DATABASE_URL lấy từ Secret của K8s
+# Bảo mật: không chạy bằng root (Trivy DS-0002).
+USER node
 CMD ["prisma", "migrate", "deploy", "--schema", "schema.prisma"]

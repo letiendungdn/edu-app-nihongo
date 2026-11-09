@@ -1,0 +1,57 @@
+# Kyverno tự sinh luật tương ứng cho Deployment/StatefulSet/Job (autogen), nên luật viết cho Pod là đủ.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: edu-app-pod-security
+  annotations:
+    policies.kyverno.io/title: Pod an toàn cho edu-app
+    policies.kyverno.io/description: >-
+      Chặn leo quyền và privileged cho mọi pod trong namespace edu-app. App tự viết (gateway, content, exam,
+      web, migrate) phải chạy user thường, hệ thống file chỉ đọc, bỏ mọi capability. Image bên thứ ba
+      (postgres, redis, kafka, mosquitto) được miễn phần đó: xem .trivyignore.yaml KSV-0014/KSV-0118.
+spec:
+  background: true
+  rules:
+    - name: no-privilege-escalation
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [edu-app]
+      validate:
+        failureAction: Enforce
+        message: "Container phải đặt securityContext.allowPrivilegeEscalation: false và không privileged."
+        pattern:
+          spec:
+            =(initContainers):
+              - securityContext:
+                  allowPrivilegeEscalation: false
+                  =(privileged): false
+            containers:
+              - securityContext:
+                  allowPrivilegeEscalation: false
+                  =(privileged): false
+
+    - name: app-non-root-readonly
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [edu-app]
+              selector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: [api-gateway, content-service, exam-service, nihongo-web, prisma-migrate]
+      validate:
+        failureAction: Enforce
+        message: "App edu-app phải chạy non-root, readOnlyRootFilesystem và drop ALL capabilities."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: true
+                  capabilities:
+                    drop: ["ALL"]

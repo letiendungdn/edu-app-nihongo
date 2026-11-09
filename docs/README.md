@@ -109,13 +109,15 @@ Viết test, đọc test có sẵn, đo tải.
 
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
-| 1 | [learn-docker.md](./learn-docker.md) | Docker: image, container, volume, compose |
-| 2 | [learn-nginx.md](./learn-nginx.md) | Nginx: reverse proxy cổng 8080, HTTPS, triển khai |
-| 3 | [learn-infra.md](./learn-infra.md) | Thư mục infra/, cổng, healthcheck và các sự cố thật |
-| 4 | [learn-kubernetes.md](./learn-kubernetes.md) | Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update |
-| 5 | [learn-release-cicd.md](./learn-release-cicd.md) | CI/CD: migrate khi deploy, canary, feature flag, rollback |
-| 6 | [learn-observability.md](./learn-observability.md) | Log, metric, trace với Prometheus, Grafana, Jaeger |
-| 7 | [learn-incident-postmortem.md](./learn-incident-postmortem.md) | Xử lý sự cố, runbook, postmortem (có postmortem thật) |
+| 1 | [learn-devops-roadmap.md](./learn-devops-roadmap.md) | Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự |
+| 2 | [learn-docker.md](./learn-docker.md) | Docker: image, container, volume, compose |
+| 3 | [learn-nginx.md](./learn-nginx.md) | Nginx: reverse proxy cổng 8080, HTTPS, triển khai |
+| 4 | [learn-infra.md](./learn-infra.md) | Thư mục infra/, cổng, healthcheck và các sự cố thật |
+| 5 | [learn-kubernetes.md](./learn-kubernetes.md) | Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update |
+| 6 | [learn-release-cicd.md](./learn-release-cicd.md) | CI/CD: migrate khi deploy, canary, feature flag, rollback |
+| 7 | [learn-observability.md](./learn-observability.md) | Log, metric, trace với Prometheus, Grafana, Jaeger |
+| 8 | [learn-incident-postmortem.md](./learn-incident-postmortem.md) | Xử lý sự cố, runbook, postmortem (có postmortem thật) |
+| 9 | [learn-devsecops.md](./learn-devsecops.md) | DevSecOps: quét bí mật, thư viện, image, hạ tầng — có kết quả quét thật |
 
 ---
 

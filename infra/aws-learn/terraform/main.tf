@@ -70,6 +70,8 @@ resource "aws_iam_role_policy" "lambda" {
 
 # ── Lambda ──────────────────────────────────────────────────────────────────────────────────────────────────
 
+# Log bài học vẫn được CloudWatch mã hóa mặc định; khóa KMS riêng tốn phí (giống AWS-0132 trong .trivyignore.yaml)
+# nosemgrep: aws-cloudwatch-log-group-unencrypted
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${local.name}"
   retention_in_days = var.log_retention_days

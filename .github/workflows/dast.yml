@@ -1,0 +1,28 @@
+name: DAST
+
+# Quét app ĐANG CHẠY bằng OWASP ZAP baseline (thụ động, không tấn công phá hoại).
+# Chạy tay vào staging sau khi deploy. Không quét production của người khác — chỉ URL bạn sở hữu.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: URL cần quét (ví dụ https://staging.example.com/)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: ZAP baseline
+        env:
+          TARGET: ${{ inputs.target }}
+        run: bash infra/security/zap-baseline.sh "$TARGET"
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        if: always()
+        with:
+          name: zap-report
+          path: infra/security/reports/

@@ -212,10 +212,10 @@ Cố tình gây lỗi trong môi trường dev để kiểm tra runbook và giá
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 7/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 8/9.
 
 - Bài trước: [learn-observability.md](./learn-observability.md) — Log, metric, trace với Prometheus, Grafana, Jaeger
-- Xong nhóm này. **Nhóm tiếp: 7. Cloud** — bắt đầu bằng [learn-localstack.md](./learn-localstack.md) (Giả lập AWS trên máy bằng LocalStack)
+- **Bài tiếp: [learn-devsecops.md](./learn-devsecops.md)** — DevSecOps: quét bí mật, thư viện, image, hạ tầng — có kết quả quét thật
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

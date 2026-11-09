@@ -19,6 +19,9 @@ resource "digitalocean_droplet" "app" {
   size   = var.droplet_size
   image  = var.droplet_image
 
+  # Đăng nhập bằng SSH key; DigitalOcean tắt đăng nhập root bằng mật khẩu khi có key.
+  ssh_keys = var.ssh_key_ids
+
   tags = var.tags
 }
 
