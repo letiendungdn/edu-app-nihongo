@@ -1,4 +1,8 @@
-import { GrammarQaController, GrammarQaDto, SearchQueryDto } from "./grammar-qa.controller";
+import {
+  GrammarQaController,
+  GrammarQaDto,
+  SearchQueryDto,
+} from "./grammar-qa.controller";
 import { GrammarQaService } from "./grammar-qa.service";
 
 describe("GrammarQaController", () => {
@@ -13,7 +17,18 @@ describe("GrammarQaController", () => {
   it("search không trả nội dung nguồn đầy đủ (chỉ metadata)", async () => {
     const qa = {
       search: jest.fn().mockResolvedValue({
-        sources: [{ grammarId: 1, pattern: "V たい", meaning: "muốn", jlptLevel: "N5", lessonId: 1, lessonNumber: 1, score: 0.8, text: "nội dung dài" }],
+        sources: [
+          {
+            grammarId: 1,
+            pattern: "V たい",
+            meaning: "muốn",
+            jlptLevel: "N5",
+            lessonId: 1,
+            lessonNumber: 1,
+            score: 0.8,
+            text: "nội dung dài",
+          },
+        ],
         embedMs: 5,
         searchMs: 1,
       }),

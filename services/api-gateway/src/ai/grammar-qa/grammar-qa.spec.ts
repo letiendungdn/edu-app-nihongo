@@ -12,7 +12,12 @@ import {
   type IndexedDoc,
 } from "./grammar-qa";
 
-const doc = (id: number, pattern: string, vector: number[], jlptLevel = "N4"): IndexedDoc => ({
+const doc = (
+  id: number,
+  pattern: string,
+  vector: number[],
+  jlptLevel = "N4",
+): IndexedDoc => ({
   grammarId: id,
   pattern,
   meaning: `nghĩa ${id}`,
@@ -66,10 +71,17 @@ describe("grammar-qa (RAG)", () => {
   });
 
   it("câu hỏi có chữ Nhật của mẫu thì mẫu đó được đẩy lên", () => {
-    expect(lexicalScore("たことがある nghĩa là gì?", "V たことがあります")).toBe(1);
+    expect(
+      lexicalScore("たことがある nghĩa là gì?", "V たことがあります"),
+    ).toBe(1);
     expect(lexicalScore("đã từng làm gì", "V たことがあります")).toBe(0);
-    const docs = [doc(1, "V たいです", [1, 0]), doc(2, "V ばかりです", [0.9, 0.44])];
-    expect(rank(normalize([1, 0]), "ばかり dùng thế nào", docs, 2)[0].grammarId).toBe(2);
+    const docs = [
+      doc(1, "V たいです", [1, 0]),
+      doc(2, "V ばかりです", [0.9, 0.44]),
+    ];
+    expect(
+      rank(normalize([1, 0]), "ばかり dùng thế nào", docs, 2)[0].grammarId,
+    ).toBe(2);
   });
 
   it("prompt đánh số nguồn [1]..[n] để AI trích", () => {
@@ -80,11 +92,15 @@ describe("grammar-qa (RAG)", () => {
   });
 
   it("chỉ nhận trích dẫn hợp lệ, bỏ số AI bịa ngoài phạm vi", () => {
-    expect(parseCitations("Dùng để kể kinh nghiệm [1][3]. Xem thêm [7] và [0].", 5)).toEqual([1, 3]);
+    expect(
+      parseCitations("Dùng để kể kinh nghiệm [1][3]. Xem thêm [7] và [0].", 5),
+    ).toEqual([1, 3]);
     expect(parseCitations("Không có trích dẫn", 5)).toEqual([]);
   });
 
   it("cache coi câu hỏi khác hoa thường, khoảng trắng là một", () => {
-    expect(cacheKey("  Cách   dùng ばかり ")).toBe(cacheKey("cách dùng ばかり"));
+    expect(cacheKey("  Cách   dùng ばかり ")).toBe(
+      cacheKey("cách dùng ばかり"),
+    );
   });
 });

@@ -131,7 +131,9 @@ export function lexicalScore(question: string, pattern: string): number {
   return patternRuns.some((p) =>
     runs.some((r) => {
       const common = longestCommon(r, p);
-      return common >= 3 || (common >= 2 && common === Math.min(r.length, p.length));
+      return (
+        common >= 3 || (common >= 2 && common === Math.min(r.length, p.length))
+      );
     }),
   )
     ? 1
@@ -184,7 +186,10 @@ export const SYSTEM_PROMPT = [
   "Trả lời bằng tiếng Việt, ngắn gọn (tối đa khoảng 150 từ), có 1–2 ví dụ tiếng Nhật kèm nghĩa.",
 ].join("\n");
 
-export function buildUserPrompt(question: string, sources: { text: string }[]): string {
+export function buildUserPrompt(
+  question: string,
+  sources: { text: string }[],
+): string {
   const numbered = sources.map((s, i) => `[${i + 1}]\n${s.text}`).join("\n\n");
   return `NGUỒN:\n${numbered}\n\nCÂU HỎI: ${question}`;
 }

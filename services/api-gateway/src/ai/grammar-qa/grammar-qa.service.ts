@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { PrismaService } from "@app/prisma";
 import { AiService } from "../ai.service";
 import { EmbeddingService } from "./embedding.service";
@@ -44,7 +48,10 @@ export class GrammarQaService {
   private readonly logger = new Logger(GrammarQaService.name);
   private index: IndexedDoc[] | null = null;
   private loading: Promise<IndexedDoc[]> | null = null;
-  private readonly cache = new Map<string, { at: number; value: GrammarQaAnswer }>();
+  private readonly cache = new Map<
+    string,
+    { at: number; value: GrammarQaAnswer }
+  >();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -53,13 +60,21 @@ export class GrammarQaService {
   ) {}
 
   /** Tạo / cập nhật embedding. Chỉ embed lại mẫu có nội dung hoặc model đổi (so `contentHash`). */
-  async reindex(): Promise<{ total: number; embedded: number; unchanged: number; removed: number; ms: number }> {
+  async reindex(): Promise<{
+    total: number;
+    embedded: number;
+    unchanged: number;
+    removed: number;
+    ms: number;
+  }> {
     const started = Date.now();
     const docs = await this.loadDocs();
     const existing = new Map(
-      (await this.prisma.grammarEmbedding.findMany({ select: { grammarId: true, contentHash: true } })).map(
-        (e) => [e.grammarId, e.contentHash],
-      ),
+      (
+        await this.prisma.grammarEmbedding.findMany({
+          select: { grammarId: true, contentHash: true },
+        })
+      ).map((e) => [e.grammarId, e.contentHash]),
     );
 
     const todo = docs
@@ -109,17 +124,24 @@ export class GrammarQaService {
 
   async status(): Promise<{ indexed: number; grammar: number; model: string }> {
     const [indexed, grammar] = await Promise.all([
-      this.prisma.grammarEmbedding.count({ where: { model: this.embedder.model } }),
+      this.prisma.grammarEmbedding.count({
+        where: { model: this.embedder.model },
+      }),
       this.prisma.grammar.count(),
     ]);
     return { indexed, grammar, model: this.embedder.model };
   }
 
   /** Chỉ tìm nguồn, không gọi AI: dùng cho bộ đánh giá và để xem nhanh "mẫu liên quan". */
-  async search(question: string, k = TOP_K): Promise<{ sources: RankedSource[]; embedMs: number; searchMs: number }> {
+  async search(
+    question: string,
+    k = TOP_K,
+  ): Promise<{ sources: RankedSource[]; embedMs: number; searchMs: number }> {
     const index = await this.getIndex();
     const t0 = Date.now();
-    const [raw] = await this.embedder.embed([this.embedder.queryText(question)]);
+    const [raw] = await this.embedder.embed([
+      this.embedder.queryText(question),
+    ]);
     const t1 = Date.now();
     const sources = rank(normalize(raw), question, index, k);
     return { sources, embedMs: t1 - t0, searchMs: Date.now() - t1 };
@@ -128,7 +150,8 @@ export class GrammarQaService {
   async ask(question: string): Promise<GrammarQaAnswer> {
     const key = cacheKey(question);
     const hit = this.cache.get(key);
-    if (hit && Date.now() - hit.at < CACHE_TTL_MS) return { ...hit.value, cached: true };
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS)
+      return { ...hit.value, cached: true };
 
     const { sources, embedMs, searchMs } = await this.search(question);
     const best = sources[0]?.score ?? 0;
@@ -153,10 +176,14 @@ export class GrammarQaService {
 
     const t0 = Date.now();
     const answer = (
-      await this.ai.generate(SYSTEM_PROMPT, buildUserPrompt(question, sources), {
-        temperature: 0.2,
-        maxTokens: 700,
-      })
+      await this.ai.generate(
+        SYSTEM_PROMPT,
+        buildUserPrompt(question, sources),
+        {
+          temperature: 0.2,
+          maxTokens: 700,
+        },
+      )
     ).trim();
     const llm = Date.now() - t0;
     const cited = new Set(parseCitations(answer, sources.length));
@@ -177,8 +204,11 @@ export class GrammarQaService {
 
   private remember(key: string, value: GrammarQaAnswer) {
     if (this.cache.size >= CACHE_MAX) {
-      const oldest = this.cache.keys().next().value;
-      if (oldest !== undefined) this.cache.delete(oldest);
+      // for-of giữ kiểu string; keys().next().value bị eslint coi là any.
+      for (const oldest of this.cache.keys()) {
+        this.cache.delete(oldest);
+        break;
+      }
     }
     this.cache.set(key, { at: Date.now(), value });
   }
@@ -219,7 +249,11 @@ export class GrammarQaService {
             jlptLevel: true,
             lessonId: true,
             lesson: { select: { lessonNumber: true } },
-            examples: { select: { jp: true, vi: true }, orderBy: { sortOrder: "asc" }, take: 3 },
+            examples: {
+              select: { jp: true, vi: true },
+              orderBy: { sortOrder: "asc" },
+              take: 3,
+            },
           },
         },
       },
@@ -264,7 +298,11 @@ export class GrammarQaService {
         explanation: true,
         jlptLevel: true,
         lessonId: true,
-        examples: { select: { jp: true, vi: true }, orderBy: { sortOrder: "asc" }, take: 3 },
+        examples: {
+          select: { jp: true, vi: true },
+          orderBy: { sortOrder: "asc" },
+          take: 3,
+        },
       },
       orderBy: { id: "asc" },
     });

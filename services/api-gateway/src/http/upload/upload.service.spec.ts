@@ -44,8 +44,13 @@ describe("buildS3ClientConfig", () => {
   });
 
   it("S3 giả lập không có key → gắn key giả (server giả lập không kiểm)", () => {
-    const cfg = buildS3ClientConfig(config({ AWS_ENDPOINT_URL: "http://s3:9090" }));
-    expect(cfg.credentials).toEqual({ accessKeyId: "local", secretAccessKey: "local" });
+    const cfg = buildS3ClientConfig(
+      config({ AWS_ENDPOINT_URL: "http://s3:9090" }),
+    );
+    expect(cfg.credentials).toEqual({
+      accessKeyId: "local",
+      secretAccessKey: "local",
+    });
   });
 });
 
@@ -100,9 +105,13 @@ describe("UploadService.getPresignedUploadUrl", () => {
       }),
     );
     const out = await svc.getPresignedUploadUrl("image/jpeg", "chat");
-    expect(out.url.startsWith("http://localhost:8080/s3/edu-app-dev/chat/")).toBe(true);
+    expect(
+      out.url.startsWith("http://localhost:8080/s3/edu-app-dev/chat/"),
+    ).toBe(true);
     expect(out.url).not.toContain("s3:9090");
-    expect(out.publicUrl).toBe(`http://localhost:8080/s3/edu-app-dev/${out.key}`);
+    expect(out.publicUrl).toBe(
+      `http://localhost:8080/s3/edu-app-dev/${out.key}`,
+    );
   });
 });
 

@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 
 /**
  * Gọi model embedding trên Ollama (`POST /api/embed`). Mặc định `qwen3-embedding:0.6b`: đa ngôn ngữ (Nhật + Việt),
@@ -7,9 +11,13 @@ import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common"
 @Injectable()
 export class EmbeddingService {
   private readonly logger = new Logger(EmbeddingService.name);
-  private readonly base = (process.env.LOCAL_AI_BASE_URL ?? "http://127.0.0.1:11434").replace(/\/$/, "");
-  readonly model = process.env.LOCAL_AI_EMBED_MODEL?.trim() || "qwen3-embedding:0.6b";
-  private readonly timeoutMs = Number(process.env.LOCAL_AI_TIMEOUT_MS) || 120_000;
+  private readonly base = (
+    process.env.LOCAL_AI_BASE_URL ?? "http://127.0.0.1:11434"
+  ).replace(/\/$/, "");
+  readonly model =
+    process.env.LOCAL_AI_EMBED_MODEL?.trim() || "qwen3-embedding:0.6b";
+  private readonly timeoutMs =
+    Number(process.env.LOCAL_AI_TIMEOUT_MS) || 120_000;
 
   /**
    * Qwen3-Embedding khuyên thêm câu chỉ dẫn cho CÂU HỎI (không thêm cho tài liệu): độ chính xác tìm kiếm cao hơn.
@@ -36,7 +44,9 @@ export class EmbeddingService {
       }
       const data = (await res.json()) as { embeddings?: number[][] };
       if (!data.embeddings || data.embeddings.length !== inputs.length) {
-        throw new ServiceUnavailableException("Model embedding trả về sai số lượng vector");
+        throw new ServiceUnavailableException(
+          "Model embedding trả về sai số lượng vector",
+        );
       }
       return data.embeddings;
     } catch (error) {

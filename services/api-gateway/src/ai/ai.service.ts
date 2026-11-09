@@ -102,7 +102,8 @@ export class AiService {
    */
   private readonly reasoning = process.env.LOCAL_AI_REASONING?.trim() || "none";
   /** Không có giới hạn thì Ollama treo là request treo theo, giữ kết nối của người dùng mãi. */
-  private readonly timeoutMs = Number(process.env.LOCAL_AI_TIMEOUT_MS) || 120_000;
+  private readonly timeoutMs =
+    Number(process.env.LOCAL_AI_TIMEOUT_MS) || 120_000;
   private readonly gemini =
     this.provider === "gemini" && process.env.GEMINI_API_KEY
       ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -146,7 +147,11 @@ export class AiService {
   }
 
   /** Sinh câu trả lời theo nhà cung cấp đang cấu hình. Dùng chung cho các tính năng AI khác (RAG). */
-  generate(systemInstruction: string, question: string, options: GenOptions): Promise<string> {
+  generate(
+    systemInstruction: string,
+    question: string,
+    options: GenOptions,
+  ): Promise<string> {
     return this.provider === "ollama"
       ? this.askOllama(systemInstruction, question, [], options)
       : this.askGemini(systemInstruction, question, [], options);
@@ -180,7 +185,9 @@ export class AiService {
           messages,
           temperature: options.temperature,
           max_tokens: options.maxTokens,
-          ...(this.reasoning !== "default" ? { reasoning_effort: this.reasoning } : {}),
+          ...(this.reasoning !== "default"
+            ? { reasoning_effort: this.reasoning }
+            : {}),
         }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });
@@ -200,8 +207,12 @@ export class AiService {
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
       if (error instanceof DOMException && error.name === "TimeoutError") {
-        this.logger.error(`Ollama quá ${this.timeoutMs} ms (model ${this.model})`);
-        throw new GatewayTimeoutException("AI trả lời quá lâu, thử lại sau nhé");
+        this.logger.error(
+          `Ollama quá ${this.timeoutMs} ms (model ${this.model})`,
+        );
+        throw new GatewayTimeoutException(
+          "AI trả lời quá lâu, thử lại sau nhé",
+        );
       }
       this.logger.error("Ollama unreachable", error);
       throw new ServiceUnavailableException(

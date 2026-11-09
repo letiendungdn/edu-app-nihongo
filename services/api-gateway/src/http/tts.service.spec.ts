@@ -25,7 +25,7 @@ describe("TtsService", () => {
 
   it("có khóa Azure → gọi Azure Speech với SSML đúng giọng, không đụng Edge", async () => {
     const fetchMock = jest.fn().mockResolvedValue(mp3("azure"));
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
     const svc = new TtsService(
       config({ AZURE_SPEECH_KEY: "k", AZURE_SPEECH_REGION: "southeastasia" }),
     );
@@ -34,7 +34,9 @@ describe("TtsService", () => {
 
     expect(out.toString()).toBe("azure");
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://southeastasia.tts.speech.microsoft.com/cognitiveservices/v1");
+    expect(url).toBe(
+      "https://southeastasia.tts.speech.microsoft.com/cognitiveservices/v1",
+    );
     expect(init.headers["Ocp-Apim-Subscription-Key"]).toBe("k");
     expect(init.body).toBe(
       '<speak version="1.0" xml:lang="ja-JP"><voice name="ja-JP-NanamiNeural">先生 &amp; &lt;生徒&gt;</voice></speak>',
@@ -43,9 +45,15 @@ describe("TtsService", () => {
   });
 
   it("Azure lỗi → thử Edge", async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 }) as unknown as typeof fetch;
-    edgeSynthesize.mockResolvedValue({ audio: { arrayBuffer: async () => new TextEncoder().encode("edge").buffer } });
-    const svc = new TtsService(config({ AZURE_SPEECH_KEY: "k", AZURE_SPEECH_REGION: "r" }));
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+    edgeSynthesize.mockResolvedValue({
+      audio: {
+        arrayBuffer: async () => new TextEncoder().encode("edge").buffer,
+      },
+    });
+    const svc = new TtsService(
+      config({ AZURE_SPEECH_KEY: "k", AZURE_SPEECH_REGION: "r" }),
+    );
 
     expect((await svc.synthesize("xin chào", "vi-VN")).toString()).toBe("edge");
   });
@@ -54,15 +62,23 @@ describe("TtsService", () => {
     edgeSynthesize.mockRejectedValue(new Error("403"));
     const svc = new TtsService(config({}));
 
-    await expect(svc.synthesize("xin chào", "vi-VN")).rejects.toBeInstanceOf(TtsUnavailableError);
-    await expect(svc.synthesize("xin chào", "vi-VN")).rejects.toBeInstanceOf(TtsUnavailableError);
+    await expect(svc.synthesize("xin chào", "vi-VN")).rejects.toBeInstanceOf(
+      TtsUnavailableError,
+    );
+    await expect(svc.synthesize("xin chào", "vi-VN")).rejects.toBeInstanceOf(
+      TtsUnavailableError,
+    );
     expect(edgeSynthesize).toHaveBeenCalledTimes(1);
   });
 
   it("ngôn ngữ không hỗ trợ / văn bản rỗng → lỗi đầu vào, không phải lỗi dịch vụ", async () => {
     const svc = new TtsService(config({}));
-    await expect(svc.synthesize("x", "en-US")).rejects.not.toBeInstanceOf(TtsUnavailableError);
-    await expect(svc.synthesize("   ", "vi-VN")).rejects.not.toBeInstanceOf(TtsUnavailableError);
+    await expect(svc.synthesize("x", "en-US")).rejects.not.toBeInstanceOf(
+      TtsUnavailableError,
+    );
+    await expect(svc.synthesize("   ", "vi-VN")).rejects.not.toBeInstanceOf(
+      TtsUnavailableError,
+    );
   });
 
   it("buildSsml escape ký tự XML", () => {
