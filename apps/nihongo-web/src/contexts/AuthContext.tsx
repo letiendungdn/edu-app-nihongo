@@ -15,7 +15,6 @@ import {
   setStoredToken,
   subscribeAuthToken,
 } from '../lib/api-client';
-import { signoutKeycloak } from '../lib/keycloak';
 import { queryKeys, useAuthMeQuery } from '../hooks/queries';
 import { adoptGuestMistakes, pullFromServer } from '../utils/mistakeVocab';
 import type { AuthUser, LoginResponse, UpdateProfileInput } from '../types/api';
@@ -148,7 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Bản cũ chỉ xóa authMe + adminStats: người đăng nhập sau thấy phòng chat, hỗ trợ… của người trước
     queryClient.clear();
 
-    // End Keycloak SSO session (front-channel) if OIDC user still in sessionStorage
+    // End Keycloak SSO session (front-channel) if OIDC user still in sessionStorage.
+    // Tải oidc-client-ts lúc đăng xuất thay vì import tĩnh: AuthContext bọc toàn app, import tĩnh
+    // làm thư viện này (~66 KB) nằm trong chunk của layout gốc, trang nào cũng phải tải.
+    const { signoutKeycloak } = await import('../lib/keycloak');
     const redirected = await signoutKeycloak();
     if (redirected) return;
   }, [queryClient]);

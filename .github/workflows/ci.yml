@@ -158,6 +158,8 @@ jobs:
       - run: npm run build -w @edu/nihongo-web
         env:
           API_URL: http://localhost:3000
+      # Thư viện nặng (socket.io, oidc, hls.js, recharts…) không được lọt vào layout gốc. Xem docs/learn-webpack.md
+      - run: npm run bundle:report -w @edu/nihongo-web
 
   # ── Android: unit test (JVM) + bản release qua R8 ───────────────────────────
   android:

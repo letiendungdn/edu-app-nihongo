@@ -489,7 +489,7 @@ A: SM-2: công thức cố định cho mọi user
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 8/9.
+Bạn đang ở **9. Mobile** — bài 8/10.
 
 - Bài trước: [learn-flutter.md](./learn-flutter.md) — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter
 - **Bài tiếp: [security-owasp-mobile.md](./security-owasp-mobile.md)** — Bảo mật mobile theo OWASP

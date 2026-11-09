@@ -15,7 +15,7 @@ Mới bắt đầu: mở [run-local.md](./run-local.md), rồi bấm "Bài tiế
 5. [Kiểm thử](#5-kiểm-thử) — Viết test, đọc test có sẵn, đo tải.
 6. [DevOps và hạ tầng](#6-devops-và-hạ-tầng) — Đóng gói, định tuyến, triển khai, theo dõi và xử lý sự cố.
 7. [Cloud](#7-cloud) — Đưa project lên cloud, giả lập cloud trên máy.
-8. [Frontend web và desktop](#8-frontend-web-và-desktop) — Next.js, các công cụ trên web, AI local và app desktop.
+8. [Frontend web và desktop](#8-frontend-web-và-desktop) — Next.js, webpack, các công cụ trên web, AI local và app desktop.
 9. [Mobile](#9-mobile) — Các app mobile của project, từ nền tảng đến tính năng và bảo mật.
 10. [Tích hợp: đăng nhập, mail, thanh toán](#10-tích-hợp-đăng-nhập-mail-thanh-toán) — Cài đặt và thực hành các dịch vụ bên ngoài.
 
@@ -138,9 +138,10 @@ Next.js, các công cụ trên web, AI local và app desktop.
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
 | 1 | [roadmap-reactjs.md](./roadmap-reactjs.md) | React + Next.js qua apps/nihongo-web |
-| 2 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
-| 3 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
-| 4 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
+| 2 | [learn-webpack.md](./learn-webpack.md) | Webpack qua bản build của web: chia chunk, đo và giảm dung lượng |
+| 3 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
+| 4 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
+| 5 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
 
 ---
 
@@ -159,6 +160,7 @@ Các app mobile của project, từ nền tảng đến tính năng và bảo m�
 | 7 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
 | 8 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
 | 9 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
+| 10 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
 
 ---
 

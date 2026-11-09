@@ -462,6 +462,8 @@ docker run --rm -v nihongo-app_postgres_data:/data -v ${PWD}:/backup alpine `
 | **502 Bad Gateway** (nginx) | Web/gateway/keycloak chưa ready — đợi ~30–60s hoặc `docker compose restart nginx` |
 | **Volume external not found** | `docker volume create nihongo-app_postgres_data` |
 | **Port 8080 đã dùng** | `NGINX_HTTP_PORT=8888` trong `.env`, `docker compose up -d nginx` |
+| **Video Mori (`/mori`) báo "Không phát được video"** | Khóa học đang để trên USB (`MORI_COURSE_DIR` trong `.env`). Cắm USB, rồi chạy `docker compose up -d --no-deps --force-recreate nihongo-web`. Kiểm tra: `docker exec edu-nihongo-web sh -c 'find /media/mori-course -name "*.mp4" \| wc -l'` phải ra khoảng 1839. Chi tiết: [media-storage.md](./media-storage.md) |
+| **Thư mục Google Drive rỗng trong container** | macOS chặn Docker đọc `~/Library/CloudStorage` ("Operation not permitted"), và app Google Drive phải đang chạy. Chép dữ liệu ra USB hoặc thư mục thường |
 | **CORS / login lỗi** | `ALLOWED_ORIGINS` khớp URL trình duyệt (`:8080`, `auth.localhost`) |
 | **Keycloak không mở** | Thêm hosts `auth.localhost`; kiểm `docker ps` có `edu-keycloak` |
 | **OIDC mobile lỗi** | Emulator dùng `10.0.2.2:8080` qua nginx — xem [learn-nginx.md](./learn-nginx.md) |

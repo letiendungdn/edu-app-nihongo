@@ -540,7 +540,7 @@ Mục 10, chọn lỗi SSE: nói được triệu chứng (200 OK nhưng im lặ
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 5/9.
+Bạn đang ở **9. Mobile** — bài 5/10.
 
 - Bài trước: [learn-android-kotlin.md](./learn-android-kotlin.md) — Android Kotlin từ code thật, lộ trình 8 tuần
 - **Bài tiếp: [learn-swift-ios.md](./learn-swift-ios.md)** — Swift/SwiftUI qua nihongo-ios

@@ -1,12 +1,20 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid, Legend,
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import { fetchAnalytics } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
+
+// recharts chỉ cần cho biểu đồ: tách thành chunk riêng, tải sau khi trang đã hiện số liệu.
+// ssr: false vì biểu đồ đo kích thước khung bằng DOM (ResponsiveContainer), không vẽ được trên server.
+const AnalyticsCharts = dynamic(() => import('@/components/AnalyticsCharts'), {
+  ssr: false,
+  loading: () => (
+    <div className="card" style={{ marginBottom: '1.5rem', minHeight: 200, color: 'var(--text-secondary)' }}>
+      Đang tải biểu đồ…
+    </div>
+  ),
+});
 
 function fmtSeconds(s: number) {
   const h = Math.floor(s / 3600);
@@ -141,56 +149,11 @@ export default function AnalyticsPage() {
         <Heatmap data={studySessions.map((s) => ({ date: s.date as unknown as string, seconds: s.seconds }))} />
       </section>
 
-      {/* Chart thời gian học 30 ngày */}
-      {last30Study.length > 0 && (
-        <section className="card" style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Thời gian học (30 ngày)</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={last30Study}>
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} unit="p" />
-              <Tooltip formatter={(v) => [`${v} phút`, 'Học']} />
-              <Bar dataKey="Phút học" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-
-      {/* Chart nghe */}
-      {last30Listening.length > 0 && (
-        <section className="card" style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Thời gian nghe (30 ngày)</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={last30Listening}>
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} unit="p" />
-              <Tooltip formatter={(v) => [`${v} phút`, 'Nghe']} />
-              <Bar dataKey="Phút nghe" fill="#4ade80" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      )}
-
-      {/* Lịch sử thi */}
-      {examChartData.length > 0 && (
-        <section className="card" style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Lịch sử thi mock exam</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={examChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-              <Tooltip formatter={(v) => [`${v}%`, 'Điểm']} />
-              <Legend />
-              <Line type="monotone" dataKey="Điểm" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-          {/* Pass line */}
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Ngưỡng đạt: N5 ≥ 60% · N4–N1 ≥ 65%
-          </p>
-        </section>
-      )}
+      <AnalyticsCharts
+        last30Study={last30Study}
+        last30Listening={last30Listening}
+        examChartData={examChartData}
+      />
 
       {examChartData.length === 0 && last30Study.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-secondary)' }}>

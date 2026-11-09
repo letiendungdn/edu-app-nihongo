@@ -2,6 +2,7 @@
 
 > **Lộ trình học** (React 19 + Next.js + TanStack Query), không phải bảng status feature.  
 > App thật: `nihongo-web` (Next 15). Chạy dev (`npm run dev:nihongo-web`): cổng **5173**. Chạy bằng Docker: vào qua nginx ở **8080** (container web nghe cổng 8080, không mở ra máy).  
+> Build và tối ưu bundle: [learn-webpack.md](./learn-webpack.md).  
 > Chạy: [run-local.md](./run-local.md) · Docker: [docker.md](./docker.md) · Mobile RN: [roadmap-react-native.md](./roadmap-react-native.md).
 
 ---
@@ -309,9 +310,9 @@ npm run docker:up:nihongo   # → http://localhost:8080
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 1/4.
+Bạn đang ở **8. Frontend web và desktop** — bài 1/5.
 
-- **Bài tiếp: [canvas-tools.md](./canvas-tools.md)** — Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web
+- **Bài tiếp: [learn-webpack.md](./learn-webpack.md)** — Webpack qua bản build của web: chia chunk, đo và giảm dung lượng
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

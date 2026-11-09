@@ -85,6 +85,12 @@ class HomeScreen extends ConsumerWidget {
             subtitle: 'Spaced repetition SM-2 — 4 mức đánh giá',
             onTap: () => context.push(Routes.srs),
           ),
+          _NavCard(
+            icon: Icons.menu_book_rounded,
+            title: 'Từ điển N5–N1',
+            subtitle: 'Duyệt toàn bộ từ vựng theo cấp, kéo xuống tải tiếp',
+            onTap: () => context.push(Routes.dictionary),
+          ),
 
           _SectionLabel('LUYỆN TẬP'),
           _NavCard(

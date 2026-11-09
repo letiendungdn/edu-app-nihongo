@@ -1471,7 +1471,7 @@ Thêm câu hỏi mobile: [interview-mobile.md](./interview-mobile.md) · Android
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 4/9.
+Bạn đang ở **9. Mobile** — bài 4/10.
 
 - Bài trước: [learn-android-fundamentals.md](./learn-android-fundamentals.md) — Nền tảng Android qua code nihongo-android
 - **Bài tiếp: [learn-android-features.md](./learn-android-features.md)** — 9 tính năng Android mới và bài học

@@ -1,5 +1,7 @@
 # Ảnh và file media được lưu ở đâu
 
+> Tài liệu này nói về phía server và web. Lưu ảnh trên app mobile, tràn cache: xem [mobile-qa.md](./mobile-qa.md).
+
 Hệ thống có **bốn kiểu lưu** ảnh và file, tùy ảnh đó do ai tạo ra:
 
 | Kiểu | Dùng cho | Nằm ở đâu | Có trong git? | Sao lưu bằng |
@@ -152,6 +154,17 @@ Khai báo trong [docker-compose.yml](../docker-compose.yml), service `nihongo-we
 | volume `mori_hls_cache` | `/tmp/mori-hls` | Bản HLS sinh ra khi phát video (tạo lại được) |
 
 - Hai thư mục đầu nằm trong `.gitignore` vì nặng và có bản quyền. **Máy mới phải tự chép sang.**
+
+**Khóa học Mori đang để trên USB** (từ 09/11/2026). Trong `.env`:
+
+```bash
+MORI_COURSE_DIR="/Volumes/ESD-ISO/309. [Tiếng Nhật][Dũng Mori] - Combo Tiếng Nhật Từ N1 đến N5 của Dũng Mori"
+```
+
+- **Phải cắm USB trước khi bật container web.** Docker gắn thư mục lúc tạo container. Cắm USB sau thì phải chạy lại `docker compose up -d --no-deps --force-recreate nihongo-web`.
+- **Không dùng được thư mục Google Drive** (`~/Library/CloudStorage/...`): app Google Drive phải đang chạy, và macOS chặn Docker đọc thư mục này ("Operation not permitted"). Muốn dùng thì phải đặt thư mục ở chế độ offline và cấp Full Disk Access cho Docker.
+- **Kiểm tra nhanh:** `docker exec edu-nihongo-web sh -c 'find /media/mori-course -name "*.mp4" | wc -l'` phải ra khoảng 1.839. Ra 0 là container không đọc được thư mục.
+- Danh sách bài nằm trong `apps/nihongo-web/src/data/mori-course.json` (đường dẫn file tương đối với `MORI_COURSE_DIR`). Danh sách này đóng vào image, nên sửa xong phải build lại web.
 - Vì là bind mount, thêm file vào thư mục trên máy thì container thấy ngay, không cần build lại.
 
 ---

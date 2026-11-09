@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Hls from 'hls.js';
 import catalog from '@/data/mori-course.json';
 import './MoriCourseView.css';
 
@@ -27,20 +26,36 @@ function HlsVideo({ src }: { src: string }) {
     if (!video) return;
     setError('');
     setReady(false);
-    if (Hls.isSupported()) {
-      const hls = new Hls({ startPosition: 0 });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setError('Không phát được video.');
-      });
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      return () => hls.destroy();
-    }
+    // Safari (macOS, iOS) phát HLS sẵn: không cần tải hls.js (~570 KB chưa nén).
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
       return;
     }
-    setError('Trình duyệt không phát được HLS.');
+    // Trình duyệt khác: tải hls.js lúc cần, thay vì import tĩnh làm trang /mori nặng thêm.
+    let cancelled = false;
+    let destroy: (() => void) | undefined;
+    void import('hls.js')
+      .then(({ default: Hls }) => {
+        if (cancelled) return;
+        if (!Hls.isSupported()) {
+          setError('Trình duyệt không phát được HLS.');
+          return;
+        }
+        const hls = new Hls({ startPosition: 0 });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) setError('Không phát được video.');
+        });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        destroy = () => hls.destroy();
+      })
+      .catch(() => {
+        if (!cancelled) setError('Không tải được trình phát video.');
+      });
+    return () => {
+      cancelled = true;
+      destroy?.();
+    };
   }, [src]);
 
   return (

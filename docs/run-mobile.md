@@ -135,6 +135,12 @@ flutter run -d emulator-5554
 
 Lần build đầu mất khoảng 4–5 phút, các lần sau nhanh hơn nhiều. Khi app đang chạy, bấm `r` (hot reload), `R` (hot restart) hoặc `q` (thoát) trong terminal.
 
+**Lưu ý:**
+
+- `flutter run` phải **giữ chạy trong terminal** thì mới dùng được hot reload. Tắt terminal, hoặc phiên debug bị ngắt, thì app vẫn mở trên máy ảo nhưng không nhận code mới nữa. Chạy lại `flutter run -d emulator-5554`.
+- Máy ảo tắt (ví dụ khởi động lại máy) thì `flutter run -d emulator-5554` báo "No supported devices found". Bật lại bằng `flutter emulators --launch pixel_api_35` rồi chạy lại.
+- Đừng dùng `--pid-file` trỏ vào thư mục tạm có thể bị xóa: Flutter vẫn build và cài app xong, nhưng lệnh kết thúc với mã lỗi.
+
 **Kiểm tra app đã nối được backend:**
 
 1. Trên Home, góc phải phải hiện **Online**.
@@ -212,7 +218,7 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 2/9.
+Bạn đang ở **9. Mobile** — bài 2/10.
 
 - Bài trước: [mobile-tech-stacks.md](./mobile-tech-stacks.md) — Tech stack từng app mobile
 - **Bài tiếp: [learn-android-fundamentals.md](./learn-android-fundamentals.md)** — Nền tảng Android qua code nihongo-android

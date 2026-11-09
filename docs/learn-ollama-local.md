@@ -45,7 +45,7 @@ LOCAL_AI_MODEL=qwen2.5:7b
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 3/4.
+Bạn đang ở **8. Frontend web và desktop** — bài 4/5.
 
 - Bài trước: [canvas-tools.md](./canvas-tools.md) — Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web
 - **Bài tiếp: [learn-electron.md](./learn-electron.md)** — Electron: app desktop Nihongo
