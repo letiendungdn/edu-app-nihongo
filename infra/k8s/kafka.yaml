@@ -36,9 +36,16 @@ spec:
       labels:
         app: kafka
     spec:
+      # Bảo mật: image bên thứ ba (entrypoint cần root lúc khởi động để chown thư mục dữ liệu), nên chỉ bật
+      # những gì không làm hỏng image: seccomp mặc định, chặn leo quyền. Ngoại lệ còn lại: .trivyignore.yaml.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: kafka
           image: apache/kafka:3.8.1
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 9092
               name: kafka

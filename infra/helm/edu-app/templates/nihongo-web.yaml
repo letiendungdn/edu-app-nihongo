@@ -37,10 +37,36 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      # Bảo mật (Trivy KSV-0118, KSV-0014): chạy bằng user thường, chặn leo quyền, bỏ mọi capability,
+      # hệ thống file gốc chỉ đọc. Image đã đặt USER node (uid 1000). Xem docs/learn-devsecops.md.
+      # App không gọi Kubernetes API: không gắn token ServiceAccount vào pod (lọt container cũng không dò được cluster)
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: next-cache
+          emptyDir: {}
       containers:
         - name: nihongo-web
           image: {{ include "edu-app.image" (dict "service" "nihongo-web" "Values" .Values "Chart" .Chart) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: next-cache
+              mountPath: /app/apps/nihongo-web/.next/cache
           ports:
             - containerPort: 8080
               name: http

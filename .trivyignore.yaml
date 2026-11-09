@@ -1,0 +1,54 @@
+# Ngoại lệ của Trivy (quét cấu hình và image). Mỗi mục PHẢI có lý do và điều kiện gỡ.
+# Chạy: xem docs/learn-devsecops.md mục 6. Trivy tự đọc file này khi dùng --ignorefile .trivyignore.yaml
+misconfigurations:
+  # Web phải công khai trên Internet: HTTP/HTTPS mở cho mọi IP là đúng thiết kế.
+  # (SSH đã bắt buộc nhập IP cụ thể, xem infra/terraform/variables.tf ssh_allowed_cidrs.)
+  - id: DIG-0001
+    paths:
+      - "infra/terraform/main.tf"
+    statement: "Cổng 80/443 công khai là chủ đích; SSH đã bị chặn 0.0.0.0/0 bằng validation"
+
+  # Máy chủ app cần gọi ra ngoài (Stripe, Brevo, Google OAuth, tải image). Giới hạn đích ra theo IP
+  # không khả thi khi các dịch vụ này đổi IP liên tục. Gỡ khi có proxy đi ra (egress proxy).
+  - id: DIG-0003
+    paths:
+      - "infra/terraform/main.tf"
+    statement: "App cần gọi API bên ngoài; chưa có egress proxy"
+
+  # Bài học serverless: S3 vẫn mã hóa mặc định bằng khóa do AWS quản lý (SSE-S3). Khóa riêng (KMS CMK)
+  # tốn ~1 USD/tháng, không cần cho dữ liệu học. Gỡ nếu dùng bucket này cho dữ liệu thật.
+  - id: AWS-0132
+    paths:
+      - "infra/aws-learn/terraform/main.tf"
+    statement: "Bucket học tập, đã mã hóa SSE-S3 mặc định"
+
+  # Báo nhầm: `PASSWD` trong ConfigMap MQTT là tên biến chứa ĐƯỜNG DẪN file mật khẩu (/mosquitto/passwd);
+  # mật khẩu thật lấy từ Secret qua biến MQTT_GATEWAY_PASSWORD.
+  - id: KSV-0109
+    paths:
+      - "infra/k8s/mqtt/mosquitto.yaml"
+    statement: "Báo nhầm: chỉ là đường dẫn file, mật khẩu nằm trong Secret"
+
+  # Image bên thứ ba (postgres, redis, kafka, mosquitto): entrypoint chạy root lúc khởi động để chown thư mục
+  # dữ liệu rồi tự hạ quyền, và cần ghi vào nhiều thư mục. Đã bật seccomp + allowPrivilegeEscalation: false.
+  # Gỡ khi chuyển sang dịch vụ quản lý (RDS, ElastiCache, MSK) hoặc image rootless.
+  - id: KSV-0014
+    paths:
+      - "infra/k8s/postgres.yaml"
+      - "infra/k8s/redis.yaml"
+      - "infra/k8s/kafka.yaml"
+      - "infra/k8s/mqtt/mosquitto.yaml"
+      - "infra/helm/edu-app/templates/postgres.yaml"
+      - "infra/helm/edu-app/templates/redis.yaml"
+      - "infra/helm/edu-app/templates/kafka.yaml"
+    statement: "Image bên thứ ba cần ghi hệ thống file; đã hạn chế bằng seccomp và chặn leo quyền"
+  - id: KSV-0118
+    paths:
+      - "infra/k8s/postgres.yaml"
+      - "infra/k8s/redis.yaml"
+      - "infra/k8s/kafka.yaml"
+      - "infra/k8s/mqtt/mosquitto.yaml"
+      - "infra/helm/edu-app/templates/postgres.yaml"
+      - "infra/helm/edu-app/templates/redis.yaml"
+      - "infra/helm/edu-app/templates/kafka.yaml"
+    statement: "Image bên thứ ba cần root lúc khởi động; đã đặt securityContext tối thiểu"

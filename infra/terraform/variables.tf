@@ -88,8 +88,26 @@ variable "redis_node_count" {
   default     = 1
 }
 
+# Bảo mật: KHÔNG có giá trị mặc định. Bản cũ mặc định 0.0.0.0/0 (cả Internet SSH được vào máy chủ,
+# Trivy DIG-0001). Nhập IP của bạn, ví dụ ["203.0.113.7/32"].
 variable "ssh_allowed_cidrs" {
-  description = "CIDR blocks allowed for SSH access"
+  description = "Dải IP được phép SSH vào droplet (ví dụ IP nhà / VPN của bạn, dạng /32)"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+
+  validation {
+    condition     = length(var.ssh_allowed_cidrs) > 0 && !contains(var.ssh_allowed_cidrs, "0.0.0.0/0") && !contains(var.ssh_allowed_cidrs, "::/0")
+    error_message = "ssh_allowed_cidrs phải liệt kê IP cụ thể; không được mở SSH cho mọi địa chỉ (0.0.0.0/0, ::/0)."
+  }
+}
+
+# Bảo mật: đăng nhập droplet bằng SSH key, không bằng mật khẩu (Trivy DIG-0004).
+# Lấy id/fingerprint: doctl compute ssh-key list
+variable "ssh_key_ids" {
+  description = "Id hoặc fingerprint SSH key đã thêm vào tài khoản DigitalOcean"
+  type        = list(string)
+
+  validation {
+    condition     = length(var.ssh_key_ids) > 0
+    error_message = "Cần ít nhất một SSH key để đăng nhập droplet."
+  }
 }

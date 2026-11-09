@@ -285,6 +285,8 @@ services:
       LOCAL_AI_TIMEOUT_MS: ${LOCAL_AI_TIMEOUT_MS:-120000}
       # Hỏi đáp ngữ pháp (RAG): model embedding đa ngôn ngữ. Cài: ollama pull qwen3-embedding:0.6b
       LOCAL_AI_EMBED_MODEL: ${LOCAL_AI_EMBED_MODEL:-qwen3-embedding:0.6b}
+      # Máy dev: mở Swagger ở /api/docs. Production (K8s) để mặc định = tắt, xem services/api-gateway/src/main.ts
+      ENABLE_SWAGGER: ${ENABLE_SWAGGER:-true}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     # /health/live không gọi DB/service khác — chỉ báo process Nest đã nghe cổng 3000.
     healthcheck:
@@ -458,7 +460,7 @@ services:
     container_name: edu-nginx
     restart: unless-stopped
     ports:
-      - '${NGINX_HTTP_PORT:-8080}:80'
+      - '${NGINX_HTTP_PORT:-8080}:8080'
     # Chỉ có tác dụng với `docker compose up`. Khi Docker Desktop tự bật lại container
     # (restart: unless-stopped) thì không theo thứ tự này — nginx.conf xử lý khoảng chờ đó.
     depends_on:
