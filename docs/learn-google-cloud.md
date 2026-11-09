@@ -370,9 +370,9 @@ Cách dọn sạch nhất: **xoá cả project** — `gcloud projects delete edu
 
 ## Đi tiếp
 
-Bạn đang ở **7. Cloud** — bài 3/3.
+Bạn đang ở **7. Cloud** — bài 5/5.
 
-- Bài trước: [learn-aws.md](./learn-aws.md) — AWS: S3 (đang dùng), ECS Fargate, RDS, SQS/SNS, IAM
+- Bài trước: [learn-aws-serverless.md](./learn-aws-serverless.md) — Thực hành serverless: S3 + Lambda + IAM bằng Terraform, chạy trên LocalStack hoặc AWS
 - Xong nhóm này. **Nhóm tiếp: 8. Frontend web và desktop** — bắt đầu bằng [roadmap-reactjs.md](./roadmap-reactjs.md) (React + Next.js qua apps/nihongo-web)
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

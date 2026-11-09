@@ -160,11 +160,27 @@ model Grammar {
   lessonId       Int
   lesson         Lesson     @relation(fields: [lessonId], references: [id])
   examples       Example[]
+  embedding      GrammarEmbedding?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
   @@index([lessonId, sortOrder])
   @@index([jlptLevel])
+}
+
+/// Vector embedding của một mẫu ngữ pháp, dùng cho hỏi đáp ngữ pháp (RAG).
+/// Dữ liệu SINH RA từ Grammar + Example: xóa đi thì chạy reindex là có lại, không đưa vào file seed.
+/// `contentHash` = hash nội dung đã embed: nội dung đổi thì hash đổi → reindex chỉ làm lại dòng đó.
+/// `vector` lưu float32 little-endian. Chưa dùng pgvector vì image Postgres hiện tại không có extension này;
+/// ~1.700 vector tìm trong bộ nhớ vẫn dưới 5 ms. Lên hàng trăm nghìn dòng thì chuyển sang pgvector (HNSW).
+model GrammarEmbedding {
+  grammarId   Int      @id
+  grammar     Grammar  @relation(fields: [grammarId], references: [id], onDelete: Cascade)
+  model       String
+  contentHash String
+  dims        Int
+  vector      Bytes
+  updatedAt   DateTime @updatedAt
 }
 
 model Example {

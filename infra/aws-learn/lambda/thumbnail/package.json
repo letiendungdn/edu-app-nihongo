@@ -1,0 +1,13 @@
+{
+  "name": "edu-thumbnail-lambda",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lambda tạo ảnh thu nhỏ khi có ảnh mới trong S3 (học serverless, xem docs/learn-aws-serverless.md)",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "jimp": "1.6.1"
+  }
+}

@@ -6,15 +6,31 @@ App dùng Ollama trên máy thay Gemini / Apple Intelligence.
 
 - App: `/Applications/Ollama.app`
 - CLI: `~/homebrew/bin/ollama` (symlink)
-- Model: `qwen2.5:7b` (~4.7 GB)
+- Model trả lời: `qwen3:14b` (từ 09/11/2026; `.env` đặt `LOCAL_AI_MODEL=qwen3:14b`). Mặc định của repo vẫn là `qwen2.5:7b`, nhưng model đó **không có** trên máy này: dùng nó thì mọi tính năng AI báo lỗi 404.
+- Model embedding: `qwen3-embedding:0.6b` (~640 MB), dùng cho hỏi đáp ngữ pháp (RAG)
 - API: `http://127.0.0.1:11434`
+
+**Kiểm tra model gateway đang dùng có trên máy không** (lỗi hay gặp nhất):
+
+```bash
+docker exec edu-gateway printenv LOCAL_AI_MODEL LOCAL_AI_EMBED_MODEL
+ollama list
+```
+
+**Model có chế độ "nghĩ" (qwen3, deepseek-r1):** mặc định model dùng hết `max_tokens` để suy nghĩ, phần trả lời thành **rỗng**. Gateway gửi `reasoning_effort: "none"` để tắt (biến `LOCAL_AI_REASONING`, đặt `default` để model tự quyết). Thử nhanh:
+
+```bash
+curl -s localhost:11434/v1/chat/completions -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3:14b","messages":[{"role":"user","content":"Xin chào"}],"max_tokens":200,"reasoning_effort":"none"}'
+```
 
 ## Chạy mỗi lần học
 
 ```bash
 open -a Ollama          # hoặc: npm run ai:ollama
 # lần đầu / máy khác:
-ollama pull qwen2.5:7b  # hoặc: npm run ai:ollama:pull
+ollama pull qwen2.5:7b  # hoặc: npm run ai:ollama:pull (máy này dùng qwen3:14b)
+ollama pull qwen3-embedding:0.6b   # cho hỏi đáp ngữ pháp
 ```
 
 Kiểm tra:

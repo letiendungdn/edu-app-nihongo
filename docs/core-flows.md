@@ -17,6 +17,7 @@ Viết ngày 21/10/2026, cập nhật sau đợt sửa 12 rủi ro cùng ngày. 
 - [7. Thi thử JLPT](#7-thi-thử-jlpt)
 - [8. Nội dung học](#8-nội-dung-học)
 - [9. AI](#9-ai)
+- [9b. Hỏi đáp ngữ pháp có trích nguồn (RAG)](#9b-hỏi-đáp-ngữ-pháp-có-trích-nguồn-rag)
 - [10. Nhắc ôn (push, email)](#10-nhắc-ôn-push-email)
 - [10b. Học viên sắp bỏ học (Airflow)](#10b-học-viên-sắp-bỏ-học-airflow)
 - [11. Dự đoán đề thi JLPT](#11-dự-đoán-đề-thi-jlpt)
@@ -572,6 +573,65 @@ sequenceDiagram
   - **Key AI chỉ nằm ở server.** Bản cũ của app mobile từng gọi thẳng Gemini bằng key biên dịch vào app: giải nén app là lấy được key.
   - **Throttle riêng cho AI** vì mỗi lần gọi tốn tiền / GPU.
   - **Chỉ gửi 10 tin gần nhất** để giới hạn token.
+
+---
+
+## 9b. Hỏi đáp ngữ pháp có trích nguồn (RAG)
+
+Trang `/grammar/hoi-dap`. Người học hỏi bằng tiếng Việt hoặc gõ thẳng mẫu (「たことがある」); AI trả lời **chỉ dựa trên ngữ pháp có trong app** và đánh số nguồn [1], [2].
+
+> **Nói ngắn gọn**
+> 1. Mỗi mẫu ngữ pháp (mẫu + nghĩa + giải thích + 3 ví dụ) được biến thành một **vector embedding**: một dãy 1.024 số mô tả nghĩa. Làm một lần, lưu trong bảng `GrammarEmbedding`.
+> 2. Người học hỏi → câu hỏi cũng thành vector → tìm 5 mẫu có vector **gần nhất** (cộng thêm điểm nếu câu hỏi chứa đúng chữ Nhật của mẫu).
+> 3. Điểm quá thấp (câu hỏi lạc đề) → báo "không tìm thấy" luôn, **không gọi AI**.
+> 4. Ngược lại → gửi AI câu hỏi kèm 5 nguồn đánh số, dặn chỉ trả lời từ nguồn và ghi số nguồn.
+> 5. Server đọc lại các số [n] trong câu trả lời: số không tồn tại bị bỏ; không trích nguồn nào thì gắn cờ `grounded: false` để giao diện cảnh báo.
+
+```mermaid
+sequenceDiagram
+  participant U as Web /grammar/hoi-dap
+  participant GW as POST /api/ai/grammar-qa/ask
+  participant EM as Ollama embed (qwen3-embedding:0.6b)
+  participant IX as Chỉ mục trong RAM (1.689 vector)
+  participant LLM as Ollama chat (qwen3:14b)
+
+  U->>GW: {question}
+  GW->>GW: cache 1 giờ theo câu hỏi đã chuẩn hóa
+  GW->>EM: embed("Instruct: … Query: " + question)
+  EM-->>GW: vector 1024 chiều
+  GW->>IX: cosine (85%) + trùng chữ Nhật (15%), gộp mẫu trùng, top 5
+  alt điểm tốt nhất < 0,45
+    GW-->>U: "chưa tìm thấy" + 3 mẫu gần nhất (không gọi AI)
+  else
+    GW->>LLM: system prompt + NGUỒN [1]..[5] + câu hỏi (temperature 0,2)
+    LLM-->>GW: câu trả lời có [n]
+    GW->>GW: parseCitations, grounded = có trích nguồn
+    GW-->>U: answer, sources (cited), timingsMs
+  end
+```
+
+- **File:** `services/api-gateway/src/ai/grammar-qa/` — `grammar-qa.ts` (hàm thuần: ghép nội dung, xếp hạng, prompt, đọc trích dẫn), `embedding.service.ts`, `grammar-qa.service.ts`, `grammar-qa.controller.ts`; bảng `GrammarEmbedding` (migration `20261109090000_grammar_embedding`); web `apps/nihongo-web/src/views/GrammarQaView.tsx`.
+- **API:** `POST /ask` (đăng nhập, 30 lần / 10 phút), `GET /search?q=` (chỉ tìm nguồn, không gọi AI), `POST /reindex` và `GET /status` (ADMIN).
+- **Tạo chỉ mục:** `POST /api/ai/grammar-qa/reindex` (admin). Lần đầu 1.689 mẫu mất **50 giây**; chạy lại chỉ **38 ms** vì so `contentHash` (hash của nội dung + tên model) và chỉ embed mẫu có thay đổi. Đổi model embedding thì mọi hash đổi → embed lại toàn bộ, dòng của model cũ bị xóa.
+- **Đánh giá:** `node services/api-gateway/scripts/grammar-qa-eval.mjs` (bộ câu hỏi trong `grammar-qa-eval.json`). Kết quả ngày 09/11/2026:
+
+  | Chỉ số | Kết quả |
+  |---|---|
+  | hit@5 (mẫu đúng trong 5 nguồn) | 18/18 = 1,00 |
+  | hit@1 (mẫu đúng đứng đầu) | 0,72 |
+  | MRR | 0,82 |
+  | Câu ngoài phạm vi bị từ chối | 3/3 |
+
+  Script thoát mã 1 nếu hit@5 < 0,8 hoặc có câu ngoài phạm vi được trả lời như có nguồn: chạy lại mỗi khi đổi model, cách ghép nội dung hay trọng số.
+
+- **Điểm thiết kế (hay được hỏi khi phỏng vấn AI production):**
+  - **Bám nguồn và trích dẫn:** AI chỉ được dùng nguồn đã đánh số; server tự kiểm số trích dẫn thay vì tin AI. Không trích nguồn nào → cảnh báo trên giao diện.
+  - **Hai lớp chặn câu lạc đề:** chỉ dùng ngưỡng điểm là không đủ — câu "thời tiết Hà Nội" đạt 0,529, cao hơn câu đúng chủ đề "nếu trời mưa" (0,515). Lớp 1: ngưỡng thấp loại câu chắc chắn lạc đề, **không tốn lượt gọi AI**. Lớp 2: prompt dặn AI từ chối, và câu trả lời không trích nguồn bị gắn `grounded: false`.
+  - **Kết hợp vector + chữ:** embedding xếp sai thứ tự giữa các mẫu gần nghĩa; người học gõ 「たことがある」 (thể thường) trong khi DB lưu 「たことがあります」, nên so bằng chuỗi con chung ≥ 3 ký tự chứ không so nguyên chuỗi.
+  - **Chi phí và độ trễ:** cache câu hỏi 1 giờ; câu lạc đề không gọi AI; mỗi câu ghi một dòng log `grammar_qa` gồm thời gian embed / tìm / AI và điểm nguồn tốt nhất. Đo thật: tìm nguồn ~120 ms, AI ~12 giây (`qwen3:14b` chạy trên máy).
+  - **Chưa dùng pgvector:** image Postgres hiện tại không có extension này. 1.689 vector tìm tuyến tính trong RAM dưới 5 ms. Khi lên hàng trăm nghìn tài liệu thì chuyển sang pgvector với chỉ mục HNSW.
+  - **Model "nghĩ" (qwen3):** phải gửi `reasoning_effort: "none"`, nếu không model dùng hết `max_tokens` để suy nghĩ và câu trả lời **rỗng** (xem `LOCAL_AI_REASONING`).
+  - **Cấu hình:** `LOCAL_AI_MODEL`, `LOCAL_AI_EMBED_MODEL` (mặc định `qwen3-embedding:0.6b`, cài bằng `ollama pull`), `LOCAL_AI_TIMEOUT_MS` (mặc định 120 giây), `GRAMMAR_QA_MIN_SCORE` (mặc định 0,45).
 
 ---
 

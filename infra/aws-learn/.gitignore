@@ -1,0 +1,6 @@
+lambda/thumbnail/node_modules/
+terraform/.terraform/
+terraform/.terraform.lock.hcl.bak
+terraform/.build/
+terraform/terraform.tfstate*
+terraform/terraform.tfstate.d/

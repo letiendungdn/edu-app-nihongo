@@ -11,6 +11,7 @@ export const NAV_GROUPS = [
       { href: '/vocab/picture', icon: '絵', label: 'Từ điển tranh' },
       { href: '/grammar',   icon: '文',  label: 'Ngữ pháp' },
       { href: '/grammar/mindmap', icon: '系', label: 'Sơ đồ ngữ pháp' },
+      { href: '/grammar/hoi-dap', icon: '問', label: 'Hỏi đáp ngữ pháp' },
       { href: '/kanji',     icon: '漢',  label: 'Kanji' },
       { href: '/kanji/mindmap', icon: '網', label: 'Sơ đồ kanji' },
       { href: '/kanji/list', icon: '表', label: 'Bảng Kanji JLPT' },

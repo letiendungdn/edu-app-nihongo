@@ -14,7 +14,7 @@ Mới bắt đầu: mở [run-local.md](./run-local.md), rồi bấm "Bài tiế
 4. [Cơ sở dữ liệu](#4-cơ-sở-dữ-liệu) — Từ câu SQL đầu tiên đến thiết kế và đọc sơ đồ DB thật.
 5. [Kiểm thử](#5-kiểm-thử) — Viết test, đọc test có sẵn, đo tải.
 6. [DevOps và hạ tầng](#6-devops-và-hạ-tầng) — Đóng gói, định tuyến, triển khai, theo dõi và xử lý sự cố.
-7. [Cloud](#7-cloud) — Đưa project lên cloud, giả lập cloud trên máy.
+7. [Cloud](#7-cloud) — Đưa project lên cloud, giả lập cloud trên máy, Terraform, serverless.
 8. [Frontend web và desktop](#8-frontend-web-và-desktop) — Next.js, webpack, các công cụ trên web, AI local và app desktop.
 9. [Mobile](#9-mobile) — Các app mobile của project, từ nền tảng đến tính năng và bảo mật.
 10. [Tích hợp: đăng nhập, mail, thanh toán](#10-tích-hợp-đăng-nhập-mail-thanh-toán) — Cài đặt và thực hành các dịch vụ bên ngoài.
@@ -127,7 +127,9 @@ Viết test, đọc test có sẵn, đo tải.
 |---|----------|----------|
 | 1 | [learn-localstack.md](./learn-localstack.md) | Giả lập AWS trên máy bằng LocalStack |
 | 2 | [learn-aws.md](./learn-aws.md) | AWS: S3 (đang dùng), ECS Fargate, RDS, SQS/SNS, IAM |
-| 3 | [learn-google-cloud.md](./learn-google-cloud.md) | Google Cloud: Cloud Run, Cloud SQL, GCS, Pub/Sub, GKE |
+| 3 | [learn-terraform.md](./learn-terraform.md) | Terraform: plan/apply, state, phụ thuộc, drift — học trên bộ S3 + Lambda chạy thật |
+| 4 | [learn-aws-serverless.md](./learn-aws-serverless.md) | Thực hành serverless: S3 + Lambda + IAM bằng Terraform, chạy trên LocalStack hoặc AWS |
+| 5 | [learn-google-cloud.md](./learn-google-cloud.md) | Google Cloud: Cloud Run, Cloud SQL, GCS, Pub/Sub, GKE |
 
 ---
 

@@ -407,10 +407,10 @@ Kiểm tra tài nguyên còn sót ở **mọi region** (dễ lỡ tay tạo ở 
 
 ## Đi tiếp
 
-Bạn đang ở **7. Cloud** — bài 2/3.
+Bạn đang ở **7. Cloud** — bài 2/5.
 
 - Bài trước: [learn-localstack.md](./learn-localstack.md) — Giả lập AWS trên máy bằng LocalStack
-- **Bài tiếp: [learn-google-cloud.md](./learn-google-cloud.md)** — Google Cloud: Cloud Run, Cloud SQL, GCS, Pub/Sub, GKE
+- **Bài tiếp: [learn-terraform.md](./learn-terraform.md)** — Terraform: plan/apply, state, phụ thuộc, drift — học trên bộ S3 + Lambda chạy thật
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

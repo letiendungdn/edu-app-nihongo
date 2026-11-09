@@ -364,7 +364,7 @@ chữ ký, CORS, Content-Type… những thứ mock không bắt được.
 
 ## Đi tiếp
 
-Bạn đang ở **7. Cloud** — bài 1/3.
+Bạn đang ở **7. Cloud** — bài 1/5.
 
 - **Bài tiếp: [learn-aws.md](./learn-aws.md)** — AWS: S3 (đang dùng), ECS Fargate, RDS, SQS/SNS, IAM
 

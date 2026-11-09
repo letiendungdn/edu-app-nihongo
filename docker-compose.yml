@@ -280,6 +280,11 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
       LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434}
       LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-qwen2.5:7b}
+      # Model có chế độ "nghĩ" (qwen3…) phải tắt, nếu không câu trả lời rỗng. "default" = để model tự quyết.
+      LOCAL_AI_REASONING: ${LOCAL_AI_REASONING:-none}
+      LOCAL_AI_TIMEOUT_MS: ${LOCAL_AI_TIMEOUT_MS:-120000}
+      # Hỏi đáp ngữ pháp (RAG): model embedding đa ngôn ngữ. Cài: ollama pull qwen3-embedding:0.6b
+      LOCAL_AI_EMBED_MODEL: ${LOCAL_AI_EMBED_MODEL:-qwen3-embedding:0.6b}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     # /health/live không gọi DB/service khác — chỉ báo process Nest đã nghe cổng 3000.
     healthcheck:
@@ -518,7 +523,6 @@ services:
     depends_on:
       - mailpit
 
-  # Hộp thư giả cho dev: bắt mọi mail SMTP, xem ở http://localhost:8025 (không gửi ra Internet)
   # S3 giả lập cho dev: ảnh upload (chat, admin). Ghi file vào volume nên còn sau khi restart
   # (LocalStack bản miễn phí mất hết khi restart). Không mở cổng ra máy: vào qua nginx /s3/.
   # Chi tiết: docs/media-storage.md
@@ -533,6 +537,25 @@ services:
     volumes:
       - s3_data:/data
 
+  # Chỉ để HỌC AWS serverless (S3 + Lambda + IAM) miễn phí trên máy. Không chạy cùng `docker compose up`
+  # thường: bật bằng `bash infra/aws-learn/run.sh up` (profile aws-learn). Xem docs/learn-aws-serverless.md.
+  # Bản miễn phí MẤT dữ liệu khi restart: bật lại thì chạy lại `run.sh apply`.
+  localstack:
+    image: localstack/localstack:4.14.0
+    container_name: edu-localstack
+    profiles: ['aws-learn']
+    ports:
+      - '127.0.0.1:4566:4566'
+    environment:
+      SERVICES: s3,lambda,iam,sts,logs,cloudwatch
+      # Lambda chạy trong container riêng; cho nó vào cùng mạng để gọi ngược được LocalStack (S3).
+      LAMBDA_DOCKER_NETWORK: edu-app_default
+    volumes:
+      # LocalStack tạo container cho mỗi lần chạy Lambda nên cần dùng Docker của máy.
+      # Lưu ý: gắn docker.sock là trao quyền điều khiển Docker trên máy cho container này.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Hộp thư giả cho dev: bắt mọi mail SMTP, xem ở http://localhost:8025 (không gửi ra Internet)
   mailpit:
     image: axllent/mailpit:v1.20
     container_name: edu-mailpit

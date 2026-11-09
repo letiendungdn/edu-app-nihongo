@@ -1,0 +1,29 @@
+{
+  "_comment": "Bộ câu hỏi đánh giá hỏi đáp ngữ pháp (RAG). expect: regex khớp với pattern của mẫu đúng. offTopic: câu hỏi ngoài phạm vi, điểm nguồn tốt nhất phải DƯỚI ngưỡng MIN_SCORE để không gọi AI.",
+  "questions": [
+    { "q": "Cách nói mình đã từng làm việc gì đó", "expect": "たことが" },
+    { "q": "Muốn nói tôi muốn ăn sushi thì dùng mẫu nào?", "expect": "たい" },
+    { "q": "Vừa làm việc này vừa làm việc kia", "expect": "ながら" },
+    { "q": "Phải làm gì đó (bắt buộc)", "expect": "なければ|なくては|ないと" },
+    { "q": "Diễn tả dự định, ý định sẽ làm", "expect": "つもり|よう.*と思" },
+    { "q": "Mặc dù đã cố gắng nhưng vẫn không được", "expect": "のに|ても|けれど" },
+    { "q": "Nếu trời mưa thì tôi ở nhà", "expect": "たら|ば|なら|と" },
+    { "q": "Bị người khác làm gì đó (câu bị động)", "expect": "られ|れる|受身|bị động" },
+    { "q": "Bắt ai đó làm gì, cho phép ai làm gì", "expect": "させ|せる|使役|sai khiến" },
+    { "q": "Chỉ có... thôi, dùng với phủ định", "expect": "しか" },
+    { "q": "Vừa mới làm xong", "expect": "たばかり|ところ" },
+    { "q": "Nghe nói là, người ta bảo rằng", "expect": "そうです|らしい|って" },
+    { "q": "Dễ làm, khó làm một việc gì", "expect": "やすい|にくい" },
+    { "q": "Có lẽ, có thể là", "expect": "でしょう|かもしれ|だろう" },
+    { "q": "Trước khi làm gì đó", "expect": "まえに|前に" },
+    { "q": "たことがある nghĩa là gì?", "expect": "たことが" },
+    { "q": "ばかり dùng thế nào?", "expect": "ばかり" },
+    { "q": "Cách dùng ように", "expect": "ように" }
+  ],
+  "_offTopicNote": "Đã bỏ câu 'Giá vé máy bay đi Tokyo bao nhiêu?': AI hiểu là hỏi cách nói giá tiền bằng tiếng Nhật và trích đúng mẫu いくらですか. Với app học tiếng Nhật đó là câu lưng chừng, trả lời như vậy vẫn có ích nên không tính là lỗi.",
+  "offTopic": [
+    "Thời tiết Hà Nội hôm nay thế nào?",
+    "Viết giúp tôi một hàm Python sắp xếp mảng",
+    "Tổng thống Mỹ năm 2020 là ai?"
+  ]
+}

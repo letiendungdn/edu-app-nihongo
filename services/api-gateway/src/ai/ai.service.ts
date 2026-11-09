@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   ServiceUnavailableException,
+  GatewayTimeoutException,
 } from "@nestjs/common";
 import { GoogleGenAI } from "@google/genai";
 
@@ -25,7 +26,7 @@ export interface SentenceFeedback {
   examples: string[];
 }
 
-interface GenOptions {
+export interface GenOptions {
   temperature: number;
   maxTokens: number;
 }
@@ -95,6 +96,13 @@ export class AiService {
     process.env.LOCAL_AI_BASE_URL ?? "http://127.0.0.1:11434"
   ).replace(/\/$/, "");
   private readonly model = process.env.LOCAL_AI_MODEL?.trim() || "qwen2.5:7b";
+  /**
+   * Model có chế độ "nghĩ" (qwen3, deepseek-r1…) mặc định dùng hết max_tokens để suy nghĩ, phần trả lời
+   * thành RỖNG. "none" tắt chế độ đó; đặt LOCAL_AI_REASONING=default để giữ hành vi của model.
+   */
+  private readonly reasoning = process.env.LOCAL_AI_REASONING?.trim() || "none";
+  /** Không có giới hạn thì Ollama treo là request treo theo, giữ kết nối của người dùng mãi. */
+  private readonly timeoutMs = Number(process.env.LOCAL_AI_TIMEOUT_MS) || 120_000;
   private readonly gemini =
     this.provider === "gemini" && process.env.GEMINI_API_KEY
       ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -137,6 +145,17 @@ export class AiService {
     return parsed;
   }
 
+  /** Sinh câu trả lời theo nhà cung cấp đang cấu hình. Dùng chung cho các tính năng AI khác (RAG). */
+  generate(systemInstruction: string, question: string, options: GenOptions): Promise<string> {
+    return this.provider === "ollama"
+      ? this.askOllama(systemInstruction, question, [], options)
+      : this.askGemini(systemInstruction, question, [], options);
+  }
+
+  get modelName(): string {
+    return this.provider === "ollama" ? this.model : "gemini-2.0-flash";
+  }
+
   private async askOllama(
     systemInstruction: string,
     question: string,
@@ -161,7 +180,9 @@ export class AiService {
           messages,
           temperature: options.temperature,
           max_tokens: options.maxTokens,
+          ...(this.reasoning !== "default" ? { reasoning_effort: this.reasoning } : {}),
         }),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
 
       if (!res.ok) {
@@ -178,6 +199,10 @@ export class AiService {
       return data.choices?.[0]?.message?.content ?? "";
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
+      if (error instanceof DOMException && error.name === "TimeoutError") {
+        this.logger.error(`Ollama quá ${this.timeoutMs} ms (model ${this.model})`);
+        throw new GatewayTimeoutException("AI trả lời quá lâu, thử lại sau nhé");
+      }
       this.logger.error("Ollama unreachable", error);
       throw new ServiceUnavailableException(
         `Không nối được Ollama (${this.localBase}). Chạy: open -a Ollama && ollama pull ${this.model}`,
