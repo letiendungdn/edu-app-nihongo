@@ -1,6 +1,6 @@
 # ADR-0005: Commit bản backup DB `nihongo` vào repo
 
-- **Trạng thái:** Đã chấp nhận — **cần xem lại** trước khi có người dùng thật
+- **Trạng thái:** **Bị thay** bởi [ADR-0009](0009-db-backups-out-of-git.md) (09/11/2026)
 - **Phạm vi:** `infra/backups/`, `npm run db:backup`
 
 ## Bối cảnh

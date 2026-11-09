@@ -68,3 +68,6 @@ apps/nihongo-ios/SourcePackages/
 packages/nest-*/src/**/*.js
 packages/nest-*/src/**/*.js.map
 packages/nest-*/src/**/*.d.ts
+
+# Backup DB đầy đủ chứa dữ liệu cá nhân: chỉ giữ trên máy, không commit (docs/adr/0009-db-backups-out-of-git.md)
+infra/backups/*.sql

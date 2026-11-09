@@ -114,11 +114,11 @@ copy apps\nihongo-web\.env.example apps\nihongo-web\.env
 docker compose up -d postgres redis mongodb kafka zookeeper
 npm run prisma:generate
 
-# Restore DB có sẵn trong repo (khuyên dùng)
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+# DB trống: migrate + seed nội dung (khuyên dùng) — xem docs/run-local.md
+# Có file backup đầy đủ trên máy (không nằm trong git, ADR-0009) thì restore:
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 
-# Hoặc DB trống: migrate + seed — xem docs/run-local.md
 ```
 
 ### Mỗi lần dev (5 terminal)
@@ -163,10 +163,10 @@ Swagger UI: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ## Database
 
-**Restore từ backup** (nhanh nhất — file trong `infra/backups/`):
+**Restore từ backup** (file `npm run db:backup` tạo trên máy bạn, **không có trong git** — [ADR-0009](docs/adr/0009-db-backups-out-of-git.md)):
 
 ```powershell
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 

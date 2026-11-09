@@ -8,6 +8,8 @@ TS="$(date +%Y%m%d_%H%M%S)"
 declare -a CONTAINERS=("edu-postgres-nihongo:nihongo:nihongo")
 
 mkdir -p "$OUT_DIR"
+# File dump chứa dữ liệu cá nhân (email, hash mật khẩu, thanh toán): chỉ chủ máy đọc được, không commit (ADR-0009)
+umask 077
 
 for entry in "${CONTAINERS[@]}"; do
   IFS=':' read -r container user db <<< "$entry"
