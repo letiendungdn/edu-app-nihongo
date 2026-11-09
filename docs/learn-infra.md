@@ -241,7 +241,7 @@ docker exec edu-nginx nginx -t
 |------|-------|------|----------|----------|
 | **Migration** | `packages/prisma-nihongo/migrations/` | cấu trúc bảng (DDL) | `prisma migrate dev` | `npm run migrate:deploy -w @edu/prisma-nihongo` |
 | **Content seed** | `infra/postgres/nihongo-content-seed.sql` | **chỉ** bảng nội dung học (Minna, KLL, JLPT…) | `npm run db:export-content` | `npm run seed -w @edu/prisma-nihongo` |
-| **Full backup** | `infra/backups/nihongo_YYYYMMDD_HHMMSS.sql` | toàn bộ DB: user, payment, nội dung | `npm run db:backup` | `psql -f` (mục 6.2) |
+| **Full backup** | `infra/backups/nihongo_YYYYMMDD_HHMMSS.sql` (chỉ trên máy, **không commit** — [ADR-0009](adr/0009-db-backups-out-of-git.md)) | toàn bộ DB: user, payment, nội dung | `npm run db:backup` | `psql -f` (mục 6.2) |
 | **Sửa dữ liệu** | `infra/postgres/fix-*.sql` | `UPDATE`/`DELETE` có chủ đích, bọc `BEGIN…COMMIT` | viết tay / sinh bằng script | `psql -v ON_ERROR_STOP=1 -f` |
 
 **Nguồn sự thật là DB**, không phải seed. Seed chỉ là ảnh chụp để máy mới có dữ liệu.
@@ -301,10 +301,10 @@ docker exec edu-postgres-nihongo rm -f /tmp/backup.sql
 
 ```powershell
 # SAI — PowerShell mã hoá lại file trước khi đưa vào psql → chữ Việt/Nhật thành "?"
-Get-Content infra\backups\nihongo_20261005_214346.sql | docker exec -i edu-postgres-nihongo psql -U nihongo nihongo
+Get-Content infra\backups\nihongo_<ngày_giờ>.sql | docker exec -i edu-postgres-nihongo psql -U nihongo nihongo
 
 # ĐÚNG
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 
@@ -321,7 +321,7 @@ MSYS_NO_PATHCONV=1 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -
 export MSYS_NO_PATHCONV=1
 P="docker exec -i edu-postgres-nihongo psql -U nihongo -v ON_ERROR_STOP=1 -q"
 $P -d nihongo -c "CREATE DATABASE seedtest"
-grep -v -E '^\\(un)?restrict' infra/backups/nihongo_schema_20261005_214346.sql | $P -d seedtest
+grep -v -E '^\\(un)?restrict' infra/backups/nihongo_schema_<ngày_giờ>.sql | $P -d seedtest
 grep -v -E '^\\(un)?restrict' infra/postgres/nihongo-content-seed.sql            | $P -d seedtest
 $P -d seedtest -c 'select count(*) from "Vocabulary"'
 $P -d nihongo -c "DROP DATABASE seedtest"
@@ -470,7 +470,7 @@ Chi tiết: [learn-performance-k6.md](./learn-performance-k6.md).
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 3/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 4/9.
 
 - Bài trước: [learn-nginx.md](./learn-nginx.md) — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
 - **Bài tiếp: [learn-kubernetes.md](./learn-kubernetes.md)** — Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update

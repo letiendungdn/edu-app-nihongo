@@ -83,10 +83,10 @@ Kiểm tra: `docker ps --filter "name=edu-"`
 
 ### 4. Database
 
-**Cách A — Restore backup có sẵn trong repo (khuyên dùng)**
+**Cách A — Restore backup đầy đủ trên máy** (file do `npm run db:backup` tạo; không có trong git từ [ADR-0009](adr/0009-db-backups-out-of-git.md), máy mới dùng Cách B)
 
 ```powershell
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 

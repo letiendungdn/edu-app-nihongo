@@ -236,7 +236,7 @@ main: CI xanh ──▶ build image :sha ──▶ migrate job ──▶ set ima
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 5/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 6/9.
 
 - Bài trước: [learn-kubernetes.md](./learn-kubernetes.md) — Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update
 - **Bài tiếp: [learn-observability.md](./learn-observability.md)** — Log, metric, trace với Prometheus, Grafana, Jaeger

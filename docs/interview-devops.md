@@ -533,6 +533,8 @@ await prisma.user.findUnique({ where: { email } });
 
 ## LỘ TRÌNH HỌC DEVOPS — 8 tháng
 
+> Bản chi tiết theo tuần, nối với bài học và code thật của repo: [learn-devops-roadmap.md](./learn-devops-roadmap.md). Phần dưới là khung tóm tắt.
+
 ```
 Tháng 1: Linux cơ bản
   - File system, permission, process, SSH

@@ -325,14 +325,14 @@ ALLOWED_ORIGINS=http://localhost:8080,http://nihongo.localhost:8080,http://auth.
 
 ## Restore / backup DB
 
-Snapshot trong repo (cập nhật gần nhất):
+Backup đầy đủ chỉ nằm trên máy tạo ra nó, không commit ([ADR-0009](adr/0009-db-backups-out-of-git.md)):
 
 ```powershell
 # Backup mới
 npm run db:backup
 
 # Restore Nihongo
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 
@@ -367,7 +367,7 @@ docker volume create nihongo-app_postgres_data
 npm run docker:up:nihongo
 
 # Đợi postgres healthy rồi restore
-docker cp infra\backups\nihongo_20261005_214346.sql edu-postgres-nihongo:/tmp/restore.sql
+docker cp infra\backups\nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
 docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 

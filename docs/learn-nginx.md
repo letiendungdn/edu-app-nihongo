@@ -66,8 +66,8 @@ Các file liên quan:
 | File | Vai trò |
 |------|---------|
 | [infra/nginx/nginx.conf](../infra/nginx/nginx.conf) | Toàn bộ quy tắc định tuyến |
-| [infra/nginx/Dockerfile](../infra/nginx/Dockerfile) | Image `nginx:1.27-alpine` + chép config + healthcheck |
-| [docker-compose.yml](../docker-compose.yml) (service `nginx`) | Map cổng `8080:80`, chờ gateway và web khỏe mới chạy |
+| [infra/nginx/Dockerfile](../infra/nginx/Dockerfile) | Image `nginxinc/nginx-unprivileged:1.30-alpine` (không chạy root) + vá gói Alpine + chép config + healthcheck |
+| [docker-compose.yml](../docker-compose.yml) (service `nginx`) | Map cổng `8080:8080`, chờ gateway và web khỏe mới chạy |
 | [infra/k8s/ingress.yaml](../infra/k8s/ingress.yaml) | Bản tương đương trên Kubernetes |
 
 ---
@@ -78,14 +78,15 @@ Các file liên quan:
 
 ```nginx
 server {
-    listen 80;
+    listen 8080;
     server_name nihongo.localhost localhost 10.0.2.2;
     client_max_body_size 10m;
     ...
 }
 ```
 
-- `listen 80`: nghe cổng 80 **bên trong container**. Docker map ra máy bạn thành 8080.
+- `listen 8080`: nghe cổng 8080 **bên trong container**, Docker map ra máy bạn cũng là 8080.
+  - Vì sao không phải 80: nginx chạy bằng user thường (uid 101) cho an toàn, mà user thường không được mở cổng dưới 1024. Xem [learn-devsecops.md](learn-devsecops.md).
 - `server_name`: nginx xem header `Host` của request để chọn server block.
   - `localhost`, `nihongo.localhost` → app tiếng Nhật.
   - `10.0.2.2` → địa chỉ máy thật khi nhìn từ máy ảo Android.
@@ -190,12 +191,18 @@ location @web_starting {
 ### 4.1. Image
 
 ```dockerfile
-FROM nginx:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
+USER root
+RUN apk upgrade --no-cache          # vá thư viện Alpine (openssl, curl...) mà image gốc chưa kịp vá
 COPY infra/nginx/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+USER 101                            # trả về user nginx, không chạy root
+EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO /dev/null http://127.0.0.1/nginx-health || exit 1
+  CMD wget -qO /dev/null http://127.0.0.1:8080/nginx-health || exit 1
 ```
+
+- Image `nginx-unprivileged` là bản chính chủ của nginx, chạy sẵn bằng user thường. Đổi sang nó thì phải đổi `listen` thành 8080.
+- Đừng ghim phiên bản quá cũ: bản 1.27 và 1.28 còn CVE CRITICAL trong chính nginx. Dependabot sẽ mở PR nâng phiên bản.
 
 Config được **chép vào image** lúc build. Vì vậy, sau khi sửa `nginx.conf`, phải build lại image (hoặc dùng cách reload ở 4.3).
 
@@ -414,7 +421,7 @@ proxy_pass dùng biến    → cần resolver + tự thêm $request_uri
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 2/7.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 3/9.
 
 - Bài trước: [learn-docker.md](./learn-docker.md) — Docker: image, container, volume, compose
 - **Bài tiếp: [learn-infra.md](./learn-infra.md)** — Thư mục infra/, cổng, healthcheck và các sự cố thật
