@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 work="$(mktemp -d)"
+# mktemp mặc định 0700: user trong image kyverno-cli không đọc được → "permission denied".
+chmod 755 "$work"
 trap 'rm -rf "${work:?}"' EXIT
 
 for f in infra/k8s/*.yaml infra/k8s/mqtt/*.yaml infra/k8s/jobs/*.yaml; do
@@ -26,6 +28,8 @@ spec:
       image: ghcr.io/letiendungdn/edu_app/api-gateway:latest
       securityContext: {privileged: true}
 POD
+
+chmod -R a+rX "$work"
 
 kyverno() {
   docker run --rm -v "$PWD:/repo:ro" -v "$work:/work:ro" -w /repo ghcr.io/kyverno/kyverno-cli:v1.15.2 "$@"
