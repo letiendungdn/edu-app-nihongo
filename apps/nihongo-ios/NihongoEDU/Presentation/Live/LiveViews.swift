@@ -1,4 +1,3 @@
-import LiveKit
 import SwiftUI
 
 struct LiveListView: View {
@@ -88,6 +87,9 @@ struct LiveListView: View {
         }
     }
 }
+
+#if canImport(LiveKit)
+import LiveKit
 
 struct LiveHostView: View {
     let join: LiveJoinResponse
@@ -277,3 +279,34 @@ struct LiveViewerView: View {
         chatInput = ""
     }
 }
+
+#else
+
+/// CI không kéo LiveKit (binary SPM hay lỗi "already exists" trên runner). Máy local vẫn dùng bản thật.
+struct LiveHostView: View {
+    let join: LiveJoinResponse
+
+    var body: some View {
+        ContentUnavailableView(
+            "Livestream",
+            systemImage: "video.slash",
+            description: Text("Bản build này không kèm LiveKit. Chạy xcodegen trên máy để bật phòng live.")
+        )
+        .navigationTitle(join.title ?? "Phát live")
+    }
+}
+
+struct LiveViewerView: View {
+    let join: LiveJoinResponse
+
+    var body: some View {
+        ContentUnavailableView(
+            "Livestream",
+            systemImage: "video.slash",
+            description: Text("Bản build này không kèm LiveKit. Chạy xcodegen trên máy để xem live.")
+        )
+        .navigationTitle(join.title ?? "Xem live")
+    }
+}
+
+#endif

@@ -59,6 +59,10 @@ __pycache__/
 xcuserdata/
 *.xcuserstate
 
+# iOS: project.ci.yml sinh từ CI (bỏ LiveKit); SourcePackages khi resolve local
+apps/nihongo-ios/project.ci.yml
+apps/nihongo-ios/SourcePackages/
+
 # Package dùng chung chạy thẳng từ .ts (main: ./src/index.ts). File biên dịch nằm cạnh .ts bị Node
 # load TRƯỚC .ts khi chạy dev (ts-node + tsconfig-paths) → chạy code cũ.
 packages/nest-*/src/**/*.js

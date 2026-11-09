@@ -21,9 +21,11 @@ settings:
       ENABLE_TESTABILITY: YES
 
 packages:
+  # Ghim bản có WebRTC + UniFFI cố định: CI prefetch đúng URL/checksum (xem job ios trong ci.yml).
+  # `from:` sẽ nhảy lên bản mới và đổi URL binary → prefetch lệch.
   LiveKitClient:
     url: https://github.com/livekit/client-sdk-swift
-    from: 2.0.19
+    exactVersion: 2.17.0
   # Apple Pay qua Stripe: chỉ lấy StripeApplePay (STPApplePayContext), không kéo cả PaymentSheet
   Stripe:
     url: https://github.com/stripe/stripe-ios-spm

@@ -255,23 +255,17 @@ jobs:
       # Sinh lại .xcodeproj từ project.yml: CI luôn build đúng cấu hình trong project.yml,
       # kể cả khi ai đó quên chạy xcodegen trước khi commit file project
       - run: brew install xcodegen
-      - run: xcodegen generate
+      # Bỏ LiveKit trên CI: binary WebRTC/UniFFI hay lỗi SPM "already exists in file system".
+      # Unit/UI test không cần phòng live; máy local vẫn `xcodegen generate` đủ LiveKit.
+      - name: Generate Xcode project (no LiveKit)
+        run: |
+          python3 ci/strip-livekit-for-ci.py
+          xcodegen generate --spec project.ci.yml
       # Tên simulator đổi theo phiên bản image của runner: chọn iPhone đầu tiên có sẵn
       - name: Pick simulator
         run: |
           UDID=$(xcrun simctl list devices available | grep -m1 -E "iPhone" | grep -oE "[0-9A-F-]{36}")
           echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
-      # LiveKit (WebRTC/UniFFI) tải .xcframework zip vào cache SPM. Lần tải trước
-      # để lại file/thư mục cùng tên → "already exists in file system" và xcodebuild 74.
-      - name: Resolve Swift packages
-        run: |
-          resolve() {
-            rm -rf "$HOME/Library/Caches/org.swift.swiftpm/artifacts"
-            xcodebuild -resolvePackageDependencies \
-              -project NihongoEDU.xcodeproj \
-              -scheme NihongoEDU
-          }
-          resolve || { echo "SPM resolve failed once; clear artifacts and retry"; sleep 3; resolve; }
       - name: Unit test
         run: xcodebuild test -project NihongoEDU.xcodeproj -scheme NihongoEDU -destination "id=$SIM_UDID" -only-testing:NihongoEDUTests
       # UI test luồng offline (deep link, kana); bỏ test đo khởi động vì runner CI quá nhiễu
