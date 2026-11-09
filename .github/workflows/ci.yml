@@ -57,6 +57,7 @@ jobs:
 
   # Quét image thật sẽ chạy production. Deploy chỉ chạy khi CI xanh nên image có CVE CRITICAL đã có bản vá sẽ không lên.
   image-scan:
+    name: image-scan (${{ matrix.name }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
