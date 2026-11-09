@@ -45,6 +45,7 @@ export function booksFor(series: TextbookSeriesInfo | undefined, level: JlptMind
 export function audioRegex(series: TextbookSeriesInfo | undefined): RegExp | null {
   if (!series?.audioMatch) return null;
   try {
+    // nosemgrep: detect-non-literal-regexp -- regex lấy từ dữ liệu bộ sách tĩnh trong repo, không từ người dùng
     return new RegExp(series.audioMatch, 'i');
   } catch {
     return null;

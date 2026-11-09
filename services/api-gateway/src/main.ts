@@ -59,6 +59,20 @@ async function bootstrap() {
       },
     }),
   );
+  // API không dùng camera/micro/vị trí: tắt hẳn cho trang Swagger và mọi response (OWASP ZAP 10063)
+  app.use(
+    (
+      _req: unknown,
+      res: { setHeader(name: string, value: string): void },
+      next: () => void,
+    ) => {
+      res.setHeader(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()",
+      );
+      next();
+    },
+  );
 
   const allowedOrigins = configService.get<string[]>("cors.origins") ?? [];
   const isProduction = process.env.NODE_ENV === "production";
@@ -96,16 +110,23 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup("api/docs", app, document, {
-    swaggerOptions: { persistAuthorization: true },
-  });
+  // Bảo mật: production mặc định KHÔNG mở Swagger — lộ toàn bộ danh sách API cho người lạ dò.
+  // Bật lại bằng ENABLE_SWAGGER=true (docker-compose trên máy dev đã bật).
+  const swaggerEnabled =
+    (process.env.ENABLE_SWAGGER ?? (isProduction ? "false" : "true")) ===
+    "true";
+  if (swaggerEnabled) {
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup("api/docs", app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+  }
 
   const port = configService.get<number>("port") ?? 3000;
   await app.listen(port);
   clearTimeout(startupWatchdog);
   logger.log(`API Gateway: http://localhost:${port}`);
-  logger.log(`Swagger: http://localhost:${port}/api/docs`);
+  if (swaggerEnabled) logger.log(`Swagger: http://localhost:${port}/api/docs`);
 }
 
 bootstrap().catch((err) => {
