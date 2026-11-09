@@ -8,8 +8,8 @@ useDefault = true
 [[allowlists]]
 description = "Rủi ro đã biết, đã ghi lại"
 paths = [
-  # Backup DB commit vào repo (ADR-0005): dump chứa client_secret/idempotency_key của Stripe (test mode)
-  # và hash mật khẩu. Repo BẮT BUỘC private. Xem docs/adr/0005-commit-db-backups-to-repo.md
+  # Backup DB từng commit vào repo (ADR-0005, đã thay bằng ADR-0009: không commit nữa). Lịch sử git vẫn chứa
+  # client_secret/idempotency_key Stripe (test mode) và hash mật khẩu → repo BẮT BUỘC private cho tới khi viết lại lịch sử.
   '''^infra/backups/.*\.sql$''',
   # .env và services/.env đã bỏ theo dõi. Allowlist giữ vì lịch sử git vẫn chứa secret cũ.
   '''^\.env$''',
@@ -23,4 +23,7 @@ paths = [
   # (AppAuth, GTMAppAuth, react-native-app-auth, React-cxxstableapi) bị rule
   # generic-api-key nhận nhầm thành khóa.
   '''(^|/)Podfile\.lock$''',
+  # Test nhóm bài học: rule generic-api-key nhận nhầm chuỗi `key` của một nhóm bài (g.key === '…')
+  # ở commit 96cb7fe là khóa. Chỉ là id nhóm, không phải bí mật (quét 09/11/2026, docs/learn-devsecops.md mục 5).
+  '''^apps/nihongo-web/src/utils/__tests__/lessonGroups\.test\.ts$''',
 ]

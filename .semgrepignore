@@ -1,0 +1,29 @@
+# Semgrep (SAST) bỏ qua các đường dẫn này. Có file này thì Semgrep KHÔNG dùng danh sách mặc định nữa,
+# nên phải tự kéo .gitignore vào. Xem docs/learn-devsecops.md.
+:include .gitignore
+node_modules/
+**/build/
+**/.next/
+**/dist/
+infra/backups/
+
+# Test cố ý chứa token/khóa giả (fcm.sender.spec.ts, call-token.db-spec.ts)
+*.spec.ts
+*.test.ts
+*.test.tsx
+*.db-spec.ts
+__tests__/
+
+# Tài liệu: code mẫu minh họa, không chạy
+docs/
+# Script chạy tay trên máy dev (tải audio sách), không đóng gói vào image
+scripts/
+# Cấu hình chạy dev trên máy ảo Android (10.0.2.2 = máy thật), bản build thật lấy URL từ biến môi trường
+apps/nihongo-mobile/app.json
+**/src/test/
+**/src/androidTest/
+**/tests/
+# Workflow trong thư mục con: GitHub chỉ chạy .github/ ở gốc repo, mấy file này không bao giờ chạy
+apps/nihongo-cli/.github/
+# File JS sinh tự động (drift worker), rất lớn nên Semgrep quá thời gian
+apps/nihongo_flutter/web/drift_worker.js

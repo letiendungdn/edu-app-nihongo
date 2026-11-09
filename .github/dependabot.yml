@@ -1,0 +1,34 @@
+# Dependabot: mở PR nâng phiên bản hằng tuần. CI (gitleaks, audit-ci, Trivy) chạy trên mỗi PR này.
+# Gom nhóm bản minor/patch để không bị ngập PR. Xem docs/learn-devsecops.md.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  # Image gốc trong Dockerfile (node:22-alpine, nginx-unprivileged...)
+  - package-ecosystem: docker
+    directories:
+      - /services/api-gateway
+      - /services/content-service
+      - /services/exam-service
+      - /services/signaling-service
+      - /apps/nihongo-web
+      - /packages/prisma-nihongo
+      - /infra/nginx
+    schedule:
+      interval: weekly
