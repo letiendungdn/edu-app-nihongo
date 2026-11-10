@@ -32,7 +32,7 @@ spec:
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
-  replicas: 1
+  # Không đặt replicas: HPA (grpc-services-autoscaling.yaml) quyết định số pod, tối thiểu 2
   selector:
     matchLabels:
       app: content-service

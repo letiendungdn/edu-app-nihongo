@@ -21,7 +21,7 @@ import {
   UpdateVocabSuffixGroupDto,
   UpdateVocabSuffixItemDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Roles, RolesGuard } from "@app/common";
+import { Roles, RolesGuard } from "@app/common";
 
 @ApiTags("vocab-suffixes")
 @Controller("api/vocab-suffixes")
@@ -31,7 +31,7 @@ export class VocabSuffixesController {
   ) {}
 
   @Post("groups")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create vocab suffix group (admin)" })
@@ -42,7 +42,7 @@ export class VocabSuffixesController {
   }
 
   @Patch("groups/:slug")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update vocab suffix group (admin)" })
@@ -59,7 +59,7 @@ export class VocabSuffixesController {
   }
 
   @Delete("groups/:slug")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete vocab suffix group (admin)" })
@@ -72,7 +72,7 @@ export class VocabSuffixesController {
   }
 
   @Put("items/reorder")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Reorder vocab suffix items in a group (admin)" })
@@ -83,7 +83,7 @@ export class VocabSuffixesController {
   }
 
   @Post("items")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create vocab suffix item (admin)" })
@@ -94,7 +94,7 @@ export class VocabSuffixesController {
   }
 
   @Patch("items/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update vocab suffix item (admin)" })
@@ -108,7 +108,7 @@ export class VocabSuffixesController {
   }
 
   @Delete("items/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete vocab suffix item (admin)" })

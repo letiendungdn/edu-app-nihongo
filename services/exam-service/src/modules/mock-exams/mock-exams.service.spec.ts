@@ -48,7 +48,10 @@ describe("MockExamsService", () => {
   };
 
   const mockPrisma: Record<string, unknown> = {
-    examResult: { create: jest.fn().mockResolvedValue({ id: 1 }) },
+    examResult: {
+      create: jest.fn().mockResolvedValue({ id: 1 }),
+      deleteMany: jest.fn(),
+    },
     outboxEvent: { create: jest.fn().mockResolvedValue({ id: 1 }) },
     // submit() ghi ExamResult + OutboxEvent trong một transaction — mock chạy callback với chính mockPrisma
     $transaction: jest.fn((fn: (tx: unknown) => unknown) => fn(mockPrisma)),
@@ -79,6 +82,24 @@ describe("MockExamsService", () => {
 
     service = module.get(MockExamsService);
     jest.clearAllMocks();
+  });
+
+  describe("deleteResult()", () => {
+    const deleteMany = () =>
+      (mockPrisma.examResult as { deleteMany: jest.Mock }).deleteMany;
+
+    it("xóa và trả id", async () => {
+      deleteMany().mockResolvedValue({ count: 1 });
+      await expect(service.deleteResult(5)).resolves.toEqual({ id: 5 });
+      expect(deleteMany()).toHaveBeenCalledWith({ where: { id: 5 } });
+    });
+
+    it("không có → 404 (không để lộ lỗi P2025 của Prisma)", async () => {
+      deleteMany().mockResolvedValue({ count: 0 });
+      await expect(service.deleteResult(99)).rejects.toMatchObject({
+        error: { statusCode: 404 },
+      });
+    });
   });
 
   describe("submit()", () => {

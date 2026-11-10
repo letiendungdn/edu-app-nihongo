@@ -75,11 +75,12 @@ Hệ thống gồm những gì, request chạy ra sao, vì sao thiết kế như
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
 | 1 | [system-design.md](./system-design.md) | Kiến trúc tổng thể, các service, route map |
-| 2 | [core-flows.md](./core-flows.md) | Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm… |
-| 3 | [microservices-communication.md](./microservices-communication.md) | Các service nói chuyện với nhau bằng gì, vì sao |
-| 4 | [media-storage.md](./media-storage.md) | Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container |
-| 5 | [learn-system-design.md](./learn-system-design.md) | Tư duy system design qua các quyết định của project |
-| 6 | [learn-adr-design-docs.md](./learn-adr-design-docs.md) | Viết ADR và design doc (ví dụ: thư mục adr/) |
+| 2 | [learn-microservices.md](./learn-microservices.md) | Microservice là gì, vì sao project tách service, cái giá phải trả và chỗ còn thiếu |
+| 3 | [core-flows.md](./core-flows.md) | Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm… |
+| 4 | [microservices-communication.md](./microservices-communication.md) | Các service nói chuyện với nhau bằng gì, vì sao |
+| 5 | [media-storage.md](./media-storage.md) | Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container |
+| 6 | [learn-system-design.md](./learn-system-design.md) | Tư duy system design qua các quyết định của project |
+| 7 | [learn-adr-design-docs.md](./learn-adr-design-docs.md) | Viết ADR và design doc (ví dụ: thư mục adr/) |
 
 Quyết định kiến trúc đã ghi lại (ADR): [adr/](./adr/) — ví dụ [0006 Transactional outbox](./adr/0006-transactional-outbox-exam-events.md). SQL tham khảo: [sql/chat-schema.sql](./sql/chat-schema.sql).
 

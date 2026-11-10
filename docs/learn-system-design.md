@@ -35,20 +35,22 @@ Option B: 2 DB riêng (đã chọn)
 ### Tại sao gRPC cho content/exam nhưng in-process cho payment?
 
 ```
-gRPC (content-service, exam-service):
-  → Nội dung nihongo — dữ liệu lớn, nhiều query phức tạp
-  → Cần scale riêng khi traffic đọc vocab/grammar tăng
-  → Có thể deploy nhiều instance, load balance
-  → Tốc độ: binary protocol (Protobuf) nhanh hơn JSON
+Tiến trình riêng, gọi qua gRPC (content-service, exam-service):
+  → Hai vùng nghiệp vụ khác nhau: nội dung (đọc nhiều) và thi/tiến độ (ghi nhiều theo người dùng)
+  → Deploy riêng; exam-service treo thì vẫn đọc được bài học
+  → Scale riêng: HPA tối thiểu 2 pod cho content/exam (infra/k8s/grpc-services-autoscaling.yaml)
+  → KHÔNG nhanh hơn nhờ Protobuf: chỉ có một RPC Dispatch, payload vẫn là chuỗi JSON
 
-In-process modules (payment-service):
-  → Logic đơn giản hơn, ít data hơn
-  → Không cần scale riêng
-  → Không có network overhead
-  → Dễ share DB transaction với api-gateway
+Module chạy chung trong gateway (payment-service):
+  → Thanh toán cần transaction DB chắc chắn cùng dữ liệu khác
+  → Tải thấp, không cần scale riêng
+  → Không thêm một chỗ có thể lỗi mạng giữa "trừ tiền" và "kích hoạt gói"
 
 → Không phải mọi thứ đều cần microservice
+→ Cả gateway, content, exam đang dùng CHUNG một database: chưa tách được ở tầng dữ liệu
 ```
+
+Phân tích đầy đủ, kèm số liệu đo: [learn-microservices.md](./learn-microservices.md).
 
 ### Tại sao Redis cho rate limit thay vì in-memory?
 
@@ -346,7 +348,7 @@ Step 5: Scale consideration
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 5/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 6/7.
 
 - Bài trước: [media-storage.md](./media-storage.md) — Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container
 - **Bài tiếp: [learn-adr-design-docs.md](./learn-adr-design-docs.md)** — Viết ADR và design doc (ví dụ: thư mục adr/)

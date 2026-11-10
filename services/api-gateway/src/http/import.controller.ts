@@ -4,11 +4,11 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
 import { firstValueFrom } from "rxjs";
 import { CONTENT_PATTERNS } from "@app/contracts";
-import { JwtAuthGuard, Roles, RolesGuard } from "@app/common";
+import { Roles, RolesGuard } from "@app/common";
 
 @ApiTags("import")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(Role.TEACHER, Role.ADMIN)
 @Controller("api/import")
 export class ImportController {

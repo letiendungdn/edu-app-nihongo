@@ -18,7 +18,6 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
 import {
   CurrentUser,
-  JwtAuthGuard,
   Public,
   Roles,
   RolesGuard,
@@ -56,7 +55,7 @@ export class LiveController {
 
   @Post("sessions")
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @ApiOperation({ summary: "Coach tạo phòng livestream" })
   createSession(
@@ -68,7 +67,6 @@ export class LiveController {
 
   @Post("sessions/:id/join")
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Viewer lấy token vào xem" })
   joinSession(
     @CurrentUser() user: AuthUserPayload,
@@ -79,7 +77,7 @@ export class LiveController {
 
   @Delete("sessions/:id")
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.TEACHER, Role.ADMIN)
   @ApiOperation({ summary: "Coach kết thúc livestream" })
   async endSession(

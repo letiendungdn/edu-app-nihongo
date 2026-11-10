@@ -25,7 +25,9 @@ metadata:
     app: exam-service
     {{- include "edu-app.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.hpa.examService.enabled }}
   replicas: {{ .Values.replicaCount.examService }}
+  {{- end }}
   selector:
     matchLabels:
       app: exam-service

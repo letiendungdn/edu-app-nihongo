@@ -7,15 +7,9 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import {
-  CurrentUser,
-  JwtAuthGuard,
-  Public,
-  type AuthUserPayload,
-} from "@app/common";
+import { CurrentUser, Public, type AuthUserPayload } from "@app/common";
 import { BookingService } from "../../../payment-service/src/booking/booking.service";
 import { MarketplaceService } from "../../../payment-service/src/marketplace/marketplace.service";
 import { SessionChatService } from "../../../payment-service/src/booking/session-chat.service";
@@ -62,7 +56,6 @@ export class MarketplaceController {
   }
 
   @Post("sessions")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Đặt lịch coaching session" })
   bookSession(
@@ -78,7 +71,6 @@ export class MarketplaceController {
   }
 
   @Post("sessions/:id/call-token")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary:
@@ -92,7 +84,6 @@ export class MarketplaceController {
   }
 
   @Post("sessions/:id/cancel")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Hủy coaching session" })
   async cancelSession(
@@ -104,7 +95,6 @@ export class MarketplaceController {
   }
 
   @Post("sessions/:id/review")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Đánh giá coaching session" })
   reviewSession(
@@ -121,7 +111,6 @@ export class MarketplaceController {
   }
 
   @Get("sessions/:id/messages")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Lịch sử chat coaching session" })
   getSessionMessages(
@@ -132,7 +121,6 @@ export class MarketplaceController {
   }
 
   @Post("sessions/:id/messages")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Gửi tin nhắn trong coaching session" })
   sendSessionMessage(
@@ -150,7 +138,6 @@ export class MarketplaceController {
   }
 
   @Patch("sessions/:id/messages/read")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Đánh dấu đã đọc chat session" })
   async markSessionRead(

@@ -245,8 +245,8 @@ POST /api/auth/register  → 3 req / 3600s
 |-------|----------|----------|
 | `edu.exam.submitted` | exam-service (transactional outbox) | Consumer `progress-updater` cập nhật tiến độ; lỗi 3 lần → `edu.exam.submitted.dlq` |
 | `edu.payment.succeeded` | payment-service (webhook, transactional outbox) | Chưa có consumer; event không mất (ghi cùng transaction với Payment, relay của exam-service đẩy lên) |
-| `edu.session.completed` | — | Chỉ khai báo trong `kafka-topics.ts`, chưa ai gửi |
-| `edu.vocab.reviewed` | — | Chỉ khai báo trong `kafka-topics.ts`, chưa ai gửi |
+
+Các topic `edu.session.completed`, `edu.vocab.reviewed`, `edu.exam.scored` đã bị xóa khỏi `kafka-topics.ts` vì chưa từng được gửi.
 
 ---
 
@@ -281,9 +281,9 @@ CI/CD: `.github/workflows/`
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 1/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 1/7.
 
-- **Bài tiếp: [core-flows.md](./core-flows.md)** — Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm…
+- **Bài tiếp: [learn-microservices.md](./learn-microservices.md)** — Microservice là gì, vì sao project tách service, cái giá phải trả và chỗ còn thiếu
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

@@ -26,7 +26,6 @@ import {
   ReorderMockExamQuestionsDto,
 } from "@app/contracts";
 import {
-  JwtAuthGuard,
   OptionalJwtAuthGuard,
   Public,
   Roles,
@@ -34,6 +33,7 @@ import {
   resolveMicroserviceError,
 } from "@app/common";
 import type { AuthUserPayload } from "@app/common";
+import { SubmitMockExamDto } from "./dto/mock-exam.dto";
 
 async function sendExam<T>(
   client: ClientProxy,
@@ -66,7 +66,7 @@ export class MockExamsController {
   }
 
   @Get("admin")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "List all mock exam templates (admin)" })
@@ -75,7 +75,7 @@ export class MockExamsController {
   }
 
   @Get("admin/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get mock exam template detail (admin)" })
@@ -84,7 +84,7 @@ export class MockExamsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create mock exam template (admin)" })
@@ -93,7 +93,7 @@ export class MockExamsController {
   }
 
   @Patch("admin/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update mock exam template (admin)" })
@@ -108,7 +108,7 @@ export class MockExamsController {
   }
 
   @Delete("admin/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete mock exam template (admin)" })
@@ -117,7 +117,7 @@ export class MockExamsController {
   }
 
   @Get("admin/:id/questions")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "List questions for a custom mock exam (admin)" })
@@ -128,7 +128,7 @@ export class MockExamsController {
   }
 
   @Post("admin/:id/questions")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Add question to mock exam (admin)" })
@@ -143,7 +143,7 @@ export class MockExamsController {
   }
 
   @Patch("admin/:id/questions/:questionId")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update mock exam question (admin)" })
@@ -160,7 +160,7 @@ export class MockExamsController {
   }
 
   @Delete("admin/:id/questions/:questionId")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete mock exam question (admin)" })
@@ -175,7 +175,7 @@ export class MockExamsController {
   }
 
   @Put("admin/:id/questions/reorder")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Reorder mock exam questions (admin)" })
@@ -190,7 +190,6 @@ export class MockExamsController {
   }
 
   @Get("history")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Last 20 exam results for current user" })
   history(@Req() req: { user: AuthUserPayload }) {
@@ -212,12 +211,12 @@ export class MockExamsController {
   @ApiOperation({ summary: "Submit mock exam answers" })
   submit(
     @Param("examId") examId: string,
-    @Body() body: { answers: Record<string, string> },
+    @Body() body: SubmitMockExamDto,
     @Req() req: { user?: AuthUserPayload | null },
   ) {
     return sendExam(this.examClient, EXAM_PATTERNS.SUBMIT_EXAM, {
       examId,
-      answers: body.answers ?? {},
+      answers: body.answers,
       userId: req.user?.id,
     });
   }

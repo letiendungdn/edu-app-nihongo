@@ -1,18 +1,10 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from "@nestjs/common";
+import { Controller, Delete, Get, Param, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CurrentUser, JwtAuthGuard, type AuthUserPayload } from "@app/common";
+import { CurrentUser, type AuthUserPayload } from "@app/common";
 import { PaymentMethodService } from "../../../payment-service/src/payment-method/payment-method.service";
 
 @ApiTags("Payment methods")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/payment-methods")
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodService: PaymentMethodService) {}

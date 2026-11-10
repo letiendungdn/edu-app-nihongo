@@ -15,7 +15,6 @@ import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import {
   CurrentUser,
-  JwtAuthGuard,
   Public,
   RateLimit,
   SlidingWindowRateLimitGuard,
@@ -144,7 +143,6 @@ export class AuthController {
   }
 
   @Post("logout")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Đăng xuất — revoke refresh token và xóa cookie" })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -177,7 +175,6 @@ export class AuthController {
   }
 
   @Get("me")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Thông tin user hiện tại" })
   me(@CurrentUser() user: AuthUserPayload) {
@@ -185,7 +182,6 @@ export class AuthController {
   }
 
   @Patch("me")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Cập nhật thông tin cá nhân" })
   updateMe(
@@ -206,7 +202,6 @@ export class AuthController {
 
   @RateLimit(3, 3600)
   @Throttle({ default: { ttl: 60_000, limit: 3 } })
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post("resend-verification")
   @ApiOperation({ summary: "Gửi lại email xác thực (5 phút cooldown)" })

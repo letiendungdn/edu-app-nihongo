@@ -17,8 +17,8 @@ imagePullSecrets:
 
 replicaCount:
   apiGateway: 2
-  contentService: 1
-  examService: 1
+  contentService: 2 # chỉ dùng khi tắt HPA của service đó
+  examService: 2
   nihongoWeb: 1
   redis: 1
 
@@ -77,6 +77,25 @@ hpa:
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
+  contentService:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+  examService:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+
+# Khi bảo trì node: luôn giữ ít nhất 1 pod mỗi service
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Chỉ api-gateway được gọi cổng gRPC của content/exam (cần CNI hỗ trợ NetworkPolicy)
+networkPolicy:
+  enabled: true
 
 resources:
   apiGateway:

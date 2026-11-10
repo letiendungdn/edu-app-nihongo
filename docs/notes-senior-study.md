@@ -143,7 +143,7 @@ findFirst(conflict)     // A và B cùng thấy trống
 
 | Khái niệm | Việc / trạng thái trên edu_app |
 |-----------|-------------------------------|
-| Topics | `edu.exam.submitted`, `edu.payment.succeeded`, `edu.session.completed`, `edu.vocab.reviewed` |
+| Topics | `edu.exam.submitted`, `edu.payment.succeeded` (các topic khai báo mà chưa dùng đã xóa) |
 | Producer hiện có | `services/exam-service/src/kafka/` · `services/payment-service/src/kafka/` |
 | Outbox | **Chưa có** — ghi event trong cùng `$transaction` với business write → worker poll publish |
 | Retry / DLQ | Consumer fail → backoff; poison → dead-letter, không block partition |

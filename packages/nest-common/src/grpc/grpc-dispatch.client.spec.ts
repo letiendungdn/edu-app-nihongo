@@ -1,4 +1,4 @@
-import { NEVER, of } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { GrpcDispatchClient } from './grpc-dispatch.client';
 
@@ -41,6 +41,18 @@ describe('GrpcDispatchClient', () => {
       await expect(firstValueFrom(client.send('GET_LESSON', {}))).rejects.toMatchObject({ statusCode: 404 });
     }
     expect(client.breaker.currentState).toBe('CLOSED');
+  });
+
+  it('mất kết nối gRPC → 503, không lộ chi tiết nội bộ', async () => {
+    const client = clientWith(() =>
+      throwError(() => Object.assign(new Error('14 UNAVAILABLE: No connection established'), { code: 14 })),
+    );
+    const err = (await firstValueFrom(client.send('GET_LESSON', {})).catch((e: unknown) => e)) as {
+      statusCode: number;
+      message: string;
+    };
+    expect(err.statusCode).toBe(503);
+    expect(err.message).not.toMatch(/UNAVAILABLE|No connection/);
   });
 
   it('service con không phản hồi → lỗi 504 sau timeout (không treo mãi)', async () => {

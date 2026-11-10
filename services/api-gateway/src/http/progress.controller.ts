@@ -5,7 +5,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
   Inject,
 } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
@@ -21,12 +20,11 @@ import {
   UpsertDailyNoteDto,
   UpsertDailyGoalsDto,
 } from "@app/contracts";
-import { CurrentUser, JwtAuthGuard } from "@app/common";
+import { CurrentUser } from "@app/common";
 import type { AuthUserPayload } from "@app/common";
 
 @ApiTags("progress")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/progress")
 export class ProgressController {
   constructor(

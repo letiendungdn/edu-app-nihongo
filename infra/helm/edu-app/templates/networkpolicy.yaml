@@ -1,0 +1,28 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- /* Chỉ api-gateway được gọi gRPC của content/exam (xem infra/k8s/grpc-services-networkpolicy.yaml) */}}
+{{- range $svc := list (dict "name" "content-service" "port" 50051) (dict "name" "exam-service" "port" 50052) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $svc.name }}-from-gateway
+  namespace: {{ include "edu-app.namespace" $ }}
+  labels:
+    app: {{ $svc.name }}
+    {{- include "edu-app.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $svc.name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: {{ $svc.port }}
+{{- end }}
+{{- end }}

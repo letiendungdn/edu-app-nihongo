@@ -22,7 +22,7 @@ import {
   ReorderVocabularyDto,
   UpdateVocabularyDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 
 @ApiTags("vocabularies")
 @Controller("api/vocabularies")
@@ -32,7 +32,7 @@ export class VocabulariesController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create vocabulary entry (admin)" })
@@ -59,7 +59,7 @@ export class VocabulariesController {
   }
 
   @Put("reorder")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Reorder vocabularies in a lesson (admin)" })
@@ -82,7 +82,7 @@ export class VocabulariesController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update vocabulary entry (admin)" })
@@ -96,7 +96,7 @@ export class VocabulariesController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete vocabulary (admin)" })

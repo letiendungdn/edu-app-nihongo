@@ -1,0 +1,28 @@
+{{- /* content-service, exam-service: tối thiểu 2 pod, tự tăng theo CPU (xem infra/k8s/grpc-services-autoscaling.yaml) */}}
+{{- range $svc := list (dict "name" "content-service" "cfg" .Values.hpa.contentService) (dict "name" "exam-service" "cfg" .Values.hpa.examService) }}
+{{- if $svc.cfg.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ include "edu-app.namespace" $ }}
+  labels:
+    app: {{ $svc.name }}
+    {{- include "edu-app.labels" $ | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $svc.name }}
+  minReplicas: {{ $svc.cfg.minReplicas }}
+  maxReplicas: {{ $svc.cfg.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $svc.cfg.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}

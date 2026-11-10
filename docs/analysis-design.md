@@ -470,8 +470,7 @@ flowchart TD
   Answer --> Rate[Chọn Again / Hard / Good / Easy]
   Rate --> SM2[Cập nhật SM-2<br/>ease, interval, due]
   SM2 --> Save[POST /api/progress/review]
-  Save --> Queue[Kafka: edu.vocab.reviewed]
-  Queue --> Empty
+  Save --> Empty
 ```
 
 ---

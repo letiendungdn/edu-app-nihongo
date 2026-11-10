@@ -5,16 +5,14 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CurrentUser, JwtAuthGuard, type AuthUserPayload } from "@app/common";
+import { CurrentUser, type AuthUserPayload } from "@app/common";
 import { RefundService } from "../../../payment-service/src/refund/refund.service";
 import { RequestRefundDto } from "./dto/refund.dto";
 
 @ApiTags("Payments")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/payments")
 export class PaymentsController {
   constructor(private readonly refundService: RefundService) {}

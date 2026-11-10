@@ -10,7 +10,7 @@ import {
 import { Throttle } from "@nestjs/throttler";
 import { IsNotEmpty, IsString, MaxLength } from "class-validator";
 import { Role } from "@prisma/client";
-import { JwtAuthGuard, Roles, RolesGuard } from "@app/common";
+import { Roles, RolesGuard } from "@app/common";
 import { GrammarQaService } from "./grammar-qa.service";
 
 export class GrammarQaDto {
@@ -55,14 +55,14 @@ export class GrammarQaController {
 
   @Post("reindex")
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   reindex() {
     return this.qa.reindex();
   }
 
   @Get("status")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   status() {
     return this.qa.status();

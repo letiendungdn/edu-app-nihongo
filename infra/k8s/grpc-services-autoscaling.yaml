@@ -1,0 +1,96 @@
+# content-service và exam-service: tối thiểu 2 pod, tự tăng theo CPU.
+# Trước đây mỗi service cố định replicas: 1 → pod đó chết (OOM, node bảo trì) là tính năng đó ngưng
+# cho tới khi K8s dựng lại pod. Chạy 2 pod an toàn:
+#   - content-service không giữ trạng thái (cache nằm ở Redis).
+#   - exam-service: outbox relay khóa dòng bằng FOR UPDATE SKIP LOCKED; consumer Kafka cùng group
+#     chia partition và chống xử lý trùng bằng bảng ProcessedEvent.
+# Deployment KHÔNG đặt replicas: HPA quyết định số pod (apply lại manifest không ép về 1).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: content-service
+  namespace: edu-app
+  labels:
+    app: content-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: content-service
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: exam-service
+  namespace: edu-app
+  labels:
+    app: exam-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: exam-service
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+# PodDisruptionBudget: khi bảo trì node (kubectl drain, nâng cấp cluster) K8s không được gỡ cùng lúc
+# mọi pod của một service. Không có PDB, drain có thể xóa cả 2 pod một lúc → mất dịch vụ.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway
+  namespace: edu-app
+  labels:
+    app: api-gateway
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: content-service
+  namespace: edu-app
+  labels:
+    app: content-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: content-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: exam-service
+  namespace: edu-app
+  labels:
+    app: exam-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: exam-service

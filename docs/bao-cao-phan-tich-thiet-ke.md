@@ -225,7 +225,7 @@ flowchart LR
   P32["3.2 Hiển thị flashcard"]
   P33["3.3 Nhận đánh giá<br/>Again/Hard/Good/Easy"]
   P34["3.4 Cập nhật SM-2"]
-  P35["3.5 Ghi log / Kafka"]
+  P35["3.5 Ghi log hoạt động"]
 
   D2[("D2 Vocabulary<br/>Grammar Kanji")]
   D3[("D3 SrsCard")]
@@ -241,7 +241,6 @@ flowchart LR
   P34 -->|"ghi"| D3
   P34 -->|"cập nhật streak"| D1
   P34 --> P35
-  P35 -->|"edu.vocab.reviewed"| K[[Kafka]]
 ```
 
 ### B.2.4. Từ điển dữ liệu (rút gọn)
@@ -642,8 +641,7 @@ flowchart TD
   Flip --> Rate[Chọn Again / Hard / Good / Easy]
   Rate --> SM2[Tính SM-2: ease, interval, nextReviewAt]
   SM2 --> Persist[Lưu SrsCard]
-  Persist --> Event[Publish Kafka edu.vocab.reviewed]
-  Event --> Has
+  Persist --> Has
 ```
 
 ### C.2.2. Activity — Đặt lịch coaching + thanh toán
@@ -1131,7 +1129,7 @@ Phần này phục vụ **bảo vệ đồ án / phỏng vấn** dựa trên bá
 
 **E14. Vì sao tách `content-service` / `exam-service` (gRPC) thay vì tất cả trong api-gateway?**
 
-> Tách bounded context: nội dung học vs thi/progress. Scale độc lập, deploy riêng, contract rõ qua protobuf. Gateway là BFF HTTP: auth, payment, chat, proxy gRPC. Trade-off: độ trễ mạng nội bộ + vận hành nhiều process.
+> Tách bounded context: nội dung học (đọc nhiều) vs thi/tiến độ (ghi nhiều). Deploy riêng và cô lập lỗi: tắt content-service thì API thi thử vẫn trả 200. Hợp đồng qua file `.proto` và danh sách pattern. Gateway là BFF HTTP: auth, payment (chạy chung trong gateway), chat, proxy gRPC. Trade-off: độ trễ mạng nội bộ, phải có timeout/circuit breaker, vận hành nhiều process. Hạn chế hiện tại: ba service dùng chung một database (chưa có database-per-service); đã có quy tắc mỗi bảng một service chủ được ghi, kiểm bằng test ([ADR-0010](./adr/0010-shared-database-ownership.md)). content/exam chạy tối thiểu 2 pod với HPA. Xem [learn-microservices.md](./learn-microservices.md).
 
 **E15. Nginx trong hệ thống đóng vai trò gì?**
 
@@ -1164,7 +1162,7 @@ Phần này phục vụ **bảo vệ đồ án / phỏng vấn** dựa trên bá
 | # | Câu hỏi | Gợi ý 1 câu |
 |---|---------|-------------|
 | E21 | Actor nào host livestream? | TEACHER (ADMIN cũng có thể tùy policy) |
-| E22 | Kafka topic ví dụ trong app? | `edu.exam.submitted`, `edu.payment.succeeded`, `edu.vocab.reviewed` |
+| E22 | Kafka topic ví dụ trong app? | `edu.exam.submitted` (có consumer `progress-updater`), `edu.payment.succeeded` (ghi qua outbox, chưa có consumer) |
 | E23 | SM-2 `mastered` khi nào? | `interval >= 21` ngày |
 | E24 | App tiếng Anh dùng chung DB với Nihongo không? | Không — app tiếng Anh ở repo riêng `edu-app-english`, DB riêng |
 | E25 | Rate limit login dùng gì? | Redis sliding window / Throttler trên auth |

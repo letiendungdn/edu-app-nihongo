@@ -159,7 +159,7 @@ Góp ý bằng **câu hỏi** và **rủi ro cụ thể**, không bằng sở th
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 6/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 7/7.
 
 - Bài trước: [learn-system-design.md](./learn-system-design.md) — Tư duy system design qua các quyết định của project
 - Xong nhóm này. **Nhóm tiếp: 3. Backend (NestJS)** — bắt đầu bằng [learn-nestjs.md](./learn-nestjs.md) (NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe)

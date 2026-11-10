@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
 import {
   CurrentUser,
-  JwtAuthGuard,
   Roles,
   RolesGuard,
   type AuthUserPayload,
@@ -19,7 +18,7 @@ import {
 
 @ApiTags("Coach")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(Role.TEACHER, Role.ADMIN)
 @Controller("api/coach")
 export class CoachController {

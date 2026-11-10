@@ -19,13 +19,7 @@ import {
   Matches,
   MaxLength,
 } from "class-validator";
-import {
-  JwtAuthGuard,
-  OptionalJwtAuthGuard,
-  Public,
-  Roles,
-  RolesGuard,
-} from "@app/common";
+import { OptionalJwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
 import type { AuthRequest } from "@app/common/auth/current-user.decorator";
 import { FeatureFlagsService } from "./feature-flags.service";
 
@@ -70,7 +64,7 @@ export class FeatureFlagsController {
   }
 
   @Get("admin/feature-flags")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Danh sách feature flag (admin)" })
@@ -79,7 +73,7 @@ export class FeatureFlagsController {
   }
 
   @Post("admin/feature-flags")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Tạo feature flag (admin) — mặc định TẮT" })
@@ -88,7 +82,7 @@ export class FeatureFlagsController {
   }
 
   @Patch("admin/feature-flags/:key")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({

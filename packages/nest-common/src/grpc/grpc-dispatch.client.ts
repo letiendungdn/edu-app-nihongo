@@ -1,4 +1,4 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Logger, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, TimeoutError, from, lastValueFrom, timeout } from 'rxjs';
 import { CircuitBreaker } from './circuit-breaker';
@@ -27,6 +27,15 @@ function isServiceFailure(error: { statusCode?: number; message?: unknown }): bo
   return !/không tồn tại|not found|hết hạn/i.test(String(error.message ?? ''));
 }
 
+function describeGrpcError(error: unknown): string {
+  if (error && typeof error === 'object') {
+    const e = error as { code?: unknown; details?: unknown; message?: unknown };
+    if (typeof e.code === 'number') return `gRPC code ${e.code}: ${String(e.details ?? e.message ?? '')}`;
+    if (typeof e.message === 'string') return e.message;
+  }
+  return String(error);
+}
+
 /** Chuyển `response.error` (chuỗi JSON hoặc chuỗi thường) thành object ném ra — giữ nguyên định dạng cũ. */
 function toRpcError(raw: string): { statusCode?: number; status?: string; message?: string } {
   try {
@@ -48,6 +57,7 @@ export class GrpcDispatchClient implements OnModuleInit {
   private readonly serviceName: string;
   private readonly grpcClient: ClientGrpc;
   readonly breaker = new CircuitBreaker();
+  private readonly logger = new Logger(GrpcDispatchClient.name);
 
   constructor(grpcClient: ClientGrpc, serviceName: string) {
     this.grpcClient = grpcClient;
@@ -88,7 +98,14 @@ export class GrpcDispatchClient implements OnModuleInit {
           message: `${this.serviceName} không phản hồi sau ${ms}ms (${pattern})`,
         };
       }
-      throw error;
+      // Lỗi tầng gRPC (mất kết nối, service đang khởi động lại…): client chỉ cần biết "tạm thời không
+      // dùng được". Bản cũ ném nguyên lỗi → 500 kèm "14 UNAVAILABLE: No connection established…"
+      // (lộ chi tiết nội bộ, sai mã: lỗi ở service phía sau không phải bug của gateway).
+      this.logger.warn(`${this.serviceName} ${pattern}: ${describeGrpcError(error)}`);
+      throw {
+        statusCode: 503,
+        message: `${this.serviceName} tạm thời không khả dụng — thử lại sau ít phút (${pattern})`,
+      };
     }
 
     if (response.error) {

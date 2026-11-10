@@ -60,7 +60,6 @@ Nền tảng học tiếng Nhật (nihongo-web) kết hợp coaching marketplace
     ┌──────────────────────────────────────────────────────────┐
     │               Async Layer (Kafka :9092)                  │
     │  edu.exam.submitted   │  edu.payment.succeeded           │
-    │  edu.session.completed│  edu.vocab.reviewed              │
     └──────────────────────────────────────────────────────────┘
 
     ┌──────────────────────────────────────────────────────────┐

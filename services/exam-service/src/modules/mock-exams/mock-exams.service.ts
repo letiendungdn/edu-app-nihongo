@@ -1105,6 +1105,24 @@ export class MockExamsService {
     });
   }
 
+  /**
+   * Xóa một kết quả thi (admin). ExamResult thuộc exam-service: gateway gọi qua gRPC, không tự xóa
+   * thẳng trong DB (docs/adr/0010-shared-database-ownership.md). Phần chi tiết theo phần thi xóa theo
+   * (onDelete: Cascade). Không có → 404 thay vì lỗi P2025 của Prisma.
+   */
+  async deleteResult(id: number) {
+    const { count } = await this.prisma.examResult.deleteMany({
+      where: { id },
+    });
+    if (count === 0) {
+      throw new RpcException({
+        statusCode: 404,
+        message: `Kết quả thi ${id} không tồn tại`,
+      });
+    }
+    return { id };
+  }
+
   getSession(examId: string) {
     return this.cacheManager.get<MockExamSession>(sessionKey(examId));
   }

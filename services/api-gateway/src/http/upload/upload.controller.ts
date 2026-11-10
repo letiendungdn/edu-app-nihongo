@@ -1,12 +1,11 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "@app/common";
+import {} from "@app/common";
 import { GetPresignedUrlDto } from "../dto/upload.dto";
 import { UploadService } from "./upload.service";
 
 @ApiTags("Upload")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}

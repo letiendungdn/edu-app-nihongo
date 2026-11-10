@@ -20,7 +20,7 @@ import {
   LessonPaginationDto,
   UpdateGrammarDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 import { KanaRomajiService } from "./kana-romaji.service";
 
 type GrammarExampleRow = {
@@ -56,7 +56,7 @@ export class GrammarsController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create grammar entry (admin)" })
@@ -99,7 +99,7 @@ export class GrammarsController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update grammar entry (admin)" })
@@ -113,7 +113,7 @@ export class GrammarsController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete grammar (admin)" })

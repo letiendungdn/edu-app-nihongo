@@ -25,7 +25,9 @@ metadata:
     app: content-service
     {{- include "edu-app.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.hpa.contentService.enabled }}
   replicas: {{ .Values.replicaCount.contentService }}
+  {{- end }}
   selector:
     matchLabels:
       app: content-service

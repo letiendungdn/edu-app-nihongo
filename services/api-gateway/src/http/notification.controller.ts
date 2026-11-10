@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CurrentUser, JwtAuthGuard, type AuthUserPayload } from "@app/common";
+import { CurrentUser, type AuthUserPayload } from "@app/common";
 import { NotificationService } from "../realtime/notification.service";
 
 class MarkNotificationsReadDto {
@@ -9,7 +9,6 @@ class MarkNotificationsReadDto {
 
 @ApiTags("Notifications")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/notifications")
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}

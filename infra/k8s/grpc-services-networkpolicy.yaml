@@ -1,0 +1,53 @@
+# Chỉ api-gateway được gọi cổng gRPC của content-service và exam-service.
+# Service con tin gateway đã kiểm token, quyền và dữ liệu (DTO); chúng không tự kiểm lại.
+# Không có policy này, MỌI pod trong cluster (kể cả pod bị chiếm quyền) gọi thẳng được gRPC và
+# bỏ qua toàn bộ lớp kiểm tra của gateway. Xem docs/learn-microservices.md.
+#
+# Chỉ giới hạn chiều VÀO (Ingress). Probe của kubelet (tcpSocket) đi từ chính node nên luôn được phép.
+# Cần CNI có hỗ trợ NetworkPolicy (Calico, Cilium, AWS VPC CNI bật network policy…); CNI không hỗ trợ
+# thì policy bị bỏ qua mà không báo lỗi.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: content-service-from-gateway
+  namespace: edu-app
+  labels:
+    app: content-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: content-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50051
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: exam-service-from-gateway
+  namespace: edu-app
+  labels:
+    app: exam-service
+    app.kubernetes.io/part-of: edu-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: exam-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 50052

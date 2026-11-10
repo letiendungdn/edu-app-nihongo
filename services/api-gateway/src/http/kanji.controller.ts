@@ -25,7 +25,7 @@ import {
   UpdateKanjiEntryDto,
   UpdateKanjiLessonDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 
 @ApiTags("kanji")
 @Controller("api")
@@ -44,7 +44,7 @@ export class KanjiController {
   }
 
   @Post("kanji-lessons")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create kanji lesson (admin)" })
@@ -55,7 +55,7 @@ export class KanjiController {
   }
 
   @Patch("kanji-lessons/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update kanji lesson (admin)" })
@@ -69,7 +69,7 @@ export class KanjiController {
   }
 
   @Delete("kanji-lessons/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete kanji lesson (admin)" })
@@ -119,7 +119,7 @@ export class KanjiController {
   }
 
   @Post("kanji")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create kanji entry (admin)" })
@@ -130,7 +130,7 @@ export class KanjiController {
   }
 
   @Patch("kanji/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update kanji entry (admin)" })
@@ -144,7 +144,7 @@ export class KanjiController {
   }
 
   @Delete("kanji/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete kanji entry (admin)" })
@@ -155,7 +155,7 @@ export class KanjiController {
   }
 
   @Post("kanji/:entryId/vocabularies")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Add related vocabulary to a kanji entry (admin)" })
@@ -172,7 +172,7 @@ export class KanjiController {
   }
 
   @Put("kanji/:entryId/vocabularies/reorder")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Reorder related vocabularies (admin)" })
@@ -189,7 +189,7 @@ export class KanjiController {
   }
 
   @Patch("kanji-vocab/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update related vocabulary (admin)" })
@@ -203,7 +203,7 @@ export class KanjiController {
   }
 
   @Delete("kanji-vocab/:id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete related vocabulary (admin)" })

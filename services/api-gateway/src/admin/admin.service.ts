@@ -2,7 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { firstValueFrom } from "rxjs";
 import { Role } from "@prisma/client";
-import { CONTENT_PATTERNS } from "@app/contracts";
+import { CONTENT_PATTERNS, EXAM_PATTERNS } from "@app/contracts";
 import { PrismaService } from "@app/prisma";
 
 @Injectable()
@@ -10,6 +10,7 @@ export class AdminService {
   constructor(
     private prisma: PrismaService,
     @Inject("CONTENT_SERVICE") private readonly contentClient: ClientProxy,
+    @Inject("EXAM_SERVICE") private readonly examClient: ClientProxy,
   ) {}
 
   async getDashboardStats() {
@@ -111,8 +112,11 @@ export class AdminService {
     });
   }
 
+  /** ExamResult thuộc exam-service: xóa qua gRPC, không ghi thẳng bảng của service khác (ADR-0010). */
   deleteExamResult(id: number) {
-    return this.prisma.examResult.delete({ where: { id } });
+    return firstValueFrom(
+      this.examClient.send(EXAM_PATTERNS.DELETE_RESULT, { id }),
+    );
   }
 
   importVocab(lessonNumber: number, text: string) {

@@ -10,7 +10,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { SkipThrottle } from "@nestjs/throttler";
 import { Role } from "@prisma/client";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 import { ReengagementBatchDto } from "./insights.dto";
 import { InsightsService } from "./insights.service";
 import { InternalTokenGuard } from "./internal-token.guard";
@@ -36,7 +36,7 @@ export class InsightsInternalController {
 
 @ApiTags("admin")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(Role.ADMIN)
 @Controller("api/admin/insights")
 export class InsightsAdminController {

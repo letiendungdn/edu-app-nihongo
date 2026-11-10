@@ -20,12 +20,14 @@
 | `environment:` | **ConfigMap** / **Secret** | `configmap.yaml`, `secret.yaml` |
 | volume của Postgres | **StatefulSet** + PersistentVolumeClaim | `postgres.yaml` (5Gi) |
 | `restart: unless-stopped` | K8s tự khởi động lại Pod, dời sang node khác | (mặc định) |
-| — | **HPA** tự scale theo CPU | `api-gateway-hpa.yaml` (2–5 pod, 70% CPU) |
+| — | **HPA** tự scale theo CPU | `api-gateway-hpa.yaml` (2–5 pod), `grpc-services-autoscaling.yaml` (content/exam 2–4 pod), cùng ngưỡng 70% CPU |
+| — | **PodDisruptionBudget**: bảo trì node không gỡ hết pod một lúc | `grpc-services-autoscaling.yaml` (gateway, content, exam: luôn còn ≥ 1 pod) |
+| mạng nội bộ của compose (ai cũng gọi được ai) | **NetworkPolicy**: chỉ gateway được gọi gRPC | `grpc-services-networkpolicy.yaml` (cần CNI hỗ trợ) |
 
 ```
 Internet ─▶ Ingress (nihongo.example.com)
-              ├─ /api, /health ─▶ Service api-gateway:3000 ─▶ Pod ×2..5 ─┬─▶ Service content-service:50051 ─▶ Pod
-              │                                                           ├─▶ Service exam-service:50052   ─▶ Pod
+              ├─ /api, /health ─▶ Service api-gateway:3000 ─▶ Pod ×2..5 ─┬─▶ Service content-service:50051 ─▶ Pod ×2..4
+              │                                                           ├─▶ Service exam-service:50052   ─▶ Pod ×2..4
               │                                                           ├─▶ Service postgres:5432 ─▶ StatefulSet (PVC 5Gi)
               │                                                           └─▶ Service redis:6379    ─▶ Pod
               └─ /             ─▶ Service nihongo-web:8080 ─▶ Pod

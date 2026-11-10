@@ -13,7 +13,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { MindMapKind, Role } from "@prisma/client";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 import { MindMapsService } from "./mind-maps.service";
 import { MindMapDataService } from "./mind-map-data.service";
 import {
@@ -40,7 +40,7 @@ export class MindMapsController {
   }
 
   @Post("bulk-upsert")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Upsert nhiều sơ đồ / seed mặc định (admin)" })
@@ -71,7 +71,7 @@ export class MindMapsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create mind map level (admin)" })
@@ -80,7 +80,7 @@ export class MindMapsController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update mind map level (admin)" })
@@ -92,7 +92,7 @@ export class MindMapsController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete mind map level (admin)" })

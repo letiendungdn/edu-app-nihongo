@@ -71,6 +71,7 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 
 **2. Kiến trúc**
 - [ ] system-design.md
+- [x] learn-microservices.md (mới)
 - [ ] core-flows.md
 - [ ] microservices-communication.md
 - [ ] media-storage.md

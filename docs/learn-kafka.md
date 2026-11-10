@@ -55,14 +55,14 @@ Consumer Group: exam-service-consumers
 ## 3. Topics trong project
 
 ```typescript
-// packages/nest-contracts/src/kafka/topics.ts
-export const KAFKA_TOPICS = {
-  EXAM_SUBMITTED:      'edu.exam.submitted',
-  PAYMENT_SUCCEEDED:   'edu.payment.succeeded',
-  SESSION_COMPLETED:   'edu.session.completed',
-  VOCAB_REVIEWED:      'edu.vocab.reviewed',
+// packages/nest-contracts/src/kafka-topics.ts
+export const KafkaTopics = {
+  EXAM_SUBMITTED:    'edu.exam.submitted',    // exam-service gửi; consumer progress-updater đọc
+  PAYMENT_SUCCEEDED: 'edu.payment.succeeded', // payment gửi qua outbox; chưa có consumer
 } as const;
 ```
+
+Ba topic `edu.exam.scored`, `edu.vocab.reviewed`, `edu.session.completed` từng được khai báo nhưng chưa bao giờ được gửi, nên đã bị xóa. Lý do giữ `edu.payment.succeeded` dù chưa ai đọc: [learn-microservices.md](./learn-microservices.md) mục 5.4.
 
 **Tại sao `edu.payment.succeeded` không xử lý ngay trong webhook?**
 

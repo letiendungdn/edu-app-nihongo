@@ -1,17 +1,13 @@
 import "./instrument";
 import "./tracing";
-import { Logger, ValidationPipe } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
+import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
 import { Logger as PinoLogger } from "nestjs-pino";
-import { AllExceptionsFilter, ResponseInterceptor } from "@app/common";
 import { AppModule } from "./app.module";
-import { bodyLimitMiddleware } from "./body-limit.middleware";
+import { configureApp } from "./configure-app";
 
 // Khi Docker Desktop khởi động lại, gateway có thể lên trước khi Postgres/Kafka hồi phục xong và treo
 // ở bước init mà không chết → không bao giờ mở cổng 3000, nginx trả 502 mãi. Quá hạn thì thoát để
@@ -29,79 +25,15 @@ async function bootstrap() {
     bufferLogs: true,
     rawBody: true,
   });
-  // Gateway đứng sau đúng MỘT proxy (nginx, hoặc Ingress trên K8s). Không bật thì req.ip là IP của
-  // nginx với MỌI người dùng: throttler (120 request/phút theo IP) bị chia chung cho cả hệ thống.
-  // Giá trị 1 = chỉ tin một lớp proxy: lấy IP mà nginx thấy, client không giả được qua X-Forwarded-For.
-  app.set("trust proxy", 1);
-  // Chặn body > 1 MB theo Content-Length TRƯỚC khi parse, trừ route soạn nội dung (xem body-limit.middleware.ts)
-  app.use(bodyLimitMiddleware);
-  // Route soạn nội dung gửi ảnh data URL — parser cho phép tới 8 MB
-  app.useBodyParser("json", { limit: "8mb" });
-  // Webhook LiveKit gửi Content-Type application/webhook+json (parser trên chỉ nhận application/json)
-  app.useBodyParser("json", { type: "application/webhook+json" });
   // SIGTERM (K8s rolling update) → đóng server, Prisma, Kafka gọn gàng thay vì cắt ngang request
   app.enableShutdownHooks();
   app.useLogger(app.get(PinoLogger));
   const configService = app.get(ConfigService);
   const logger = new Logger("Bootstrap");
-
-  app.use(cookieParser());
-
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:", "https:"],
-        },
-      },
-    }),
-  );
-  // API không dùng camera/micro/vị trí: tắt hẳn cho trang Swagger và mọi response (OWASP ZAP 10063)
-  app.use(
-    (
-      _req: unknown,
-      res: { setHeader(name: string, value: string): void },
-      next: () => void,
-    ) => {
-      res.setHeader(
-        "Permissions-Policy",
-        "camera=(), microphone=(), geolocation=(), payment=()",
-      );
-      next();
-    },
-  );
-
-  const allowedOrigins = configService.get<string[]>("cors.origins") ?? [];
   const isProduction = process.env.NODE_ENV === "production";
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      // Mọi cổng localhost chỉ được phép khi dev — production chỉ dùng danh sách cors.origins
-      if (!isProduction && /^http:\/\/localhost(:\d+)?$/.test(origin))
-        return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Origin lạ: không gắn header CORS → trình duyệt tự chặn. Không ném lỗi (trước đây thành 500,
-      // làm bẩn log lỗi và metric 5xx vì một request hoàn toàn bình thường từ trang khác).
-      callback(null, false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-
-  app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
-  app.useGlobalFilters(new AllExceptionsFilter());
+  // Middleware, CORS, pipe/interceptor/filter global — dùng chung với test e2e
+  configureApp(app);
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle("Nihongo Learn API")

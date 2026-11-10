@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ScheduleModule } from "@nestjs/schedule";
 import { BullModule } from "@nestjs/bullmq";
@@ -34,7 +34,8 @@ import { PushModule } from "./push/push.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { MailSchedulerModule } from "./mail-scheduler/mail-scheduler.module";
 import { EmailTemplateModule } from "./email-template/email-template.module";
-import { HttpMetricsInterceptor } from "./metrics/http-metrics.interceptor";
+import { HttpMetricsMiddleware } from "./metrics/http-metrics.middleware";
+import { AuthDeniedAuditMiddleware } from "./audit/auth-denied-audit.middleware";
 import { MetricsController } from "./metrics/metrics.controller";
 import { LearningProgressModule } from "./learning-progress/learning-progress.module";
 
@@ -121,11 +122,18 @@ class NoopAuditService {
     }),
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_INTERCEPTOR, useClass: HttpMetricsInterceptor },
     ...(mongoEnabled
       ? []
       : [{ provide: AuditService, useClass: NoopAuditService }]),
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // Middleware nghe `finish` của response: thấy cả request bị guard/throttler/body-limit chặn,
+  // điều mà interceptor không làm được (interceptor chỉ chạy khi đã qua guard).
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(HttpMetricsMiddleware, AuthDeniedAuditMiddleware)
+      .forRoutes("{*splat}");
+  }
+}

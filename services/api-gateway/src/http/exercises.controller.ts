@@ -19,7 +19,7 @@ import {
   CreateExerciseDto,
   UpdateExerciseDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 
 @ApiTags("exercises")
 @Controller("api/exercises")
@@ -29,7 +29,7 @@ export class ExercisesController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create exercise (admin)" })
@@ -70,7 +70,7 @@ export class ExercisesController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update exercise (admin)" })
@@ -84,7 +84,7 @@ export class ExercisesController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete exercise (admin)" })

@@ -185,7 +185,7 @@ MORI_COURSE_DIR="/Volumes/ESD-ISO/309. [Tiếng Nhật][Dũng Mori] - Combo Ti�
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 4/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 5/7.
 
 - Bài trước: [microservices-communication.md](./microservices-communication.md) — Các service nói chuyện với nhau bằng gì, vì sao
 - **Bài tiếp: [learn-system-design.md](./learn-system-design.md)** — Tư duy system design qua các quyết định của project

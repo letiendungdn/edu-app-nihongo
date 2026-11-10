@@ -145,12 +145,11 @@ exam-service ──(EventBus in-process)──► ExamSubmittedHandler
 > ```ts
 > export const KafkaTopics = {
 >   EXAM_SUBMITTED:    'edu.exam.submitted',
->   EXAM_SCORED:       'edu.exam.scored',
->   VOCAB_REVIEWED:    'edu.vocab.reviewed',
 >   PAYMENT_SUCCEEDED: 'edu.payment.succeeded',
->   SESSION_COMPLETED: 'edu.session.completed',
 > } as const;
 > ```
+>
+> (Ba topic `exam.scored`, `vocab.reviewed`, `session.completed` đã xóa vì chưa từng được gửi.)
 >
 > Producer hiện có: exam-service phát `edu.exam.submitted` (qua
 > `ExamSubmittedHandler`), payment-service phát `edu.payment.succeeded`.
@@ -348,7 +347,7 @@ Xem thêm: `docs/interview-questions.md` (Q11–Q14, Q27 về Kafka; phần "gRP
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 3/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 4/7.
 
 - Bài trước: [core-flows.md](./core-flows.md) — Luồng từng tính năng: đăng nhập, thanh toán, video call, livestream, chat, SRS, thi thử, dự đoán đề, phát âm…
 - **Bài tiếp: [media-storage.md](./media-storage.md)** — Ảnh và file media lưu ở đâu: repo, S3, DB, thư mục gắn container

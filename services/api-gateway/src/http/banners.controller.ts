@@ -9,7 +9,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Role } from "@prisma/client";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 import { BannersService } from "./banners.service";
 import { DeleteBannerDto, UpsertBannerDto } from "./dto/banner.dto";
 
@@ -26,7 +26,7 @@ export class BannersController {
   }
 
   @Put()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Đặt ảnh nền global hoặc theo trang (admin)" })
@@ -35,7 +35,7 @@ export class BannersController {
   }
 
   @Delete()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Xóa ảnh nền (admin)" })

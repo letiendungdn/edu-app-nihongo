@@ -1,11 +1,6 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import {
-  CurrentUser,
-  JwtAuthGuard,
-  Public,
-  type AuthUserPayload,
-} from "@app/common";
+import { CurrentUser, Public, type AuthUserPayload } from "@app/common";
 import { JlptPredictionService } from "./jlpt-prediction.service";
 
 @ApiTags("jlpt-prediction")
@@ -14,7 +9,6 @@ export class JlptPredictionController {
   constructor(private readonly prediction: JlptPredictionService) {}
 
   @Get("score")
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Predicted JLPT score and pass chance from the user's mock exams",

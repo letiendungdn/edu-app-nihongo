@@ -280,8 +280,8 @@ filter                                   ← nhảy thẳng tới filter
 
 Không interceptor nào chạy, kể cả phần "before". Hệ quả thật trong repo:
 
-- `AuditInterceptor` **không bao giờ** ghi lại lần đăng nhập sai token. Muốn audit 401 thì phải ghi ở filter hoặc trong guard.
-- `HttpMetricsInterceptor` cũng không thấy 401/403 từ guard, nên metric `http_requests_total{status="401"}` thiếu các lần này.
+- `AuditInterceptor` **không bao giờ** thấy lần bị 401/403 từ guard.
+- Bản cũ đo metric bằng interceptor, nên `http_requests_total{status="401"}` luôn thiếu các lần này. Đã sửa bằng cách chuyển sang **middleware nghe sự kiện `finish`** của response (mục 8.2): `finish` luôn xảy ra, dù request bị chặn ở tầng nào. Audit các lần bị từ chối cũng làm theo cách đó (mục 8.3).
 - ThrottlerGuard đứng **sau** JwtAuthGuard. Request không có token bị 401 trước khi kịp đếm, nên ThrottlerGuard không bảo vệ trước việc spam request không token. Route công khai vẫn được đếm vì `@Public()` cho qua JwtAuthGuard.
 
 **Handler ném lỗi** (`?x=boom`):
@@ -369,9 +369,9 @@ JwtAuthGuard.canActivate
 
 Mặc định là **đóng**: mọi route cần đăng nhập, trừ route được đánh dấu `@Public()`. Quên đánh dấu thì route bị khóa, chứ không bị mở toang. Đây là hướng an toàn.
 
-### 5.2 Bẫy có thật: JwtAuthGuard chạy hai lần
+### 5.2 Lỗi đã gặp: JwtAuthGuard chạy hai lần (đã sửa)
 
-Vì `JwtAuthGuard` đã global, đoạn sau trong [lessons.controller.ts](../services/api-gateway/src/http/lessons.controller.ts) làm nó chạy **lần thứ hai**:
+Vì `JwtAuthGuard` đã global, code cũ trong [lessons.controller.ts](../services/api-gateway/src/http/lessons.controller.ts) làm nó chạy **lần thứ hai**:
 
 ```ts
 @Post()
@@ -380,9 +380,11 @@ Vì `JwtAuthGuard` đã global, đoạn sau trong [lessons.controller.ts](../ser
 create(@Body() dto: CreateLessonDto) { … }
 ```
 
-Phép đo ở mục 4 cho thấy `guard:Auth#1` (global) rồi `guard:Auth#2` (controller). Mỗi lần là một lần `JwtStrategy.validate`, tức **2 query `user.findUnique` cho một request**. Hiện có 82 chỗ như vậy trong 28 file của gateway.
+Phép đo ở mục 4 cho thấy `guard:Auth#1` (global) rồi `guard:Auth#2` (controller). Mỗi lần là một lần `JwtStrategy.validate`, tức **2 query `user.findUnique` cho một request**. Có 82 chỗ như vậy trong 28 file của gateway.
 
-Cách sửa: chỉ giữ `@UseGuards(RolesGuard)`. Bài tập 1 ở mục 19 hướng dẫn làm và kiểm.
+Đã sửa: `@UseGuards(JwtAuthGuard, RolesGuard)` thành `@UseGuards(RolesGuard)`; `@UseGuards(JwtAuthGuard)` đứng một mình thì xóa hẳn. Không đổi hành vi: `JwtAuthGuard` ở controller cũng đọc `@Public()` theo cùng quy tắc với bản global, nên chạy lại nó không thêm lớp bảo vệ nào.
+
+Bài học: guard đăng ký global thì **đừng** gắn lại ở controller. Muốn biết một guard có phải global không, tìm `APP_GUARD` trong [app.module.ts](../services/api-gateway/src/app.module.ts).
 
 ### 5.3 `OptionalJwtAuthGuard`: khách cũng được, có token thì nhận diện
 
@@ -601,21 +603,23 @@ DTO **phải là class**, không được là `interface` hay `type`. Interface 
 
 DTO dùng chung giữa gateway và service nằm ở [packages/nest-contracts/src/dto](../packages/nest-contracts/src/dto/).
 
-### 7.3 Bẫy: kiểu inline không được kiểm
+### 7.3 Lỗi đã gặp: kiểu inline không được kiểm (đã sửa)
 
-[mock-exams.controller.ts](../services/api-gateway/src/http/mock-exams.controller.ts):
+Code cũ của [mock-exams.controller.ts](../services/api-gateway/src/http/mock-exams.controller.ts):
 
 ```ts
 submit(@Body() body: { answers: Record<string, string> }, …)
 ```
 
-Kiểu `{ answers: … }` viết inline nên metadata chỉ là `Object`. ValidationPipe thấy `Object` thì **bỏ qua hoàn toàn**: `whitelist` và `forbidNonWhitelisted` đều không áp dụng, và `answers` có thể là bất cứ thứ gì. Muốn kiểm thì tạo class DTO.
+Kiểu `{ answers: … }` viết inline nên metadata chỉ là `Object`. ValidationPipe thấy `Object` thì **bỏ qua hoàn toàn**: `whitelist` và `forbidNonWhitelisted` đều không áp dụng, và `answers` có thể là bất cứ thứ gì, kể cả object lồng `{"q1": {"$ne": ""}}` hay một mảng.
+
+Đã sửa bằng class [SubmitMockExamDto](../services/api-gateway/src/http/dto/mock-exam.dto.ts). `class-validator` không có sẵn kiểu "object có giá trị là chuỗi", nên DTO tự viết validator `IsAnswerMap` bằng `registerDecorator`: tối đa 300 câu, mỗi đáp án là chuỗi ≤ 200 ký tự. Trước khi siết, phải kiểm **mọi client** đang gửi gì (web, Android, iOS đều gửi `{ answers: { [mãCâu]: đápÁn } }`); nếu không, `forbidNonWhitelisted` sẽ làm app cũ nhận 400.
 
 ### 7.4 Microservice không có ValidationPipe
 
 Gateway kiểm DTO xong mới gửi sang content-service qua gRPC dưới dạng JSON. Ở đầu kia, `handleGrpcDispatch` chỉ `JSON.parse` rồi gọi handler, không kiểm lại. Như vậy service con tin hoàn toàn vào gateway.
 
-Cổng gRPC chỉ mở trong mạng nội bộ: mạng Docker Compose, hoặc Service `ClusterIP` trên K8s. Nhưng repo **chưa có NetworkPolicy**, nên bất kỳ pod nào trong cluster cũng gọi thẳng được content-service và bỏ qua mọi kiểm tra của gateway. Cần thêm NetworkPolicy chỉ cho gateway vào cổng gRPC, hoặc thêm validation ở phía service.
+Cổng gRPC chỉ mở trong mạng nội bộ: mạng Docker Compose, hoặc Service `ClusterIP` trên K8s. Trên K8s, [grpc-services-networkpolicy.yaml](../infra/k8s/grpc-services-networkpolicy.yaml) chỉ cho pod `api-gateway` vào cổng gRPC. Không có policy này (như trước đây), bất kỳ pod nào trong cluster cũng gọi thẳng được content-service và bỏ qua mọi kiểm tra của gateway. Lưu ý: NetworkPolicy chỉ có tác dụng khi CNI của cluster hỗ trợ (Calico, Cilium…); Docker Compose trên máy dev không có lớp bảo vệ này.
 
 ### 7.5 Pipe có sẵn cho tham số
 
@@ -646,7 +650,7 @@ intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 | Operator | Dùng để | Ví dụ trong repo |
 |---|---|---|
 | `map` | Đổi giá trị trả về | `ResponseInterceptor` |
-| `tap({ next, error })` | Làm việc phụ, không đổi giá trị | `HttpMetricsInterceptor` |
+| `tap({ next, error })` | Làm việc phụ, không đổi giá trị | `AuditInterceptor` (phần ghi thành công) |
 | `catchError` | Bắt lỗi; phải ném lại hoặc trả giá trị khác | `AuditInterceptor` |
 | `timeout` | Giới hạn thời gian | `GrpcDispatchClient` |
 
@@ -668,25 +672,40 @@ Mọi API trả `{ success: true, data: …, timestamp }`. Riêng `/metrics` đ�
 
 Bẫy: route dùng `@Res()` (không có `passthrough: true`) thì tự ghi response, và interceptor không bọc được. Route auth dùng `@Res({ passthrough: true })` để vừa set cookie vừa giữ interceptor.
 
-### 8.2 `HttpMetricsInterceptor`: đo cho Prometheus
+### 8.2 Đo cho Prometheus: vì sao là middleware, không phải interceptor
 
-[http-metrics.interceptor.ts](../services/api-gateway/src/metrics/http-metrics.interceptor.ts):
+Bản đầu đo bằng interceptor: `tap({ next, error })` quanh `next.handle()`. Cách đó **bỏ sót** mọi request bị chặn trước khi tới interceptor: 401/403 từ guard, 429 từ throttler, 413 từ body limit (mục 4). Dashboard vì vậy không bao giờ thấy một đợt tấn công dò token.
+
+Bản hiện tại là [http-metrics.middleware.ts](../services/api-gateway/src/metrics/http-metrics.middleware.ts):
 
 ```ts
-if (context.getType() !== "http") return next.handle();   // bỏ qua ws/rpc
-
-const route = routeLabel(req);   // "/api/lessons/:lessonNumber", KHÔNG phải "/api/lessons/12"
-const endTimer = this.histogram.startTimer({ method, route });
-return next.handle().pipe(
-  tap({
-    next: () => record(String(res.statusCode)),
-    error: (err) => record(String(err?.status ?? err?.statusCode ?? 500)),
-  }),
-);
+use(req: Request, res: Response, next: NextFunction): void {
+  const endTimer = this.histogram.startTimer();
+  res.on("finish", () => {
+    // req.route chỉ có SAU khi Express khớp route → đọc lúc response xong, không đọc lúc vào
+    const labels = { method: req.method, route: routeLabel(req), status: String(res.statusCode) };
+    this.counter.inc(labels);
+    endTimer(labels);
+  });
+  next();
+}
 ```
 
-- **Nhãn là mẫu route, không phải URL thật.** Mỗi giá trị nhãn khác nhau là một time series trong Prometheus. URL thật có id thì mỗi bài học sinh một series, gọi là bùng nổ cardinality.
+Đăng ký trong `AppModule` bằng middleware dạng class (để được inject metric):
+
+```ts
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpMetricsMiddleware, AuthDeniedAuditMiddleware).forRoutes("{*splat}");
+  }
+}
+```
+
+- **Nhãn là mẫu route, không phải URL thật.** `routeLabel` trả `"/api/lessons/:lessonNumber"`, không trả `"/api/lessons/12"`. Mỗi giá trị nhãn khác nhau là một time series trong Prometheus; URL thật có id thì mỗi bài học sinh một series, gọi là bùng nổ cardinality.
+- **`finish` luôn xảy ra** khi response gửi xong, dù request dừng ở guard, pipe, handler hay filter. Đây là điểm đo đúng cho mọi thứ "về request".
 - `@InjectMetric("http_requests_total")` lấy metric khai báo bằng `makeCounterProvider` trong `app.module.ts`. Đây vẫn là DI với token chuỗi.
+
+Quy tắc chọn: việc cần **giá trị trả về** của handler (bọc response, cache) → interceptor. Việc cần **mọi** request kể cả bị chặn (đo, log truy cập) → middleware nghe `finish`.
 
 ### 8.3 `AuditInterceptor`: ghi lại ai làm gì
 
@@ -708,7 +727,10 @@ return next.handle().pipe(
 - **`void this.auditService.log(...)`** là ghi kiểu bắn rồi quên. Response không phải chờ MongoDB, và `void` cho ESLint biết bỏ Promise ở đây là cố ý. Bên trong `AuditService.log` còn `.catch(() => {})`, nên Mongo chết cũng không làm hỏng request.
 - **`catchError` phải `throwError` lại.** Nếu `return of(null)` thì lỗi bị nuốt: client nhận `200 { data: null }` thay vì 404/500.
 - **Tại sao không `subscribe()` trong interceptor?** `subscribe` khởi chạy handler thêm một lần nữa (Observable lạnh). Handler sẽ chạy hai lần, ví dụ tạo hai bài học. Chỉ dùng operator trong `.pipe()`.
-- **Interceptor này không thấy 401/403 từ guard** (đã đo ở mục 4).
+- **Interceptor này không thấy 401/403 từ guard** (đã đo ở mục 4). Các lần bị từ chối được ghi bởi [auth-denied-audit.middleware.ts](../services/api-gateway/src/audit/auth-denied-audit.middleware.ts), cũng nghe `finish`:
+  - ghi mọi **403** (đã đăng nhập, không đủ quyền), kèm `userId`;
+  - ghi **401 có gửi token** (token sai, hết hạn), `userId: null`;
+  - **bỏ qua** 401 không có token: chỉ là "chưa đăng nhập". ThrottlerGuard chạy sau JwtAuthGuard nên không chặn được loại này; ghi hết thì bot spam request trống là làm đầy MongoDB.
 
 ---
 
@@ -892,7 +914,8 @@ send(pattern, data)
   ├─ breaker OPEN?                → ném { statusCode: 503 } ngay, không gọi
   ├─ dispatch(...).pipe(timeout(10s))
   │    ├─ quá hạn                 → breaker ghi lỗi, ném { statusCode: 504 }
-  │    └─ mất kết nối…            → breaker ghi lỗi, ném lại
+  │    └─ mất kết nối gRPC…       → breaker ghi lỗi, ghi log chi tiết, ném { statusCode: 503 }
+  │                                 (không đưa "14 UNAVAILABLE…" ra cho client)
   ├─ response.error có giá trị
   │    ├─ 5xx / lỗi hạ tầng       → breaker ghi lỗi
   │    ├─ 4xx / "không tồn tại"   → breaker ghi THÀNH CÔNG (service vẫn sống)
@@ -1093,19 +1116,17 @@ Test interceptor thì truyền `next` trả về `of(value)` hoặc `throwError(
 
 ```ts
 const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
-app = moduleFixture.createNestApplication();
-app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
-app.useGlobalFilters(new AllExceptionsFilter());
+app = moduleFixture.createNestApplication<NestExpressApplication>({ rawBody: true });
+configureApp(app);   // đúng hàm main.ts gọi
 await app.init();
 ```
 
-**Bẫy có thật:** `useGlobal*` và `app.use` nằm trong `main.ts`, không nằm trong `AppModule`, nên test phải chép lại. Và bản chép đã **lệch**:
+**Lỗi đã gặp (đã sửa):** `useGlobal*` và `app.use` nằm trong `main.ts`, không nằm trong `AppModule`, nên bản cũ của test phải tự chép lại. Bản chép đã **lệch**:
 
 - E2E thiếu `forbidNonWhitelisted: true`. Request có field lạ được 201 trong test nhưng 400 trên production.
 - E2E thiếu `bodyLimitMiddleware`, `helmet`, `trust proxy`.
 
-Cách chữa: tách `configureApp(app)` dùng chung cho `main.ts` và test (bài tập 4).
+Cách chữa: mọi cấu hình đó chuyển vào [configure-app.ts](../services/api-gateway/src/configure-app.ts). `main.ts` và test cùng gọi `configureApp(app)`, nên không thể lệch nữa. Test e2e có thêm ca kiểm đúng chỗ từng lệch: gửi `role: "ADMIN"` khi đăng ký phải nhận 400.
 
 Ghi đè guard trong e2e khi cần:
 
@@ -1124,15 +1145,16 @@ Test.createTestingModule({ imports: [AppModule] })
 | *"Nest can't resolve dependencies of X (?, Y)"* | Provider chưa có trong module, chưa được export, hoặc import bằng `import type` | Thêm vào `providers`, `exports`/`imports`; bỏ `type` |
 | Route mới luôn 401 | `JwtAuthGuard` global, quên `@Public()` | Thêm `@Public()` nếu route thật sự công khai |
 | `req.user` là `undefined` trong `RolesGuard` | Guard gán user chạy sau, hoặc route `@Public()` | Đặt guard xác thực trước; route có role thì không `@Public()` |
-| Mỗi request có token tốn 2 query user | `@UseGuards(JwtAuthGuard)` lặp lại guard global | Bỏ `JwtAuthGuard` khỏi `@UseGuards` |
-| Field lạ lọt vào DB | DTO là `interface`/kiểu inline | Dùng class có decorator `class-validator` |
+| Mỗi request có token tốn 2 query user | `@UseGuards(JwtAuthGuard)` lặp lại guard global | Bỏ `JwtAuthGuard` khỏi `@UseGuards` (đã sửa trong repo, mục 5.2) |
+| Field lạ lọt vào DB | DTO là `interface`/kiểu inline | Dùng class có decorator `class-validator` (ví dụ `SubmitMockExamDto`, mục 7.3) |
 | `@RateLimit` đặt ở class không có tác dụng | Guard đọc bằng `reflector.get(…, getHandler())` | Đặt ở method, hoặc sửa guard dùng `getAllAndOverride` |
 | Response không được bọc `{success,data}` | Dùng `@Res()` không `passthrough` | `@Res({ passthrough: true })` |
 | Handler chạy 2 lần | `subscribe()` trong interceptor | Chỉ dùng operator trong `pipe()` |
 | Lỗi bị nuốt, client nhận 200 | `catchError` trả `of(...)` | `return throwError(() => err)` |
 | Cron chạy 2 lần | Nhiều pod | `claimCronRun` hoặc chuyển sang BullMQ |
+| Metric/audit thiếu 401, 403, 429 | Đo bằng interceptor, mà guard chặn trước interceptor | Middleware nghe `res.on("finish")` (mục 8.2) |
 | Rolling update làm mất request | Thiếu `enableShutdownHooks()` | Gọi trong `main.ts`; đóng kết nối ở `onModuleDestroy` |
-| Test pass nhưng production 400 | E2E tự cấu hình pipe khác `main.ts` | Dùng chung `configureApp()` |
+| Test pass nhưng production 400 | E2E tự cấu hình pipe khác `main.ts` | Dùng chung `configureApp()` (đã làm, mục 17.2) |
 | Trace OpenTelemetry trống | `import "./tracing"` không đứng đầu | Đưa lên dòng đầu `main.ts` |
 | Ai cũng kết nối được WebSocket | Tin rằng `@UseGuards` bảo vệ `handleConnection` | Tự kiểm token trong `handleConnection` |
 
@@ -1142,33 +1164,33 @@ Test.createTestingModule({ imports: [AppModule] })
 
 Mỗi bài dựa trên code thật và có cách tự kiểm. Làm trên một branch riêng.
 
-**1. Bỏ JwtAuthGuard chạy hai lần.**
-Trong [services/api-gateway/src](../services/api-gateway/src/), đổi `@UseGuards(JwtAuthGuard, RolesGuard)` thành `@UseGuards(RolesGuard)`. Chỗ nào chỉ có `@UseGuards(JwtAuthGuard)` thì xóa hẳn.
-Kiểm: bật log query Prisma (`log: ['query']`), gọi một route admin, đếm số `SELECT … FROM "User"` trước (2) và sau (1). Chạy `npm test` trong `services/`.
+**Phần A: đọc hiểu các lỗi đã được sửa trong repo.** Mỗi bài, đọc code hiện tại rồi trả lời câu hỏi. Lịch sử thay đổi xem bằng `git log -p -- <file>`.
 
-**2. Viết `@AdminOnly()`** bằng `applyDecorators(UseGuards(RolesGuard), Roles(Role.ADMIN), ApiBearerAuth())`, đặt trong `packages/nest-common/src/auth/`, export ở `index.ts`, thay cho một controller.
+**A1. Guard chạy hai lần** (mục 5.2). Bật log query Prisma (`new PrismaClient({ log: ['query'] })` trong [prisma.service.ts](../packages/nest-prisma/src/prisma.service.ts), chỉ trên máy bạn), gọi `GET /api/admin/stats` bằng token admin. Đếm số câu `SELECT … FROM "User"`. Tạm gắn lại `@UseGuards(JwtAuthGuard, RolesGuard)` cho route đó, đếm lại. Kết quả nên là 1 so với 2.
+
+**A2. Audit lần bị từ chối** (mục 8.3). Đọc [auth-denied-audit.middleware.ts](../services/api-gateway/src/audit/auth-denied-audit.middleware.ts). Vì sao làm bằng middleware chứ không sửa `AllExceptionsFilter`? (Gợi ý: filter global tạo bằng `new` nên không inject được `AuditService`; middleware dạng class thì được.) Gọi `/api/auth/me` với `Authorization: Bearer abc`, rồi tìm bản ghi `auth.invalid_token` trong MongoDB:
+
+```bash
+docker exec edu-mongodb mongosh nihongo_audit --quiet --eval 'db.audit_logs.find({action:/^auth\./}).sort({createdAt:-1}).limit(3)'
+```
+
+**A3. `configureApp`** (mục 17.2). So [main.ts](../services/api-gateway/src/main.ts) với [configure-app.ts](../services/api-gateway/src/configure-app.ts). Vì sao Swagger và `enableShutdownHooks` vẫn nằm trong `main.ts`, không chuyển sang `configureApp`?
+
+**A4. DTO nộp bài** (mục 7.3). Đọc [mock-exam.dto.ts](../services/api-gateway/src/http/dto/mock-exam.dto.ts) và test của nó. Gửi `{"answers":{"q1":{"$ne":""}}}` tới `POST /api/mock-exams/<examId>/submit` và giải thích vì sao trước đây body này lọt qua.
+
+**Phần B: tự làm.**
+
+**B1. Viết `@AdminOnly()`** bằng `applyDecorators(UseGuards(RolesGuard), Roles(Role.ADMIN), ApiBearerAuth())`, đặt trong `packages/nest-common/src/auth/`, export ở `index.ts`, thay cho một controller.
 Kiểm: gọi bằng token USER thì 403, token ADMIN thì 200.
 
-**3. Audit cả lần bị 401/403.**
-`AuditInterceptor` không thấy lỗi từ guard (mục 4). Ghi audit trong `AllExceptionsFilter` khi status là 401/403.
-Gợi ý: filter global tạo bằng `new` nên không inject được. Chuyển sang `{ provide: APP_FILTER, useClass: AllExceptionsFilter }` để nhận `AuditService`.
-
-**4. Tách `configureApp(app)`.**
-Gom `trust proxy`, `bodyLimitMiddleware`, `helmet`, pipe, interceptor, filter vào một hàm. Gọi nó từ `main.ts` và [app.e2e-spec.ts](../services/test/app.e2e-spec.ts).
-Kiểm: thêm test e2e gửi `{ email, password, role: "ADMIN" }` tới `/api/auth/register` phải nhận 400.
-
-**5. `PrismaService` đóng kết nối khi tắt.**
+**B2. `PrismaService` đóng kết nối khi tắt.**
 Thêm `implements OnModuleDestroy` và `await this.$disconnect()`.
 Kiểm: viết unit test gọi `app.close()` trên một `TestingModule` có `PrismaService` mock, rồi kiểm `$disconnect` được gọi đúng một lần.
 
-**6. Kiểm biến môi trường khi khởi động.**
+**B3. Kiểm biến môi trường khi khởi động.**
 Thêm `validate` vào `ConfigModule.forRoot`: production thiếu `DATABASE_URL` hoặc `JWT_SECRET` thì báo rõ tên biến và dừng.
 
-**7. DTO cho nộp bài thi.**
-Thay `@Body() body: { answers: Record<string, string> }` trong [mock-exams.controller.ts](../services/api-gateway/src/http/mock-exams.controller.ts) bằng class `SubmitExamDto`.
-Gợi ý: `@IsObject()`, và kiểm từng giá trị là chuỗi ngắn bằng một custom validator hoặc `@ValidateNested`.
-
-**8. Thứ tự Throttler.**
+**B4. Thứ tự Throttler.**
 Hiện ThrottlerGuard đứng sau JwtAuthGuard nên request thiếu token không bị đếm. Đảo thứ tự hai `APP_GUARD` rồi tự trả lời: có gì thay đổi với người dùng đã đăng nhập không, và với kẻ spam token rác thì sao?
 
 ---
@@ -1177,7 +1199,7 @@ Hiện ThrottlerGuard đứng sau JwtAuthGuard nên request thiếu token không
 
 Trả lời trước, rồi mở phần đáp án.
 
-1. Guard ném `UnauthorizedException`. `HttpMetricsInterceptor` có ghi metric 401 không?
+1. Guard ném `UnauthorizedException`. Một **interceptor** đo metric có ghi được lần 401 này không? Middleware nghe `finish` thì sao?
 2. Tại sao `JwtStrategy.validate` lại tra DB, trong khi JWT đã có `sub`, `email`, `role`?
 3. `@Public()` đặt ở controller, `@Roles(ADMIN)` đặt ở một method. Gọi method đó không có token thì sao?
 4. Có `ResponseInterceptor` qua `useGlobalInterceptors` và `AuditInterceptor` qua `APP_INTERCEPTOR`. Lúc response đi ra, cái nào thấy giá trị **đã bọc** `{ success, data }`?
@@ -1188,7 +1210,7 @@ Trả lời trước, rồi mở phần đáp án.
 <details>
 <summary>Đáp án</summary>
 
-1. **Không.** Guard ném thì interceptor không chạy, kể cả phần trước handler. Filter định dạng 401 nhưng không có metric.
+1. Interceptor: **không**. Guard ném thì interceptor không chạy, kể cả phần trước handler. Middleware nghe `finish`: **có**, vì response 401 vẫn được gửi đi; đó là lý do repo đo metric bằng middleware (mục 8.2).
 2. Để user bị xóa hoặc đổi role mất quyền ngay, không phải đợi token hết hạn (15 phút). Cái giá là 1 query mỗi request.
 3. `JwtAuthGuard` dùng `getAllAndOverride([handler, class])`. Method không có `@Public` thì lấy của class (`true`), nên cho qua. Sau đó `RolesGuard` thấy `user` là `undefined`, trả `false`, client nhận **403**. Route được "mở" nhưng không ai dùng được. Đừng đặt `@Public()` ở class có route cần quyền.
 4. Thứ tự vào là Audit rồi Response; chiều ra ngược lại là Response rồi Audit. Vậy **Audit** thấy giá trị đã bọc. Audit chỉ dùng `tap()` không đọc giá trị nên không ảnh hưởng.

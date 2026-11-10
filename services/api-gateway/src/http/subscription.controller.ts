@@ -1,18 +1,12 @@
-import { Body, Controller, Delete, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import {
-  CurrentUser,
-  JwtAuthGuard,
-  Public,
-  type AuthUserPayload,
-} from "@app/common";
+import { CurrentUser, Public, type AuthUserPayload } from "@app/common";
 import { SubscriptionService } from "../../../payment-service/src/subscription/subscription.service";
 import { CreateSubscriptionDto } from "./dto/subscription.dto";
 import { RequestRefundDto } from "./dto/refund.dto";
 
 @ApiTags("Subscription")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/subscriptions")
 export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}

@@ -7,12 +7,11 @@ import {
   Post,
   Res,
   Sse,
-  UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Response } from "express";
 import { Observable } from "rxjs";
-import { CurrentUser, JwtAuthGuard, type AuthUserPayload } from "@app/common";
+import { CurrentUser, type AuthUserPayload } from "@app/common";
 import { SupportChatService } from "../realtime/support-chat.service";
 import { ChatEventsService } from "../realtime/chat-events.service";
 
@@ -24,7 +23,6 @@ class SendMessageDto {
 
 @ApiTags("Support")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller("api/support")
 export class SupportController {
   constructor(

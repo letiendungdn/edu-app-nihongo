@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './audit-log.schema';
 
 export interface LogActionParams {
-  userId: number;
+  userId: number | null;
   action: string;
   resource: string;
   metadata?: Record<string, unknown>;

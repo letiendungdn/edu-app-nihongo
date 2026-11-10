@@ -81,6 +81,8 @@ export class ExamMsController implements OnModuleInit {
         ),
       [EXAM_PATTERNS.GET_HISTORY]: (data) =>
         this.getHistory(data as { userId: number }),
+      [EXAM_PATTERNS.DELETE_RESULT]: (data) =>
+        this.mockExamsService.deleteResult((data as { id: number }).id),
       [PROGRESS_PATTERNS.SYNC_REVIEW]: (data) =>
         this.syncReview(data as { userId: number; dto: SyncReviewDto }),
       [PROGRESS_PATTERNS.GET_REVIEW_BANK]: (data) =>

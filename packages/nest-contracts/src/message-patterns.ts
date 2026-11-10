@@ -69,6 +69,7 @@ export const EXAM_PATTERNS = {
   START_EXAM: 'exam.start',
   SUBMIT_EXAM: 'exam.submit',
   GET_HISTORY: 'exam.history.get',
+  DELETE_RESULT: 'exam.results.delete',
 } as const;
 
 export const PROGRESS_PATTERNS = {

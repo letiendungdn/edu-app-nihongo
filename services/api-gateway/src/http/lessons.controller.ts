@@ -20,7 +20,7 @@ import {
   CreateLessonDto,
   UpdateLessonDto,
 } from "@app/contracts";
-import { JwtAuthGuard, Public, Roles, RolesGuard } from "@app/common";
+import { Public, Roles, RolesGuard } from "@app/common";
 
 @ApiTags("lessons")
 @Controller("api/lessons")
@@ -30,7 +30,7 @@ export class LessonsController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create a lesson (admin)" })
@@ -67,7 +67,7 @@ export class LessonsController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update a lesson (admin)" })
@@ -78,7 +78,7 @@ export class LessonsController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete a lesson (admin)" })

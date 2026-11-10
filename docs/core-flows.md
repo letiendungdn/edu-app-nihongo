@@ -870,9 +870,9 @@ Tìm thấy khi viết tài liệu này, sửa cùng ngày 21/10/2026. Phần l�
 
 ## Đi tiếp
 
-Bạn đang ở **2. Kiến trúc hệ thống** — bài 2/6.
+Bạn đang ở **2. Kiến trúc hệ thống** — bài 3/7.
 
-- Bài trước: [system-design.md](./system-design.md) — Kiến trúc tổng thể, các service, route map
+- Bài trước: [learn-microservices.md](./learn-microservices.md) — Microservice là gì, vì sao project tách service, cái giá phải trả và chỗ còn thiếu
 - **Bài tiếp: [microservices-communication.md](./microservices-communication.md)** — Các service nói chuyện với nhau bằng gì, vì sao
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

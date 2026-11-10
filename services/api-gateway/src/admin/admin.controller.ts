@@ -14,7 +14,6 @@ import { PaymentStatus, Role } from "@prisma/client";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import {
   CurrentUser,
-  JwtAuthGuard,
   Roles,
   RolesGuard,
   type AuthUserPayload,
@@ -37,7 +36,7 @@ import {
 
 @ApiTags("admin")
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(Role.ADMIN)
 @Controller("api/admin")
 export class AdminController {

@@ -5,8 +5,9 @@ export type AuditLogDocument = AuditLog & Document;
 
 @Schema({ timestamps: true, collection: 'audit_logs' })
 export class AuditLog {
-  @Prop({ required: true, index: true })
-  userId!: number;
+  /** null: request bị từ chối khi chưa xác định được người dùng (401 với token sai/hết hạn). */
+  @Prop({ type: Number, default: null, index: true })
+  userId!: number | null;
 
   @Prop({ required: true, index: true })
   action!: string;

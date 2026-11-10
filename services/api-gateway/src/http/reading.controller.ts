@@ -20,13 +20,7 @@ import {
   CreateReadingPassageDto,
   UpdateReadingPassageDto,
 } from "@app/contracts";
-import {
-  JwtAuthGuard,
-  Public,
-  Roles,
-  RolesGuard,
-  type AuthUserPayload,
-} from "@app/common";
+import { Public, Roles, RolesGuard, type AuthUserPayload } from "@app/common";
 
 @ApiTags("reading")
 @Controller("api/reading")
@@ -58,7 +52,7 @@ export class ReadingController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create reading passage (admin)" })
@@ -69,7 +63,7 @@ export class ReadingController {
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update reading passage (admin)" })
@@ -83,7 +77,7 @@ export class ReadingController {
   }
 
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete reading passage (admin)" })
