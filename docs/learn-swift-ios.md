@@ -8,7 +8,7 @@ Tài liệu này đi theo đúng quy trình đã làm cho app iOS: đọc code, 
 
 Đọc kèm:
 
-- [learn-android-kotlin.md](./learn-android-kotlin.md) và [learn-android-features.md](./learn-android-features.md): cùng tính năng, làm bằng Kotlin. Nhiều lỗi iOS có "anh em" bên Android, có ghi mã L tương ứng.
+- [learn-android-kotlin.md](./learn-android-kotlin.md) và [learn-android-features.md](./learn-android-features.md): cùng tính năng, làm bằng Kotlin. Nhiều lỗi iOS có "anh em" bên Android, có ghi mã L tương ứng; tra mã L ở [bảng 14 lỗi Android](./learn-android-architecture.md#35-bảng-tổng-hợp).
 - [roadmap-swift.md](./roadmap-swift.md): lộ trình học Swift theo tuần.
 
 ## Mục lục
@@ -996,9 +996,9 @@ Dùng Keychain (được mã hóa, có `kSecAttrAccessibleAfterFirstUnlockThisDe
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 6/10.
+Bạn đang ở **9. Mobile** — bài 8/12.
 
-- Bài trước: [learn-android-features.md](./learn-android-features.md) — 9 tính năng Android mới và bài học
+- Bài trước: [learn-android-framework.md](./learn-android-framework.md) — Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive
 - **Bài tiếp: [learn-flutter.md](./learn-flutter.md)** — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

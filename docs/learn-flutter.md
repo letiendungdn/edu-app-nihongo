@@ -524,7 +524,7 @@ Muốn thêm câu hỏi: [interview-mobile.md](./interview-mobile.md).
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 7/10.
+Bạn đang ở **9. Mobile** — bài 9/12.
 
 - Bài trước: [learn-swift-ios.md](./learn-swift-ios.md) — Swift/SwiftUI qua nihongo-ios
 - **Bài tiếp: [learn-ml-mobile.md](./learn-ml-mobile.md)** — Machine learning trong app mobile: on-device, LLM, SRS thông minh

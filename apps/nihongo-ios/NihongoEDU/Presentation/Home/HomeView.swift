@@ -6,7 +6,7 @@ enum AppRoute: Hashable {
     case vocab, srs, sentencePractice, login, cameraTranslate, live, progress
     case reading, readingDetail(id: Int), exams, exam(id: String), kana, community, chat(roomId: Int)
     case aiTutor, pronunciation(kana: String, meaning: String), kanjiDraw(kanji: String, kana: String)
-    case premium
+    case premium, vocabSearch
 }
 
 struct HomeView: View {
@@ -73,6 +73,9 @@ struct HomeView: View {
                     }
                     NavCard(title: "Bài học", subtitle: "Từ vựng · ngữ pháp · kanji, dùng được offline", icon: "📖") {
                         path.append(AppRoute.vocab)
+                    }
+                    NavCard(title: "Tra từ", subtitle: "Gõ romaji tới đâu gợi ý tới đó, không cần mạng", icon: "🔎", badge: "MỚI") {
+                        path.append(AppRoute.vocabSearch)
                     }
                     NavCard(title: "Ôn tập SRS", subtitle: "Spaced repetition — SM-2 algorithm", icon: "🔁") {
                         path.append(AppRoute.srs)
@@ -142,6 +145,7 @@ struct HomeView: View {
                 case .community:         RoomsView()
                 case .chat(let roomId):  ChatView(roomId: roomId)
                 case .premium:           PremiumView()
+                case .vocabSearch:       VocabSearchView()
                 }
             }
             // Mạng vừa có lại: gửi hàng đợi ôn tập

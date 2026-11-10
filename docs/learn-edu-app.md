@@ -417,7 +417,7 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 | 5    | CameraX + ML Kit Japanese   | `presentation/camera/`            |
 
 
-**Đọc thêm:** [learn-android-kotlin.md](./learn-android-kotlin.md) (lộ trình học tuần + bài tập), [roadmap-android.md](./roadmap-android.md), [learn-android-fundamentals.md](./learn-android-fundamentals.md)
+**Đọc thêm:** [learn-android-kotlin.md](./learn-android-kotlin.md) (lộ trình 9 tuần cho 4 bài Android), [roadmap-android.md](./roadmap-android.md), [learn-android-fundamentals.md](./learn-android-fundamentals.md)
 
 **Sản phẩm tuần:** thêm field UI + chạy `SrsAlgorithmTest` xanh.
 
@@ -629,7 +629,7 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 | 5    | Viết unit/integration test cho sync helper hoặc repository (mock API)  |
 
 
-**Đọc:** [learn-android-kotlin.md](./learn-android-kotlin.md) mục 30 (Android) hoặc [roadmap-flutter.md](./roadmap-flutter.md) phần Data Layer (Flutter), tùy stack.
+**Đọc:** [learn-android-architecture.md](./learn-android-architecture.md) mục 30 (Android) hoặc [roadmap-flutter.md](./roadmap-flutter.md) phần Data Layer (Flutter), tùy stack.
 
 **Đầu ra:** note “offline queue hoạt động thế nào” + 1 test.
 

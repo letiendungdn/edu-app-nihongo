@@ -73,6 +73,15 @@ export async function getVocabByLesson(lessonNumber: number): Promise<Vocabulary
   return rows.map(toVocabulary);
 }
 
+/** Mọi từ vựng đã có trên máy (các bài đã mở), cho tra từ offline. */
+export async function getAllVocab(): Promise<Vocabulary[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<VocabRow>(
+    `SELECT * FROM vocabulary ORDER BY lesson_number ASC, sort_order ASC`,
+  );
+  return rows.map(toVocabulary);
+}
+
 export async function getReviewQueue(): Promise<ReviewCard[]> {
   const db = await getDatabase();
   const now = Date.now();

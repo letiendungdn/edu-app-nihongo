@@ -7,6 +7,7 @@ export { RawResponse } from './interceptors/raw-response.decorator';
 export { shuffle, sample } from './utils/array';
 export { speechTextFromJapanese } from './utils/japanese';
 export { normalizeAnswer, parseJsonArray } from './utils/string';
+export { RomajiTrie, normalizeRomaji, romajiKeys, looksLikeRomaji } from './utils/romaji-trie';
 export { resolveMicroserviceError } from './utils/rpc-error';
 export {
   handleGrpcDispatch,

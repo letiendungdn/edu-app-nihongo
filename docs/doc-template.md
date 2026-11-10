@@ -129,9 +129,11 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 **9. Mobile**
 - [ ] mobile-tech-stacks.md
 - [ ] run-mobile.md
-- [ ] learn-android-fundamentals.md
-- [ ] learn-android-kotlin.md
-- [ ] learn-android-features.md
+- [x] learn-android-fundamentals.md (Android 3/4)
+- [x] learn-android-kotlin.md (Android 1/4)
+- [x] learn-android-architecture.md (Android 2/4)
+- [x] learn-android-features.md (Android 4/4)
+- [x] learn-android-framework.md (Android nâng cao, mới)
 - [ ] learn-swift-ios.md
 - [ ] learn-flutter.md
 - [ ] learn-ml-mobile.md
@@ -150,5 +152,5 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 **11–14. Tham khảo**
 - [ ] roadmap-android.md, roadmap-swift.md, roadmap-flutter.md, roadmap-react-native.md
 - [ ] analysis-design.md, bao-cao-phan-tich-thiet-ke.md
-- [ ] interview-questions.md, interview-nestjs-mqtt-db.md, interview-devops.md, interview-backend-android-rn-swift.md, interview-mobile.md, interview-react-native-senior.md
+- [ ] interview-questions.md, interview-nestjs-mqtt-db.md, interview-devops.md, interview-backend-android-rn-swift.md, interview-mobile.md, interview-android.md, interview-java-dsa.md, interview-react-native-senior.md
 - [ ] senior-roadmap.md, notes-senior-study.md, learn-mobile-senior.md

@@ -70,6 +70,13 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
+  /// Mọi từ đã có trên máy (các bài đã mở), cho tra từ offline.
+  Stream<List<VocabularyTableData>> watchAllVocab() {
+    return (select(vocabularyTable)
+          ..orderBy([(t) => OrderingTerm.asc(t.lessonNumber), (t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
+  }
+
   Future<void> upsertVocabulary(VocabularyTableCompanion row) {
     return into(vocabularyTable).insertOnConflictUpdate(row);
   }

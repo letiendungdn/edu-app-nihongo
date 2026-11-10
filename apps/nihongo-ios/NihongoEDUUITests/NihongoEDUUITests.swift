@@ -78,4 +78,53 @@ final class NihongoEDUUITests: XCTestCase {
             app.launch()
         }
     }
+
+    // MARK: Tra từ theo romaji
+
+    /// Mở màn Tra từ và gõ: dùng được cả khi máy chưa có từ nào (CI không có backend).
+    func testVocabSearchScreenOpensAndAcceptsTyping() {
+        app.launch()
+        let card = homeCard("Tra từ")
+        XCTAssertTrue(reveal(card), "thiếu thẻ Tra từ")
+        card.tap()
+
+        XCTAssertTrue(app.navigationBars["Tra từ (romaji)"].waitForExistence(timeout: 8))
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("wata")
+        // Có dữ liệu thì có kết quả; chưa có thì thông báo hướng dẫn. Màn hình không được trống.
+        let hasResultOrHint = app.staticTexts["watashi"].waitForExistence(timeout: 5)
+            || app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Chưa có từ vựng'")).firstMatch.exists
+        XCTAssertTrue(hasResultOrHint)
+    }
+
+    /// Luồng đầy đủ với backend local: mở bài 1 (sync từ vựng về SwiftData) → Tra từ → gõ "wata" → thấy "watashi".
+    /// Không gọi được backend thì bỏ qua thay vì báo đỏ.
+    func testVocabSearchFindsSyncedWordEndToEnd() throws {
+        let health = URL(string: "http://localhost:3000/health")!
+        let reachable = (try? Data(contentsOf: health)) != nil
+        try XCTSkipUnless(reachable, "Cần backend local ở localhost:3000")
+
+        app.launch()
+        let lessons = homeCard("Bài học")
+        XCTAssertTrue(reveal(lessons))
+        lessons.tap()
+        XCTAssertTrue(app.staticTexts["わたし"].waitForExistence(timeout: 20), "bài 1 chưa sync được")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let search = homeCard("Tra từ")
+        XCTAssertTrue(reveal(search))
+        search.tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("wata")
+
+        XCTAssertTrue(app.staticTexts["watashi"].waitForExistence(timeout: 5))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "vocab-search-wata"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
 }

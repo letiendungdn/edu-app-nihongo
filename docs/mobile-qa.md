@@ -345,7 +345,7 @@ Server phải giới hạn `limit`, ví dụ tối đa 100. Nếu không, gọi 
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 10/10.
+Bạn đang ở **9. Mobile** — bài 12/12.
 
 - Bài trước: [security-owasp-mobile.md](./security-owasp-mobile.md) — Bảo mật mobile theo OWASP
 - Xong nhóm này. **Nhóm tiếp: 10. Tích hợp: đăng nhập, mail, thanh toán** — bắt đầu bằng [keycloak-setup.md](./keycloak-setup.md) (Cài Keycloak (local/Docker))

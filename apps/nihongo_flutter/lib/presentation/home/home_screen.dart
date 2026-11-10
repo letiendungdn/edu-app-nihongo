@@ -86,6 +86,12 @@ class HomeScreen extends ConsumerWidget {
             onTap: () => context.push(Routes.srs),
           ),
           _NavCard(
+            icon: Icons.search_rounded,
+            title: 'Tra từ',
+            subtitle: 'Gõ romaji tới đâu gợi ý tới đó, không cần mạng',
+            onTap: () => context.push(Routes.vocabSearch),
+          ),
+          _NavCard(
             icon: Icons.menu_book_rounded,
             title: 'Từ điển N5–N1',
             subtitle: 'Duyệt toàn bộ từ vựng theo cấp, kéo xuống tải tiếp',

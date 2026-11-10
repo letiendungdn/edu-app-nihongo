@@ -36,6 +36,8 @@ private class FakeVocabRepository : VocabularyRepository {
 
     override fun getVocabByLesson(lessonNumber: Int): Flow<List<Vocabulary>> = vocab
 
+    override fun observeAllVocab(): Flow<List<Vocabulary>> = vocab
+
     override fun getReviewQueue(): Flow<List<ReviewCard>> = emptyFlow()
 
     override suspend fun updateSrsCard(card: SrsCard): Result<Unit> = Result.success(Unit)

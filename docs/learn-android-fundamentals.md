@@ -1,14 +1,42 @@
-# Nền Tảng Android — Ôn Phỏng Vấn Qua Code Của `nihongo-android`
+# Android 3: Nền tảng hệ điều hành qua `nihongo-android`
 
-[learn-android-kotlin.md](./learn-android-kotlin.md) dạy Kotlin, Coroutines, Compose, kiến trúc. File này lấp phần còn thiếu: **hệ điều hành Android chạy app của bạn thế nào**. Đây là phần interviewer dùng để phân biệt người "viết được màn hình" với người "hiểu nền tảng".
+> **Mục tiêu:** Học xong bài này bạn:
+> - biết Android giữ, đẩy xuống nền và giết tiến trình của app thế nào, và mỗi trường hợp mất dữ liệu gì;
+> - nắm vòng đời Activity/Fragment, Context, Intent và deep link, bốn thành phần của Android;
+> - chọn đúng công cụ cho việc chạy nền (coroutine, WorkManager, foreground service, AlarmManager) và hiểu Doze;
+> - xin quyền runtime đúng lúc, tránh ANR và rò rỉ bộ nhớ, lưu dữ liệu nhạy cảm an toàn;
+> - biết tăng `targetSdk` thì phải kiểm những gì, và vì sao build hỏng khi đổi JDK;
+> - kể được 3 lỗi nền tảng thật đã tìm và sửa trong app (token theo bản sao lưu, HTTP mở cho mọi domain, gọi video thiếu foreground service).
+>
+> **Cần biết trước:** [learn-android-kotlin.md](./learn-android-kotlin.md) và [learn-android-architecture.md](./learn-android-architecture.md) (bài 1 và 2). Bài này dùng ViewModel, Room, WorkManager, coroutine như thứ đã biết.
+> **Thời gian:** khoảng 1 tuần (tuần 8 trong [lộ trình 9 tuần](./learn-android-kotlin.md#lộ-trình-9-tuần-cho-cả-bốn-bài)).
 
-Mỗi mục có ba phần:
+Đây là bài **3/4** của lộ trình Android. Bài 1–2 dạy viết code; bài này dạy **hệ điều hành chạy code đó thế nào**: vì sao app mất trạng thái khi quay lại, vì sao việc nền không chạy đúng giờ, vì sao một quyền đột nhiên bị từ chối. Các chủ đề WorkManager, process death, foreground service, Doze được giải thích kỹ **ở đây**; các bài khác chỉ dẫn về.
 
-- **Kiến thức:** điều cần nói được.
-- **Trong repo:** đoạn code thật minh họa, để bạn trả lời bằng ví dụ của chính mình.
-- **Câu hỏi hay gặp:** kèm ý trả lời.
+Mỗi mục có:
 
-Cuối file có [ba vấn đề thật trong app](#13-ba-vấn-đề-thật-trong-app--dùng-làm-câu-chuyện-phỏng-vấn) tìm được khi viết tài liệu này, kèm cách đã sửa và cách đã kiểm chứng. Kể được cách bạn phát hiện và sửa chúng là điểm cộng lớn.
+- **Kiến thức:** điều cần hiểu.
+- **Trong repo:** đoạn code thật minh họa.
+- **Thử tay** (ở một số mục): lệnh để tự quan sát trên emulator.
+
+Câu hỏi phỏng vấn của bài này đã chuyển sang [interview-android.md](./interview-android.md#nền-tảng-android).
+
+## Từ khóa trong bài
+
+| Từ | Nghĩa ngắn gọn |
+|---|---|
+| Tiến trình (process) | Một app đang chạy, có bộ nhớ riêng. Android có thể giết nó bất cứ lúc nào khi app ở nền |
+| Process death | Hệ thống giết tiến trình của app đang ở nền để lấy bộ nhớ; người dùng quay lại thì app được dựng lại |
+| Vòng đời (lifecycle) | Các trạng thái của Activity: tạo, hiện, ẩn, hủy. Mỗi trạng thái có hàm được gọi (`onCreate`, `onStop`…) |
+| Context | Object cho phép gọi dịch vụ hệ thống (tài nguyên, file, thông báo). Giữ sai loại Context là rò rỉ bộ nhớ |
+| Intent | "Thông điệp" yêu cầu hệ thống mở màn hình, chạy service hoặc gửi sự kiện |
+| Deep link | Đường dẫn mở thẳng một màn hình trong app, ví dụ `nihongo://srs` |
+| Service / foreground service | Phần chạy không cần giao diện. Foreground service luôn kèm thông báo, được phép dùng camera/micro khi app ở nền |
+| Doze | Chế độ tiết kiệm pin: máy để yên thì việc nền bị gom lại và hoãn |
+| Quyền runtime | Quyền phải hỏi người dùng lúc dùng (camera, micro, thông báo), không chỉ khai trong manifest |
+| ANR | "Application Not Responding": main thread bị chặn quá lâu, hệ thống hỏi người dùng có muốn đóng app |
+| Manifest | File `AndroidManifest.xml` khai báo app có gì và cần quyền gì |
+| `targetSdk` | Phiên bản Android mà app tuyên bố đã kiểm. Tăng nó là bật các hành vi mới của phiên bản đó |
 
 ## Mục lục
 
@@ -24,8 +52,8 @@ Cuối file có [ba vấn đề thật trong app](#13-ba-vấn-đề-thật-tron
 10. [Lưu trữ và bảo mật](#10-lưu-trữ-và-bảo-mật)
 11. [Thay đổi theo từng phiên bản Android](#11-thay-đổi-theo-từng-phiên-bản-android)
 12. [Gradle và build](#12-gradle-và-build)
-13. [Ba vấn đề thật trong app](#13-ba-vấn-đề-thật-trong-app--dùng-làm-câu-chuyện-phỏng-vấn)
-14. [Bộ câu hỏi tự kiểm tra](#14-bộ-câu-hỏi-tự-kiểm-tra)
+13. [Ba lỗi nền tảng thật trong app](#13-ba-lỗi-nền-tảng-thật-trong-app)
+14. [Tự kiểm tra](#14-tự-kiểm-tra)
 
 ---
 
@@ -73,14 +101,6 @@ adb shell am kill com.edu.nihongo
 ```
 
 Tùy chọn "Don't keep activities" trong Developer options chỉ hủy Activity, **không** giết tiến trình. Đó là thử nghiệm khác, đừng nhầm hai cái.
-
-### Câu hỏi hay gặp
-
-**ViewModel sống qua xoay màn hình bằng cách nào?**
-`ComponentActivity` giữ một `ViewModelStore` qua `onRetainNonConfigurationInstance`. Khi Activity được tạo lại do đổi cấu hình, store cũ được trao cho Activity mới. `onCleared()` chỉ chạy khi Activity kết thúc thật (`isFinishing`), không chạy khi xoay màn hình.
-
-**Lưu trạng thái form đang nhập dở ở đâu?**
-Phụ thuộc mức độ quan trọng. Nhỏ và chấp nhận mất khi người dùng tự tắt: `SavedStateHandle` hoặc `rememberSaveable`. Không được mất (bài thi, tin nhắn đang soạn dài): ghi nháp vào Room hoặc DataStore.
 
 ---
 
@@ -130,14 +150,6 @@ App dùng **một Activity duy nhất**: [MainActivity.kt](../apps/nihongo-andro
 
 **Cái giá phải trả:** mọi thứ phụ thuộc vào cách tổ chức navigation graph.
 
-### Câu hỏi hay gặp
-
-**Chuyển từ Activity A sang B: thứ tự callback?**
-`A.onPause` → `B.onCreate` → `B.onStart` → `B.onResume` → `A.onStop`. A chỉ `onStop` sau khi B đã hiện, vì nếu B trong suốt thì A vẫn còn được thấy.
-
-**`onSaveInstanceState` được gọi khi nào?**
-Khi Activity có thể bị hủy rồi tạo lại: xoay màn hình, hoặc xuống nền (để phòng process death). Không gọi khi người dùng bấm Back để thoát hẳn.
-
 ---
 
 ## 3. Context
@@ -167,11 +179,6 @@ class NetworkMonitor @Inject constructor(
 ```
 
 Hilt bắt buộc ghi rõ `@ApplicationContext` hoặc `@ActivityContext`, nên khó vô tình tiêm nhầm Activity vào singleton.
-
-### Câu hỏi hay gặp
-
-**Vì sao không nên hiện hộp thoại bằng Application context?**
-Nó không mang theme của Activity và không có cửa sổ (window token) để gắn vào. Kết quả là crash `BadTokenException`, hoặc hộp thoại sai giao diện.
 
 ---
 
@@ -213,12 +220,7 @@ val pending = PendingIntent.getActivity(context, 0, intent,
 composable(Routes.SRS, deepLinks = listOf(navDeepLink { uriPattern = SRS_DEEP_LINK })) { ... }
 ```
 
-Đáng để thảo luận khi phỏng vấn: `CLEAR_TASK` xóa back stack hiện có. Bấm thông báo khi đang ở màn đọc hiểu thì vào thẳng SRS, nhưng bấm Back thì thoát app chứ không quay lại màn đọc hiểu. Đó là một lựa chọn có chủ ý. Cách khác là `TaskStackBuilder`, dựng sẵn back stack Home → SRS.
-
-### Câu hỏi hay gặp
-
-**Bấm thông báo khi app đang mở: Activity mới hay cũ?**
-Với `launchMode="standard"` và không có cờ nào, hệ thống tạo **Activity mới** chồng lên trên. Muốn dùng lại Activity đang có thì dùng `singleTop` (hoặc cờ `CLEAR_TOP|SINGLE_TOP`) và xử lý Intent mới trong `onNewIntent`.
+Đáng để ý: `CLEAR_TASK` xóa back stack hiện có. Bấm thông báo khi đang ở màn đọc hiểu thì vào thẳng SRS, nhưng bấm Back thì thoát app chứ không quay lại màn đọc hiểu. Đó là một lựa chọn có chủ ý. Cách khác là `TaskStackBuilder`, dựng sẵn back stack Home → SRS.
 
 ---
 
@@ -291,17 +293,12 @@ WorkManager.getInstance(context)
     .enqueueUniqueWork("srs-review-sync", ExistingWorkPolicy.KEEP, request)
 ```
 
-Bốn chi tiết đáng nói khi phỏng vấn:
+Bốn chi tiết đáng chú ý:
 
 - **`enqueueUniqueWork` kèm `KEEP`:** chấm 10 thẻ thì gọi lên lịch 10 lần, nhưng chỉ có **một** lượt chờ. Lượt đó đọc hàng đợi lúc chạy, nên gửi luôn mọi thứ.
 - **Điều kiện `CONNECTED`:** đang offline thì việc ở yên trong hàng đợi, có mạng là tự chạy.
 - **`Result.retry()` với backoff tăng dần,** dừng sau 8 lần thử.
 - **Nhắc ôn 20:00 dùng WorkManager,** chấp nhận trễ vài phút; nhắc học không cần đúng tới từng giây như báo thức. App iOS làm khác hẳn: hẹn sẵn một thông báo cục bộ, vì iOS không cho app tự chạy code đúng giờ.
-
-### Câu hỏi hay gặp
-
-**Coroutine trong `GlobalScope` khác WorkManager thế nào?**
-Coroutine chết cùng tiến trình. Bị hệ thống giết hay khởi động lại máy là mất việc. WorkManager lưu việc vào database riêng của nó và chạy lại khi có cơ hội.
 
 ---
 
@@ -449,16 +446,16 @@ Repo đang target 35 và gọi `enableEdgeToEdge()` trong `MainActivity`. Nghĩa
 ### Gradle wrapper và sự tương thích
 
 - **`gradle/wrapper/gradle-wrapper.properties`** ghim phiên bản Gradle cho cả nhóm và CI: ai chạy `./gradlew` cũng dùng đúng một phiên bản, không phụ thuộc Gradle cài trên máy.
-- **Phải khớp bốn thứ:** phiên bản **Gradle**, **Android Gradle Plugin (AGP)**, **Kotlin** và **JDK** phải tương thích với nhau. Repo từng gặp lỗi build vì máy dùng JDK 25 trong khi AGP 8.7 và Kotlin 2.0 cần JDK 17 ([learn-android-kotlin.md](./learn-android-kotlin.md) Phần 0). CI ghim `java-version: '17'` vì lý do này.
+- **Phải khớp bốn thứ:** phiên bản **Gradle**, **Android Gradle Plugin (AGP)**, **Kotlin** và **JDK** phải tương thích với nhau. Repo từng gặp lỗi build khi máy dùng JDK 25 với Gradle 8.12: thông báo lỗi chỉ in số `25.0.3`. Sau khi wrapper lên Gradle 9.7.1, biên dịch bằng JDK 25 của Android Studio đã chạy được (kiểm ngày 10/11/2026). CI vẫn ghim `java-version: '17'` để mọi lần build dùng cùng một JDK ([learn-android-kotlin.md](./learn-android-kotlin.md) mục 1.5).
 - **Build type** (`debug` / `release`) khác **product flavor** (`free` / `pro`, `staging` / `prod`). Kết hợp hai thứ thành **build variant**, ví dụ `stagingRelease`.
-- **Version catalog** (`libs.versions.toml`) giữ phiên bản thư viện ở một chỗ.
+- **Version catalog** (`gradle/libs.versions.toml`) giữ phiên bản thư viện ở một chỗ. Repo **chưa** dùng: phiên bản plugin nằm trong `build.gradle.kts` gốc, phiên bản thư viện nằm thẳng trong `app/build.gradle.kts`.
 - **Release:** bật R8 (`isMinifyEnabled`), ký bằng keystore riêng của release, phát hành dạng App Bundle (`.aab`). Play tự cắt APK theo từng máy.
 
 ---
 
-## 13. Ba vấn đề thật trong app — dùng làm câu chuyện phỏng vấn
+## 13. Ba lỗi nền tảng thật trong app
 
-Ba vấn đề này được tìm ra khi viết tài liệu, và **đã sửa** kèm test. Phần "Bản cũ" giữ lại để bạn kể được trước và sau. Test nằm ở `app/src/androidTest/.../platform/PlatformHardeningTest.kt` (chạy trên emulator) và `app/src/test/.../data/local/TokenCodecTest.kt` (JVM).
+Ba lỗi này được tìm ra khi viết tài liệu, và **đã sửa** kèm test. Phần "Bản cũ" giữ lại để bạn thấy rõ trước và sau. Test nằm ở `app/src/androidTest/.../platform/PlatformHardeningTest.kt` (chạy trên emulator) và `app/src/test/.../data/local/TokenCodecTest.kt` (JVM).
 
 ### Vấn đề 1: Refresh token đi theo bản sao lưu
 
@@ -510,16 +507,9 @@ Màn LiveKit (`LiveHostScreen`) xin quyền camera và micro, nhưng app không 
 - **Sửa thêm một lỗi cũ trong cùng màn:** `LiveHostViewModel` bật camera/micro ngay sau khi kết nối, kể cả khi người dùng chưa kịp cấp quyền. Lỗi bị bắt chung thành "Không phát live được", và cấp quyền xong cũng không bật lại. Giờ màn hình báo trạng thái quyền cho ViewModel, và camera/micro (cùng service) chỉ bật khi vừa kết nối xong, vừa đã có quyền.
 - **Đã kiểm chứng:** test trên emulator bật service rồi kiểm tra thông báo đang chạy xuất hiện, tắt service rồi kiểm tra thông báo biến mất.
 
-### Cách kể theo STAR
-
-- **Situation:** app học tiếng Nhật, có đăng nhập, sync dữ liệu và gọi video.
-- **Task:** tự soát nền tảng trước khi phát hành.
-- **Action:** đối chiếu manifest và cách lưu dữ liệu với các thay đổi của Android 6, 9 và 14; tìm thấy ba vấn đề trên; sửa và viết test cho từng cái, kể cả chạy một lần sao lưu thật để chứng minh token không còn nằm trong đó.
-- **Result:** token không còn rời khỏi máy; bản release chỉ dùng HTTPS; cuộc gọi không bị ngắt khi app xuống nền.
-
 ---
 
-## 14. Bộ câu hỏi tự kiểm tra
+## 14. Tự kiểm tra
 
 Tự trả lời thành tiếng trước, rồi mới đối chiếu với mục được ghi trong ngoặc.
 
@@ -543,7 +533,25 @@ Tự trả lời thành tiếng trước, rồi mới đối chiếu với mục
 18. Tăng `targetSdk` từ 33 lên 35 cần kiểm tra những gì? (mục 11)
 19. `minSdk`, `compileSdk`, `targetSdk` khác nhau thế nào? (mục 12)
 20. Gradle wrapper giải quyết vấn đề gì? Vì sao build lỗi khi đổi JDK? (mục 12)
-21. Kể một vấn đề nền tảng bạn đã tìm và sửa trong app của mình. (mục 13)
+21. Chọn một trong ba lỗi ở mục 13: nó gây hại gì, sửa thế nào, kiểm chứng ra sao? (mục 13)
+
+---
+
+## Bài tập
+
+Làm trên emulator `pixel_api_35` với bản debug ([learn-android-kotlin.md](./learn-android-kotlin.md) mục 1.3).
+
+1. **Phân biệt ba kiểu "app chết".** Vào bài thi thử, chọn đáp án tới câu 3. Lần lượt thử: (a) xoay màn hình, (b) bấm Home rồi `adb shell am kill com.edu.nihongo` rồi mở lại từ màn đa nhiệm, (c) `adb shell am force-stop com.edu.nihongo` rồi mở lại. Ghi lại mỗi lần: đáp án còn không, đang ở câu mấy, đồng hồ có đúng không. Đối chiếu với bảng ở mục 1 và [bài 4](./learn-android-features.md) mục 5.
+2. **Xem việc nền đã hẹn.** Chạy `adb shell dumpsys jobscheduler | grep -A3 com.edu.nihongo`. Tìm job của WorkManager và đọc các ràng buộc (mạng, pin). Liên hệ với mục 6.
+3. **Quyền bị từ chối hai lần.** Gỡ quyền thông báo của app trong Settings, mở app, bấm thẻ "Bật nhắc ôn tập" và từ chối hai lần. Lần thứ ba có hộp thoại không? Đọc mục 7 để giải thích.
+4. **Kiểm cấu hình mạng.** Khi emulator đang mở, chạy riêng lớp test này:
+
+   ```bash
+   ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.edu.nihongo.platform.PlatformHardeningTest
+   ```
+
+   (`--tests` chỉ dùng được cho unit test, không dùng được cho test trên thiết bị.) Đọc 4 test và nói mỗi test chứng minh điều gì trong mục 13.
+
 
 <!-- nav:start -->
 
@@ -551,10 +559,10 @@ Tự trả lời thành tiếng trước, rồi mới đối chiếu với mục
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 3/10.
+Bạn đang ở **9. Mobile** — bài 5/12.
 
-- Bài trước: [run-mobile.md](./run-mobile.md) — Chạy các app mobile
-- **Bài tiếp: [learn-android-kotlin.md](./learn-android-kotlin.md)** — Android Kotlin từ code thật, lộ trình 8 tuần
+- Bài trước: [learn-android-architecture.md](./learn-android-architecture.md) — Android 2/4: kiến trúc, Room, offline, mạng, Hilt, native, test, 14 lỗi đã sửa
+- **Bài tiếp: [learn-android-features.md](./learn-android-features.md)** — Android 4/4: nhật ký làm 9 tính năng và 5 lỗi chỉ lộ ra khi chạy thật
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

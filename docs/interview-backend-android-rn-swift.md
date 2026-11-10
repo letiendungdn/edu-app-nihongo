@@ -997,6 +997,8 @@ Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 - [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
 - [interview-devops.md](./interview-devops.md) — DevOps
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+- [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive
+- [interview-java-dsa.md](./interview-java-dsa.md) — Java, OOP và 10 bài thuật toán gắn với app (lời giải Java đã chạy), kế hoạch luyện bài test lập trình
 - [interview-react-native-senior.md](./interview-react-native-senior.md) — Senior React Native
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

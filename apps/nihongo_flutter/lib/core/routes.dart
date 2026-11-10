@@ -2,6 +2,7 @@ abstract final class Routes {
   static const home             = '/';
   static const vocab            = '/vocab';
   static const dictionary       = '/dictionary';
+  static const vocabSearch      = '/vocab-search';
   static const srs              = '/srs';
   static const sentencePractice = '/sentence-practice';
   static const cameraTranslate  = '/camera-translate';

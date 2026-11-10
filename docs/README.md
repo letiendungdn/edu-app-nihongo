@@ -184,14 +184,16 @@ Các app mobile của project, từ nền tảng đến tính năng và bảo m�
 |---|----------|----------|
 | 1 | [mobile-tech-stacks.md](./mobile-tech-stacks.md) | Tech stack từng app mobile |
 | 2 | [run-mobile.md](./run-mobile.md) | Chạy các app mobile |
-| 3 | [learn-android-fundamentals.md](./learn-android-fundamentals.md) | Nền tảng Android qua code nihongo-android |
-| 4 | [learn-android-kotlin.md](./learn-android-kotlin.md) | Android Kotlin từ code thật, lộ trình 8 tuần |
-| 5 | [learn-android-features.md](./learn-android-features.md) | 9 tính năng Android mới và bài học |
-| 6 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
-| 7 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
-| 8 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
-| 9 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
-| 10 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
+| 3 | [learn-android-kotlin.md](./learn-android-kotlin.md) | Android 1/4: Kotlin, coroutine/Flow, Compose. Có lộ trình 9 tuần cho cả 4 bài Android |
+| 4 | [learn-android-architecture.md](./learn-android-architecture.md) | Android 2/4: kiến trúc, Room, offline, mạng, Hilt, native, test, 14 lỗi đã sửa |
+| 5 | [learn-android-fundamentals.md](./learn-android-fundamentals.md) | Android 3/4: hệ điều hành chạy app thế nào: tiến trình, vòng đời, chạy nền, quyền, bảo mật |
+| 6 | [learn-android-features.md](./learn-android-features.md) | Android 4/4: nhật ký làm 9 tính năng và 5 lỗi chỉ lộ ra khi chạy thật |
+| 7 | [learn-android-framework.md](./learn-android-framework.md) | Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive |
+| 8 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
+| 9 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
+| 10 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
+| 11 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
+| 12 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
 
 ---
 
@@ -248,6 +250,8 @@ Câu hỏi và đáp án phỏng vấn, trả lời bằng code của project.
 | [interview-devops.md](./interview-devops.md) | DevOps |
 | [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) | Backend, Android, React Native, Swift |
 | [interview-mobile.md](./interview-mobile.md) | Senior Mobile |
+| [interview-android.md](./interview-android.md) | Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive |
+| [interview-java-dsa.md](./interview-java-dsa.md) | Java, OOP và 10 bài thuật toán gắn với app (lời giải Java đã chạy), kế hoạch luyện bài test lập trình |
 | [interview-react-native-senior.md](./interview-react-native-senior.md) | Senior React Native |
 
 ---

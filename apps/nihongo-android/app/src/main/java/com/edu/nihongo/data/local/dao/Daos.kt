@@ -38,6 +38,10 @@ interface VocabularyDao {
     )
     fun getByLesson(lessonNumber: Int): Flow<List<VocabularyEntity>>
 
+    /** Mọi từ đã có trên máy, cho tra từ offline (VocabSearchViewModel dựng Trie từ danh sách này). */
+    @Query("SELECT * FROM vocabulary ORDER BY lesson_number ASC, sort_order ASC")
+    fun observeAll(): Flow<List<VocabularyEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<VocabularyEntity>)
 

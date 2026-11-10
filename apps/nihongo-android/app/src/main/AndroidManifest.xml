@@ -42,6 +42,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Lab Binder/AIDL: service ở tiến trình riêng, chỉ chính app bind được (docs/learn-android-framework.md) -->
+        <service
+            android:name=".data.ipc.DueCardsIpcService"
+            android:exported="false"
+            android:process=":ipc" />
+
         <service
             android:name=".data.live.LiveCallService"
             android:exported="false"

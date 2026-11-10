@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface VocabularyRepository {
     fun getVocabByLesson(lessonNumber: Int): Flow<List<Vocabulary>>
+    /** Mọi từ vựng đã có trên máy (các bài đã mở). Dùng cho tra từ offline. */
+    fun observeAllVocab(): Flow<List<Vocabulary>>
     fun getReviewQueue(): Flow<List<ReviewCard>>
     /** Lưu kết quả chấm vào máy rồi hẹn gửi lên server. Không phụ thuộc mạng. */
     suspend fun updateSrsCard(card: SrsCard): Result<Unit>

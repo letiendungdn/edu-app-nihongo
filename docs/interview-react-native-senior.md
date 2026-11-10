@@ -2143,6 +2143,8 @@ Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 - [interview-devops.md](./interview-devops.md) — DevOps
 - [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
+- [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive
+- [interview-java-dsa.md](./interview-java-dsa.md) — Java, OOP và 10 bài thuật toán gắn với app (lời giải Java đã chạy), kế hoạch luyện bài test lập trình
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

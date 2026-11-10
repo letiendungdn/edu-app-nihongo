@@ -268,3 +268,91 @@ describe("rankVocabSearch", () => {
     expect(ranked[0].id).toBe(2);
   });
 });
+
+describe("tra từ romaji không dấu (Trie)", () => {
+  const rows = [
+    { id: 1, romaji: "kandō shimasu" },
+    { id: 2, romaji: "kanji" },
+  ];
+  let prisma: {
+    lesson: { findUnique: jest.Mock };
+    vocabulary: Record<string, jest.Mock>;
+    $transaction: jest.Mock;
+  };
+  let service: VocabulariesService;
+
+  beforeEach(async () => {
+    prisma = {
+      lesson: { findUnique: jest.fn() },
+      vocabulary: {
+        // Lần gọi chỉ select id+romaji là lần dựng chỉ mục; các lần khác là truy vấn tìm kiếm
+        findMany: jest.fn((args: { select?: unknown }) =>
+          Promise.resolve(args?.select ? rows : []),
+        ),
+        count: jest.fn().mockResolvedValue(0),
+        delete: jest.fn().mockResolvedValue({ id: 1, lessonId: 30 }),
+      },
+      $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+    };
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        VocabulariesService,
+        { provide: PrismaService, useValue: prisma },
+        {
+          provide: CACHE_MANAGER,
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
+      ],
+    }).compile();
+    service = module.get(VocabulariesService);
+  });
+
+  const indexBuilds = () =>
+    prisma.vocabulary.findMany.mock.calls.filter(([a]) => a?.select).length;
+  const containsWhere = () =>
+    prisma.vocabulary.count.mock.calls.at(-1)![0].where as { OR: unknown[] };
+
+  it("gõ 'kandou' thì điều kiện tìm có thêm id của 'kandō shimasu'", async () => {
+    await service.findAll(undefined, 1, 20, undefined, "kandou");
+    expect(containsWhere().OR).toContainEqual({ id: { in: [1] } });
+  });
+
+  it("query không phải romaji (kana) thì không đụng tới chỉ mục", async () => {
+    await service.findAll(undefined, 1, 20, undefined, "かんどう");
+    expect(indexBuilds()).toBe(0);
+    expect(containsWhere().OR).toHaveLength(4);
+  });
+
+  it("chỉ mục dựng một lần rồi dùng lại; sửa từ thì dựng lại", async () => {
+    await service.findAll(undefined, 1, 20, undefined, "kando");
+    await service.findAll(undefined, 1, 20, undefined, "kanji");
+    expect(indexBuilds()).toBe(1);
+
+    await service.remove(1);
+    await service.findAll(undefined, 1, 20, undefined, "kando");
+    expect(indexBuilds()).toBe(2);
+  });
+
+  it("xếp hạng: 'kando' coi 'kandō shimasu' là bắt đầu bằng, đứng trước từ chỉ chứa", () => {
+    const ranked = rankVocabSearch(
+      [
+        {
+          id: 9,
+          kanji: null,
+          kana: "ほんかんどう",
+          romaji: "honkandou",
+          meaning: "x",
+        },
+        {
+          id: 1,
+          kanji: "感動します",
+          kana: "かんどうします",
+          romaji: "kandō shimasu",
+          meaning: "cảm động",
+        },
+      ],
+      "kando",
+    );
+    expect(ranked.map((v) => v.id)).toEqual([1, 9]);
+  });
+});

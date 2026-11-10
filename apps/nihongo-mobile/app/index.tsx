@@ -29,6 +29,12 @@ export default function HomeScreen() {
         onPress={() => router.push('/vocab')}
       />
       <NavCard
+        icon="🔎"
+        title="Tra từ"
+        subtitle="Gõ romaji tới đâu gợi ý tới đó, không cần mạng"
+        onPress={() => router.push('/vocab-search')}
+      />
+      <NavCard
         icon="🔁"
         title="Ôn tập SRS"
         subtitle="Spaced repetition — SM-2 algorithm"

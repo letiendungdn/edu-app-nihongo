@@ -38,6 +38,11 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
   }
 
   @override
+  Stream<List<Vocabulary>> watchAllVocab() {
+    return _db.watchAllVocab().map((rows) => rows.map(_toVocabDomain).toList());
+  }
+
+  @override
   Stream<List<ReviewCard>> watchReviewQueue() {
     return _db.watchDueReviewCards().map(
           (rows) => rows

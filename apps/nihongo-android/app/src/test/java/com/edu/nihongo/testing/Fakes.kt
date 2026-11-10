@@ -51,6 +51,9 @@ class FakeVocabularyDao : VocabularyDao {
     override fun getByLesson(lessonNumber: Int): Flow<List<VocabularyEntity>> =
         rows.map { all -> all.values.filter { it.lessonNumber == lessonNumber }.sortedBy { it.sortOrder } }
 
+    override fun observeAll(): Flow<List<VocabularyEntity>> =
+        rows.map { all -> all.values.sortedWith(compareBy({ it.lessonNumber }, { it.sortOrder })) }
+
     override suspend fun upsertAll(items: List<VocabularyEntity>) {
         rows.value = rows.value + items.associateBy { it.id }
     }

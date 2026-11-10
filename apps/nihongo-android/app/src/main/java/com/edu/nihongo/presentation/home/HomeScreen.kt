@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.TextFields
@@ -74,6 +75,7 @@ fun HomeScreen(
     onExams: () -> Unit,
     onKana: () -> Unit,
     onPremium: () -> Unit,
+    onSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle(initialValue = true)
@@ -143,6 +145,15 @@ fun HomeScreen(
                     subtitle = "Từ vựng · ngữ pháp · kanji, dùng được offline",
                     icon = Icons.Rounded.LibraryBooks,
                     onClick = onVocab,
+                )
+            }
+            item {
+                NavCard(
+                    title = "Tra từ",
+                    subtitle = "Gõ romaji tới đâu gợi ý tới đó, không cần mạng",
+                    icon = Icons.Rounded.Search,
+                    onClick = onSearch,
+                    badge = "MỚI",
                 )
             }
             item {

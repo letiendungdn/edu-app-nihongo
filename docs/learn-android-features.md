@@ -1,13 +1,41 @@
-# Android — 9 Tính Năng Mới Và Những Gì Học Được Khi Làm
+# Android 4: Làm 9 tính năng thật và những gì vấp phải
 
-Tiếp nối [learn-android-kotlin.md](./learn-android-kotlin.md) (Kotlin, Compose, kiến trúc, 14 lỗi đã sửa). Cùng 9 tính năng này làm bằng SwiftUI: [learn-swift-ios.md](./learn-swift-ios.md). File này kể từng tính năng đã thêm vào `apps/nihongo-android`:
+> **Mục tiêu:** Học xong bài này bạn:
+> - thấy được cách ghép kiến thức của bài 1–3 thành tính năng hoàn chỉnh: nhắc ôn hằng ngày, chat realtime, thi thử có giờ, widget…;
+> - biết thêm dữ liệu vào Room ở phiên bản mới mà không mất dữ liệu cũ (DB version 3);
+> - bật được R8 và Baseline Profile cho bản release, viết test Compose UI và chạy test trên emulator trong CI;
+> - hiểu vì sao **5 lỗi** vẫn lọt dù unit test đều xanh, và cách bắt chúng bằng chạy thật.
+>
+> **Cần biết trước:** bài 1–3 của lộ trình Android: [learn-android-kotlin.md](./learn-android-kotlin.md), [learn-android-architecture.md](./learn-android-architecture.md), [learn-android-fundamentals.md](./learn-android-fundamentals.md).
+> **Thời gian:** khoảng 1 tuần (tuần 9 trong [lộ trình 9 tuần](./learn-android-kotlin.md#lộ-trình-9-tuần-cho-cả-bốn-bài)).
+
+Đây là bài **4/4** của lộ trình Android, viết dạng **nhật ký làm tính năng**. Mỗi mục kể:
 
 - Tính năng làm gì, nằm ở file nào.
-- Kỹ thuật Android chính và lý do chọn.
-- **Lỗi lộ ra khi chạy thật** trên emulator với backend thật. Đây là phần đáng học nhất: 5 lỗi, cả 5 đều đã qua unit test xanh mà vẫn sai.
+- Kỹ thuật Android chính và lý do chọn. Phần lý thuyết đã có ở bài 1–3 thì chỉ dẫn link, không giải thích lại.
+- **Lỗi lộ ra khi chạy thật** trên emulator với backend thật. Đây là phần đáng học nhất: cả 5 lỗi đều đã qua unit test xanh mà vẫn sai.
 - Test kiểm chứng.
 
-Kết quả ngày 11/10/2026: **79 unit test** và **9 test trên emulator** (API 35) đều pass. Mọi luồng bên dưới đã chạy tay trên emulator với backend Docker thật, ở cả bản debug lẫn bản release (R8).
+Cùng 9 tính năng này làm bằng SwiftUI: [learn-swift-ios.md](./learn-swift-ios.md). Câu hỏi phỏng vấn: [interview-android.md](./interview-android.md#làm-tính-năng-thật).
+
+Các luồng bên dưới được chạy tay trên emulator API 35 với backend Docker thật, ở cả bản debug lẫn bản release (R8), ngày 11/10/2026. Kiểm lại ngày 10/11/2026: **108 unit test** và **17 test trên emulator** đều pass.
+
+## Từ khóa trong bài
+
+| Từ | Nghĩa ngắn gọn |
+|---|---|
+| `PeriodicWorkRequest` | Việc WorkManager chạy lặp lại theo chu kỳ, ví dụ mỗi 24 giờ |
+| Notification channel | Nhóm thông báo mà người dùng bật/tắt riêng được (Android 8+) |
+| SSE | Server-Sent Events: server giữ kết nối HTTP mở và đẩy tin xuống liên tục |
+| Gửi lạc quan | Hiện tin nhắn ngay khi bấm gửi, chưa chờ server; lỗi thì đánh dấu để thử lại |
+| `@Relation`, `TypeConverter` | Cách Room đọc dữ liệu nhiều bảng một lần, và lưu kiểu phức tạp (list, JSON) vào cột |
+| Glance | Thư viện viết widget màn hình chính bằng cú pháp giống Compose |
+| R8 | Công cụ thu gọn và làm rối code khi build bản release. Có thể làm hỏng code dùng reflection |
+| Baseline Profile | Danh sách đoạn code được biên dịch sẵn khi cài app, giúp mở app nhanh hơn |
+| Macrobenchmark | Thư viện đo hiệu năng app thật (thời gian mở, độ mượt) |
+| `adb` | Công cụ dòng lệnh điều khiển emulator/điện thoại: cài app, xem log, giết tiến trình |
+
+## Chín tính năng
 
 | # | Tính năng | Kỹ thuật chính |
 | --- | --- | --- |
@@ -20,6 +48,7 @@ Kết quả ngày 11/10/2026: **79 unit test** và **9 test trên emulator** (AP
 | 7 | Widget màn hình chính | Glance, `@EntryPoint` |
 | 8 | R8 + Baseline Profile | Quy tắc keep cho Gson/Retrofit, Macrobenchmark |
 | 9 | Test Compose UI + CI | `createComposeRule`, `ActivityScenario`, GitHub Actions + emulator |
+| 11 | Tra từ theo romaji (thêm sau) | Trie, chuẩn hóa dữ liệu thật, `flowOn(Default)`, dispatcher inject được |
 
 ---
 
@@ -37,7 +66,7 @@ exam_attempt                          ← bài thi đang làm
 
 `app/schemas/.../3.json` được sinh khi build. Test `AppDatabaseMigrationTest.migrate1To3_keepsData_andCreatesNewTables` mô phỏng người dùng đang ở v1 cập nhật thẳng lên v3: Room chạy nối 1→2→3, và thẻ `PENDING` vẫn còn.
 
-Sơ đồ dữ liệu các bảng mới (sinh từ `3.json` bằng `apps/nihongo-android/scripts/room_erd.py`; nét đứt là quan hệ không có khóa ngoại). Bảng từ vựng, SRS, hàng đợi sync: [learn-android-kotlin.md](./learn-android-kotlin.md) mục 29.
+Sơ đồ dữ liệu các bảng mới (sinh từ `3.json` bằng `apps/nihongo-android/scripts/room_erd.py`; nét đứt là quan hệ không có khóa ngoại). Bảng từ vựng, SRS, hàng đợi sync: [learn-android-architecture.md](./learn-android-architecture.md) mục 29.
 
 **Nội dung học**
 
@@ -182,7 +211,7 @@ flowchart TD
 Các quyết định đáng nói:
 
 - **`millisUntilNext` là hàm thuần** (`utils/ReminderTime.kt`), dùng `Calendar` để cộng "1 ngày lịch" chứ không cộng cứng 24 giờ. Test `daylightSavingDay_keepsLocalTime` kiểm tra ngày đổi giờ mùa hè ở Berlin (ngày chỉ có 23 giờ): vẫn nhắc đúng 20:00 giờ địa phương. Không dùng `java.time` vì minSdk 24.
-- **WorkManager, không dùng AlarmManager**: WorkManager có thể dời vài phút khi máy ở chế độ Doze. Với lời nhắc học bài thì không sao, đổi lại không cần quyền `SCHEDULE_EXACT_ALARM` và tiết kiệm pin.
+- **WorkManager, không dùng AlarmManager**: nhắc học bài lệch vài phút vì Doze cũng không sao, đổi lại không cần quyền `SCHEDULE_EXACT_ALARM` và tiết kiệm pin. Cách chọn giữa coroutine, WorkManager, foreground service và AlarmManager, cùng ảnh hưởng của Doze: [learn-android-fundamentals.md](./learn-android-fundamentals.md) mục 6.
 - **Quyền thông báo xin theo ngữ cảnh**: Home có thẻ "Bật nhắc ôn tập" (chỉ hiện trên Android 13+ khi chưa có quyền), thay vì bật hộp thoại ngay lúc mở app. Từ chối 2 lần là hệ thống không hỏi lại nữa, nên lần hỏi phải là lúc người dùng hiểu lý do.
 - **Deep link một nguồn**: hằng `SRS_DEEP_LINK = "nihongo://srs"` dùng chung cho thông báo, widget, `navDeepLink` và test. Manifest khai `<intent-filter>` với `scheme="nihongo" host="srs"`.
 
@@ -368,7 +397,7 @@ stateDiagram-v2
 
 Trên emulator: làm tới câu 2, chạy `adb shell am force-stop`, mở lại. Đáp án vẫn còn (2/33), đồng hồ vẫn đúng (49:44 → 49:18), nhưng **quay về câu 1**.
 
-Nguyên nhân: `SavedStateHandle` chỉ được khôi phục khi **hệ thống** giết process. Khi **người dùng** tự tắt app (force-stop, vuốt khỏi danh sách gần đây), saved state bị bỏ, đó là hành vi đúng của Android. Sửa: không có index đã lưu (`-1`) thì mở ở câu đầu tiên chưa trả lời, tính từ đáp án trong Room (hàm thuần `resolveIndex`). Kiểm chứng lại: mở vào câu 3.
+Nguyên nhân (lý thuyết đầy đủ ở [learn-android-fundamentals.md](./learn-android-fundamentals.md) mục 1): `SavedStateHandle` chỉ được khôi phục khi **hệ thống** giết process. Khi **người dùng** tự tắt app (force-stop, vuốt khỏi danh sách gần đây), saved state bị bỏ, đó là hành vi đúng của Android. Sửa: không có index đã lưu (`-1`) thì mở ở câu đầu tiên chưa trả lời, tính từ đáp án trong Room (hàm thuần `resolveIndex`). Kiểm chứng lại: mở vào câu 3.
 
 | Cách app chết | `SavedStateHandle` | Room |
 | --- | --- | --- |
@@ -416,7 +445,7 @@ Bẫy khi kiểm tra: `connectedDebugAndroidTest` **gỡ app sau khi chạy test
 | Code (dex) | 73,4 MB | **5,8 MB** (−92%) |
 | Cả APK | 119,8 MB | 95,8 MB |
 
-APK vẫn nặng vì thư viện native (WebRTC của LiveKit, model ML Kit) được đóng gói cho **cả 4 kiến trúc CPU**: x86_64 26,5 MB, x86 23,1 MB, arm64 22,1 MB, armv7 13,0 MB. Mỗi máy chỉ cần một bản. Phát hành bằng App Bundle (`sh ./gradlew bundleRelease`) thì Google Play tự gửi đúng bản cho từng máy.
+APK vẫn nặng vì thư viện native (WebRTC của LiveKit, model ML Kit) được đóng gói cho **cả 4 kiến trúc CPU**: x86_64 26,5 MB, x86 23,1 MB, arm64 22,1 MB, armv7 13,0 MB. Mỗi máy chỉ cần một bản. Phát hành bằng App Bundle (`./gradlew bundleRelease`) thì Google Play tự gửi đúng bản cho từng máy.
 
 Quy tắc quan trọng nhất là **Gson**: Gson đọc tên field bằng reflection. R8 đổi tên field thì JSON không khớp nữa, mọi field ra `null`, và **không có lỗi nào báo ra**. Phải giữ field của:
 
@@ -437,8 +466,8 @@ Module `:baselineprofile`:
 - `StartupBenchmark`: đo cold start có và không có profile.
 
 ```bash
-sh ./gradlew :app:generateReleaseBaselineProfile                 # sinh profile (cần emulator API 33+)
-sh ./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest # đo khởi động
+./gradlew :app:generateReleaseBaselineProfile                 # sinh profile (cần emulator API 33+)
+./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest # đo khởi động
 ```
 
 `profileinstaller` cài profile ngay cả khi app không đi qua Play Store. Luồng generator chỉ dùng màn offline (Home, kana) để không phụ thuộc backend.
@@ -455,7 +484,7 @@ Median nhanh hơn khoảng 19%, nhưng hai dải số chồng lên nhau. Với 5
 Macrobenchmark mặc định từ chối chạy trên emulator (lỗi `ERRORS (not suppressed): EMULATOR`). Muốn so sánh tương đối trên emulator thì phải bỏ qua lỗi đó một cách tường minh:
 
 ```bash
-sh ./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest \
+./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR
 ```
 
@@ -474,10 +503,13 @@ File profile sinh ra có 21.257 dòng quy tắc. Sinh mất khoảng 9 phút tr�
 | `ProgressContentTest` (2) | Composable hiện số liệu; biểu đồ đọc được bằng TalkBack; banner offline |
 | `DeepLinkTest` (1) | App thật (Hilt, Room, NavHost) mở `nihongo://srs` vào thẳng màn SRS |
 | `DueCardsWidgetTest` (2) | Nội dung widget và hành động bấm |
+| `PlatformHardeningTest` (4) | Token không vào bản sao lưu, chặn HTTP ngoài danh sách cho phép, foreground service gọi video ([bài 3](./learn-android-fundamentals.md) mục 13) |
+| `DueCardsIpcServiceTest` (3) | Lab AIDL: service ở tiến trình `:ipc`, gọi đồng bộ và `oneway` ([learn-android-framework.md](./learn-android-framework.md) mục 5) |
+| `VocabSearchTest` (1) | App thật: Home → Tra từ, gõ `kandou` ra từ lưu là `kandō shimasu` (mục 11) |
 
 ```bash
-~/Library/Android/sdk/emulator/emulator -avd pixel_api_35 -no-window -no-audio &
-sh ./gradlew connectedDebugAndroidTest
+~/Library/Android/sdk/emulator/emulator -avd pixel_api_35 -no-window -no-audio &   # emulator không giao diện
+./gradlew connectedDebugAndroidTest
 ```
 
 - `createComposeRule()`: test một composable riêng lẻ, không cần Activity.
@@ -506,33 +538,93 @@ sh ./gradlew connectedDebugAndroidTest
 
 Bài học: unit test chỉ chứng minh code làm đúng **điều test giả định**. Giả định sai (client không có logging, cookie không `Secure`, process chết theo một kiểu) thì test vẫn xanh. Sau khi unit test xanh, luôn chạy thử trên thiết bị với backend thật. Khi tìm ra lỗi, **viết test tái hiện đúng điều kiện thật** (body SSE chảy chậm, đúng header cookie đo được, `resolveIndex(-1, ...)`), thấy nó đỏ, rồi mới sửa.
 
+
 ---
 
-## 11. Câu hỏi phỏng vấn
+## 11. Tra từ theo romaji (Trie), trên mọi nền tảng
 
-**1. Thiết kế chat realtime trên mobile thế nào để không mất tin?**
-SSE hoặc WebSocket để nhận nhanh; mỗi lần (nối lại) kết nối thì tải lại lịch sử bằng REST; gộp và loại trùng theo id; gửi lạc quan có trạng thái và nút thử lại; nối lại có backoff, dừng hẳn khi gặp 4xx. Kể lỗi logging interceptor nuốt stream.
+Thêm sau 9 tính năng trên, từ bài thuật toán số 48 trong [interview-java-dsa.md](./interview-java-dsa.md). Home → **Tra từ**: gõ romaji tới đâu, danh sách từ vựng gợi ý tới đó, không cần mạng.
 
-**2. Vì sao lưu mốc `endsAt` chứ không lưu "còn bao nhiêu giây"?**
-Coroutine và timer dừng khi app ở nền hoặc bị giết; tính lại từ mốc tuyệt đối thì luôn đúng.
+```text
+Room: vocabulary (các bài đã mở)
+   └─ observeAll(): Flow<List<…>> ──map {dựng RomajiTrie}──flowOn(Default)──┐
+Ô nhập: query (StateFlow) ───────────────────────────────────────────────────┴─ combine ─▶ trie.search(query, 30) ─▶ UI
+```
 
-**3. `SavedStateHandle` khác Room thế nào khi app bị giết?**
-Bảng ở mục 5. Hệ thống giết thì `SavedStateHandle` còn; người dùng force-stop thì mất. Dữ liệu không được phép mất phải nằm trong Room.
+| File | Vai trò |
+|---|---|
+| `domain/search/RomajiTrie.kt` | Trie Kotlin thuần, chuẩn hóa romaji, sinh khóa |
+| `presentation/search/VocabSearchViewModel.kt` | Dựng Trie khi Room đổi, lọc theo chữ đang gõ |
+| `presentation/search/VocabSearchScreen.kt` | Màn hình; `VocabSearchContent` tách riêng để test bằng dữ liệu giả |
+| `di/Dispatchers.kt` | Qualifier `@DefaultDispatcher`: test truyền dispatcher của `runTest` vào |
 
-**4. WorkManager khác AlarmManager?**
-WorkManager: bền qua khởi động lại máy, có ràng buộc (mạng, pin), không đúng tới từng phút. AlarmManager exact: đúng giờ, nhưng cần quyền và tốn pin. Nhắc học bài thì chọn WorkManager.
+Các quyết định đáng nói:
 
-**5. R8 làm hỏng app ở đâu, phát hiện thế nào?**
-Reflection: Gson, Retrofit, và các thư viện tự đọc class. Triệu chứng là dữ liệu ra null chứ không crash. Phát hiện: build release trong CI và chạy thử bản release.
+- **Dữ liệu thật quyết định thiết kế.** DB có 14.609 từ vựng, romaji viết theo Hepburn có dấu trường âm và ký tự lạ: `kandō shimasu`, `nyūgaku`, `ja, mata [ashita].`. Người dùng thì gõ `kando` hoặc `kandou`. Vì vậy mỗi từ được lưu dưới **hai khóa** (bỏ dấu và nhân đôi nguyên âm: `kandoshimasu`, `kandoushimasu`), và mọi thứ không phải a–z bị bỏ khi chuẩn hóa.
+- **Đo trước khi chọn cấu trúc.** Đưa cả 14.609 từ (16.139 khóa) vào Trie chỉ ra 33.711 nút, vì các từ chung tiền tố rất nhiều. Nút chỉ tạo `HashMap` con khi cần, vì phần lớn nút là lá.
+- **Không trả trùng, thứ tự dễ đoán.** Một từ nằm ở hai khóa nên kết quả gom qua `LinkedHashSet`. Duyệt BFS: khóa ngắn trước (`ka` trước `kaban`), cùng độ dài thì theo bảng chữ cái.
+- **Dựng ở luồng nền, tìm ở bất kỳ đâu.** Trie dựng lại mỗi khi Room phát danh sách mới (vừa sync thêm bài), trên `Dispatchers.Default`. Mỗi lần gõ chỉ là một lần `search`.
+- **Ô nhập đọc thẳng `query`**, không đọc qua `uiState` (đi qua `combine`, cập nhật bất đồng bộ), để con trỏ không nhảy khi gõ nhanh.
 
-**6. Baseline Profile để làm gì?**
-Biên dịch trước (AOT) code của các luồng hay dùng, giúp mở app lần đầu và cuộn mượt hơn. Đo bằng Macrobenchmark, so sánh `CompilationMode.None` với `Partial(BaselineProfileMode.Require)`.
+Vì sao không dùng `LIKE 'kan%'` của SQLite: cột `romaji` chứa dấu và khoảng trắng nên phải thêm một cột đã chuẩn hóa (nâng DB lên v4, viết migration); SQLite cũng chỉ dùng index cho `LIKE` tiền tố trong một số điều kiện (collation phù hợp với `case_sensitive_like`). Với vài chục nghìn từ, Trie trong bộ nhớ đơn giản và đủ nhanh. Nếu cần tìm cả theo nghĩa tiếng Việt hay giữa từ, lựa chọn đúng là **FTS** (full-text search) của SQLite qua Room `@Fts4`.
 
-**7. Test Compose thế nào? Liên quan gì tới trợ năng?**
-Tách composable khỏi ViewModel để truyền dữ liệu giả vào; tìm node theo chữ hoặc `contentDescription`. Node tìm được bằng semantics thì TalkBack cũng đọc được.
+### Cùng tính năng trên các nền tảng khác
 
-**8. Kể một lỗi mà unit test không bắt được.**
-Mục 10, chọn lỗi SSE: nói được triệu chứng (200 OK nhưng im lặng), cách tìm (logcat), nguyên nhân (interceptor đọc hết body), cách sửa và test tái hiện (body chảy chậm, đỏ trước khi sửa).
+Cùng một thuật toán, cùng bộ 6 ca test cho Trie, nhưng mỗi nền tảng lấy dữ liệu theo cách riêng của nó:
+
+| Nền tảng | Trie | Dữ liệu và màn hình | Test (đã chạy) |
+|---|---|---|---|
+| Android | `domain/search/RomajiTrie.kt` | Room `observeAll()` (Flow) → ViewModel dựng lại khi DB đổi | 6 + 3 unit, 1 end-to-end trên emulator |
+| iOS | `NihongoEDU/Core/RomajiTrie.swift` | SwiftData `@Query` → `VocabSearchIndex` dựng lại theo `.task(id:)`; `.searchable` | 7 XCTest + 2 UI test (một test chạy cả luồng: mở bài 1 sync từ backend → Tra từ → gõ `wata` thấy `watashi`; không có backend thì tự bỏ qua) |
+| Flutter | `lib/domain/search/romaji_trie.dart` | drift `watchAllVocab()` (Stream) → Riverpod `StreamProvider` | 6 unit + 3 widget test; đã mở thử trên emulator |
+| React Native | `src/utils/romajiTrie.ts` | `expo-sqlite` không có luồng tự cập nhật → đọc hết một lần khi mở màn | 6 test vitest (cả app: 32 test), `tsc` sạch |
+| Web, desktop | `packages/nest-common/src/utils/romaji-trie.ts` (backend) | Web không có DB trên máy, đã có ô tra từ gọi `GET /api/vocabularies?q=`: content-service thêm id tìm được bằng Trie vào câu tìm kiếm cũ | 5 + 4 jest |
+
+Chi tiết đáng kể lại khi phỏng vấn:
+
+- **Bỏ dấu mỗi nơi một kiểu.** Kotlin/Java dùng `Normalizer` (NFD), Swift dùng `folding(.diacriticInsensitive)`, Node dùng `normalize('NFD')`. Dart không có sẵn, còn Hermes (engine JS của React Native) không phải bản nào cũng hỗ trợ `normalize`, nên hai bản này dùng bảng thay ký tự viết tay.
+- **Web không tải 14.609 từ về trình duyệt.** Backend đã có tìm kiếm `ILIKE`, nhưng `ILIKE` không bỏ dấu: trước khi sửa, gõ `kando` ra 4 kết quả và **thiếu** `kandō shimasu`; sau khi sửa ra 6, có đủ. Trie chỉ **bổ sung** id vào điều kiện `OR` cũ, không thay cách tìm theo kana, kanji hay nghĩa.
+- **Cache trong bộ nhớ có nhiều pod.** Mỗi pod content-service giữ chỉ mục riêng: sửa từ ở pod nào thì pod đó xóa ngay; pod khác cập nhật chậm nhất sau 10 phút (`ROMAJI_INDEX_TTL_MS`). Một bộ đếm "thế hệ" chặn trường hợp bản dựng bắt đầu trước khi sửa lại ghi đè lên lệnh xóa.
+- **Bẫy SwiftData trong test iOS:** `let ctx = try makeMemoryContainer().mainContext` làm test crash, vì `ModelContainer` không được giữ lại và bị giải phóng ngay. Phải giữ `let container = …` riêng.
+
+Test: `RomajiTrieTest` (6 test: chuẩn hóa, gõ có/không trường âm, thứ tự, không trùng, giới hạn, mẫu romaji lấy từ DB thật), `VocabSearchViewModelTest` (3 test: máy chưa có từ, lọc theo tiền tố, bài mới sync xong tìm được ngay), và `VocabSearchTest` trên emulator (mở app thật, bấm "Tra từ", gõ `kandou`, thấy `cảm động`).
+
+---
+
+## Tự kiểm tra
+
+1. Nhắc ôn chạy bằng `PeriodicWorkRequest` 24 giờ. Vì sao vẫn nhắc đúng 20:00 vào ngày đổi giờ mùa hè? (mục 1)
+2. Vì sao không ép job WorkManager chạy được bằng `adb shell cmd jobscheduler run -f`, và test đúng cách là gì? (mục 1)
+3. Chat SSE trả `200 OK` mà không có tin nào. Nguyên nhân là gì, và vì sao unit test không bắt được? (mục 3, mục 10)
+4. Bài thi lưu "còn 49 phút" hay lưu mốc `endsAt`? Vì sao? (mục 5)
+5. Force-stop và hệ thống giết process khác nhau thế nào với `SavedStateHandle`? (mục 5)
+6. R8 làm hỏng app ở đâu, và triệu chứng là crash hay dữ liệu null? (mục 8)
+
+<details>
+<summary>Đáp án</summary>
+
+1. `millisUntilNext` cộng "1 ngày lịch" bằng `Calendar` chứ không cộng cứng 24 giờ; test `daylightSavingDay_keepsLocalTime` kiểm ngày chỉ có 23 giờ.
+2. WorkManager tự kiểm lịch của nó: work định kỳ chưa tới giờ thì không chạy dù JobScheduler bị ép. Test bằng `TestListenableWorkerBuilder` gọi thẳng `doWork()`.
+3. Logging interceptor đọc hết body nên stream SSE bị "nuốt". Client trong test không có logging, nên giả định của test sai.
+4. Lưu mốc `endsAt`. Coroutine dừng khi app ở nền hoặc bị giết; tính lại từ mốc tuyệt đối thì luôn đúng.
+5. Hệ thống giết: `SavedStateHandle` được khôi phục. Người dùng force-stop: mất. Dữ liệu không được mất phải nằm trong Room.
+6. Chỗ dùng reflection (Gson, Retrofit). Triệu chứng thường là dữ liệu ra null chứ không crash; phải build và chạy thử bản release.
+
+</details>
+
+## Bài tập
+
+1. **Bật nhắc ôn và kích hoạt nó.** Trên emulator, cấp quyền thông báo cho app. Chạy test của Worker: `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.edu.nihongo.data.sync.SrsReminderWorkerTest`. Đọc test để thấy cách gọi thẳng `doWork()` thay vì chờ tới 20:00 (mục 1).
+2. **Mở deep link bằng tay.** App phải đang được cài (`./gradlew installDebug`; lưu ý `connectedDebugAndroidTest` gỡ app sau khi chạy xong). Rồi:
+
+   ```bash
+   adb shell am start -W -a android.intent.action.VIEW -d "nihongo://srs" com.edu.nihongo
+   ```
+
+   Kết quả đo thật có `Status: ok` và `Activity: com.edu.nihongo/.MainActivity`; app mở thẳng màn SRS. Nếu thấy `Error: Activity not started, unable to resolve Intent` thì app chưa được cài.
+3. **Tái hiện lỗi chat mất mạng (lỗi số 2 ở mục 10).** Mở một phòng chat, bật chế độ máy bay. Kiểm: trạng thái đổi sang mất kết nối, không còn "trực tuyến". Tắt chế độ máy bay: tin lỡ trong lúc mất mạng được tải lại.
+4. **Build bản release.** `./gradlew assembleRelease` rồi `adb install -r app/build/outputs/apk/release/app-release.apk`. Mở từ vựng và chat. Nếu thấy dữ liệu trống bất thường, đó là dấu hiệu thiếu quy tắc giữ của R8 (mục 8).
+
 
 <!-- nav:start -->
 
@@ -540,10 +632,10 @@ Mục 10, chọn lỗi SSE: nói được triệu chứng (200 OK nhưng im lặ
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 5/10.
+Bạn đang ở **9. Mobile** — bài 6/12.
 
-- Bài trước: [learn-android-kotlin.md](./learn-android-kotlin.md) — Android Kotlin từ code thật, lộ trình 8 tuần
-- **Bài tiếp: [learn-swift-ios.md](./learn-swift-ios.md)** — Swift/SwiftUI qua nihongo-ios
+- Bài trước: [learn-android-fundamentals.md](./learn-android-fundamentals.md) — Android 3/4: hệ điều hành chạy app thế nào: tiến trình, vòng đời, chạy nền, quyền, bảo mật
+- **Bài tiếp: [learn-android-framework.md](./learn-android-framework.md)** — Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

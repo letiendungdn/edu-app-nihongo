@@ -162,6 +162,9 @@ class VocabularyRepositoryImpl @Inject constructor(
     override fun getVocabByLesson(lessonNumber: Int) =
         vocabDao.getByLesson(lessonNumber).map { list -> list.map { it.toDomain() } }
 
+    override fun observeAllVocab() =
+        vocabDao.observeAll().map { list -> list.map { it.toDomain() } }
+
     /**
      * Mỗi nhịp lấy `now` mới rồi chạy lại query, nên thẻ đến hạn trong lúc đang mở
      * màn hình cũng hiện ra. `flatMapLatest` hủy query của nhịp cũ.

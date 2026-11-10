@@ -8,6 +8,7 @@ import 'auth/login_screen.dart';
 import 'camera/camera_translate_screen.dart'
     if (dart.library.html) 'camera/camera_translate_screen_stub.dart';
 import 'dictionary/dictionary_screen.dart';
+import 'vocab_search/vocab_search_screen.dart';
 import 'home/home_screen.dart';
 import 'kanji_draw/kanji_draw_screen.dart';
 import 'live/live_host_screen.dart';
@@ -207,6 +208,7 @@ final _router = GoRouter(
     GoRoute(path: Routes.home,             builder: (_, __) => const HomeScreen()),
     GoRoute(path: Routes.vocab,            builder: (_, __) => const VocabScreen()),
     GoRoute(path: Routes.dictionary,       builder: (_, __) => const DictionaryScreen()),
+    GoRoute(path: Routes.vocabSearch,      builder: (_, __) => const VocabSearchScreen()),
     GoRoute(path: Routes.srs,              builder: (_, __) => const SrsScreen()),
     GoRoute(path: Routes.sentencePractice, builder: (_, __) => const SentencePracticeScreen()),
     GoRoute(path: Routes.cameraTranslate,  builder: (_, __) => const CameraTranslateScreen()),

@@ -14,6 +14,7 @@ import com.edu.nihongo.presentation.exam.ExamListScreen
 import com.edu.nihongo.presentation.exam.ExamScreen
 import com.edu.nihongo.presentation.kana.KanaScreen
 import com.edu.nihongo.presentation.lessons.LessonDetailScreen
+import com.edu.nihongo.presentation.search.VocabSearchScreen
 import com.edu.nihongo.presentation.progress.ProgressScreen
 import com.edu.nihongo.presentation.reading.ReadingDetailScreen
 import com.edu.nihongo.presentation.reading.ReadingListScreen
@@ -54,6 +55,7 @@ object Routes {
     const val EXAM = "exams/{examId}"
     const val KANA = "kana"
     const val PREMIUM = "premium"
+    const val VOCAB_SEARCH = "vocab-search"
 
     fun chat(roomId: Long) = "community/$roomId"
     fun reading(id: Long) = "reading/$id"
@@ -92,7 +94,11 @@ fun NihongoApp() {
                 onExams = { navController.navigate(Routes.EXAMS) },
                 onKana = { navController.navigate(Routes.KANA) },
                 onPremium = { navController.navigate(Routes.PREMIUM) },
+                onSearch = { navController.navigate(Routes.VOCAB_SEARCH) },
             )
+        }
+        composable(Routes.VOCAB_SEARCH) {
+            VocabSearchScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.LESSONS) {
             LessonListScreen(

@@ -76,6 +76,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        aidl = true // AGP 8 tắt AIDL mặc định; cần cho lab Binder (src/main/aidl)
     }
 
     // lifecycle-runtime 2.8.7 ship detector NullSafeMutableLiveData biên dịch khi

@@ -2,7 +2,14 @@ import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import type { Cache } from "cache-manager";
 import { PrismaService } from "@app/prisma";
-import { CacheKeys, CacheTTL } from "@app/common";
+import {
+  CacheKeys,
+  CacheTTL,
+  RomajiTrie,
+  looksLikeRomaji,
+  normalizeRomaji,
+  romajiKeys,
+} from "@app/common";
 import { CreateVocabularyDto, UpdateVocabularyDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
 import { withAlsoIn } from "../shared/book-overlap";
@@ -82,6 +89,12 @@ function splitExampleDto<T extends ExampleDto>(dto: T) {
 /** Số ứng viên tối đa lấy về để xếp hạng khi tra từ. */
 const SEARCH_POOL = 500;
 
+/**
+ * Chỉ mục romaji → id trong bộ nhớ được dựng lại sau khoảng này. Mỗi pod content-service giữ bản riêng:
+ * sửa từ ở pod này thì pod này xóa chỉ mục ngay, pod khác cập nhật chậm nhất sau TTL.
+ */
+export const ROMAJI_INDEX_TTL_MS = 10 * 60 * 1000;
+
 /** Dạng viết (kanji nếu có, không thì kana) là katakana, không kèm hiragana hay Hán tự. */
 export function isKatakanaWritten(
   kanji: string | null | undefined,
@@ -108,18 +121,23 @@ export function rankVocabSearch<T extends SearchableVocab>(
   query: string,
 ): T[] {
   const q = query.trim().toLowerCase();
+  // Gõ romaji không dấu ("kando") vẫn khớp từ lưu có dấu trường âm ("kandō shimasu")
+  const nq = looksLikeRomaji(q) ? normalizeRomaji(q) : "";
   const tier = (v: T) => {
     const words = [v.kanji, v.kana, v.romaji]
       .filter(Boolean)
       .map((w) => w!.toLowerCase());
+    const romaji = nq ? romajiKeys(v.romaji) : [];
     const meanings = v.meaning
       .toLowerCase()
       .split(/[,;、，/]/)
       .map((m) => m.trim());
-    if (words.includes(q) || meanings.includes(q)) return 0;
+    if (words.includes(q) || meanings.includes(q) || romaji.includes(nq))
+      return 0;
     if (
       words.some((w) => w.startsWith(q)) ||
-      meanings.some((m) => m.startsWith(q))
+      meanings.some((m) => m.startsWith(q)) ||
+      romaji.some((k) => k.startsWith(nq))
     )
       return 1;
     return 2;
@@ -133,6 +151,12 @@ export function rankVocabSearch<T extends SearchableVocab>(
 
 @Injectable()
 export class VocabulariesService {
+  private romajiIndex?: { trie: RomajiTrie<number>; builtAt: number };
+  /** Đang dựng: các request đến cùng lúc dùng chung một lần dựng, không đọc DB nhiều lần. */
+  private romajiIndexBuild?: Promise<RomajiTrie<number>>;
+  /** Tăng mỗi lần từ vựng đổi: bản dựng bắt đầu trước khi đổi thì không được lưu lại (dữ liệu cũ). */
+  private romajiGeneration = 0;
+
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -185,9 +209,18 @@ export class VocabulariesService {
     limit: number,
   ) {
     const fields = ["kanji", "kana", "romaji", "meaning"] as const;
+    // ILIKE không bỏ dấu: "kando" không chứa trong "kandō shimasu". Trie romaji bù phần này.
+    const romajiIds = looksLikeRomaji(query)
+      ? (await this.getRomajiIndex()).search(query, SEARCH_POOL)
+      : [];
     const match = (op: "contains" | "equals") => ({
       ...base,
-      OR: fields.map((f) => ({ [f]: { [op]: query, mode: "insensitive" } })),
+      OR: [
+        ...fields.map((f) => ({ [f]: { [op]: query, mode: "insensitive" } })),
+        ...(op === "contains" && romajiIds.length > 0
+          ? [{ id: { in: romajiIds } }]
+          : []),
+      ],
     });
     const include = {
       ...EXAMPLES_INCLUDE,
@@ -429,7 +462,32 @@ export class VocabulariesService {
     return rows.map(withExampleFields);
   }
 
+  private async getRomajiIndex(): Promise<RomajiTrie<number>> {
+    const fresh =
+      this.romajiIndex &&
+      Date.now() - this.romajiIndex.builtAt < ROMAJI_INDEX_TTL_MS;
+    if (fresh) return this.romajiIndex!.trie;
+    const generation = this.romajiGeneration;
+    this.romajiIndexBuild ??= this.prisma.vocabulary
+      .findMany({ select: { id: true, romaji: true } })
+      .then((rows) => {
+        const trie = new RomajiTrie<number>();
+        for (const r of rows) trie.insert(r.romaji, r.id);
+        if (generation === this.romajiGeneration) {
+          this.romajiIndex = { trie, builtAt: Date.now() };
+        }
+        return trie;
+      })
+      .finally(() => {
+        this.romajiIndexBuild = undefined;
+      });
+    return this.romajiIndexBuild;
+  }
+
   private async invalidateLessonCaches(lessonId: number) {
+    // Từ vựng đổi: chỉ mục romaji dựng lại ở lần tra kế tiếp
+    this.romajiIndex = undefined;
+    this.romajiGeneration++;
     await this.cacheManager.del(CacheKeys.vocabByLesson(lessonId));
     await this.cacheManager.del(CacheKeys.vocabKatakana());
     await Promise.all(
