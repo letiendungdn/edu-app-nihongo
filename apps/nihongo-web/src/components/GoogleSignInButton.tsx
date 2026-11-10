@@ -54,7 +54,6 @@ export default function GoogleSignInButton({
         theme="outline"
         size="large"
         width="360"
-        locale="vi"
       />
     </div>
   );
