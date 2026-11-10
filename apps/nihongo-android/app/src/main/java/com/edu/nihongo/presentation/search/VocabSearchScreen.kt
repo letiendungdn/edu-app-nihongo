@@ -2,6 +2,8 @@ package com.edu.nihongo.presentation.search
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +19,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,13 +45,24 @@ import com.edu.nihongo.utils.TtsHelper
 fun VocabSearchScreen(onBack: () -> Unit, viewModel: VocabSearchViewModel = hiltViewModel()) {
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // Mở màn là gõ được ngay: ô nhập tự được chọn và bàn phím tự bật, không phải chạm vào ô trước
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     BackScaffold(title = "Tra từ (romaji)", onBack = onBack) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             OutlinedTextField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("search_input"),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .focusRequester(focusRequester)
+                    .testTag("search_input"),
                 singleLine = true,
+                // Kết quả đã cập nhật theo từng chữ; nút "Tìm" trên bàn phím chỉ để cất bàn phím đi xem danh sách
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 label = { Text("Gõ romaji, ví dụ: tabe, kandou") },
             )

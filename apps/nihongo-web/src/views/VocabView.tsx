@@ -11,6 +11,7 @@ import VocabWordList from '../components/VocabWordList';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
 import { useFeatureFlag, useLessons, useVocab, useVocabSearchQuery } from '../hooks/queries';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import StrokeOrder from '../components/StrokeOrder';
 import VocabPicture from '../components/VocabPicture';
 import {
@@ -41,6 +42,9 @@ function useCopyText() {
   return { copied, copy };
 }
 
+/** Ngừng gõ bao lâu thì tự tra từ. Đủ ngắn để thấy như tức thì, đủ dài để không gọi API mỗi phím. */
+const SEARCH_DEBOUNCE_MS = 300;
+
 export default function VocabView({
   initialLessonNumber,
   initialVocabId,
@@ -53,6 +57,11 @@ export default function VocabView({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  // Gõ tới đâu tìm tới đó: ngừng gõ SEARCH_DEBOUNCE_MS thì tự tìm, không cần bấm "Tìm" hay Enter
+  const debouncedSearchInput = useDebouncedValue(searchInput.trim(), SEARCH_DEBOUNCE_MS);
+  useEffect(() => {
+    setSearchQuery(debouncedSearchInput);
+  }, [debouncedSearchInput]);
   const [pendingVocabId, setPendingVocabId] = useState<number | null>(initialVocabId ?? null);
   const vocabLoggedRef = useRef(false);
   const { copied: flashcardCopied, copy: copyFlashcard } = useCopyText();
@@ -352,7 +361,7 @@ export default function VocabView({
 
           {isSearchActive && (
             <div className="vocab-search__panel glass-panel" role="region" aria-label="Kết quả tra từ vựng">
-              {searching ? (
+              {searching && !search ? (
                 <p className="kanji-search-status">Đang tìm...</p>
               ) : searchHits.length === 0 ? (
                 <p className="kanji-search-status">Không tìm thấy từ phù hợp.</p>

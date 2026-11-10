@@ -2,6 +2,7 @@ package com.edu.nihongo.presentation.search
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -56,6 +57,9 @@ class VocabSearchTest {
     fun typingRomaji_showsMatchingVocabularyOffline() {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.onNodeWithText("Tra từ").performClick()
+            // Ô nhập phải tự được chọn khi mở màn (không phải chạm vào trước mới gõ được)
+            compose.waitForIdle()
+            compose.onNodeWithTag("search_input").assertIsFocused()
             compose.onNodeWithTag("search_input").performTextInput("kandou")
             compose.waitUntilAtLeastOneExists(hasText("cảm động"), timeoutMillis = 5_000)
             compose.onNodeWithText("cảm động").assertIsDisplayed()

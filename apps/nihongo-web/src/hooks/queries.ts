@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/query-keys';
 import { STALE_5M } from '../api/hooks/constants';
 import {
@@ -138,6 +138,8 @@ export function useVocabSearchQuery(query: string) {
     queryFn: () => searchVocabularies(query),
     enabled: query.trim().length > 0,
     staleTime: STALE_5M,
+    // Gõ tiếp thì giữ kết quả cũ trong lúc chờ kết quả mới, không nháy "Đang tìm..."
+    placeholderData: keepPreviousData,
   });
 }
 

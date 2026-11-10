@@ -91,8 +91,9 @@ final class NihongoEDUUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Tra từ (romaji)"].waitForExistence(timeout: 8))
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))
-        field.tap()
-        field.typeText("wata")
+        // Không chạm vào ô: ô tìm phải tự được chọn khi mở màn. app.typeText gõ vào ô đang có bàn phím.
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5), "bàn phím phải tự bật")
+        app.typeText("wata")
         // Có dữ liệu thì có kết quả; chưa có thì thông báo hướng dẫn. Màn hình không được trống.
         let hasResultOrHint = app.staticTexts["watashi"].waitForExistence(timeout: 5)
             || app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Chưa có từ vựng'")).firstMatch.exists
@@ -102,9 +103,8 @@ final class NihongoEDUUITests: XCTestCase {
     /// Luồng đầy đủ với backend local: mở bài 1 (sync từ vựng về SwiftData) → Tra từ → gõ "wata" → thấy "watashi".
     /// Không gọi được backend thì bỏ qua thay vì báo đỏ.
     func testVocabSearchFindsSyncedWordEndToEnd() throws {
-        let health = URL(string: "http://localhost:3000/health")!
-        let reachable = (try? Data(contentsOf: health)) != nil
-        try XCTSkipUnless(reachable, "Cần backend local ở localhost:3000")
+        let (reachable, detail) = backendReachable(URL(string: "http://localhost:3000/health")!)
+        try XCTSkipUnless(reachable, "Cần backend local ở localhost:3000 (\(detail))")
 
         app.launch()
         let lessons = homeCard("Bài học")
@@ -118,13 +118,35 @@ final class NihongoEDUUITests: XCTestCase {
         search.tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 5))
-        field.tap()
-        field.typeText("wata")
+        // Không chạm vào ô: ô tìm phải tự được chọn khi mở màn. app.typeText gõ vào ô đang có bàn phím.
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5), "bàn phím phải tự bật")
+        app.typeText("wata")
 
         XCTAssertTrue(app.staticTexts["watashi"].waitForExistence(timeout: 5))
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = "vocab-search-wata"
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// Kiểm backend có sống không: hạn chờ 10 giây, thử 3 lần, trả về lý do nếu không gọi được.
+    /// Không dùng Data(contentsOf:): nó chặn luồng, không có hạn chờ riêng (treo tới 60 giây) và nuốt lỗi.
+    private func backendReachable(_ url: URL) -> (Bool, String) {
+        var last = "chưa thử"
+        for _ in 0..<3 {
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 10
+            let done = expectation(description: "health")
+            var ok = false
+            URLSession.shared.dataTask(with: request) { _, response, error in
+                let status = (response as? HTTPURLResponse)?.statusCode
+                ok = status == 200
+                last = error.map { "\($0.localizedDescription)" } ?? "HTTP \(status ?? -1)"
+                done.fulfill()
+            }.resume()
+            wait(for: [done], timeout: 12)
+            if ok { return (true, last) }
+        }
+        return (false, last)
     }
 }

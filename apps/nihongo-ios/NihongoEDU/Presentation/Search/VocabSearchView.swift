@@ -41,6 +41,8 @@ struct VocabSearchView: View {
     private var vocabulary: [Vocabulary]
     @State private var index = VocabSearchIndex()
     @State private var query = ""
+    /// Bật ngay khi màn hiện ra: ô tìm tự được chọn, bàn phím tự bật, gõ được luôn (iOS 17+).
+    @State private var searchPresented = false
 
     /// Đổi khi thêm/xóa từ hoặc từ được sửa: dựng lại Trie.
     private var indexKey: String {
@@ -51,10 +53,11 @@ struct VocabSearchView: View {
         content
             .navigationTitle("Tra từ (romaji)")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Gõ romaji, ví dụ: tabe, kandou")
+            .searchable(text: $query, isPresented: $searchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Gõ romaji, ví dụ: tabe, kandou")
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .task(id: indexKey) { index.rebuild(from: vocabulary) }
+            .task { searchPresented = true }
     }
 
     @ViewBuilder
