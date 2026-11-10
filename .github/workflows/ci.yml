@@ -177,11 +177,33 @@ jobs:
       - name: Start content and exam gRPC
         working-directory: services
         run: |
+          # Tránh EADDRINUSE nếu bước trước để sót process; start tuần tự để log rõ service nào lỗi.
+          fuser -k 50051/tcp 50052/tcp 2>/dev/null || true
+          rm -f /tmp/content-grpc.log /tmp/exam-grpc.log
           node -r tsconfig-paths/register -r ts-node/register content-service/src/main.ts > /tmp/content-grpc.log 2>&1 &
-          node -r tsconfig-paths/register -r ts-node/register exam-service/src/main.ts > /tmp/exam-grpc.log 2>&1 &
+          CONTENT_PID=$!
           for _ in $(seq 1 40); do
-            if grep -q "Content service listening" /tmp/content-grpc.log && grep -q "Exam service listening" /tmp/exam-grpc.log; then
+            if grep -q "Content service listening" /tmp/content-grpc.log; then
+              break
+            fi
+            if ! kill -0 "$CONTENT_PID" 2>/dev/null; then
+              echo "----- content (exited early) -----"; cat /tmp/content-grpc.log
+              exit 1
+            fi
+            sleep 2
+          done
+          grep -q "Content service listening" /tmp/content-grpc.log || {
+            echo "----- content -----"; cat /tmp/content-grpc.log; exit 1
+          }
+          node -r tsconfig-paths/register -r ts-node/register exam-service/src/main.ts > /tmp/exam-grpc.log 2>&1 &
+          EXAM_PID=$!
+          for _ in $(seq 1 40); do
+            if grep -q "Exam service listening" /tmp/exam-grpc.log; then
               exit 0
+            fi
+            if ! kill -0 "$EXAM_PID" 2>/dev/null; then
+              echo "----- exam (exited early) -----"; cat /tmp/exam-grpc.log
+              exit 1
             fi
             sleep 2
           done
@@ -194,6 +216,9 @@ jobs:
           JWT_SECRET: test-secret
           EXAM_CONSUMER_DISABLED: "true"
           OTEL_SDK_DISABLED: "true"
+          GRPC_BIND_HOST: 127.0.0.1
+          CONTENT_GRPC_PORT: "50051"
+          EXAM_GRPC_PORT: "50052"
       - run: npm run test:e2e -w @edu/nihongo-services
         env:
           DATABASE_URL: postgresql://nihongo:nihongo@localhost:5432/nihongo

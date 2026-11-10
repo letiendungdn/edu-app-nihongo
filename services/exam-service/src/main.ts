@@ -12,6 +12,7 @@ import { RpcHttpExceptionFilter } from "./filters/rpc-http-exception.filter";
 
 async function bootstrap() {
   const port = process.env.EXAM_GRPC_PORT ?? GRPC_DEFAULT_PORTS.exam;
+  const host = process.env.GRPC_BIND_HOST ?? "0.0.0.0";
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     ExamModule,
     {
@@ -19,7 +20,7 @@ async function bootstrap() {
       options: {
         package: GRPC_PACKAGES.exam,
         protoPath: EXAM_PROTO_PATH,
-        url: `0.0.0.0:${port}`,
+        url: `${host}:${port}`,
       },
     },
   );

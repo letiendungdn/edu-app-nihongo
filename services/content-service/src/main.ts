@@ -11,6 +11,7 @@ import { ContentModule } from "./content.module";
 
 async function bootstrap() {
   const port = process.env.CONTENT_GRPC_PORT ?? GRPC_DEFAULT_PORTS.content;
+  const host = process.env.GRPC_BIND_HOST ?? "0.0.0.0";
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     ContentModule,
     {
@@ -18,7 +19,7 @@ async function bootstrap() {
       options: {
         package: GRPC_PACKAGES.content,
         protoPath: CONTENT_PROTO_PATH,
-        url: `0.0.0.0:${port}`,
+        url: `${host}:${port}`,
       },
     },
   );

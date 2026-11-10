@@ -41,6 +41,11 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
+    // CI / local tắt consumer cũng bỏ connect lúc boot — tránh spam lỗi và chậm listen gRPC
+    if (process.env.EXAM_CONSUMER_DISABLED === "true") {
+      this.logger.log("Kafka producer deferred (EXAM_CONSUMER_DISABLED=true)");
+      return;
+    }
     try {
       await this.ensureConnected();
     } catch (error) {
