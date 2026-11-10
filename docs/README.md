@@ -1,13 +1,25 @@
 # Tài liệu EDU APP
 
-Mọi tài liệu ở đây đều học trên **chính code và stack của project này**.
-Đi theo các nhóm 1 → 10 theo thứ tự; cuối mỗi bài có mục **Đi tiếp** dẫn sang bài kế tiếp, hết nhóm thì sang nhóm sau.
-Nhóm 11 → 14 là tài liệu tham khảo, đọc khi cần.
+Mọi tài liệu ở đây đều học trên **chính code và stack của project này**: ví dụ lấy từ file thật, output in ra là output thật.
 
-Mới bắt đầu: mở [run-local.md](./run-local.md), rồi bấm "Bài tiếp" ở cuối mỗi bài.
+## Bắt đầu từ đâu
+
+- **Mới học lập trình** (chưa quen terminal, Git, JavaScript): bắt đầu ở nhóm 0, bài [learn-terminal.md](./learn-terminal.md).
+- **Đã biết lập trình, mới vào project:** đọc lướt nhóm 0, bắt đầu thật sự ở [run-local.md](./run-local.md).
+
+Đi theo nhóm 0 → 10 theo thứ tự. Mỗi bài mở đầu bằng **Mục tiêu**, **Cần biết trước** và **Thời gian**, kết thúc bằng **Tự kiểm tra**, **Bài tập** và mục **Đi tiếp** dẫn sang bài kế. Hết nhóm thì sang nhóm sau. Nhóm 11 → 14 là tài liệu tham khảo, đọc khi cần.
+
+Cách học hiệu quả:
+
+1. **Gõ lại** lệnh và code, đừng chỉ đọc. Lỗi tự gặp nhớ lâu hơn lỗi đọc được.
+2. Làm phần **Tự kiểm tra** trước khi mở đáp án.
+3. Bí quá 30 phút ở một lỗi: đọc bảng **Lỗi hay gặp** của bài, rồi hỏi người trong nhóm, kèm lệnh đã chạy và toàn bộ thông báo lỗi.
+
+Người viết bài: theo [doc-template.md](./doc-template.md).
 
 ## Lộ trình chính
 
+0. [Nền tảng](#0-nền-tảng) — Terminal, cài công cụ, Git, JavaScript/TypeScript, web và HTTP. Dành cho người mới học lập trình.
 1. [Bắt đầu: chạy được project](#1-bắt-đầu-chạy-được-project) — Dựng stack trên máy, đăng nhập, kết nối DB, rồi xem lộ trình tổng.
 2. [Kiến trúc hệ thống](#2-kiến-trúc-hệ-thống) — Hệ thống gồm những gì, request chạy ra sao, vì sao thiết kế như vậy.
 3. [Backend (NestJS)](#3-backend-nestjs) — Gateway, message queue, cache và các pattern backend.
@@ -25,6 +37,20 @@ Mới bắt đầu: mở [run-local.md](./run-local.md), rồi bấm "Bài tiế
 - [Báo cáo phân tích thiết kế](#12-báo-cáo-phân-tích-thiết-kế) — Tài liệu kiểu đồ án: BFD/DFD/ERD, Use Case/UML.
 - [Phỏng vấn](#13-phỏng-vấn) — Câu hỏi và đáp án phỏng vấn, trả lời bằng code của project.
 - [Định hướng lên Senior](#14-định-hướng-lên-senior) — Ghi chú định hướng nghề nghiệp dựa trên project.
+
+---
+
+## 0. Nền tảng
+
+Terminal, cài công cụ, Git, JavaScript/TypeScript, web và HTTP. Dành cho người mới học lập trình.
+
+| # | Tài liệu | Nội dung |
+|---|----------|----------|
+| 1 | [learn-terminal.md](./learn-terminal.md) | Terminal: thư mục, đường dẫn, đọc một lệnh dài, biến môi trường |
+| 2 | [setup-tools.md](./setup-tools.md) | Cài VS Code, Git, Node 22, Docker Desktop và tải code về |
+| 3 | [learn-git.md](./learn-git.md) | Git: branch, commit, Pull Request, xử lý conflict, những gì không được commit |
+| 4 | [learn-js-ts.md](./learn-js-ts.md) | JavaScript/TypeScript đủ để đọc code project: hàm, mảng, object, async/await, kiểu |
+| 5 | [learn-web-http.md](./learn-web-http.md) | Web và HTTP: URL, request/response, status code, gọi API bằng curl, token đăng nhập |
 
 ---
 
@@ -183,6 +209,8 @@ Cài đặt và thực hành các dịch vụ bên ngoài.
 | 7 | [payment-checklist.md](./payment-checklist.md) | Việc cần làm để thanh toán chạy được |
 
 ---
+
+<!-- nav:reference-from 11 -->
 
 ## 11. Lộ trình theo framework mobile
 

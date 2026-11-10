@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import type { Cache } from "cache-manager";
 import { PrismaService } from "@app/prisma";
@@ -70,10 +70,15 @@ export class LessonsService {
     });
   }
 
-  findOne(lessonNumber: number) {
-    return this.prisma.lesson.findUnique({
+  /** Không có bài → 404 (bản cũ trả `null` với 200, client phải tự đoán "không tồn tại"). */
+  async findOne(lessonNumber: number) {
+    const lesson = await this.prisma.lesson.findUnique({
       where: { lessonNumber },
     });
+    if (!lesson) {
+      throw new NotFoundException(`Bài ${lessonNumber} không tồn tại`);
+    }
+    return lesson;
   }
 
   async update(id: number, dto: UpdateLessonDto) {

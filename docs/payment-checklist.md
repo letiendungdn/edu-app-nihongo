@@ -35,12 +35,11 @@ Cách hoạt động và vị trí code: [payment-wallets.md](./payment-wallets.
 ### 2. Cho webhook của Stripe chạy tới máy
 Gói **chỉ được kích hoạt khi webhook về server**. Thiếu bước này thì app trả tiền xong vẫn báo "đang kích hoạt" mãi.
 
-`npm run stripe:listen` gọi `stripe.cmd`, chỉ chạy trên Windows. Trên Mac:
-- [ ] Cài Stripe CLI: `brew install stripe/stripe-cli/stripe`.
-- [ ] Đăng nhập **đúng tài khoản** có khóa ở bước 1: `stripe login`.
+- [ ] Cài Stripe CLI: macOS `brew install stripe/stripe-cli/stripe`, Windows `winget install Stripe.StripeCli`.
+- [ ] Đăng nhập **đúng tài khoản** có khóa ở bước 1: `npm run stripe:login`.
 - [ ] Mở một terminal riêng, để chạy suốt lúc thử:
   ```bash
-  stripe listen --forward-to localhost:3000/api/webhooks/stripe
+  npm run stripe:listen     # = stripe listen --forward-to localhost:3000/api/webhooks/stripe
   ```
 - [ ] Lệnh trên in ra `whsec_...`. Dán giá trị này vào `STRIPE_WEBHOOK_SECRET` trong `.env` gốc, rồi chạy `docker compose up -d api-gateway`.
 

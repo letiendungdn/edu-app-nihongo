@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Inject,
+  ParseIntPipe,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -59,11 +60,9 @@ export class LessonsController {
   @Get(":lessonNumber")
   @Public()
   @ApiOperation({ summary: "Get lesson by number" })
-  findOne(@Param("lessonNumber") lessonNumber: string) {
+  findOne(@Param("lessonNumber", ParseIntPipe) lessonNumber: number) {
     return firstValueFrom(
-      this.contentClient.send(CONTENT_PATTERNS.GET_LESSON, {
-        lessonNumber: +lessonNumber,
-      }),
+      this.contentClient.send(CONTENT_PATTERNS.GET_LESSON, { lessonNumber }),
     );
   }
 

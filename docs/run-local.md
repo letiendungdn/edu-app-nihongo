@@ -15,7 +15,7 @@ Monorepo `edu-app-nihongo` — **Windows / PowerShell**. Chạy frontend Next.js
 | **Docker Desktop** | Bật trước khi chạy backend |
 | **Git** | Clone repo |
 
-Tùy chọn: **Stripe CLI** (`infra/stripe-cli/`, gọi qua `npm run stripe:...`) khi test thanh toán.
+Tùy chọn: **Stripe CLI** khi test thanh toán. Cài: macOS `brew install stripe/stripe-cli/stripe`, Windows `winget install Stripe.StripeCli`; rồi gọi qua `npm run stripe:...`.
 
 ---
 

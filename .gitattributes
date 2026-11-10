@@ -1,0 +1,30 @@
+# Kiểu xuống dòng trong repo: LF cho mọi file chữ, bất kể máy clone là Windows hay macOS/Linux.
+# Không có file này, Git trên Windows (core.autocrlf=true) đổi sang CRLF khi checkout. Các script .sh
+# chạy trong container Linux khi đó lỗi "/bin/sh^M: bad interpreter", và file .env đọc ra có "\r" ở cuối giá trị.
+* text=auto eol=lf
+
+# File chỉ chạy trên Windows: cmd.exe cần CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Nhị phân: không bao giờ đổi xuống dòng, không diff như chữ
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.ogg binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.keystore binary
+*.jks binary
+*.tflite binary

@@ -34,10 +34,6 @@ dist/
 .next/
 out/
 
-# Stripe CLI binary (~27MB, không phải config)
-infra/stripe-cli/stripe.exe
-infra/stripe-cli/stripe.zip
-
 # Media tải về (Drive — không commit)
 apps/nihongo-web/public/media/book-audio/
 apps/nihongo-web/public/media/mori-course/

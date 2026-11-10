@@ -63,16 +63,23 @@ src/main.cjs                        http://localhost:8080  hoặc  offline.html
 Stack web phải đang chạy (nginx `:8080`). Rồi:
 
 ```bash
-apps/nihongo-desktop/start.sh
+npm install --prefix apps/nihongo-desktop   # lần đầu: tải Electron
+npm run dev:desktop
 ```
 
-`package.json` của repo có script `dev:desktop` gọi đúng file đó.
+`dev:desktop` gọi [scripts/run-os.mjs](../scripts/run-os.mjs). Script này tìm đúng file Electron cho hệ điều hành của bạn và bỏ biến `ELECTRON_RUN_AS_NODE` trước khi chạy, nên lệnh dùng được trên macOS, Windows và Linux. `ELECTRON_RUN_AS_NODE=1` có sẵn trong terminal mở từ VS Code/Cursor; biến này khiến Electron chạy như Node thường và không mở cửa sổ.
 
 Đổi URL (ví dụ web dev trực tiếp cổng 5173):
 
 ```bash
-NIHONGO_URL=http://localhost:5173 apps/nihongo-desktop/start.sh
+NIHONGO_URL=http://localhost:5173 npm run dev:desktop          # macOS/Linux
 ```
+
+```powershell
+$env:NIHONGO_URL = "http://localhost:5173"; npm run dev:desktop   # PowerShell
+```
+
+`apps/nihongo-desktop/start.sh` vẫn còn và chạy thẳng binary Electron mà không cần npm, nhưng **chỉ trên macOS**.
 
 App này **không** nằm trong npm workspaces của monorepo (`!apps/nihongo-desktop` ở `package.json` gốc). Electron kéo binary đúng hệ điều hành (macOS arm64). Nhét nó vào `node_modules` chung của Nest/Next sẽ kéo nhầm bản Linux/Windows khi cài trên máy khác.
 
@@ -196,7 +203,7 @@ Dấu `.` là thư mục app. Electron đọc `package.json` ở đó rồi nạ
 
 ## 8. Bài tập trên đúng file này
 
-Làm lần lượt trong `src/main.cjs`. Sau mỗi bài, tắt app rồi chạy lại `start.sh`.
+Làm lần lượt trong `src/main.cjs`. Sau mỗi bài, tắt app rồi chạy lại `npm run dev:desktop`.
 
 **Bài 1 — tiêu đề cửa sổ nói server đang sống.**  
 Trong `did-finish-load` của main frame, `mainWindow.setTitle("Nihongo")`. Trong nhánh offline, `setTitle("Nihongo — ngoại tuyến")`.
@@ -205,7 +212,7 @@ Trong `did-finish-load` của main frame, `mainWindow.setTitle("Nihongo")`. Tron
 `Menu.setApplicationMenu` với mục **Tải lại** gọi `mainWindow.webContents.reload()`, và mục **Trang chủ** gọi `openApp()`.
 
 **Bài 3 — DevTools chỉ khi học.**  
-Nếu `process.env.ELECTRON_DEV === "1"` thì `mainWindow.webContents.openDevTools()`. Chạy: `ELECTRON_DEV=1 apps/nihongo-desktop/start.sh`.
+Nếu `process.env.ELECTRON_DEV === "1"` thì `mainWindow.webContents.openDevTools()`. Chạy: `ELECTRON_DEV=1 npm run dev:desktop`.
 
 **Bài 4 — thêm một kênh IPC.**  
 Lộ `window.nihongoDesktop.version()` trả `app.getVersion()` từ `package.json`. Gọi thử trong console của trang offline. Không `exposeInMainWorld` cả `ipcRenderer`.
