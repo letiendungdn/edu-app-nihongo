@@ -76,7 +76,7 @@
     "jose": "^6.2.3",
     "kafkajs": "^2.2.4",
     "livekit-server-sdk": "^2.16.0",
-    "mongoose": "^9.7.3",
+    "mongoose": "9.12.1",
     "mqtt": "^5.14.1",
     "nestjs-pino": "^4.6.1",
     "passport": "^0.7.0",
