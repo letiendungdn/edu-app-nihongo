@@ -9,6 +9,7 @@ import com.edu.nihongo.domain.entity.ReviewCard
 import com.edu.nihongo.domain.entity.SrsCard
 import com.edu.nihongo.domain.entity.SyncStatus
 import com.edu.nihongo.domain.entity.Vocabulary
+import com.edu.nihongo.domain.vocab.parseFurigana
 
 fun VocabularyEntity.toDomain(): Vocabulary = Vocabulary(
     id = id,
@@ -19,6 +20,10 @@ fun VocabularyEntity.toDomain(): Vocabulary = Vocabulary(
     romaji = romaji,
     sortOrder = sortOrder,
     syncStatus = SyncStatus.valueOf(syncStatus),
+    meaningEn = meaningEn,
+    meaningEnSource = meaningEnSource,
+    hanViet = hanViet,
+    furigana = parseFurigana(furigana),
 )
 
 fun SrsCardEntity.toDomain(): SrsCard = SrsCard(

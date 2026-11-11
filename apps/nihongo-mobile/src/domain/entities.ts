@@ -1,3 +1,5 @@
+import type { FuriganaSegment } from '../utils/furigana';
+
 export type SyncStatus = 'synced' | 'pending' | 'conflict';
 
 export interface Vocabulary {
@@ -9,6 +11,12 @@ export interface Vocabulary {
   romaji: string;
   sortOrder: number;
   syncStatus: SyncStatus;
+  meaningEn?: string | null;
+  /** manual | jmdict | ai — "ai" thì UI ghi "dịch máy". */
+  meaningEnSource?: string | null;
+  hanViet?: string | null;
+  /** [[chữ, cách đọc], …]; rỗng = không tách được, hiện chữ trơn. */
+  furigana?: FuriganaSegment[];
 }
 
 export interface SrsCard {

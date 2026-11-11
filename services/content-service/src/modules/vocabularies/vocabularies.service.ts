@@ -9,6 +9,7 @@ import {
   looksLikeRomaji,
   normalizeRomaji,
   romajiKeys,
+  toFurigana,
 } from "@app/common";
 import { CreateVocabularyDto, UpdateVocabularyDto } from "@app/contracts";
 import { LEVEL_POOL_LESSON } from "@app/prisma/level-pool";
@@ -149,6 +150,12 @@ export function rankVocabSearch<T extends SearchableVocab>(
     .map((x) => x.v);
 }
 
+/** Furigana lưu dạng JSON để mọi client vẽ giống nhau; null nếu không có kanji hoặc không tách được. */
+function furiganaJson(kanji: string | null | undefined, kana: string): string | null {
+  const seg = toFurigana(kanji, kana);
+  return seg ? JSON.stringify(seg) : null;
+}
+
 @Injectable()
 export class VocabulariesService {
   private romajiIndex?: { trie: RomajiTrie<number>; builtAt: number };
@@ -173,6 +180,11 @@ export class VocabulariesService {
         kana: dto.kana,
         romaji: dto.romaji,
         meaning: dto.meaning,
+        furigana: furiganaJson(dto.kanji, dto.kana),
+        hanViet: await this.hanVietOf(dto.kanji),
+        ...(dto.meaningEn?.trim()
+          ? { meaningEn: dto.meaningEn.trim(), meaningEnSource: "manual" }
+          : {}),
         lessonId: dto.lessonId,
         sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
         ...(dto.partOfSpeech !== undefined
@@ -208,7 +220,7 @@ export class VocabulariesService {
     page: number,
     limit: number,
   ) {
-    const fields = ["kanji", "kana", "romaji", "meaning"] as const;
+    const fields = ["kanji", "kana", "romaji", "meaning", "meaningEn"] as const;
     // ILIKE không bỏ dấu: "kando" không chứa trong "kandō shimasu". Trie romaji bù phần này.
     const romajiIds = looksLikeRomaji(query)
       ? (await this.getRomajiIndex()).search(query, SEARCH_POOL)
@@ -379,6 +391,8 @@ export class VocabulariesService {
         kana: true,
         romaji: true,
         meaning: true,
+        meaningEn: true,
+        meaningEnSource: true,
         jlptLevel: true,
         lesson: {
           select: { lessonNumber: true, title: true, textbook: true },
@@ -407,13 +421,34 @@ export class VocabulariesService {
   async update(id: number, dto: UpdateVocabularyDto) {
     const prev = await this.prisma.vocabulary.findUnique({
       where: { id },
-      select: { lessonId: true },
+      select: { lessonId: true, kanji: true, kana: true, meaningEn: true },
     });
     const { examples, rest } = splitExampleDto(dto);
     const examplesWrite = firstExampleWrite(id, examples);
+    const derived: Record<string, unknown> = {};
+    // Đổi chữ hoặc cách đọc thì tính lại furigana
+    if (prev && (dto.kanji !== undefined || dto.kana !== undefined)) {
+      derived.furigana = furiganaJson(
+        dto.kanji !== undefined ? dto.kanji : prev.kanji,
+        dto.kana ?? prev.kana,
+      );
+    }
+    // Đổi kanji thì âm Hán Việt cũ không còn đúng: tính lại
+    if (prev && dto.kanji !== undefined && dto.kanji !== prev.kanji) {
+      derived.hanViet = await this.hanVietOf(dto.kanji, id);
+    }
+    // Người soạn sửa nghĩa tiếng Anh → nguồn thành manual (bỏ nhãn "dịch máy")
+    if (dto.meaningEn !== undefined && dto.meaningEn !== prev?.meaningEn) {
+      derived.meaningEn = dto.meaningEn?.trim() || null;
+      derived.meaningEnSource = dto.meaningEn?.trim() ? "manual" : null;
+    }
     const vocab = await this.prisma.vocabulary.update({
       where: { id },
-      data: { ...rest, ...(examplesWrite ? { examples: examplesWrite } : {}) },
+      data: {
+        ...rest,
+        ...derived,
+        ...(examplesWrite ? { examples: examplesWrite } : {}),
+      },
       include: EXAMPLES_INCLUDE,
     });
     await this.invalidateLessonCaches(vocab.lessonId);
@@ -421,6 +456,33 @@ export class VocabulariesService {
       await this.invalidateLessonCaches(prev.lessonId);
     }
     return withExampleFields(vocab);
+  }
+
+  /**
+   * Âm Hán Việt của cả từ, cùng quy tắc với scripts/vocab-enrich/han-viet.sql: ghép âm từng chữ trong
+   * KanjiEntry (chữ nhiều âm lấy âm đầu), chỉ khi mọi chữ đều có âm; có chữ số hoặc 々 thì null.
+   * Có từ khác cùng chữ đã có Hán Việt (đã qua bảng ngoại lệ của script: 銀行 → NGÂN HÀNG) thì dùng lại âm đó.
+   */
+  private async hanVietOf(kanji: string | null | undefined, selfId?: number): Promise<string | null> {
+    const word = (kanji ?? "").split(/[、／/]/)[0];
+    if (!/[\u4e00-\u9fff]/.test(word) || /[0-9０-９々]/.test(word)) return null;
+    const same = await this.prisma.vocabulary.findFirst({
+      where: { kanji, hanViet: { not: null }, ...(selfId ? { id: { not: selfId } } : {}) },
+      select: { hanViet: true },
+    });
+    if (same?.hanViet) return same.hanViet;
+    const chars = [...word].filter((c) => /[\u4e00-\u9fff]/.test(c));
+    const entries = await this.prisma.kanjiEntry.findMany({
+      where: { character: { in: [...new Set(chars)] }, hanViet: { not: null } },
+      select: { character: true, hanViet: true },
+    });
+    const reading = new Map<string, string>();
+    for (const e of entries) {
+      const first = (e.hanViet ?? "").split(/\s*[,/;、]/)[0].trim().toUpperCase();
+      if (first && !reading.has(e.character)) reading.set(e.character, first);
+    }
+    if (chars.some((c) => !reading.has(c))) return null;
+    return chars.map((c) => reading.get(c)).join(" ");
   }
 
   async remove(id: number) {

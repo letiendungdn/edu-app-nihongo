@@ -1,5 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
+import { vocabMigrations } from '../utils/furigana';
+
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 async function initSchema(db: SQLite.SQLiteDatabase) {
@@ -46,11 +48,23 @@ async function initSchema(db: SQLite.SQLiteDatabase) {
   `);
 }
 
+/** Nâng cấp schema theo PRAGMA user_version (CREATE TABLE IF NOT EXISTS không thêm cột cho máy cũ). */
+async function migrate(db: SQLite.SQLiteDatabase) {
+  const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+  const { statements, toVersion } = vocabMigrations(row?.user_version ?? 0);
+  if (statements.length === 0) return;
+  await db.withTransactionAsync(async () => {
+    for (const sql of statements) await db.execAsync(sql);
+    await db.execAsync(`PRAGMA user_version = ${toVersion}`);
+  });
+}
+
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
     dbPromise = (async () => {
       const db = await SQLite.openDatabaseAsync('edu_app.db');
       await initSchema(db);
+      await migrate(db);
       return db;
     })();
   }

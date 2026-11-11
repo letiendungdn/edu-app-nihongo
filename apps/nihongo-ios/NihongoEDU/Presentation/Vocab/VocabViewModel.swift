@@ -14,8 +14,10 @@ final class VocabViewModel {
     private let synthesizer = AVSpeechSynthesizer()
     private var autoSyncedLessons: Set<Int> = []
 
-    func autoSyncIfNeeded(lesson: Int, vocabIsEmpty: Bool, modelContext: ModelContext) async {
-        guard vocabIsEmpty, !autoSyncedLessons.contains(lesson), !isSyncing else { return }
+    /// Tự tải bài một lần mỗi phiên khi `needsSync`: bài chưa có trên máy, hoặc tải từ bản cũ
+    /// (chưa có nghĩa EN / Hán Việt / furigana).
+    func autoSyncIfNeeded(lesson: Int, needsSync: Bool, modelContext: ModelContext) async {
+        guard needsSync, !autoSyncedLessons.contains(lesson), !isSyncing else { return }
         autoSyncedLessons.insert(lesson)
         await syncLesson(lesson, modelContext: modelContext, silent: true)
     }
@@ -37,6 +39,11 @@ final class VocabViewModel {
             let existingMap: [Int: Vocabulary] = Dictionary(
                 uniqueKeysWithValues: existingList.map { ($0.id, $0) }
             )
+            let ids = items.compactMap { $0["id"] as? Int }
+            let extraList = (try? modelContext.fetch(FetchDescriptor<VocabularyExtra>(
+                predicate: #Predicate { ids.contains($0.vocabId) }
+            ))) ?? []
+            let existingExtras = Dictionary(extraList.map { ($0.vocabId, $0) }, uniquingKeysWith: { a, _ in a })
 
             for (i, dict) in items.enumerated() {
                 guard let id      = dict["id"]      as? Int,
@@ -61,6 +68,15 @@ final class VocabViewModel {
                     )
                     modelContext.insert(vocab)
                 }
+                let extra = existingExtras[id] ?? {
+                    let e = VocabularyExtra(vocabId: id)
+                    modelContext.insert(e)
+                    return e
+                }()
+                extra.meaningEn       = dict["meaningEn"]       as? String
+                extra.meaningEnSource = dict["meaningEnSource"] as? String
+                extra.hanViet         = dict["hanViet"]         as? String
+                extra.furigana        = dict["furigana"]        as? String
 
                 if vocab.srsCard == nil {
                     let card = SRSCard()

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
+import { FuriganaWord, JmdictAttribution, VocabExtraMeanings } from '../components/VocabReading';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
@@ -385,6 +386,7 @@ export default function VocabView({
                             {hit.kanji ? <span className="japanese-text">{hit.kana} · </span> : null}
                             {hit.romaji ? `${hit.romaji} · ` : ''}
                             {hit.meaning}
+                            {hit.meaningEn ? <span className="vocab-search__en" lang="en"> · {hit.meaningEn}</span> : null}
                           </span>
                           {hit.lesson ? (
                             <span className="kanji-search-lesson">{lessonShortLabel(hit.lesson)}</span>
@@ -489,7 +491,12 @@ export default function VocabView({
                 <div className="vocab-card__top">
                   <div className="vocab-card__heading">
                     <p className="vocab-card__title japanese-text">
-                      {currentVocab.kanji ? `${currentVocab.kanji} - ` : ''}
+                      {currentVocab.kanji ? (
+                        <>
+                          <FuriganaWord vocab={currentVocab} className="vocab-card__title-word" />
+                          {' - '}
+                        </>
+                      ) : null}
                       {currentVocab.kana}
                       {currentVocab.romaji ? <span className="vocab-card__title-romaji"> ({currentVocab.romaji})</span> : null}
                     </p>
@@ -557,6 +564,7 @@ export default function VocabView({
                       <span className="vocab-card__sep" aria-hidden="true">|</span>
                       <span className="vocab-meaning">{currentVocab.meaning}</span>
                     </p>
+                    <VocabExtraMeanings vocab={currentVocab} />
                     {currentVocab.pitchAccent ? (
                       <span className="vocab-pitch">Cao điệu {currentVocab.pitchAccent}</span>
                     ) : null}
@@ -615,6 +623,7 @@ export default function VocabView({
               </div>
             </section>
           ) : null}
+          {currentVocab.meaningEnSource === 'jmdict' ? <JmdictAttribution /> : null}
           </>
           ) : (
             <div className="empty-state">

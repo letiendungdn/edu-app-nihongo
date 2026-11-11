@@ -129,6 +129,12 @@ model Vocabulary {
   romaji        String
   meaning       String
   meaningEn     String?
+  /// Nguồn của meaningEn: manual (người soạn), jmdict (từ điển JMdict, CC BY-SA 4.0), ai (dịch máy)
+  meaningEnSource String?
+  /// Âm Hán Việt của cả từ, ghép từ KanjiEntry.hanViet: 感動 → CẢM ĐỘNG
+  hanViet       String?
+  /// Furigana dạng JSON [[chữ, cách đọc], …], tính từ kanji + kana (toFurigana trong nest-common)
+  furigana      String?
   partOfSpeech  String?
   jlptLevel     JlptLevel?
   pitchAccent   String?

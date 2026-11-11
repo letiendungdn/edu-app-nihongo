@@ -19,6 +19,7 @@
 		1628F547B030C77F0C502F18 /* TranslateAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F77D3B13A9586DAD83072A1 /* TranslateAPI.swift */; };
 		172D6856CB2DC8A29B008457 /* VocabAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C79BABFBDE7742AB5861D9C /* VocabAPI.swift */; };
 		1AC9DCCCD20ECCBE65C563AC /* SRSCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A8F2F3D1BBAFC8B370B453 /* SRSCard.swift */; };
+		1F148592D809145D8AB0B2C0 /* VocabReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5943497E0EC86ED0F7B89A7 /* VocabReading.swift */; };
 		2365FBF9828115E31F144FEF /* CommunityViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565C28376CB370DC6C8E164B /* CommunityViews.swift */; };
 		2D78F186AA227F5806635F58 /* AiTutorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826C6F74D7DAD97C9B115379 /* AiTutorView.swift */; };
 		2D83BC24C1FEC0B37321812A /* KanaViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CA28DDE4C2347D3B1D7DA04 /* KanaViews.swift */; };
@@ -27,6 +28,7 @@
 		386DFA442BDBD3A1163C8DF4 /* CameraTranslateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97148846B4B51380AD59C4DA /* CameraTranslateView.swift */; };
 		39051F24DB5FBF2B714FA322 /* SentencePracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F4F0EE74D99045463A0E56 /* SentencePracticeView.swift */; };
 		3BBB4D5732A315AA260EF69B /* IntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D0FAC7B1704777AA724552 /* IntegrationTests.swift */; };
+		3E288E5A93BECD34ACF5D978 /* VocabularyExtra.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69238EAAAE057ABA69554B7E /* VocabularyExtra.swift */; };
 		4205D111882C64B960C7923C /* OverlayMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B45320B3E5212092ACD5B /* OverlayMapper.swift */; };
 		451F60789D58EE6991064CF6 /* VocabSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77290440FE012A4EC485539 /* VocabSearchView.swift */; };
 		4AEA2D1FF7A3325606EDA8AD /* VocabViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56392F4A8E27EDA70BF7F71 /* VocabViewModel.swift */; };
@@ -167,6 +169,7 @@
 		6741AB83B4EBAECEADAAE804 /* SRSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRSView.swift; sourceTree = "<group>"; };
 		68363B4D1CFC48D0BD0CCD44 /* KanjiDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDrawView.swift; sourceTree = "<group>"; };
 		688B447C05DACC75A40875F8 /* SmallUnitsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmallUnitsTests.swift; sourceTree = "<group>"; };
+		69238EAAAE057ABA69554B7E /* VocabularyExtra.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyExtra.swift; sourceTree = "<group>"; };
 		72E734258B699EB913673635 /* SentencePracticeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentencePracticeViewModel.swift; sourceTree = "<group>"; };
 		74EF9459842E5CFF6799E631 /* SRSAlgorithmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRSAlgorithmTests.swift; sourceTree = "<group>"; };
 		75422C1E6812B95545500AD6 /* CommunityAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityAPI.swift; sourceTree = "<group>"; };
@@ -195,6 +198,7 @@
 		AFE2FD58E99D1ADF46D23465 /* NihongoWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = NihongoWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2B4EE186CE7B2CBF3878859 /* PremiumCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumCheckout.swift; sourceTree = "<group>"; };
 		C1E95F85B084BA89FC0976C0 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
+		C5943497E0EC86ED0F7B89A7 /* VocabReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabReading.swift; sourceTree = "<group>"; };
 		C8A0382DE0337EC2876EEAF4 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		D0F5542C4C39092C1DA05F31 /* AiAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiAPITests.swift; sourceTree = "<group>"; };
 		D7287AE9FC669D87287CDA40 /* DueDates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DueDates.swift; sourceTree = "<group>"; };
@@ -290,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				4060F08A4D7B198C78F43E19 /* NavCard.swift */,
+				C5943497E0EC86ED0F7B89A7 /* VocabReading.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -482,6 +487,7 @@
 				E2A8F2F3D1BBAFC8B370B453 /* SRSCard.swift */,
 				E823B5ACABAD2D5DC1B0E616 /* SyncQueueItem.swift */,
 				DF2735DDCF805ACBD49DA653 /* Vocabulary.swift */,
+				69238EAAAE057ABA69554B7E /* VocabularyExtra.swift */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -762,10 +768,12 @@
 				1628F547B030C77F0C502F18 /* TranslateAPI.swift in Sources */,
 				9F2400A0D92075C400872A38 /* UserMessage.swift in Sources */,
 				172D6856CB2DC8A29B008457 /* VocabAPI.swift in Sources */,
+				1F148592D809145D8AB0B2C0 /* VocabReading.swift in Sources */,
 				451F60789D58EE6991064CF6 /* VocabSearchView.swift in Sources */,
 				14AD9CCBBCCBEE118ECC07CB /* VocabView.swift in Sources */,
 				4AEA2D1FF7A3325606EDA8AD /* VocabViewModel.swift in Sources */,
 				817A7A76BD9347585A20CBEF /* Vocabulary.swift in Sources */,
+				3E288E5A93BECD34ACF5D978 /* VocabularyExtra.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

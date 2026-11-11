@@ -3515,3 +3515,56 @@
 .vocab-card__strokes {
   max-width: none;
 }
+
+/* Hán Việt + nghĩa tiếng Anh (VocabReading.tsx) */
+.vocab-extra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.9rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+.vocab-extra__hanviet {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-primary, inherit);
+}
+.vocab-extra__en {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.vocab-extra__tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  opacity: 0.7;
+}
+.vocab-extra__ai {
+  font-size: 0.72rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #b45309;
+}
+.vocab-card__title-word ruby rt {
+  font-size: 0.5em;
+  font-weight: 500;
+}
+.vocab-search__en {
+  opacity: 0.75;
+}
+.vocab-attribution {
+  margin: 0.75rem 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.vocab-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}

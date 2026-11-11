@@ -22,6 +22,7 @@ type Draft = {
   kana: string;
   romaji: string;
   meaning: string;
+  meaningEn: string;
   imageUrl: string | null;
 };
 
@@ -30,6 +31,7 @@ const emptyDraft = (): Draft => ({
   kana: '',
   romaji: '',
   meaning: '',
+  meaningEn: '',
   imageUrl: null,
 });
 
@@ -213,6 +215,7 @@ export default function VocabWordList({
       kana: item.kana,
       romaji: item.romaji,
       meaning: item.meaning,
+      meaningEn: item.meaningEn ?? '',
       imageUrl: item.imageUrl ?? null,
     });
     setError(null);
@@ -256,6 +259,7 @@ export default function VocabWordList({
           kana,
           romaji,
           meaning,
+          meaningEn: draft.meaningEn.trim() || null,
           imageUrl: draft.imageUrl,
         },
         token,
@@ -312,6 +316,7 @@ export default function VocabWordList({
           romaji,
           meaning,
           ...(kanji ? { kanji } : {}),
+          ...(addDraft.meaningEn.trim() ? { meaningEn: addDraft.meaningEn.trim() } : {}),
           ...(addDraft.imageUrl ? { imageUrl: addDraft.imageUrl } : {}),
         },
         token,
@@ -416,6 +421,15 @@ export default function VocabWordList({
           value={value.meaning}
           disabled={busy}
           onChange={(e) => onChange({ ...value, meaning: e.target.value })}
+        />
+        <input
+          lang="en"
+          placeholder="Nghĩa tiếng Anh (tuỳ chọn)"
+          title="Sửa ô này thì bỏ nhãn &quot;dịch máy&quot;"
+          aria-label="Nghĩa tiếng Anh"
+          value={value.meaningEn}
+          disabled={busy}
+          onChange={(e) => onChange({ ...value, meaningEn: e.target.value })}
         />
         {renderImageField(value, onChange)}
         <div className="vocab-admin-actions">{actions}</div>

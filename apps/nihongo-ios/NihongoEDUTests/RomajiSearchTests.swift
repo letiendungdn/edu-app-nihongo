@@ -72,3 +72,18 @@ final class VocabSearchIndexTests: XCTestCase {
         XCTAssertEqual(index.search("nomi").map(\.meaning), ["uống"])
     }
 }
+
+final class FuriganaSegmentTests: XCTestCase {
+    func testParsesBackendJSON() {
+        XCTAssertEqual(
+            FuriganaSegment.parse(#"[["食","た"],["べます",""]]"#),
+            [FuriganaSegment(text: "食", ruby: "た"), FuriganaSegment(text: "べます", ruby: "")]
+        )
+    }
+
+    func testInvalidOrEmptyGivesNoSegments() {
+        XCTAssertTrue(FuriganaSegment.parse(nil).isEmpty)
+        XCTAssertTrue(FuriganaSegment.parse("not json").isEmpty)
+        XCTAssertTrue(FuriganaSegment.parse(#"[["食"]]"#).isEmpty)
+    }
+}

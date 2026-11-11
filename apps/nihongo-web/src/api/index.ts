@@ -112,6 +112,8 @@ export type CreateVocabularyInput = {
   kana: string;
   romaji: string;
   meaning: string;
+  /** Nghĩa tiếng Anh; người soạn sửa thì nguồn thành manual (bỏ nhãn "dịch máy"). null để xóa. */
+  meaningEn?: string | null;
   lessonId: number;
   partOfSpeech?: string | null;
   imageUrl?: string | null;

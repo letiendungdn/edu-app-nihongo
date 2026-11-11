@@ -18,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.edu.nihongo.presentation.common.FuriganaText
+import com.edu.nihongo.presentation.common.JmdictAttribution
 import com.edu.nihongo.presentation.common.LoadingBox
+import com.edu.nihongo.presentation.common.VocabExtraMeanings
 import com.edu.nihongo.presentation.common.MessageBox
 import com.edu.nihongo.presentation.common.StaleBanner
 import com.edu.nihongo.utils.TtsHelper
@@ -44,9 +47,17 @@ fun VocabTab(viewModel: VocabViewModel = hiltViewModel()) {
                         .clickable { TtsHelper.speak(vocab.kana) },
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(vocab.kana, style = MaterialTheme.typography.titleMedium)
-                        vocab.kanji?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                        if (vocab.furigana.isNotEmpty()) {
+                            // Kanji có furigana đã chứa cách đọc: không cần dòng kana riêng
+                            FuriganaText(vocab.furigana, fallback = vocab.kana)
+                        } else {
+                            Text(vocab.kana, style = MaterialTheme.typography.titleMedium)
+                            vocab.kanji?.takeIf { it.isNotBlank() }?.let {
+                                Text(it, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                         Text(vocab.meaning, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        VocabExtraMeanings(vocab)
                         Text(
                             "🔊 Chạm để nghe",
                             style = MaterialTheme.typography.labelSmall,
@@ -55,6 +66,9 @@ fun VocabTab(viewModel: VocabViewModel = hiltViewModel()) {
                         )
                     }
                 }
+            }
+            if (uiState.items.any { it.meaningEnSource == "jmdict" }) {
+                item { JmdictAttribution() }
             }
         }
     }

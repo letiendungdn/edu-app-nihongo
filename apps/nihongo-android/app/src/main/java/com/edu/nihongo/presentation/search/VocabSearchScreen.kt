@@ -39,6 +39,7 @@ import com.edu.nihongo.domain.entity.Vocabulary
 import com.edu.nihongo.presentation.common.BackScaffold
 import com.edu.nihongo.presentation.common.LoadingBox
 import com.edu.nihongo.presentation.common.MessageBox
+import com.edu.nihongo.presentation.common.VocabExtraMeanings
 import com.edu.nihongo.utils.TtsHelper
 
 @Composable
@@ -101,6 +102,7 @@ private fun SearchResultCard(vocab: Vocabulary) {
             )
             Text(vocab.romaji, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             Text(vocab.meaning, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            VocabExtraMeanings(vocab)
             Text("Bài ${vocab.lessonNumber}", style = MaterialTheme.typography.labelSmall)
         }
     }

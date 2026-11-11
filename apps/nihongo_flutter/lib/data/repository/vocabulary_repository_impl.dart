@@ -8,6 +8,7 @@ import '../../domain/entity/sync_status.dart';
 import '../../domain/entity/vocabulary.dart';
 import '../../domain/repository/result.dart';
 import '../../domain/repository/vocabulary_repository.dart';
+import '../../domain/vocab/furigana.dart';
 import '../local/app_database.dart';
 import '../remote/vocabulary_api.dart';
 import '../../utils/network_monitor.dart';
@@ -116,6 +117,10 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
             sortOrder: i,
             syncStatus: const Value('synced'),
             updatedAt: DateTime.now().millisecondsSinceEpoch,
+            meaningEn: Value(json['meaningEn'] as String?),
+            meaningEnSource: Value(json['meaningEnSource'] as String?),
+            hanViet: Value(json['hanViet'] as String?),
+            furigana: Value(json['furigana'] as String?),
           ),
         );
 
@@ -257,6 +262,10 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
         romaji: row.romaji,
         sortOrder: row.sortOrder,
         syncStatus: SyncStatusX.fromStorage(row.syncStatus),
+        meaningEn: row.meaningEn,
+        meaningEnSource: row.meaningEnSource,
+        hanViet: row.hanViet,
+        furigana: parseFurigana(row.furigana),
       );
 
   SrsCard _toSrsDomain(SrsCardTableData row) => SrsCard(

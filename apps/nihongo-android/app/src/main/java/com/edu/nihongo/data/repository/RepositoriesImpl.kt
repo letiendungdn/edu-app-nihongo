@@ -224,6 +224,10 @@ class VocabularyRepositoryImpl @Inject constructor(
                 meaning = dto.meaning.orEmpty(),
                 romaji = dto.romaji.orEmpty(),
                 sortOrder = index,
+                meaningEn = dto.meaningEn,
+                meaningEnSource = dto.meaningEnSource,
+                hanViet = dto.hanViet,
+                furigana = dto.furigana,
                 updatedAt = now,
             )
         }

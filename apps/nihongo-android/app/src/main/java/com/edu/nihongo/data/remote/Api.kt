@@ -12,6 +12,10 @@ data class VocabDto(
     val kanji: String?,
     val meaning: String?,
     val romaji: String?,
+    val meaningEn: String? = null,
+    val meaningEnSource: String? = null,
+    val hanViet: String? = null,
+    val furigana: String? = null,
     @SerializedName("lessonNumber") val lessonNumber: Int? = null,
     @SerializedName("lessonId") val lessonId: Int? = null,
 )

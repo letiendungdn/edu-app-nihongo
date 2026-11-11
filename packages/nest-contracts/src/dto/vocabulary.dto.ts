@@ -33,6 +33,13 @@ export class CreateVocabularyDto {
   @IsString()
   meaning: string;
 
+  /** Nghĩa tiếng Anh do người soạn nhập (meaningEnSource = manual); null để xóa khi cập nhật */
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
+  @IsString()
+  meaningEn?: string | null;
+
   @ApiProperty()
   @IsInt()
   lessonId: number;

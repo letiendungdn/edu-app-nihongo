@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entity/vocabulary.dart';
+import '../widgets/vocab_reading.dart';
 import 'vocab_search_controller.dart';
 
 /// Tra từ theo romaji, chạy offline trên từ vựng đã có trong drift.
@@ -88,6 +89,11 @@ class _ResultCard extends StatelessWidget {
             ),
             Text(vocab.romaji, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
             Text(vocab.meaning),
+            VocabExtraMeanings(
+              hanViet: vocab.hanViet,
+              meaningEn: vocab.meaningEn,
+              source: vocab.meaningEnSource,
+            ),
             Text('Bài ${vocab.lessonNumber}', style: theme.textTheme.labelSmall),
           ],
         ),

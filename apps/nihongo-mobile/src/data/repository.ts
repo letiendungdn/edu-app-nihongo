@@ -3,6 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import type { ReviewCard, SrsCard, SyncStatus, Vocabulary } from '../domain/entities';
 import { fetchAllVocabForLesson, isLoggedIn, syncReviewBank } from './api';
 import { getDatabase } from './database';
+import { parseFurigana } from '../utils/furigana';
 
 type VocabRow = {
   id: number;
@@ -13,6 +14,10 @@ type VocabRow = {
   romaji: string;
   sort_order: number;
   sync_status: string;
+  meaning_en: string | null;
+  meaning_en_source: string | null;
+  han_viet: string | null;
+  furigana: string | null;
 };
 
 type ReviewRow = {
@@ -41,6 +46,10 @@ function toVocabulary(row: VocabRow): Vocabulary {
     romaji: row.romaji,
     sortOrder: row.sort_order,
     syncStatus: row.sync_status as SyncStatus,
+    meaningEn: row.meaning_en,
+    meaningEnSource: row.meaning_en_source,
+    hanViet: row.han_viet,
+    furigana: parseFurigana(row.furigana),
   };
 }
 
@@ -197,9 +206,14 @@ export async function syncLesson(lessonNumber: number): Promise<void> {
     for (let i = 0; i < remote.length; i++) {
       const dto = remote[i];
       await db.runAsync(
-        `INSERT INTO vocabulary (id, lesson_number, kana, kanji, meaning, romaji, sort_order, sync_status, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?)
+        `INSERT INTO vocabulary (id, lesson_number, kana, kanji, meaning, romaji, sort_order, sync_status, updated_at,
+                                 meaning_en, meaning_en_source, han_viet, furigana)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
+           meaning_en = excluded.meaning_en,
+           meaning_en_source = excluded.meaning_en_source,
+           han_viet = excluded.han_viet,
+           furigana = excluded.furigana,
            lesson_number = excluded.lesson_number,
            kana = excluded.kana,
            kanji = excluded.kanji,
@@ -216,6 +230,10 @@ export async function syncLesson(lessonNumber: number): Promise<void> {
           dto.romaji ?? '',
           i,
           now,
+          dto.meaningEn ?? null,
+          dto.meaningEnSource ?? null,
+          dto.hanViet ?? null,
+          dto.furigana ?? null,
         ],
       );
       await ensureSrsCard(dto.id);

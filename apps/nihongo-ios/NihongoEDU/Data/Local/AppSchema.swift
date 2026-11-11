@@ -20,12 +20,21 @@ enum SchemaV2: VersionedSchema {
     }
 }
 
+/// V3: nghĩa tiếng Anh / Hán Việt / furigana ở entity riêng (xem VocabularyExtra vì sao không thêm vào Vocabulary).
+enum SchemaV3: VersionedSchema {
+    static var versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] { SchemaV2.models + [VocabularyExtra.self] }
+}
+
 /// Thêm entity mới là "lightweight": SwiftData tự làm. Đổi kiểu, tách hay gộp field thì cần
 /// `.custom(fromVersion:toVersion:willMigrate:didMigrate:)`.
 enum NihongoMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self] }
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self, SchemaV3.self] }
     static var stages: [MigrationStage] {
-        [.lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self)]
+        [
+            .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
+            .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
+        ]
     }
 }
 
@@ -37,7 +46,7 @@ enum AppStore {
         -> (container: ModelContainer, quarantined: URL?)
     {
         let url = storeURL ?? defaultStoreURL(fileManager)
-        let schema = Schema(versionedSchema: SchemaV2.self)
+        let schema = Schema(versionedSchema: SchemaV3.self)
         let config = ModelConfiguration(schema: schema, url: url)
         do {
             let c = try ModelContainer(for: schema, migrationPlan: NihongoMigrationPlan.self, configurations: [config])

@@ -21,6 +21,11 @@ data class VocabularyEntity(
     val meaning: String,
     val romaji: String,
     @ColumnInfo(name = "sort_order") val sortOrder: Int,
+    // v4: nghĩa tiếng Anh, nguồn (manual/jmdict/ai), âm Hán Việt, furigana JSON
+    @ColumnInfo(name = "meaning_en") val meaningEn: String? = null,
+    @ColumnInfo(name = "meaning_en_source") val meaningEnSource: String? = null,
+    @ColumnInfo(name = "han_viet") val hanViet: String? = null,
+    val furigana: String? = null,
     @ColumnInfo(name = "sync_status") val syncStatus: String = "SYNCED",
     @ColumnInfo(name = "updated_at") val updatedAt: Long = System.currentTimeMillis(),
 )

@@ -43,11 +43,12 @@ import com.edu.nihongo.data.local.entity.VocabularyEntity
     ],
     // Mỗi lần đổi schema: tăng version + khai báo migration. Schema JSON từng version
     // nằm ở app/schemas/ và được test trong androidTest/.../AppDatabaseMigrationTest.
-    version = 3,
+    version = 4,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2), // thêm bảng lesson
         AutoMigration(from = 2, to = 3), // tiến độ, ngữ pháp, kanji, đọc hiểu, bài thi
+        AutoMigration(from = 3, to = 4), // vocabulary: nghĩa EN, Hán Việt, furigana
     ],
 )
 @TypeConverters(Converters::class)

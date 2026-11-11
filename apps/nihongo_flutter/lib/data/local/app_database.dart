@@ -17,6 +17,11 @@ class VocabularyTable extends Table {
   TextColumn get syncStatus =>
       text().named('sync_status').withDefault(const Constant('synced'))();
   IntColumn get updatedAt => integer().named('updated_at')();
+  // v2: nghĩa tiếng Anh, nguồn (manual/jmdict/ai), âm Hán Việt, furigana JSON
+  TextColumn get meaningEn => text().named('meaning_en').nullable()();
+  TextColumn get meaningEnSource => text().named('meaning_en_source').nullable()();
+  TextColumn get hanViet => text().named('han_viet').nullable()();
+  TextColumn get furigana => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -61,7 +66,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // Chỉ thêm cột nullable: dữ liệu cũ và thẻ SRS giữ nguyên, cột mới có giá trị ở lần sync sau
+            await m.addColumn(vocabularyTable, vocabularyTable.meaningEn);
+            await m.addColumn(vocabularyTable, vocabularyTable.meaningEnSource);
+            await m.addColumn(vocabularyTable, vocabularyTable.hanViet);
+            await m.addColumn(vocabularyTable, vocabularyTable.furigana);
+          }
+        },
+      );
 
   Stream<List<VocabularyTableData>> watchVocabByLesson(int lessonNumber) {
     return (select(vocabularyTable)

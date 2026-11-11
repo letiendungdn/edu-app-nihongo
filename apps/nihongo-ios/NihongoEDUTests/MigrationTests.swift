@@ -37,6 +37,27 @@ final class MigrationTests: XCTestCase {
         XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<GrammarItem>()), 0) // bảng mới có và trống
     }
 
+    /// Store V2 (bản trước khi có nghĩa EN/Hán Việt/furigana) lên V3: giữ thẻ SRS, có bảng VocabularyExtra trống.
+    func testV2StoreUpgradesToV3KeepingData() throws {
+        do {
+            let schema = Schema(versionedSchema: SchemaV2.self)
+            let old = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, url: storeURL))
+            let card = seedCard(old.mainContext, id: 9, nextReviewAt: fixedNow)
+            card.syncStatus = "pending"
+            try old.mainContext.save()
+        }
+
+        let (container, quarantined) = try AppStore.makeContainer(storeURL: storeURL)
+        let ctx = container.mainContext
+
+        XCTAssertNil(quarantined, "store V2 phải migrate được, không bị cất đi")
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<SRSCard>()).first?.syncStatus, "pending")
+        XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<VocabularyExtra>()), 0)
+        ctx.insert(VocabularyExtra(vocabId: 9, meaningEn: "to eat", meaningEnSource: "jmdict"))
+        try ctx.save()
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<VocabularyExtra>()).first?.meaningEn, "to eat")
+    }
+
     /// Bản cũ: store không mở được thì XÓA cả Application Support. Giờ: cất sang Quarantine.
     func testUnreadableStoreIsQuarantinedNotDeleted() throws {
         try Data("rác, không phải SQLite".utf8).write(to: storeURL)

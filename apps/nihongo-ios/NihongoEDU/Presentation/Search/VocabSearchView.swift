@@ -9,9 +9,13 @@ struct VocabHit: Hashable, Identifiable {
     let kanji: String?
     let meaning: String
     let romaji: String
+    let meaningEn: String?
+    let meaningEnSource: String?
+    let hanViet: String?
 
-    init(_ v: Vocabulary) {
+    init(_ v: Vocabulary, extra: VocabularyExtra? = nil) {
         id = v.id; lessonNumber = v.lessonNumber; kana = v.kana; kanji = v.kanji; meaning = v.meaning; romaji = v.romaji
+        meaningEn = extra?.meaningEn; meaningEnSource = extra?.meaningEnSource; hanViet = extra?.hanViet
     }
 }
 
@@ -23,9 +27,10 @@ final class VocabSearchIndex {
     private(set) var isIndexing = true
     var indexedCount: Int { trie.itemCount }
 
-    func rebuild(from vocabulary: [Vocabulary]) {
+    func rebuild(from vocabulary: [Vocabulary], extras: [VocabularyExtra] = []) {
+        let byId = Dictionary(extras.map { ($0.vocabId, $0) }, uniquingKeysWith: { a, _ in a })
         let next = RomajiTrie<VocabHit>()
-        for v in vocabulary { next.insert(v.romaji, item: VocabHit(v)) }
+        for v in vocabulary { next.insert(v.romaji, item: VocabHit(v, extra: byId[v.id])) }
         trie = next
         isIndexing = false
     }
@@ -39,6 +44,7 @@ final class VocabSearchIndex {
 struct VocabSearchView: View {
     @Query(sort: [SortDescriptor(\Vocabulary.lessonNumber), SortDescriptor(\Vocabulary.sortOrder)])
     private var vocabulary: [Vocabulary]
+    @Query private var extras: [VocabularyExtra]
     @State private var index = VocabSearchIndex()
     @State private var query = ""
     /// Bật ngay khi màn hiện ra: ô tìm tự được chọn, bàn phím tự bật, gõ được luôn (iOS 17+).
@@ -56,7 +62,7 @@ struct VocabSearchView: View {
             .searchable(text: $query, isPresented: $searchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Gõ romaji, ví dụ: tabe, kandou")
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
-            .task(id: indexKey) { index.rebuild(from: vocabulary) }
+            .task(id: indexKey) { index.rebuild(from: vocabulary, extras: extras) }
             .task { searchPresented = true }
     }
 
@@ -77,6 +83,7 @@ struct VocabSearchView: View {
                     Text(hit.kanji.map { "\(hit.kana)  ·  \($0)" } ?? hit.kana).font(.headline)
                     Text(hit.romaji).font(.caption).foregroundStyle(.tint)
                     Text(hit.meaning)
+                    VocabExtraMeanings(hanViet: hit.hanViet, meaningEn: hit.meaningEn, source: hit.meaningEnSource)
                     Text("Bài \(hit.lessonNumber)").font(.caption2).foregroundStyle(.secondary)
                 }
             }

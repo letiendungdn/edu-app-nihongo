@@ -129,6 +129,29 @@ final class NihongoEDUUITests: XCTestCase {
         add(shot)
     }
 
+    /// Bài 1 sau khi sync: có furigana trên kanji, Hán Việt, nghĩa tiếng Anh (私 → TƯ, "I; me")
+    /// và nhãn "dịch máy" cho từ dịch bằng AI (あなた).
+    func testVocabShowsEnglishHanVietAndFurigana() throws {
+        let (reachable, detail) = backendReachable(URL(string: "http://localhost:3000/health")!)
+        try XCTSkipUnless(reachable, "Cần backend local ở localhost:3000 (\(detail))")
+
+        app.launch()
+        let lessons = homeCard("Bài học")
+        XCTAssertTrue(reveal(lessons))
+        lessons.tap()
+
+        // Bài đã tải từ bản cũ cũng phải tự tải lại để có dữ liệu mới
+        XCTAssertTrue(app.staticTexts["I; me"].waitForExistence(timeout: 20), "chưa có nghĩa tiếng Anh")
+        XCTAssertTrue(app.staticTexts["TƯ"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["furigana"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["dịch máy"].firstMatch.exists)
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "vocab-lesson1-en-hanviet-furigana"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     /// Kiểm backend có sống không: hạn chờ 10 giây, thử 3 lần, trả về lý do nếu không gọi được.
     /// Không dùng Data(contentsOf:): nó chặn luồng, không có hạn chờ riêng (treo tới 60 giây) và nuốt lỗi.
     private func backendReachable(_ url: URL) -> (Bool, String) {

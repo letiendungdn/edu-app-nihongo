@@ -56,6 +56,13 @@ private struct VocabContent: View {
     let modelContext: ModelContext
 
     @Query private var vocab: [Vocabulary]
+    /// Chỉ có từ của các bài đã sync (vài trăm–vài nghìn dòng); @Query để tự vẽ lại sau khi sync xong
+    @Query private var extras: [VocabularyExtra]
+
+    private var extrasById: [Int: VocabularyExtra] {
+        let ids = Set(vocab.map(\.id))
+        return Dictionary(extras.filter { ids.contains($0.vocabId) }.map { ($0.vocabId, $0) }, uniquingKeysWith: { a, _ in a })
+    }
 
     init(lesson: Int, viewModel: VocabViewModel, modelContext: ModelContext) {
         self.lesson = lesson
@@ -82,7 +89,10 @@ private struct VocabContent: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(vocab) { item in
-                            VocabRow(item: item, viewModel: viewModel)
+                            VocabRow(item: item, extra: extrasById[item.id], viewModel: viewModel)
+                        }
+                        if extrasById.values.contains(where: { $0.meaningEnSource == "jmdict" }) {
+                            JmdictAttribution().padding(.top, 8)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -93,7 +103,8 @@ private struct VocabContent: View {
         .background(Color(.systemGroupedBackground))
         .task {
             await viewModel.autoSyncIfNeeded(
-                lesson: lesson, vocabIsEmpty: vocab.isEmpty, modelContext: modelContext
+                // Bản mới tạo VocabularyExtra cho mọi từ khi sync: bài có từ mà chưa có extra = tải từ bản cũ
+                lesson: lesson, needsSync: vocab.isEmpty || extrasById.isEmpty, modelContext: modelContext
             )
         }
     }
@@ -177,7 +188,10 @@ private struct LessonPickerBar: View {
 
 private struct VocabRow: View {
     let item: Vocabulary
+    let extra: VocabularyExtra?
     let viewModel: VocabViewModel
+
+    private var furigana: [FuriganaSegment] { extra?.furiganaSegments ?? [] }
 
     private var jpText: String  { item.kanji ?? item.kana }
     private var readText: String { item.kanji != nil ? item.kana : item.romaji }
@@ -186,10 +200,14 @@ private struct VocabRow: View {
     var body: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(jpText)
-                        .font(.system(size: 20, weight: .semibold))
-                    if !readText.isEmpty {
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
+                    FuriganaText(segments: furigana, fallback: jpText, size: 20)
+                    // Có furigana thì cách đọc đã nằm trên chữ: chỉ hiện romaji
+                    if !furigana.isEmpty {
+                        Text(item.romaji)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.red)
+                    } else if !readText.isEmpty {
                         Text(readText)
                             .font(.system(size: 13))
                             .foregroundStyle(.red)
@@ -198,6 +216,7 @@ private struct VocabRow: View {
                 Text(item.meaning)
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
+                VocabExtraMeanings(hanViet: extra?.hanViet, meaningEn: extra?.meaningEn, source: extra?.meaningEnSource)
             }
 
             Spacer()

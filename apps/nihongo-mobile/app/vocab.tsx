@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import { FuriganaText, JmdictAttribution, VocabExtraMeanings } from '../src/components/VocabReading';
 import { getVocabByLesson, syncLesson } from '../src/data/repository';
 import type { Vocabulary } from '../src/domain/entities';
 import { speakJapanese } from '../src/utils/tts';
@@ -60,11 +61,20 @@ export default function VocabScreen() {
       data={items}
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={styles.list}
+      ListFooterComponent={items.some((v) => v.meaningEnSource === 'jmdict') ? <JmdictAttribution /> : null}
       renderItem={({ item }) => (
         <Pressable style={styles.card} onPress={() => speakJapanese(item.kana)}>
-          <Text style={styles.kana}>{item.kana}</Text>
-          {item.kanji ? <Text style={styles.kanji}>{item.kanji}</Text> : null}
+          {item.furigana?.length ? (
+            // Có furigana thì cách đọc đã nằm trên chữ: không cần dòng kana riêng
+            <FuriganaText segments={item.furigana} fallback={item.kana} />
+          ) : (
+            <>
+              <Text style={styles.kana}>{item.kana}</Text>
+              {item.kanji ? <Text style={styles.kanji}>{item.kanji}</Text> : null}
+            </>
+          )}
           <Text style={styles.meaning}>{item.meaning}</Text>
+          <VocabExtraMeanings hanViet={item.hanViet} meaningEn={item.meaningEn} source={item.meaningEnSource} />
           <Text style={styles.ttsHint}>🔊 Chạm để nghe</Text>
         </Pressable>
       )}

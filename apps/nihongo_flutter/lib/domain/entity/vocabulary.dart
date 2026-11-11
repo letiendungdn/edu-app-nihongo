@@ -1,3 +1,4 @@
+import '../vocab/furigana.dart';
 import 'sync_status.dart';
 
 class Vocabulary {
@@ -10,6 +11,10 @@ class Vocabulary {
     required this.romaji,
     required this.sortOrder,
     this.syncStatus = SyncStatus.synced,
+    this.meaningEn,
+    this.meaningEnSource,
+    this.hanViet,
+    this.furigana = const [],
   });
 
   final int id;
@@ -20,6 +25,14 @@ class Vocabulary {
   final String romaji;
   final int sortOrder;
   final SyncStatus syncStatus;
+  final String? meaningEn;
+
+  /// manual | jmdict | ai — "ai" thì UI ghi "dịch máy".
+  final String? meaningEnSource;
+  final String? hanViet;
+
+  /// Các đoạn (chữ, cách đọc); rỗng = không tách được, hiện chữ trơn.
+  final List<FuriganaSegment> furigana;
 
   Vocabulary copyWith({
     SyncStatus? syncStatus,
@@ -33,6 +46,10 @@ class Vocabulary {
       romaji: romaji,
       sortOrder: sortOrder,
       syncStatus: syncStatus ?? this.syncStatus,
+      meaningEn: meaningEn,
+      meaningEnSource: meaningEnSource,
+      hanViet: hanViet,
+      furigana: furigana,
     );
   }
 }

@@ -88,6 +88,26 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    /** v3→v4 thêm 4 cột nullable cho vocabulary: dữ liệu cũ giữ nguyên, cột mới là NULL tới lần sync sau. */
+    @Test
+    fun migrate3To4_addsVocabReadingColumns() {
+        helper.createDatabase(TEST_DB, 3).apply {
+            execSQL(
+                "INSERT INTO vocabulary (id, lesson_number, kana, kanji, meaning, romaji, sort_order, sync_status, updated_at) " +
+                    "VALUES (1, 1, 'ねこ', '猫', 'con mèo', 'neko', 0, 'SYNCED', 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true)
+
+        db.query("SELECT kana, meaning_en, meaning_en_source, han_viet, furigana FROM vocabulary WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("ねこ", c.getString(0))
+            for (i in 1..4) assertEquals(true, c.isNull(i))
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test.db"
     }

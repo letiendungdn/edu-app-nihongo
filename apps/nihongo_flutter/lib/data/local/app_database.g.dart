@@ -63,6 +63,30 @@ class $VocabularyTableTable extends VocabularyTable
   late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _meaningEnMeta =
+      const VerificationMeta('meaningEn');
+  @override
+  late final GeneratedColumn<String> meaningEn = GeneratedColumn<String>(
+      'meaning_en', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _meaningEnSourceMeta =
+      const VerificationMeta('meaningEnSource');
+  @override
+  late final GeneratedColumn<String> meaningEnSource = GeneratedColumn<String>(
+      'meaning_en_source', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _hanVietMeta =
+      const VerificationMeta('hanViet');
+  @override
+  late final GeneratedColumn<String> hanViet = GeneratedColumn<String>(
+      'han_viet', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _furiganaMeta =
+      const VerificationMeta('furigana');
+  @override
+  late final GeneratedColumn<String> furigana = GeneratedColumn<String>(
+      'furigana', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -73,7 +97,11 @@ class $VocabularyTableTable extends VocabularyTable
         romaji,
         sortOrder,
         syncStatus,
-        updatedAt
+        updatedAt,
+        meaningEn,
+        meaningEnSource,
+        hanViet,
+        furigana
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -135,6 +163,24 @@ class $VocabularyTableTable extends VocabularyTable
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('meaning_en')) {
+      context.handle(_meaningEnMeta,
+          meaningEn.isAcceptableOrUnknown(data['meaning_en']!, _meaningEnMeta));
+    }
+    if (data.containsKey('meaning_en_source')) {
+      context.handle(
+          _meaningEnSourceMeta,
+          meaningEnSource.isAcceptableOrUnknown(
+              data['meaning_en_source']!, _meaningEnSourceMeta));
+    }
+    if (data.containsKey('han_viet')) {
+      context.handle(_hanVietMeta,
+          hanViet.isAcceptableOrUnknown(data['han_viet']!, _hanVietMeta));
+    }
+    if (data.containsKey('furigana')) {
+      context.handle(_furiganaMeta,
+          furigana.isAcceptableOrUnknown(data['furigana']!, _furiganaMeta));
+    }
     return context;
   }
 
@@ -162,6 +208,14 @@ class $VocabularyTableTable extends VocabularyTable
           .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}updated_at'])!,
+      meaningEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}meaning_en']),
+      meaningEnSource: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}meaning_en_source']),
+      hanViet: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}han_viet']),
+      furigana: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}furigana']),
     );
   }
 
@@ -182,6 +236,10 @@ class VocabularyTableData extends DataClass
   final int sortOrder;
   final String syncStatus;
   final int updatedAt;
+  final String? meaningEn;
+  final String? meaningEnSource;
+  final String? hanViet;
+  final String? furigana;
   const VocabularyTableData(
       {required this.id,
       required this.lessonNumber,
@@ -191,7 +249,11 @@ class VocabularyTableData extends DataClass
       required this.romaji,
       required this.sortOrder,
       required this.syncStatus,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.meaningEn,
+      this.meaningEnSource,
+      this.hanViet,
+      this.furigana});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -206,6 +268,18 @@ class VocabularyTableData extends DataClass
     map['sort_order'] = Variable<int>(sortOrder);
     map['sync_status'] = Variable<String>(syncStatus);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || meaningEn != null) {
+      map['meaning_en'] = Variable<String>(meaningEn);
+    }
+    if (!nullToAbsent || meaningEnSource != null) {
+      map['meaning_en_source'] = Variable<String>(meaningEnSource);
+    }
+    if (!nullToAbsent || hanViet != null) {
+      map['han_viet'] = Variable<String>(hanViet);
+    }
+    if (!nullToAbsent || furigana != null) {
+      map['furigana'] = Variable<String>(furigana);
+    }
     return map;
   }
 
@@ -221,6 +295,18 @@ class VocabularyTableData extends DataClass
       sortOrder: Value(sortOrder),
       syncStatus: Value(syncStatus),
       updatedAt: Value(updatedAt),
+      meaningEn: meaningEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(meaningEn),
+      meaningEnSource: meaningEnSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(meaningEnSource),
+      hanViet: hanViet == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hanViet),
+      furigana: furigana == null && nullToAbsent
+          ? const Value.absent()
+          : Value(furigana),
     );
   }
 
@@ -237,6 +323,10 @@ class VocabularyTableData extends DataClass
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      meaningEn: serializer.fromJson<String?>(json['meaningEn']),
+      meaningEnSource: serializer.fromJson<String?>(json['meaningEnSource']),
+      hanViet: serializer.fromJson<String?>(json['hanViet']),
+      furigana: serializer.fromJson<String?>(json['furigana']),
     );
   }
   @override
@@ -252,6 +342,10 @@ class VocabularyTableData extends DataClass
       'sortOrder': serializer.toJson<int>(sortOrder),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'meaningEn': serializer.toJson<String?>(meaningEn),
+      'meaningEnSource': serializer.toJson<String?>(meaningEnSource),
+      'hanViet': serializer.toJson<String?>(hanViet),
+      'furigana': serializer.toJson<String?>(furigana),
     };
   }
 
@@ -264,7 +358,11 @@ class VocabularyTableData extends DataClass
           String? romaji,
           int? sortOrder,
           String? syncStatus,
-          int? updatedAt}) =>
+          int? updatedAt,
+          Value<String?> meaningEn = const Value.absent(),
+          Value<String?> meaningEnSource = const Value.absent(),
+          Value<String?> hanViet = const Value.absent(),
+          Value<String?> furigana = const Value.absent()}) =>
       VocabularyTableData(
         id: id ?? this.id,
         lessonNumber: lessonNumber ?? this.lessonNumber,
@@ -275,6 +373,12 @@ class VocabularyTableData extends DataClass
         sortOrder: sortOrder ?? this.sortOrder,
         syncStatus: syncStatus ?? this.syncStatus,
         updatedAt: updatedAt ?? this.updatedAt,
+        meaningEn: meaningEn.present ? meaningEn.value : this.meaningEn,
+        meaningEnSource: meaningEnSource.present
+            ? meaningEnSource.value
+            : this.meaningEnSource,
+        hanViet: hanViet.present ? hanViet.value : this.hanViet,
+        furigana: furigana.present ? furigana.value : this.furigana,
       );
   VocabularyTableData copyWithCompanion(VocabularyTableCompanion data) {
     return VocabularyTableData(
@@ -290,6 +394,12 @@ class VocabularyTableData extends DataClass
       syncStatus:
           data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      meaningEn: data.meaningEn.present ? data.meaningEn.value : this.meaningEn,
+      meaningEnSource: data.meaningEnSource.present
+          ? data.meaningEnSource.value
+          : this.meaningEnSource,
+      hanViet: data.hanViet.present ? data.hanViet.value : this.hanViet,
+      furigana: data.furigana.present ? data.furigana.value : this.furigana,
     );
   }
 
@@ -304,14 +414,30 @@ class VocabularyTableData extends DataClass
           ..write('romaji: $romaji, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('syncStatus: $syncStatus, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('meaningEn: $meaningEn, ')
+          ..write('meaningEnSource: $meaningEnSource, ')
+          ..write('hanViet: $hanViet, ')
+          ..write('furigana: $furigana')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, lessonNumber, kana, kanji, meaning,
-      romaji, sortOrder, syncStatus, updatedAt);
+  int get hashCode => Object.hash(
+      id,
+      lessonNumber,
+      kana,
+      kanji,
+      meaning,
+      romaji,
+      sortOrder,
+      syncStatus,
+      updatedAt,
+      meaningEn,
+      meaningEnSource,
+      hanViet,
+      furigana);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -324,7 +450,11 @@ class VocabularyTableData extends DataClass
           other.romaji == this.romaji &&
           other.sortOrder == this.sortOrder &&
           other.syncStatus == this.syncStatus &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.meaningEn == this.meaningEn &&
+          other.meaningEnSource == this.meaningEnSource &&
+          other.hanViet == this.hanViet &&
+          other.furigana == this.furigana);
 }
 
 class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
@@ -337,6 +467,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
   final Value<int> sortOrder;
   final Value<String> syncStatus;
   final Value<int> updatedAt;
+  final Value<String?> meaningEn;
+  final Value<String?> meaningEnSource;
+  final Value<String?> hanViet;
+  final Value<String?> furigana;
   const VocabularyTableCompanion({
     this.id = const Value.absent(),
     this.lessonNumber = const Value.absent(),
@@ -347,6 +481,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
     this.sortOrder = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.meaningEn = const Value.absent(),
+    this.meaningEnSource = const Value.absent(),
+    this.hanViet = const Value.absent(),
+    this.furigana = const Value.absent(),
   });
   VocabularyTableCompanion.insert({
     this.id = const Value.absent(),
@@ -358,6 +496,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
     required int sortOrder,
     this.syncStatus = const Value.absent(),
     required int updatedAt,
+    this.meaningEn = const Value.absent(),
+    this.meaningEnSource = const Value.absent(),
+    this.hanViet = const Value.absent(),
+    this.furigana = const Value.absent(),
   })  : lessonNumber = Value(lessonNumber),
         kana = Value(kana),
         meaning = Value(meaning),
@@ -373,6 +515,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
     Expression<int>? sortOrder,
     Expression<String>? syncStatus,
     Expression<int>? updatedAt,
+    Expression<String>? meaningEn,
+    Expression<String>? meaningEnSource,
+    Expression<String>? hanViet,
+    Expression<String>? furigana,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -384,6 +530,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (meaningEn != null) 'meaning_en': meaningEn,
+      if (meaningEnSource != null) 'meaning_en_source': meaningEnSource,
+      if (hanViet != null) 'han_viet': hanViet,
+      if (furigana != null) 'furigana': furigana,
     });
   }
 
@@ -396,7 +546,11 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
       Value<String>? romaji,
       Value<int>? sortOrder,
       Value<String>? syncStatus,
-      Value<int>? updatedAt}) {
+      Value<int>? updatedAt,
+      Value<String?>? meaningEn,
+      Value<String?>? meaningEnSource,
+      Value<String?>? hanViet,
+      Value<String?>? furigana}) {
     return VocabularyTableCompanion(
       id: id ?? this.id,
       lessonNumber: lessonNumber ?? this.lessonNumber,
@@ -407,6 +561,10 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
       sortOrder: sortOrder ?? this.sortOrder,
       syncStatus: syncStatus ?? this.syncStatus,
       updatedAt: updatedAt ?? this.updatedAt,
+      meaningEn: meaningEn ?? this.meaningEn,
+      meaningEnSource: meaningEnSource ?? this.meaningEnSource,
+      hanViet: hanViet ?? this.hanViet,
+      furigana: furigana ?? this.furigana,
     );
   }
 
@@ -440,6 +598,18 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (meaningEn.present) {
+      map['meaning_en'] = Variable<String>(meaningEn.value);
+    }
+    if (meaningEnSource.present) {
+      map['meaning_en_source'] = Variable<String>(meaningEnSource.value);
+    }
+    if (hanViet.present) {
+      map['han_viet'] = Variable<String>(hanViet.value);
+    }
+    if (furigana.present) {
+      map['furigana'] = Variable<String>(furigana.value);
+    }
     return map;
   }
 
@@ -454,7 +624,11 @@ class VocabularyTableCompanion extends UpdateCompanion<VocabularyTableData> {
           ..write('romaji: $romaji, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('syncStatus: $syncStatus, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('meaningEn: $meaningEn, ')
+          ..write('meaningEnSource: $meaningEnSource, ')
+          ..write('hanViet: $hanViet, ')
+          ..write('furigana: $furigana')
           ..write(')'))
         .toString();
   }
@@ -1297,6 +1471,10 @@ typedef $$VocabularyTableTableCreateCompanionBuilder = VocabularyTableCompanion
   required int sortOrder,
   Value<String> syncStatus,
   required int updatedAt,
+  Value<String?> meaningEn,
+  Value<String?> meaningEnSource,
+  Value<String?> hanViet,
+  Value<String?> furigana,
 });
 typedef $$VocabularyTableTableUpdateCompanionBuilder = VocabularyTableCompanion
     Function({
@@ -1309,6 +1487,10 @@ typedef $$VocabularyTableTableUpdateCompanionBuilder = VocabularyTableCompanion
   Value<int> sortOrder,
   Value<String> syncStatus,
   Value<int> updatedAt,
+  Value<String?> meaningEn,
+  Value<String?> meaningEnSource,
+  Value<String?> hanViet,
+  Value<String?> furigana,
 });
 
 final class $$VocabularyTableTableReferences extends BaseReferences<
@@ -1368,6 +1550,19 @@ class $$VocabularyTableTableFilterComposer
   ColumnFilters<int> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get meaningEn => $composableBuilder(
+      column: $table.meaningEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get meaningEnSource => $composableBuilder(
+      column: $table.meaningEnSource,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hanViet => $composableBuilder(
+      column: $table.hanViet, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get furigana => $composableBuilder(
+      column: $table.furigana, builder: (column) => ColumnFilters(column));
+
   Expression<bool> srsCardTableRefs(
       Expression<bool> Function($$SrsCardTableTableFilterComposer f) f) {
     final $$SrsCardTableTableFilterComposer composer = $composerBuilder(
@@ -1426,6 +1621,19 @@ class $$VocabularyTableTableOrderingComposer
 
   ColumnOrderings<int> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get meaningEn => $composableBuilder(
+      column: $table.meaningEn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get meaningEnSource => $composableBuilder(
+      column: $table.meaningEnSource,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hanViet => $composableBuilder(
+      column: $table.hanViet, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get furigana => $composableBuilder(
+      column: $table.furigana, builder: (column) => ColumnOrderings(column));
 }
 
 class $$VocabularyTableTableAnnotationComposer
@@ -1463,6 +1671,18 @@ class $$VocabularyTableTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get meaningEn =>
+      $composableBuilder(column: $table.meaningEn, builder: (column) => column);
+
+  GeneratedColumn<String> get meaningEnSource => $composableBuilder(
+      column: $table.meaningEnSource, builder: (column) => column);
+
+  GeneratedColumn<String> get hanViet =>
+      $composableBuilder(column: $table.hanViet, builder: (column) => column);
+
+  GeneratedColumn<String> get furigana =>
+      $composableBuilder(column: $table.furigana, builder: (column) => column);
 
   Expression<T> srsCardTableRefs<T extends Object>(
       Expression<T> Function($$SrsCardTableTableAnnotationComposer a) f) {
@@ -1519,6 +1739,10 @@ class $$VocabularyTableTableTableManager extends RootTableManager<
             Value<int> sortOrder = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
             Value<int> updatedAt = const Value.absent(),
+            Value<String?> meaningEn = const Value.absent(),
+            Value<String?> meaningEnSource = const Value.absent(),
+            Value<String?> hanViet = const Value.absent(),
+            Value<String?> furigana = const Value.absent(),
           }) =>
               VocabularyTableCompanion(
             id: id,
@@ -1530,6 +1754,10 @@ class $$VocabularyTableTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             syncStatus: syncStatus,
             updatedAt: updatedAt,
+            meaningEn: meaningEn,
+            meaningEnSource: meaningEnSource,
+            hanViet: hanViet,
+            furigana: furigana,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1541,6 +1769,10 @@ class $$VocabularyTableTableTableManager extends RootTableManager<
             required int sortOrder,
             Value<String> syncStatus = const Value.absent(),
             required int updatedAt,
+            Value<String?> meaningEn = const Value.absent(),
+            Value<String?> meaningEnSource = const Value.absent(),
+            Value<String?> hanViet = const Value.absent(),
+            Value<String?> furigana = const Value.absent(),
           }) =>
               VocabularyTableCompanion.insert(
             id: id,
@@ -1552,6 +1784,10 @@ class $$VocabularyTableTableTableManager extends RootTableManager<
             sortOrder: sortOrder,
             syncStatus: syncStatus,
             updatedAt: updatedAt,
+            meaningEn: meaningEn,
+            meaningEnSource: meaningEnSource,
+            hanViet: hanViet,
+            furigana: furigana,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

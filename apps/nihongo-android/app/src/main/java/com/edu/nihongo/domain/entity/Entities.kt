@@ -15,6 +15,12 @@ data class Vocabulary(
     val romaji: String,
     val sortOrder: Int,
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val meaningEn: String? = null,
+    /** manual | jmdict | ai — "ai" thì UI ghi "dịch máy". */
+    val meaningEnSource: String? = null,
+    val hanViet: String? = null,
+    /** Cặp (chữ, cách đọc); cách đọc rỗng = không cần furigana. Rỗng cả list = không tách được. */
+    val furigana: List<Pair<String, String>> = emptyList(),
 )
 
 data class SrsCard(

@@ -80,6 +80,10 @@ export interface VocabDto {
   kanji?: string | null;
   meaning?: string;
   romaji?: string;
+  meaningEn?: string | null;
+  meaningEnSource?: string | null;
+  hanViet?: string | null;
+  furigana?: string | null;
 }
 
 

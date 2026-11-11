@@ -11,10 +11,12 @@ describe("VocabulariesService", () => {
   let service: VocabulariesService;
   let prisma: {
     lesson: { findUnique: jest.Mock };
+    kanjiEntry: { findMany: jest.Mock };
     vocabulary: {
       findMany: jest.Mock;
       count: jest.Mock;
       findUnique: jest.Mock;
+      findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
@@ -32,10 +34,12 @@ describe("VocabulariesService", () => {
   beforeEach(async () => {
     prisma = {
       lesson: { findUnique: jest.fn() },
+      kanjiEntry: { findMany: jest.fn().mockResolvedValue([]) },
       vocabulary: {
         findMany: jest.fn(),
         count: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
@@ -146,6 +150,89 @@ describe("VocabulariesService", () => {
         }),
       }),
     );
+  });
+
+  it("create tính furigana và ghi nguồn manual cho nghĩa tiếng Anh", async () => {
+    prisma.vocabulary.create.mockResolvedValue({ id: 1 });
+    await service.create({
+      kanji: "食べます",
+      kana: "たべます",
+      romaji: "tabemasu",
+      meaning: "ăn",
+      meaningEn: " to eat ",
+      lessonId: 1,
+    });
+    const data = prisma.vocabulary.create.mock.calls[0][0].data;
+    expect(JSON.parse(data.furigana)).toEqual([
+      ["食", "た"],
+      ["べます", ""],
+    ]);
+    expect(data.meaningEn).toBe("to eat");
+    expect(data.meaningEnSource).toBe("manual");
+  });
+
+  it("update tính lại furigana khi đổi kanji; sửa nghĩa EN thì nguồn thành manual", async () => {
+    prisma.vocabulary.findUnique.mockResolvedValue({
+      lessonId: 1,
+      kanji: "食べます",
+      kana: "たべます",
+      meaningEn: "to eat",
+    });
+    prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });
+    await service.update(7, { kanji: "喰べます", meaningEn: "to devour" });
+    const data = prisma.vocabulary.update.mock.calls[0][0].data;
+    expect(JSON.parse(data.furigana)).toEqual([
+      ["喰", "た"],
+      ["べます", ""],
+    ]);
+    expect(data.meaningEnSource).toBe("manual");
+  });
+
+  it("tạo/sửa kanji thì tính Hán Việt từ KanjiEntry (chữ nhiều âm lấy âm đầu)", async () => {
+    prisma.kanjiEntry.findMany.mockResolvedValue([
+      { character: "学", hanViet: "học" },
+      { character: "生", hanViet: "SINH" },
+      { character: "行", hanViet: "HÀNH, HÀNG" },
+    ]);
+    prisma.vocabulary.create.mockResolvedValue({ id: 1 });
+    await service.create({ kanji: "学生", kana: "がくせい", romaji: "gakusei", meaning: "học sinh", lessonId: 1 });
+    expect(prisma.vocabulary.create.mock.calls[0][0].data.hanViet).toBe("HỌC SINH");
+
+    prisma.vocabulary.findUnique.mockResolvedValue({ lessonId: 1, kanji: "学生", kana: "がくせい", meaningEn: null });
+    prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });
+    await service.update(7, { kanji: "行", kana: "ぎょう" });
+    expect(prisma.vocabulary.update.mock.calls[0][0].data.hanViet).toBe("HÀNH");
+  });
+
+  it("dùng lại Hán Việt của từ khác cùng chữ (đã qua bảng ngoại lệ: 銀行 → NGÂN HÀNG)", async () => {
+    prisma.vocabulary.findFirst.mockResolvedValue({ hanViet: "NGÂN HÀNG" });
+    prisma.kanjiEntry.findMany.mockResolvedValue([
+      { character: "銀", hanViet: "NGÂN" },
+      { character: "行", hanViet: "HÀNH, HÀNG" },
+    ]);
+    prisma.vocabulary.create.mockResolvedValue({ id: 1 });
+    await service.create({ kanji: "銀行", kana: "ぎんこう", romaji: "ginkou", meaning: "ngân hàng", lessonId: 1 });
+    expect(prisma.vocabulary.create.mock.calls[0][0].data.hanViet).toBe("NGÂN HÀNG");
+    expect(prisma.kanjiEntry.findMany).not.toHaveBeenCalled();
+  });
+
+  it("Hán Việt null khi thiếu âm của một chữ hoặc có chữ số", async () => {
+    prisma.kanjiEntry.findMany.mockResolvedValue([{ character: "日", hanViet: "NHẬT" }]);
+    prisma.vocabulary.create.mockResolvedValue({ id: 1 });
+    await service.create({ kanji: "１４日", kana: "じゅうよっか", romaji: "juuyokka", meaning: "ngày 14", lessonId: 1 });
+    await service.create({ kanji: "日本", kana: "にほん", romaji: "nihon", meaning: "Nhật Bản", lessonId: 1 });
+    expect(prisma.vocabulary.create.mock.calls[0][0].data.hanViet).toBeNull();
+    expect(prisma.vocabulary.create.mock.calls[1][0].data.hanViet).toBeNull();
+  });
+
+  it("update không đụng kanji/kana thì giữ furigana cũ", async () => {
+    prisma.vocabulary.findUnique.mockResolvedValue({ lessonId: 1, kanji: "私", kana: "わたし" });
+    prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });
+    await service.update(7, { meaning: "tôi" });
+    const data = prisma.vocabulary.update.mock.calls[0][0].data;
+    expect(data).not.toHaveProperty("furigana");
+    expect(data).not.toHaveProperty("meaningEnSource");
+    expect(data).not.toHaveProperty("hanViet");
   });
 
   it("create stores the example sentence in VocabularyExample", async () => {
@@ -320,7 +407,8 @@ describe("tra từ romaji không dấu (Trie)", () => {
   it("query không phải romaji (kana) thì không đụng tới chỉ mục", async () => {
     await service.findAll(undefined, 1, 20, undefined, "かんどう");
     expect(indexBuilds()).toBe(0);
-    expect(containsWhere().OR).toHaveLength(4);
+    // kanji, kana, romaji, meaning, meaningEn — không có điều kiện id từ chỉ mục romaji
+    expect(containsWhere().OR).toHaveLength(5);
   });
 
   it("chỉ mục dựng một lần rồi dùng lại; sửa từ thì dựng lại", async () => {

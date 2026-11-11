@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { VocabExtraMeanings } from '../src/components/VocabReading';
 import { getAllVocab } from '../src/data/repository';
 import type { Vocabulary } from '../src/domain/entities';
 import { RomajiTrie } from '../src/utils/romajiTrie';
@@ -63,6 +64,7 @@ export default function VocabSearchScreen() {
               <Text style={styles.kana}>{item.kanji ? `${item.kana}  ·  ${item.kanji}` : item.kana}</Text>
               <Text style={styles.romaji}>{item.romaji}</Text>
               <Text>{item.meaning}</Text>
+              <VocabExtraMeanings hanViet={item.hanViet} meaningEn={item.meaningEn} source={item.meaningEnSource} />
               <Text style={styles.lesson}>Bài {item.lessonNumber}</Text>
             </Pressable>
           )}

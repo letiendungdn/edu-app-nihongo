@@ -48,6 +48,13 @@ export interface Vocabulary {
   partOfSpeech?: string | null;
   imageUrl?: string | null;
   pitchAccent?: string | null;
+  /** Nghĩa tiếng Anh; nguồn: manual (người soạn) | jmdict | ai (dịch máy, hiện nhãn) */
+  meaningEn?: string | null;
+  meaningEnSource?: 'manual' | 'jmdict' | 'ai' | null;
+  /** Âm Hán Việt của cả từ: 学生 → HỌC SINH */
+  hanViet?: string | null;
+  /** JSON [[chữ, cách đọc], …] — xem parseFurigana */
+  furigana?: string | null;
   /** Câu ví dụ đầu tiên (giữ cho client cũ); đủ các câu nằm ở `examples`. */
   exampleJa?: string | null;
   exampleKana?: string | null;

@@ -62,7 +62,7 @@ final class MemoryTokenStore: TokenStoring {
 
 @MainActor
 func makeMemoryContainer() throws -> ModelContainer {
-    let schema = Schema(versionedSchema: SchemaV2.self)
+    let schema = Schema(versionedSchema: SchemaV3.self)
     return try ModelContainer(for: schema, configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)])
 }
 

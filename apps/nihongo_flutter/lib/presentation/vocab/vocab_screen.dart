@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/repository/result.dart';
 import '../../providers.dart';
 import '../../utils/tts_service.dart';
+import '../widgets/vocab_reading.dart';
 
 class VocabScreen extends ConsumerStatefulWidget {
   const VocabScreen({super.key});
@@ -178,10 +179,23 @@ class _VocabScreenState extends ConsumerState<VocabScreen> {
                   );
                 }
 
+                // Bài tải từ bản cũ (chưa có nghĩa EN / Hán Việt / furigana): tải lại một lần, chạy nền,
+                // danh sách hiện tại vẫn hiển thị trong lúc chờ
+                final fromOldVersion = vocabList.every(
+                  (v) => v.meaningEn == null && v.hanViet == null && v.furigana.isEmpty,
+                );
+                if (fromOldVersion && !_autoSyncedLessons.contains(lesson) && !_syncing) {
+                  _autoSyncedLessons.add(lesson);
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => _syncLesson(silent: true),
+                  );
+                }
+                final hasJmdict = vocabList.any((v) => v.meaningEnSource == 'jmdict');
                 return ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: vocabList.length,
+                  itemCount: vocabList.length + (hasJmdict ? 1 : 0),
                   itemBuilder: (context, index) {
+                    if (index == vocabList.length) return const JmdictAttribution();
                     final v = vocabList[index];
                     final isPlaying = _speakingId == v.id;
                     final jpText = (v.kanji != null && v.kanji!.isNotEmpty)
@@ -214,16 +228,11 @@ class _VocabScreenState extends ConsumerState<VocabScreen> {
                           ),
                         ),
                         title: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(
-                              jpText,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                height: 1.2,
-                              ),
-                            ),
-                            if (v.kanji != null && v.kanji!.isNotEmpty) ...[
+                            FuriganaText(segments: v.furigana, fallback: jpText),
+                            // Có furigana thì cách đọc đã nằm trên chữ: không lặp lại kana
+                            if (v.furigana.isEmpty && v.kanji != null && v.kanji!.isNotEmpty) ...[
                               const SizedBox(width: 8),
                               Text(
                                 subText,
@@ -237,9 +246,19 @@ class _VocabScreenState extends ConsumerState<VocabScreen> {
                         ),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            v.meaning,
-                            style: TextStyle(color: scheme.onSurfaceVariant),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                v.meaning,
+                                style: TextStyle(color: scheme.onSurfaceVariant),
+                              ),
+                              VocabExtraMeanings(
+                                hanViet: v.hanViet,
+                                meaningEn: v.meaningEn,
+                                source: v.meaningEnSource,
+                              ),
+                            ],
                           ),
                         ),
                         trailing: IconButton(
