@@ -27,7 +27,7 @@
     "react-native": "0.87.1",
     "react-native-app-auth": "^8.1.0",
     "react-native-gesture-handler": "^2.27.1",
-    "react-native-mmkv": "^3.3.0",
+    "react-native-mmkv": "^4.3.2",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.10.0",
     "zustand": "^5.0.5"
