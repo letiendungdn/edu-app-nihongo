@@ -29,6 +29,9 @@ export interface KatakanaVocabulary {
   kana: string;
   romaji: string;
   meaning: string;
+  /** Nghĩa tiếng Anh; nguồn ai thì hiện nhãn "dịch máy" (xem Vocabulary.meaningEnSource) */
+  meaningEn?: string | null;
+  meaningEnSource?: 'manual' | 'jmdict' | 'ai' | null;
   jlptLevel: string | null;
   lesson: {
     lessonNumber: number;
@@ -142,6 +145,8 @@ export interface KanjiEntry {
   onyomi: string | null;
   kunyomi: string | null;
   meaningVi: string;
+  /** Nghĩa tiếng Anh từ KANJIDIC2 (CC BY-SA 4.0, EDRDG) */
+  meaningEn?: string | null;
   jlptLevel?: string | null;
   mnemonicJp?: string | null;
   mnemonicVi?: string | null;

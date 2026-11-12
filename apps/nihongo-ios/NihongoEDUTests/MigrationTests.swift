@@ -58,6 +58,29 @@ final class MigrationTests: XCTestCase {
         XCTAssertEqual(try ctx.fetch(FetchDescriptor<VocabularyExtra>()).first?.meaningEn, "to eat")
     }
 
+    /// Store V3 lên V4: giữ dữ liệu, có thêm bảng KanjiExtra trống.
+    func testV3StoreUpgradesToV4KeepingData() throws {
+        do {
+            let schema = Schema(versionedSchema: SchemaV3.self)
+            let old = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, url: storeURL))
+            let card = seedCard(old.mainContext, id: 11, nextReviewAt: fixedNow)
+            card.syncStatus = "pending"
+            old.mainContext.insert(VocabularyExtra(vocabId: 11, meaningEn: "to eat", meaningEnSource: "jmdict"))
+            try old.mainContext.save()
+        }
+
+        let (container, quarantined) = try AppStore.makeContainer(storeURL: storeURL)
+        let ctx = container.mainContext
+
+        XCTAssertNil(quarantined, "store V3 phải migrate được, không bị cất đi")
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<SRSCard>()).first?.syncStatus, "pending")
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<VocabularyExtra>()).first?.meaningEn, "to eat")
+        XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<KanjiExtra>()), 0)
+        ctx.insert(KanjiExtra(kanjiId: 1, meaningEn: "one"))
+        try ctx.save()
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<KanjiExtra>()).first?.meaningEn, "one")
+    }
+
     /// Bản cũ: store không mở được thì XÓA cả Application Support. Giờ: cất sang Quarantine.
     func testUnreadableStoreIsQuarantinedNotDeleted() throws {
         try Data("rác, không phải SQLite".utf8).write(to: storeURL)

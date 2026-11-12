@@ -907,3 +907,16 @@
   }
 }
 
+
+/* Nghĩa tiếng Anh (KANJIDIC2) trong ô chi tiết, popup và bảng */
+.kanji-meaning-en {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.kanji-meaning-en .vocab-extra__tag {
+  margin-right: 0.25rem;
+}
+.kanji-list-meaning-en {
+  color: var(--text-secondary);
+}

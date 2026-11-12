@@ -72,6 +72,7 @@ data class KanjiDto(
     val meaningVi: String? = null,
     val mnemonicVi: String? = null,
     val sortOrder: Int? = null,
+    val meaningEn: String? = null,
 )
 
 data class ReadingSummaryDto(

@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.edu.nihongo.domain.entity.Grammar
 import com.edu.nihongo.domain.entity.Kanji
 import com.edu.nihongo.presentation.common.BackScaffold
+import com.edu.nihongo.presentation.common.KanjidicAttribution
+import com.edu.nihongo.presentation.common.SpeakEnglishText
 import com.edu.nihongo.presentation.common.LoadingBox
 import com.edu.nihongo.presentation.common.MessageBox
 import com.edu.nihongo.presentation.common.StaleBanner
@@ -71,7 +73,16 @@ private fun GrammarTab(viewModel: GrammarViewModel = hiltViewModel()) {
 @Composable
 private fun KanjiTab(viewModel: KanjiViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    CachedList(state, "Chưa có kanji cho bài này.", viewModel::refresh) { KanjiCard(it) }
+    CachedList(
+        state,
+        "Chưa có kanji cho bài này.",
+        viewModel::refresh,
+        footer = if (state.items.any { !it.meaningEn.isNullOrBlank() }) {
+            { KanjidicAttribution() }
+        } else {
+            null
+        },
+    ) { KanjiCard(it) }
 }
 
 @Composable
@@ -79,6 +90,7 @@ private fun <T> CachedList(
     state: CachedListState<T>,
     emptyText: String,
     onRetry: () -> Unit,
+    footer: (@Composable () -> Unit)? = null,
     item: @Composable (T) -> Unit,
 ) {
     when {
@@ -90,6 +102,7 @@ private fun <T> CachedList(
         ) {
             item { StaleBanner(state.error) }
             items(state.items) { item(it) }
+            footer?.let { f -> item { f() } }
         }
     }
 }
@@ -121,6 +134,16 @@ private fun KanjiCard(k: Kanji) {
             Column(Modifier.weight(1f)) {
                 k.hanViet?.let { Text(it, style = MaterialTheme.typography.titleSmall) }
                 k.meaning?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                k.meaningEn?.takeIf { it.isNotBlank() }?.let {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "EN  ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        SpeakEnglishText(it)
+                    }
+                }
                 k.onyomi?.takeIf { it.isNotBlank() }?.let { Text("On: $it", style = MaterialTheme.typography.bodySmall) }
                 k.kunyomi?.takeIf { it.isNotBlank() }?.let { Text("Kun: $it", style = MaterialTheme.typography.bodySmall) }
                 k.mnemonic?.takeIf { it.isNotBlank() }?.let {

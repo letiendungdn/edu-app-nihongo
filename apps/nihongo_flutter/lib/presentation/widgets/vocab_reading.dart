@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/vocab/furigana.dart';
+import '../../utils/tts_service.dart';
 
 /// Kanji có furigana nhỏ phía trên. Cách đọc đặt trong Stack (Clip.none) phía trên chữ và được tràn sang
 /// hai bên, KHÔNG làm chữ rộng ra (わたし rộng hơn 私 sẽ đẩy thành "私 たち" có khoảng trống).
@@ -83,7 +84,7 @@ class VocabExtraMeanings extends StatelessWidget {
           if (hv != null) Text(hv, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
           if (en != null) ...[
             Text('EN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: scheme.primary)),
-            Text(en, style: const TextStyle(fontSize: 12)),
+            SpeakEnglishText(en),
             if (source == 'ai')
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -98,6 +99,56 @@ class VocabExtraMeanings extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Nghĩa tiếng Anh dạng nút: chạm để nghe (giọng en-US). InkWell riêng nên chạm vào đây không kích hoạt
+/// hành động của thẻ chứa nó. [onSpeak] để test thay bằng hàm giả.
+class SpeakEnglishText extends StatelessWidget {
+  const SpeakEnglishText(this.text, {super.key, this.style, this.onSpeak});
+
+  final String text;
+  final TextStyle? style;
+  final void Function(String text)? onSpeak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Nghe tiếng Anh: $text',
+      excludeSemantics: true,
+      child: InkWell(
+        key: const Key('speak-en'),
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => (onSpeak ?? TtsService.instance.speakEnglish)(text),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: Text(text, style: style ?? const TextStyle(fontSize: 12))),
+              const SizedBox(width: 3),
+              Icon(Icons.volume_up_outlined, size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Nghĩa tiếng Anh của kanji lấy từ KANJIDIC2 (cùng giấy phép CC BY-SA 4.0 của EDRDG): phải ghi nguồn.
+class KanjidicAttribution extends StatelessWidget {
+  const KanjidicAttribution({super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'Nghĩa tiếng Anh của kanji: KANJIDIC2 © EDRDG, CC BY-SA 4.0 (edrdg.org)',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      );
 }
 
 /// Giấy phép CC BY-SA 4.0 của JMdict yêu cầu ghi nguồn nơi hiển thị dữ liệu.

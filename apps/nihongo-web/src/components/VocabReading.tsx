@@ -1,6 +1,45 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import type { Vocabulary } from '@/types/api';
+import { playAudio } from '@/utils/speech';
+import SpeakerIcon from './SpeakerIcon';
+import './VocabReading.css';
+
+/**
+ * Chữ đưa cho giọng đọc: bỏ ghi chú trong ngoặc ("(in textbook)"), dấu ~ của mẫu câu,
+ * đổi ";" thành "," để giọng đọc ngắt nghỉ tự nhiên.
+ */
+export function englishForSpeech(text: string): string {
+  return text
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[~～]/g, ' ')
+    .replace(/\s*;\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+,/g, ',')
+    .trim();
+}
+
+/** Nghĩa tiếng Anh dạng nút: bấm để nghe (giọng en-US). Không lan click ra thẻ/hàng chứa nó. */
+export function SpeakEnglishButton({ text, className }: { text: string; className?: string }) {
+  const onClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    playAudio(englishForSpeech(text) || text, 'en-US');
+  };
+  return (
+    <button
+      type="button"
+      lang="en"
+      className={`speak-en${className ? ` ${className}` : ''}`}
+      title="Bấm để nghe tiếng Anh"
+      aria-label={`Nghe tiếng Anh: ${text}`}
+      onClick={onClick}
+    >
+      <span className="speak-en__text">{text}</span>
+      <SpeakerIcon className="speak-en__icon" size={13} />
+    </button>
+  );
+}
 
 /** Cột Vocabulary.furigana: JSON [[chữ, cách đọc], …]. Hỏng hoặc trống → null. */
 export function parseFurigana(raw: string | null | undefined): [string, string][] | null {
@@ -52,7 +91,7 @@ export function VocabExtraMeanings({ vocab }: { vocab: Pick<Vocabulary, 'hanViet
       {vocab.meaningEn ? (
         <span className="vocab-extra__en" lang="en">
           <span className="vocab-extra__tag">EN</span>
-          {vocab.meaningEn}
+          <SpeakEnglishButton text={vocab.meaningEn} />
           {vocab.meaningEnSource === 'ai' ? (
             <span className="vocab-extra__ai" title="Nghĩa tiếng Anh do máy dịch, có thể chưa chính xác">
               dịch máy
@@ -60,6 +99,23 @@ export function VocabExtraMeanings({ vocab }: { vocab: Pick<Vocabulary, 'hanViet
           ) : null}
         </span>
       ) : null}
+    </p>
+  );
+}
+
+/** Ghi nguồn KANJIDIC2 (nghĩa tiếng Anh của kanji): cùng giấy phép CC BY-SA 4.0 của EDRDG như JMdict. */
+export function KanjidicAttribution() {
+  return (
+    <p className="vocab-attribution">
+      Nghĩa tiếng Anh của kanji lấy từ{' '}
+      <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noreferrer">
+        KANJIDIC2
+      </a>{' '}
+      © EDRDG,{' '}
+      <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">
+        CC BY-SA 4.0
+      </a>
+      .
     </p>
   );
 }

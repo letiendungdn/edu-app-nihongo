@@ -23,6 +23,7 @@ import { getKanjiSpeakItems, splitKanjiReadingField, type KanjiReadingToken } fr
 import type { KanjiEntry, KanjiLesson } from '../types/api';
 import './VocabView.css';
 import './KanjiView.css';
+import { KanjidicAttribution, SpeakEnglishButton } from '../components/VocabReading';
 
 /** Trang đã có thao tác của người dùng chưa (điều kiện để trình duyệt cho phát âm). */
 function hasUserActivation(): boolean {
@@ -421,6 +422,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                         <span className="kanji-search-meta">
                           {entry.hanViet ? `${entry.hanViet} · ` : ''}
                           {entry.meaningVi}
+                          {entry.meaningEn ? <span lang="en" className="kanji-search-en"> · {entry.meaningEn}</span> : null}
                         </span>
                         <span className="kanji-search-lesson">
                           Bài {entry.lesson?.lessonNumber ?? '?'}
@@ -512,6 +514,14 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                       <dt>Nghĩa:</dt>
                       <dd className="kanji-ll__meaning">{currentKanji.meaningVi}</dd>
                     </div>
+                    {currentKanji.meaningEn ? (
+                      <div className="kanji-ll__meaning-row">
+                        <dt>Tiếng Anh:</dt>
+                        <dd className="kanji-ll__meaning-en" lang="en">
+                          <SpeakEnglishButton text={currentKanji.meaningEn} />
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                 </div>
               </div>
@@ -558,6 +568,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
           </p>
         </div>
       )}
+      {currentKanji?.meaningEn ? <KanjidicAttribution /> : null}
     </div>
   );
 }

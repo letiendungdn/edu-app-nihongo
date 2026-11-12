@@ -22,6 +22,7 @@ import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import StrokeOrder from '../components/StrokeOrder';
 import KanjiStructureButton from '../components/KanjiStructureButton';
+import { KanjidicAttribution, SpeakEnglishButton } from '../components/VocabReading';
 import type {
   CreateKanjiEntryInput,
   KanjiEntry,
@@ -96,6 +97,7 @@ function matchesSearch(entry: KanjiEntry, query: string): boolean {
     entry.onyomi,
     entry.kunyomi,
     entry.meaningVi,
+    entry.meaningEn,
     entry.jlptLevel,
     entry.lesson?.jlptLevel,
     entry.lesson?.title,
@@ -239,6 +241,11 @@ function KanjiPopup({
         </div>
 
         <p className="kanji-popup-meaning">{entry.meaningVi}</p>
+        {entry.meaningEn ? (
+          <p className="kanji-meaning-en" lang="en">
+            <span className="vocab-extra__tag">EN</span> <SpeakEnglishButton text={entry.meaningEn} />
+          </p>
+        ) : null}
 
         <button
           type="button"
@@ -706,7 +713,7 @@ export default function KanjiListView({
         <input
           type="search"
           className="kanji-list-search"
-          placeholder="Lọc kanji, Hán Việt, âm đọc, nghĩa, JLPT..."
+          placeholder="Lọc kanji, Hán Việt, âm đọc, nghĩa (Việt/Anh), JLPT..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           aria-label="Lọc kanji trong bảng"
@@ -806,6 +813,11 @@ export default function KanjiListView({
                     ON: {selectedEntry.onyomi ?? '—'} · KUN: {selectedEntry.kunyomi ?? '—'}
                   </p>
                   <p className="kanji-cell-detail-meaning">{selectedEntry.meaningVi}</p>
+                  {selectedEntry.meaningEn ? (
+                    <p className="kanji-meaning-en" lang="en">
+                      <span className="vocab-extra__tag">EN</span> <SpeakEnglishButton text={selectedEntry.meaningEn} />
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="kanji-cell-detail-meta">
@@ -860,6 +872,7 @@ export default function KanjiListView({
                 <th>Âm ON</th>
                 <th>Âm KUN</th>
                 <th>Nghĩa</th>
+                <th lang="en">Tiếng Anh</th>
                 <th>Bài</th>
                 {canEdit && <th>Thao tác</th>}
               </tr>
@@ -905,6 +918,9 @@ export default function KanjiListView({
                   <td className="kanji-list-reading">{entry.onyomi ?? '—'}</td>
                   <td className="kanji-list-reading">{entry.kunyomi ?? '—'}</td>
                   <td className="kanji-list-meaning">{entry.meaningVi}</td>
+                  <td className="kanji-list-meaning-en" lang="en">
+                    {entry.meaningEn ? <SpeakEnglishButton text={entry.meaningEn} /> : '—'}
+                  </td>
                   <td className="kanji-list-lesson">
                     {entry.lesson?.lessonNumber != null
                       ? `Bài ${entry.lesson.lessonNumber}`
@@ -935,6 +951,8 @@ export default function KanjiListView({
           </table>
         </div>
       )}
+
+      <KanjidicAttribution />
 
       {popupEntry && (
         <KanjiPopup

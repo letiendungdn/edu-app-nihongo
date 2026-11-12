@@ -2216,3 +2216,22 @@ select {
   line-height: 1.35;
   color: var(--text-secondary);
 }
+
+/* ═══════════════════════════════════════════════════════
+   BỀ NGANG TRANG: mọi trang trong vùng nội dung chính dùng hết bề ngang màn hình lớn.
+   Từng trang vẫn tự đặt max-width riêng (1100px, 1200px, 960px…); rule dưới .app-main có độ ưu tiên
+   cao hơn (2 class) nên thắng tất cả mà không phải sửa từng file. Giữ padding 2 bên của .container.
+   ═══════════════════════════════════════════════════════ */
+.app-main .container,
+.app-main .page-wrap,
+.app-main .home-page {
+  max-width: none;
+  width: 100%;
+}
+
+/* Khung con bên trong cũng tự giới hạn bề ngang: thẻ học từ vựng, nội dung ngữ pháp, khung Kana */
+.app-main .vocab-view .vocab-body-layout,
+.app-main .grammar-view .grammar-content,
+.app-main .kana-main-layout {
+  max-width: none;
+}

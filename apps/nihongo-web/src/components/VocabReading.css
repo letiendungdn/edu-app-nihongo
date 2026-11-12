@@ -1,0 +1,86 @@
+/* Hán Việt, nghĩa tiếng Anh, nhãn "dịch máy", ghi nguồn JMdict: dùng ở VocabView, KatakanaVocabView… */
+.vocab-extra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.9rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+.vocab-extra__hanviet {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-primary, inherit);
+}
+.vocab-extra__en {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.vocab-extra__tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  opacity: 0.7;
+}
+/* Mặc định của web là theme tối: chữ vàng sáng trên nền cam mờ; theme sáng dùng cam đậm */
+.vocab-extra__ai {
+  margin-left: 0.35rem;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  color: #fcd34d;
+}
+[data-theme="light"] .vocab-extra__ai {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #b45309;
+}
+.vocab-attribution {
+  margin: 0.75rem 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.vocab-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Nghĩa tiếng Anh dạng nút: trông như chữ thường, có loa nhỏ; bấm để nghe */
+.speak-en {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  margin: -0.05rem -0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.speak-en:hover,
+.speak-en:focus-visible {
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--text-primary);
+  outline: none;
+}
+.speak-en:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+.speak-en__icon {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+.speak-en:hover .speak-en__icon {
+  opacity: 1;
+  color: var(--primary-color);
+}

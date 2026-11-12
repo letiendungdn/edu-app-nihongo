@@ -84,6 +84,8 @@ data class KanjiEntity(
     @ColumnInfo(name = "meaning_vi") val meaningVi: String?,
     @ColumnInfo(name = "mnemonic_vi") val mnemonicVi: String?,
     @ColumnInfo(name = "sort_order") val sortOrder: Int,
+    // v5: nghĩa tiếng Anh từ KANJIDIC2
+    @ColumnInfo(name = "meaning_en") val meaningEn: String? = null,
 )
 
 @Entity(tableName = "reading_passage")

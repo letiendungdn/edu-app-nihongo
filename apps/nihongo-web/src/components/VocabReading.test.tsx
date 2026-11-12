@@ -1,6 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { FuriganaWord, VocabExtraMeanings, parseFurigana } from './VocabReading';
+import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+
+const speech = vi.hoisted(() => ({ playAudio: vi.fn() }));
+vi.mock('@/utils/speech', () => speech);
+
+import {
+  FuriganaWord,
+  SpeakEnglishButton,
+  VocabExtraMeanings,
+  englishForSpeech,
+  parseFurigana,
+} from './VocabReading';
 
 describe('parseFurigana', () => {
   it('đọc JSON hợp lệ, bỏ qua dữ liệu hỏng', () => {
@@ -45,5 +55,30 @@ describe('VocabExtraMeanings', () => {
     expect(screen.queryByText('dịch máy')).toBeNull();
     rerender(<VocabExtraMeanings vocab={{ hanViet: null, meaningEn: null, meaningEnSource: null }} />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('nghĩa tiếng Anh bấm để nghe', () => {
+  it('englishForSpeech bỏ ghi chú trong ngoặc, dấu ~, đổi ; thành ,', () => {
+    expect(englishForSpeech('fictional company (in textbook)')).toBe('fictional company');
+    expect(englishForSpeech('to turn on; to switch on')).toBe('to turn on, to switch on');
+    expect(englishForSpeech('this ~ (near the speaker)')).toBe('this');
+  });
+
+  it('bấm nút thì đọc bằng giọng en-US, không lan click ra ngoài', () => {
+    const outer = vi.fn();
+    render(
+      <div onClick={outer}>
+        <SpeakEnglishButton text="to eat; to have a meal" />
+      </div>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Nghe tiếng Anh/ }));
+    expect(speech.playAudio).toHaveBeenCalledWith('to eat, to have a meal', 'en-US');
+    expect(outer).not.toHaveBeenCalled();
+  });
+
+  it('VocabExtraMeanings hiện nghĩa tiếng Anh dạng nút', () => {
+    render(<VocabExtraMeanings vocab={{ hanViet: null, meaningEn: 'student', meaningEnSource: 'jmdict' }} />);
+    expect(screen.getByRole('button', { name: 'Nghe tiếng Anh: student' })).toBeTruthy();
   });
 });

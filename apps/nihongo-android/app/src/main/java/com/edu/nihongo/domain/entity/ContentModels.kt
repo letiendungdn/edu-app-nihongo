@@ -41,6 +41,8 @@ data class Kanji(
     val kunyomi: String?,
     val meaning: String?,
     val mnemonic: String?,
+    /** Nghĩa tiếng Anh (KANJIDIC2, CC BY-SA 4.0 — ghi nguồn ở màn kanji). */
+    val meaningEn: String? = null,
 )
 
 data class ReadingPassage(

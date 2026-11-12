@@ -12,6 +12,7 @@ import 'data/remote/push_service.dart';
 import 'data/remote/sentence_practice_api.dart';
 import 'data/remote/subscription_api.dart';
 import 'data/remote/translate_api.dart';
+import 'data/remote/kanji_api.dart';
 import 'data/remote/vocabulary_api.dart';
 import 'data/repository/vocabulary_repository_impl.dart';
 import 'domain/entity/srs_card.dart';
@@ -32,6 +33,8 @@ final dioProvider = Provider((ref) => createDio(ref.watch(tokenStoreProvider)));
 
 final vocabularyApiProvider =
     Provider((ref) => VocabularyApi(ref.watch(dioProvider)));
+
+final kanjiApiProvider = Provider((ref) => KanjiApi(ref.watch(dioProvider)));
 
 final authApiProvider = Provider(
   (ref) => AuthApi(ref.watch(dioProvider), ref.watch(tokenStoreProvider)),

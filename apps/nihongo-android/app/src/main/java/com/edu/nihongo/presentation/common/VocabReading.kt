@@ -1,5 +1,6 @@
 package com.edu.nihongo.presentation.common
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.edu.nihongo.domain.entity.Vocabulary
+import com.edu.nihongo.utils.TtsHelper
 
 /**
  * Kanji có furigana nhỏ phía trên. Compose không có thẻ <ruby> như web nên tự vẽ:
@@ -89,7 +92,7 @@ fun VocabExtraMeanings(vocab: Vocabulary, modifier: Modifier = Modifier) {
         vocab.meaningEn?.takeIf { it.isNotBlank() }?.let { en ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("EN", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                Text(en, style = MaterialTheme.typography.bodySmall)
+                SpeakEnglishText(en)
                 if (vocab.meaningEnSource == "ai") {
                     Surface(shape = RoundedCornerShape(50), color = Color(0x33F59E0B)) {
                         Text(
@@ -103,6 +106,37 @@ fun VocabExtraMeanings(vocab: Vocabulary, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/**
+ * Nghĩa tiếng Anh dạng nút: chạm để nghe (giọng en-US). clickable riêng nên chạm vào đây không kích hoạt
+ * click của thẻ chứa nó (thẻ từ vựng chạm để nghe tiếng Nhật).
+ */
+@Composable
+fun SpeakEnglishText(text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(onClickLabel = "Nghe tiếng Anh") { TtsHelper.speakEnglish(text) }
+            .padding(horizontal = 2.dp)
+            .testTag("speak-en"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(text, style = MaterialTheme.typography.bodySmall)
+        Text("🔊", fontSize = 10.sp)
+    }
+}
+
+/** Nghĩa tiếng Anh của kanji lấy từ KANJIDIC2, cùng giấy phép CC BY-SA 4.0 của EDRDG: phải ghi nguồn. */
+@Composable
+fun KanjidicAttribution(modifier: Modifier = Modifier) {
+    Text(
+        "Nghĩa tiếng Anh của kanji: KANJIDIC2 © EDRDG, CC BY-SA 4.0 (edrdg.org)",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(vertical = 8.dp),
+    )
 }
 
 /** Giấy phép CC BY-SA 4.0 của JMdict yêu cầu ghi nguồn nơi hiển thị dữ liệu. */

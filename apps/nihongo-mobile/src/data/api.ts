@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { API_BASE_URL } from '../config/api';
 import { parseVocabList, unwrapEnvelope } from './envelope';
+import { parseKanjiEntries, parseKanjiLessons, type KanjiEntry, type KanjiLessonOption } from './kanji';
 
 export { parseVocabList, unwrapEnvelope };
 
@@ -86,6 +87,18 @@ export interface VocabDto {
   furigana?: string | null;
 }
 
+
+/** Danh sách bài kanji (mọi giáo trình), bỏ bài rỗng. */
+export async function fetchKanjiLessons(): Promise<KanjiLessonOption[]> {
+  const res = await api.get('/kanji-lessons');
+  return parseKanjiLessons(res.data);
+}
+
+/** Kanji của một bài, có nghĩa tiếng Anh (KANJIDIC2). */
+export async function fetchKanjiByLesson(lessonNumber: number): Promise<KanjiEntry[]> {
+  const res = await api.get('/kanji', { params: { lessonNumber } });
+  return parseKanjiEntries(res.data);
+}
 
 export async function fetchAllVocabForLesson(lessonNumber: number): Promise<VocabDto[]> {
   const all: VocabDto[] = [];

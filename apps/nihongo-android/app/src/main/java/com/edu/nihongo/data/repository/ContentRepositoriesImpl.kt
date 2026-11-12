@@ -147,7 +147,7 @@ class ContentRepositoryImpl @Inject constructor(
 
     override fun observeKanji(lessonNumber: Int): Flow<List<Kanji>> =
         kanjiDao.observeByLesson(lessonNumber).map { rows ->
-            rows.map { Kanji(it.id, it.character, it.hanViet, it.onyomi, it.kunyomi, it.meaningVi, it.mnemonicVi) }
+            rows.map { Kanji(it.id, it.character, it.hanViet, it.onyomi, it.kunyomi, it.meaningVi, it.mnemonicVi, it.meaningEn) }
         }
 
     override suspend fun refreshKanji(lessonNumber: Int): Result<Unit> = runCatchingCancellable {
@@ -155,7 +155,7 @@ class ContentRepositoryImpl @Inject constructor(
         kanjiDao.replaceLesson(
             lessonNumber,
             items.mapIndexed { i, k ->
-                KanjiEntity(k.id, lessonNumber, k.character.orEmpty(), k.hanViet, k.onyomi, k.kunyomi, k.meaningVi, k.mnemonicVi, k.sortOrder ?: i)
+                KanjiEntity(k.id, lessonNumber, k.character.orEmpty(), k.hanViet, k.onyomi, k.kunyomi, k.meaningVi, k.mnemonicVi, k.sortOrder ?: i, k.meaningEn)
             },
         )
     }

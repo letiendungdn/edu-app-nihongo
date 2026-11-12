@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { FuriganaSegment } from '../utils/furigana';
+import { speakEnglish } from '../utils/tts';
 
 /**
  * Kanji có furigana nhỏ phía trên. React Native không có <ruby> nên tự vẽ: cách đọc đặt tuyệt đối phía trên chữ,
@@ -61,11 +62,38 @@ export function VocabExtraMeanings({
       {meaningEn ? (
         <View style={styles.enRow}>
           <Text style={styles.enTag}>EN</Text>
-          <Text style={styles.en}>{meaningEn}</Text>
+          <SpeakEnglishText text={meaningEn} />
           {source === 'ai' ? <Text style={styles.ai}>dịch máy</Text> : null}
         </View>
       ) : null}
     </View>
+  );
+}
+
+/**
+ * Nghĩa tiếng Anh dạng nút: chạm để nghe (giọng en-US). Pressable riêng nên chạm vào đây không kích hoạt
+ * onPress của thẻ chứa nó (thẻ từ vựng chạm để nghe tiếng Nhật).
+ */
+export function SpeakEnglishText({ text, style }: { text: string; style?: object }) {
+  return (
+    <Pressable
+      onPress={() => void speakEnglish(text)}
+      accessibilityRole="button"
+      accessibilityLabel={`Nghe tiếng Anh: ${text}`}
+      testID="speak-en"
+      hitSlop={6}
+      style={({ pressed }) => [styles.speakEn, pressed && styles.speakEnPressed]}
+    >
+      <Text style={[styles.en, style]}>{text}</Text>
+      <Text style={styles.speakIcon}>🔊</Text>
+    </Pressable>
+  );
+}
+
+/** Nghĩa tiếng Anh của kanji lấy từ KANJIDIC2 (cùng giấy phép CC BY-SA 4.0 của EDRDG): phải ghi nguồn. */
+export function KanjidicAttribution() {
+  return (
+    <Text style={styles.attribution}>Nghĩa tiếng Anh của kanji: KANJIDIC2 © EDRDG, CC BY-SA 4.0 (edrdg.org)</Text>
   );
 }
 
@@ -84,6 +112,9 @@ const styles = StyleSheet.create({
   enRow: { flexDirection: 'row', alignItems: 'center', columnGap: 4, flexShrink: 1 },
   enTag: { fontSize: 10, fontWeight: '700', color: '#2563eb' },
   en: { fontSize: 12, flexShrink: 1 },
+  speakEn: { flexDirection: 'row', alignItems: 'center', columnGap: 3, flexShrink: 1, borderRadius: 6, paddingHorizontal: 2 },
+  speakEnPressed: { backgroundColor: 'rgba(37,99,235,0.12)' },
+  speakIcon: { fontSize: 10 },
   ai: {
     fontSize: 10,
     color: '#b45309',

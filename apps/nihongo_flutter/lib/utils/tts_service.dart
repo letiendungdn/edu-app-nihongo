@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'english_speech.dart';
+
 class TtsService {
   TtsService._();
   static final TtsService instance = TtsService._();
@@ -25,7 +27,20 @@ class TtsService {
     if (text.trim().isEmpty) return;
     await _ensureReady();
     await _tts.stop();
+    // speakEnglish đổi ngôn ngữ: đặt lại tiếng Nhật mỗi lần cho chắc
+    await _tts.setLanguage('ja-JP');
     await _tts.speak(text.trim());
+  }
+
+  /// Đọc nghĩa tiếng Anh (en-US), đã làm sạch bằng [englishForSpeech].
+  Future<void> speakEnglish(String text) async {
+    final clean = englishForSpeech(text);
+    final toSay = clean.isEmpty ? text.trim() : clean;
+    if (toSay.isEmpty) return;
+    await _ensureReady();
+    await _tts.stop();
+    await _tts.setLanguage('en-US');
+    await _tts.speak(toSay);
   }
 
   Future<void> stop() => _tts.stop();

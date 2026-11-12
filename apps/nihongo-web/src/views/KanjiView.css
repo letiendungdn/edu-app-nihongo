@@ -565,3 +565,21 @@
   color: var(--primary-color);
   font-size: 0.82rem;
 }
+
+/* Nghĩa tiếng Anh (KANJIDIC2) dưới nghĩa tiếng Việt */
+.kanji-ll__meaning-en {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Khung trang giờ dùng hết bề ngang (globals.css): khối chọn bài giãn theo hàng thay vì co theo
+   tên bài dài nhất, để mép phải thẳng với ô tìm kiếm và các khung bên dưới */
+.kanji-ll__lesson {
+  flex: 1 1 22rem;
+}
+.kanji-ll__lesson-select.lesson-selector {
+  width: 100%;
+}
+.kanji-ll__lesson-select .select-input {
+  flex: 1;
+}

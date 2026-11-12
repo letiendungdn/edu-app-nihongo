@@ -23,6 +23,7 @@ struct KanjiDTO: Decodable {
     let meaningVi: String?
     let mnemonicVi: String?
     let sortOrder: Int?
+    var meaningEn: String? = nil
 }
 
 struct ReadingSummaryDTO: Decodable {

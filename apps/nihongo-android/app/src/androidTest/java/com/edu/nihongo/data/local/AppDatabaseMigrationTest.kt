@@ -108,7 +108,27 @@ class AppDatabaseMigrationTest {
         }
     }
 
-    private companion object {
+    /** v4→v5 thêm cột meaning_en cho kanji: dòng cũ giữ nguyên, cột mới NULL tới lần tải sau. */
+    @Test
+    fun migrate4To5_addsKanjiMeaningEn() {
+        helper.createDatabase(TEST_DB, 4).apply {
+            execSQL(
+                "INSERT INTO kanji (id, lesson_number, character, han_viet, onyomi, kunyomi, meaning_vi, mnemonic_vi, sort_order) " +
+                    "VALUES (1, 1, '一', 'NHẤT', 'いち', 'ひと', 'một', NULL, 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true)
+
+        db.query("SELECT character, meaning_en FROM kanji WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("一", c.getString(0))
+            assertEquals(true, c.isNull(1))
+        }
+    }
+
+        private companion object {
         const val TEST_DB = "migration-test.db"
     }
 }

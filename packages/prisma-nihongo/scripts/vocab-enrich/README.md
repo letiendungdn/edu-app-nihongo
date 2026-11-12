@@ -9,18 +9,25 @@ Các script trong thư mục này điền 5 cột của bảng `Vocabulary`:
 | `meaningEnSource` | `manual` / `jmdict` / `ai` | Ghi nguồn để app hiện nhãn "dịch máy" khi là `ai` |
 | `furigana` | `[["食","た"],["べます",""]]` | Tách từ `kanji` + `kana` ([furigana.ts](./furigana.ts), dùng `toFurigana` trong `packages/nest-common`) |
 
+Và 1 cột của bảng `KanjiEntry`:
+
+| Cột | Ví dụ | Lấy từ đâu |
+|---|---|---|
+| `meaningEn` | 食 → `eat; food` | Từ điển kanji KANJIDIC2 ([kanjidic_meanings.py](./kanjidic_meanings.py)) |
+
 Dữ liệu đã chạy xong nằm trong DB và trong seed nội dung (`npm run db:export-content`), nên **máy mới không cần chạy lại**.
 Chỉ chạy lại khi thêm hàng loạt từ mới, hoặc muốn làm lại từ đầu.
 
 Từ thêm/sửa qua admin thì content-service tự tính `furigana`. Nhập nghĩa tiếng Anh tay thì nguồn là `manual`.
 
-## Giấy phép JMdict (bắt buộc đọc)
+## Giấy phép JMdict và KANJIDIC2 (bắt buộc đọc)
 
-JMdict © [Electronic Dictionary Research and Development Group](https://www.edrdg.org/) (EDRDG),
-giấy phép [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Điều kiện:
+JMdict và KANJIDIC2 © [Electronic Dictionary Research and Development Group](https://www.edrdg.org/) (EDRDG),
+cùng giấy phép [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Điều kiện:
 
 - **Ghi nguồn** ở nơi hiển thị dữ liệu. Web và 4 app mobile đã có dòng "Nghĩa tiếng Anh: JMdict © EDRDG, CC BY-SA 4.0"
-  dưới danh sách từ khi có từ lấy từ JMdict. Đừng xóa dòng này.
+  dưới danh sách từ khi có từ lấy từ JMdict. Trang Bảng Kanji JLPT có dòng "Nghĩa tiếng Anh của kanji lấy từ KANJIDIC2 © EDRDG".
+  Đừng xóa các dòng này.
 - **Chia sẻ tương tự (share-alike):** nếu phát hành lại *bộ dữ liệu* nghĩa tiếng Anh này, phải dùng cùng giấy phép.
 
 ## Chạy lại từ đầu
@@ -85,8 +92,11 @@ docker exec edu-postgres-nihongo rm -f /tmp/jm.csv
 [ai-translations.tsv](./ai-translations.tsv) (`id<TAB>nghĩa tiếng Anh`) do AI (Claude) dịch từ nghĩa tiếng Việt:
 
 - 1.598 từ không khớp JMdict: câu giao tiếp, tên riêng trong sách, từ đồng âm…
-- 8 câu JMdict khớp đúng chữ nhưng nghĩa đầu tiên lệch ngữ cảnh của sách. Ví dụ `いいえ。` trong sách là
-  "không có gì" (đáp lại lời cảm ơn), JMdict lại cho "no".
+- 8 câu và 16 từ katakana mà JMdict khớp đúng chữ nhưng nghĩa đầu tiên lệch với nghĩa trong sách:
+  - `いいえ。` trong sách là "không có gì" (đáp lại lời cảm ơn), JMdict lại cho "no".
+  - Từ katakana đồng âm dễ bị khớp nhầm nhất: `タイ` (Thái Lan) ra "tie", `コップ` (cốc) ra "cop",
+    `ダース` (một tá) ra "Darth (Star Wars)", `マッチ` (diêm) ra "match (contest)".
+  - Đã soát hết 501 cặp từ/nghĩa katakana lấy từ JMdict. Thêm từ katakana mới thì nên soát lại kiểu lỗi này.
 
 Nguồn ghi là `ai` để app hiện nhãn "dịch máy". Bước này **ghi đè** nghĩa JMdict của các id có trong file,
 nhưng không đụng nghĩa người soạn nhập (`manual`). Nên chạy sau bước 2.
@@ -122,7 +132,28 @@ Từ không tách được (`月・水・金 / げっすいきん`) thì app hi�
 
 Có kanji mà không tách được thường là do **gõ sai** kanji hoặc kana (từng gặp `行ます`, `閉まりる`, `スパイン`), nên nên xem lại các từ này.
 
-### 5. Lưu vào seed
+### 5. Nghĩa tiếng Anh của kanji (KANJIDIC2)
+
+```bash
+curl -L -o "$WORK/kanjidic2.xml.gz" http://www.edrdg.org/kanjidic/kanjidic2.xml.gz
+gunzip -f "$WORK/kanjidic2.xml.gz"
+
+$DB -tAc "select distinct character from \"KanjiEntry\" where coalesce(\"meaningEn\",'')=''" > "$WORK/chars.txt"
+python3 -I packages/prisma-nihongo/scripts/vocab-enrich/kanjidic_meanings.py "$WORK/kanjidic2.xml" "$WORK/chars.txt" "$WORK/kanji_en.csv"
+```
+
+Script lấy tối đa 4 nghĩa tiếng Anh đầu tiên và bỏ ghi chú bộ thủ (`one radical (no.1)`). Kết quả mẫu:
+`cần 2221; có nghĩa: 2220; không có: 1 々`. `々` là dấu lặp chữ, không có trong KANJIDIC; thêm tay một dòng
+`々,repetition mark (repeats the previous kanji)` vào cuối `kanji_en.csv`.
+
+Nạp giống bước 2 (`docker cp`, `chmod 644`, `COPY`), với bảng tạm `kd (character text, meaning_en text)` và:
+
+```sql
+UPDATE "KanjiEntry" k SET "meaningEn" = kd.meaning_en FROM kd
+WHERE k.character = kd.character AND coalesce(k."meaningEn",'') = '';
+```
+
+### 6. Lưu vào seed
 
 ```bash
 npm run db:export-content

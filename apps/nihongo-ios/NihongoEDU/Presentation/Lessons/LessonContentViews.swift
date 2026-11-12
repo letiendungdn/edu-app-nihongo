@@ -58,7 +58,14 @@ struct KanjiList: View {
     let lesson: Int
     @Environment(\.modelContext) private var context
     @Query private var items: [KanjiItem]
+    @Query private var extras: [KanjiExtra]
     @State private var state = CachedListState()
+
+    private var englishById: [Int: String] {
+        let ids = Set(items.map(\.id))
+        return Dictionary(extras.compactMap { e in ids.contains(e.kanjiId) ? e.meaningEn.map { (e.kanjiId, $0) } : nil },
+                          uniquingKeysWith: { a, _ in a })
+    }
 
     init(lesson: Int) {
         self.lesson = lesson
@@ -73,11 +80,21 @@ struct KanjiList: View {
                     VStack(alignment: .leading, spacing: 2) {
                         if let h = k.hanViet { Text(h).font(.subheadline.weight(.semibold)) }
                         if let m = k.meaning { Text(m) }
+                        if let en = englishById[k.id], !en.isEmpty {
+                            HStack(spacing: 4) {
+                                Text("EN").font(.caption).foregroundStyle(.secondary)
+                                SpeakEnglishButton(text: en)
+                            }
+                        }
                         if let on = k.onyomi, !on.isEmpty { Text("On: \(on)").font(.caption) }
                         if let kun = k.kunyomi, !kun.isEmpty { Text("Kun: \(kun)").font(.caption) }
                     }
                 }
-                .accessibilityElement(children: .combine)
+                // .contain (không .combine): nút nghe tiếng Anh trong hàng vẫn bấm riêng được với VoiceOver
+                .accessibilityElement(children: .contain)
+            }
+            if !englishById.isEmpty {
+                KanjidicAttribution().padding(.top, 8)
             }
         }
         .task(id: lesson) { await refresh() }

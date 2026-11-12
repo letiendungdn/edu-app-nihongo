@@ -30,6 +30,13 @@ struct ContentSync {
                                      onyomi: k.onyomi, kunyomi: k.kunyomi, meaning: k.meaningVi, mnemonic: k.mnemonicVi,
                                      sortOrder: k.sortOrder ?? i))
         }
+        // Nghĩa tiếng Anh ở entity riêng (KanjiExtra, SchemaV4): cập nhật hoặc tạo mới theo id
+        let ids = items.map(\.id)
+        let extras = (try? context.fetch(FetchDescriptor<KanjiExtra>(predicate: #Predicate { ids.contains($0.kanjiId) }))) ?? []
+        let byId = Dictionary(extras.map { ($0.kanjiId, $0) }, uniquingKeysWith: { a, _ in a })
+        for k in items {
+            if let e = byId[k.id] { e.meaningEn = k.meaningEn } else { context.insert(KanjiExtra(kanjiId: k.id, meaningEn: k.meaningEn)) }
+        }
         try context.save()
     }
 

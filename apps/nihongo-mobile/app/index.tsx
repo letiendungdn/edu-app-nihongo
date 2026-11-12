@@ -35,6 +35,12 @@ export default function HomeScreen() {
         onPress={() => router.push('/vocab-search')}
       />
       <NavCard
+        icon="漢"
+        title="Kanji theo bài"
+        subtitle="Hán Việt, nghĩa Việt/Anh, âm On/Kun"
+        onPress={() => router.push('/kanji')}
+      />
+      <NavCard
         icon="🔁"
         title="Ôn tập SRS"
         subtitle="Spaced repetition — SM-2 algorithm"

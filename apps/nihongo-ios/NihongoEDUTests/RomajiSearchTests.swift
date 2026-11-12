@@ -87,3 +87,11 @@ final class FuriganaSegmentTests: XCTestCase {
         XCTAssertTrue(FuriganaSegment.parse(#"[["食"]]"#).isEmpty)
     }
 }
+
+final class EnglishSpeechTests: XCTestCase {
+    func testCleansTextForSpeech() {
+        XCTAssertEqual(englishForSpeech("fictional company (in textbook)"), "fictional company")
+        XCTAssertEqual(englishForSpeech("to turn on; to switch on"), "to turn on, to switch on")
+        XCTAssertEqual(englishForSpeech("this ~ (near the speaker)"), "this")
+    }
+}

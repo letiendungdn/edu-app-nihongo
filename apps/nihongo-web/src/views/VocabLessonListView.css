@@ -1089,3 +1089,40 @@
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
+
+/* Bảng katakana có thêm cột Tiếng Anh: romaji nằm dưới chữ trong cột Từ (bỏ cột Cách đọc riêng) để bảng
+   không tràn ngang. Chữ katakana và JLPT không xuống dòng (アメリカ không bị bẻ đôi). */
+.vocab-katakana-table th,
+.vocab-katakana-table td {
+  padding: 0.6rem 0.65rem;
+}
+.vocab-katakana-table th,
+.vocab-katakana-table td:nth-child(2) .vocab-lesson-list__word,
+.vocab-katakana-table td:nth-child(5) {
+  white-space: nowrap;
+}
+.vocab-katakana-table td:nth-child(1),
+.vocab-katakana-table td:nth-child(5) {
+  /* Co vừa nội dung, phần bề ngang thừa dành cho hai cột nghĩa */
+  width: 1%;
+}
+.vocab-katakana-table td:nth-child(1) {
+  min-width: 8rem;
+}
+.vocab-katakana-table__romaji {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+
+/* Âm Hán Việt nhỏ dưới nghĩa tiếng Việt trong bảng danh sách từ */
+.vocab-lesson-list__hanviet {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}

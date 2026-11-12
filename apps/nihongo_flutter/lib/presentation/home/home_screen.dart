@@ -97,6 +97,13 @@ class HomeScreen extends ConsumerWidget {
             subtitle: 'Duyệt toàn bộ từ vựng theo cấp, kéo xuống tải tiếp',
             onTap: () => context.push(Routes.dictionary),
           ),
+          _NavCard(
+            icon: Icons.translate_rounded,
+            title: 'Kanji theo bài',
+            subtitle: 'Hán Việt, nghĩa Việt/Anh, âm On/Kun',
+            badge: 'MỚI',
+            onTap: () => context.push(Routes.kanji),
+          ),
 
           _SectionLabel('LUYỆN TẬP'),
           _NavCard(

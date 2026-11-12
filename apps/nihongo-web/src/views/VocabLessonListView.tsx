@@ -20,6 +20,7 @@ import { lessonHeading, lessonShortLabel, splitLessonHeading } from '../utils/le
 import { getVocabExamples } from '../utils/vocabPatternExample';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import SpeakerIcon from '../components/SpeakerIcon';
+import { JmdictAttribution, SpeakEnglishButton, VocabExtraMeanings } from '../components/VocabReading';
 import type { Vocabulary } from '../types/api';
 import './VocabLessonListView.css';
 
@@ -234,6 +235,7 @@ function StrokeModal({
           <span className="vocab-stroke-modal__meta-sep" aria-hidden="true">|</span>
           <span className="vocab-stroke-modal__meta-meaning">{vocab.meaning}</span>
         </p>
+        <VocabExtraMeanings vocab={vocab} />
         {examples.map((example) => (
           <div key={example.ja} className="vocab-stroke-modal__example">
             <div className="vocab-stroke-modal__example-text">
@@ -262,7 +264,7 @@ function StrokeModal({
 }
 
 function matches(vocab: Vocabulary, query: string): boolean {
-  return [vocab.kanji, vocab.kana, vocab.romaji, vocab.meaning]
+  return [vocab.kanji, vocab.kana, vocab.romaji, vocab.meaning, vocab.meaningEn]
     .filter(Boolean)
     .join(' ')
     .toLowerCase()
@@ -396,7 +398,7 @@ export default function VocabLessonListView({
               className="vocab-lesson-list__search"
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
-              placeholder="Lọc trong bài: kanji, kana, romaji, nghĩa"
+              placeholder="Lọc trong bài: kanji, kana, romaji, nghĩa (Việt hoặc Anh)"
               aria-label="Lọc từ trong bài"
             />
             <svg className="vocab-lesson-list__search-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -434,6 +436,7 @@ export default function VocabLessonListView({
                 <th scope="col">Kana</th>
                 <th scope="col">Romaji</th>
                 <th scope="col">Nghĩa</th>
+                <th scope="col" lang="en">Tiếng Anh</th>
                 <th scope="col" className="vocab-lesson-list__listen-col">Nghe</th>
               </tr>
             </thead>
@@ -461,7 +464,18 @@ export default function VocabLessonListView({
                     />
                   </td>
                   <td className="vocab-lesson-list__romaji">{vocab.romaji}</td>
-                  <td>{vocab.meaning}</td>
+                  <td>
+                    {vocab.meaning}
+                    {vocab.hanViet ? <span className="vocab-lesson-list__hanviet">{vocab.hanViet}</span> : null}
+                  </td>
+                  <td lang="en">
+                    {vocab.meaningEn ? <SpeakEnglishButton text={vocab.meaningEn} /> : '—'}
+                    {vocab.meaningEn && vocab.meaningEnSource === 'ai' ? (
+                      <span className="vocab-extra__ai" title="Nghĩa tiếng Anh do máy dịch, có thể chưa chính xác">
+                        dịch máy
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="vocab-lesson-list__listen-col">
                     <button
                       type="button"
@@ -477,6 +491,7 @@ export default function VocabLessonListView({
               ))}
             </tbody>
           </table>
+          {rows.some(({ vocab }) => vocab.meaningEnSource === 'jmdict') ? <JmdictAttribution /> : null}
         </div>
       )}
       {stroke && strokeVocab && (

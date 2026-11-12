@@ -141,7 +141,10 @@ final class NihongoEDUUITests: XCTestCase {
         lessons.tap()
 
         // Bài đã tải từ bản cũ cũng phải tự tải lại để có dữ liệu mới
-        XCTAssertTrue(app.staticTexts["I; me"].waitForExistence(timeout: 20), "chưa có nghĩa tiếng Anh")
+        let english = app.buttons["Nghe tiếng Anh: I; me"]
+        XCTAssertTrue(english.waitForExistence(timeout: 20), "chưa có nghĩa tiếng Anh (nút bấm để nghe)")
+        english.tap() // chạm để nghe: không được làm crash hay mở màn khác
+        XCTAssertTrue(english.exists)
         XCTAssertTrue(app.staticTexts["TƯ"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["furigana"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts["dịch máy"].firstMatch.exists)
@@ -150,6 +153,33 @@ final class NihongoEDUUITests: XCTestCase {
         shot.name = "vocab-lesson1-en-hanviet-furigana"
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// Tab Kanji của bài 1: có nghĩa tiếng Anh (KANJIDIC2) và dòng ghi nguồn.
+    func testKanjiShowsEnglishMeaning() throws {
+        let (reachable, detail) = backendReachable(URL(string: "http://localhost:3000/health")!)
+        try XCTSkipUnless(reachable, "Cần backend local ở localhost:3000 (\(detail))")
+
+        app.launch()
+        let lessons = homeCard("Bài học")
+        XCTAssertTrue(reveal(lessons))
+        lessons.tap()
+        let kanjiTab = app.buttons["Kanji"]
+        XCTAssertTrue(kanjiTab.waitForExistence(timeout: 10))
+        kanjiTab.tap()
+
+        let english = app.buttons["Nghe tiếng Anh: one"]
+        XCTAssertTrue(english.waitForExistence(timeout: 20), "chưa có nghĩa tiếng Anh của 一 (nút bấm để nghe)")
+        english.tap()
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "kanji-lesson1-en"
+        shot.lifetime = .keepAlways
+        add(shot)
+
+        // Dòng ghi nguồn nằm cuối danh sách: cuộn xuống tới khi thấy
+        let attribution = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "KANJIDIC2")).firstMatch
+        for _ in 0..<8 where !attribution.exists { app.swipeUp() }
+        XCTAssertTrue(attribution.exists, "thiếu dòng ghi nguồn KANJIDIC2")
     }
 
     /// Kiểm backend có sống không: hạn chờ 10 giây, thử 3 lần, trả về lý do nếu không gọi được.

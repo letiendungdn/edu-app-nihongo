@@ -8,6 +8,7 @@ import PlayAllButton from '../components/PlayAllButton';
 import { playAudio } from '../utils/speech';
 import { lessonShortLabel } from '../utils/lessonHeading';
 import type { KatakanaVocabulary } from '../types/api';
+import { JmdictAttribution, SpeakEnglishButton } from '../components/VocabReading';
 import './VocabLessonListView.css';
 
 type SortKey = 'lesson' | 'word' | 'jlpt';
@@ -167,7 +168,7 @@ export default function KatakanaVocabView() {
       if (jlpt !== 'all' && jlpt !== 'none' && word.jlptLevel !== jlpt) return false;
       if (lessonNumbers.length > 0 && !lessonNumbers.includes(word.lesson.lessonNumber)) return false;
       if (!q) return true;
-      return [writtenForm(word), word.kana, word.romaji, word.meaning, lessonShortLabel(word.lesson)]
+      return [writtenForm(word), word.kana, word.romaji, word.meaning, word.meaningEn, lessonShortLabel(word.lesson)]
         .join(' ')
         .toLowerCase()
         .includes(q);
@@ -282,7 +283,7 @@ export default function KatakanaVocabView() {
             className="vocab-lesson-list__search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Lọc từ, cách đọc hoặc nghĩa"
+            placeholder="Lọc từ, cách đọc, nghĩa (Việt hoặc Anh)"
             aria-label="Lọc từ katakana"
           />
           <div className="vocab-lesson-list__lesson-picker" ref={lessonPickerRef}>
@@ -370,7 +371,7 @@ export default function KatakanaVocabView() {
 
       {!isLoading && !isError && visible.length > 0 && (
         <div className="vocab-lesson-list__table-wrap">
-          <table className="vocab-lesson-list__table">
+          <table className="vocab-lesson-list__table vocab-katakana-table">
             <thead>
               <tr>
                 <th aria-sort={sortKey === 'lesson' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
@@ -393,8 +394,8 @@ export default function KatakanaVocabView() {
                     {`Từ${sortMark('word')}`}
                   </button>
                 </th>
-                <th>Cách đọc</th>
                 <th>Nghĩa</th>
+                <th lang="en">Tiếng Anh</th>
                 <th aria-sort={sortKey === 'jlpt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                   <button
                     type="button"
@@ -434,15 +435,25 @@ export default function KatakanaVocabView() {
                       >
                         {written}
                       </button>
+                      {/* Romaji gộp vào cột Từ: thêm cột Tiếng Anh mà bảng không bị tràn ngang */}
+                      <span className="vocab-katakana-table__romaji">{word.romaji}</span>
                     </td>
-                    <td>{word.romaji}</td>
                     <td>{word.meaning}</td>
+                    <td lang="en">
+                      {word.meaningEn ? <SpeakEnglishButton text={word.meaningEn} /> : '—'}
+                      {word.meaningEn && word.meaningEnSource === 'ai' ? (
+                        <span className="vocab-extra__ai" title="Nghĩa tiếng Anh do máy dịch, có thể chưa chính xác">
+                          dịch máy
+                        </span>
+                      ) : null}
+                    </td>
                     <td>{word.jlptLevel ?? '—'}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          {visible.some((word) => word.meaningEnSource === 'jmdict') ? <JmdictAttribution /> : null}
         </div>
       )}
         </div>

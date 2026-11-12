@@ -68,7 +68,7 @@ struct VocabExtraMeanings: View {
                 if let hv { Text(hv).font(.caption.weight(.semibold)) }
                 if let en {
                     Text("EN").font(.caption2.bold()).foregroundStyle(.tint)
-                    Text(en).font(.caption).lineLimit(2)
+                    SpeakEnglishButton(text: en)
                     if source == "ai" {
                         Text("dịch máy")
                             .font(.caption2)
@@ -79,6 +79,34 @@ struct VocabExtraMeanings: View {
                 }
             }
         }
+    }
+}
+
+/// Nghĩa tiếng Anh dạng nút: chạm để nghe (giọng en-US). Là Button riêng nên không kích hoạt hành động của hàng chứa nó.
+struct SpeakEnglishButton: View {
+    let text: String
+
+    var body: some View {
+        Button {
+            EnglishSpeaker.shared.speak(text)
+        } label: {
+            HStack(spacing: 3) {
+                Text(text).font(.caption).lineLimit(2).multilineTextAlignment(.leading)
+                Image(systemName: "speaker.wave.1").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Nghe tiếng Anh: \(text)")
+        .accessibilityIdentifier("speak-en")
+    }
+}
+
+/// Nghĩa tiếng Anh của kanji lấy từ KANJIDIC2 (cùng giấy phép CC BY-SA 4.0 của EDRDG): phải ghi nguồn.
+struct KanjidicAttribution: View {
+    var body: some View {
+        Text("Nghĩa tiếng Anh của kanji: KANJIDIC2 © EDRDG, CC BY-SA 4.0 (edrdg.org)")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
     }
 }
 

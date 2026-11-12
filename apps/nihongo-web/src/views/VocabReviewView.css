@@ -204,3 +204,13 @@
     font-size: 2.25rem;
   }
 }
+
+/* Trang giãn hết bề ngang (rule .app-main .container trong globals.css) cho bảng từ sai; thẻ ôn tập vẫn giữ khổ cũ ở giữa cho dễ đọc */
+.vocab-review-view .vr-review,
+.vocab-review-view .vr-header,
+.vocab-review-view .vr-tabs {
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
