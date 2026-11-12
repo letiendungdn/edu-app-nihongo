@@ -1076,13 +1076,44 @@
   color: var(--vsm-kana);
 }
 
+.vocab-stroke-modal__example-ja,
+.vocab-stroke-modal__example-vi {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 .vocab-stroke-modal__example-ja {
   font-size: 1.3rem;
   font-weight: 700;
 }
 
+.vocab-stroke-modal__example-ja:hover,
+.vocab-stroke-modal__example-ja:focus-visible {
+  color: var(--accent, #1a6bb5);
+}
+
 .vocab-stroke-modal__example-vi {
   font-size: 0.98rem;
+}
+
+.vocab-stroke-modal__example-vi:hover,
+.vocab-stroke-modal__example-vi:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.vocab-stroke-modal__example-ja:focus-visible,
+.vocab-stroke-modal__example-vi:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #1a6bb5) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .vocab-lesson-list__table td {

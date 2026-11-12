@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
+import { speakJapaneseThenMeaning, meaningForSpeech, playAudio } from '../utils/speech';
 import { ExampleEnglish, FuriganaWord, JmdictAttribution, VocabExtraMeanings } from '../components/VocabReading';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
@@ -239,6 +239,17 @@ export default function VocabView({
   const handleExamplePronounce = (e: React.MouseEvent, speak: string, meaning: string) => {
     e.stopPropagation();
     speakJapaneseThenMeaning(speak, meaning);
+  };
+
+  const handleExampleJapanese = (e: React.MouseEvent, speak: string) => {
+    e.stopPropagation();
+    if (speak.trim()) playAudio(speak, 'ja-JP');
+  };
+
+  const handleExampleVietnamese = (e: React.MouseEvent, meaning: string) => {
+    e.stopPropagation();
+    const text = meaningForSpeech(meaning) || meaning.trim();
+    if (text) playAudio(text, 'vi-VN');
   };
 
   const handleStrokeCharClick = () => {
@@ -585,7 +596,13 @@ export default function VocabView({
                     {patternExamples.map((example) => (
                       <li key={`ex-${example.ja}`} className="vocab-examples__item">
                         <p className="vocab-examples__line">
-                          <span className="vocab-examples__ja japanese-text">
+                          <button
+                            type="button"
+                            className="vocab-examples__ja japanese-text"
+                            title="Bấm để nghe tiếng Nhật"
+                            aria-label={`Nghe tiếng Nhật: ${example.ja}`}
+                            onClick={(e) => handleExampleJapanese(e, example.speak || example.ja)}
+                          >
                             {highlightKeys(example.ja, exampleKeys).map((seg, i) =>
                               seg.kind === 'key' ? (
                                 <mark key={i} className="vocab-examples__hl">{seg.text}</mark>
@@ -593,15 +610,25 @@ export default function VocabView({
                                 <span key={i}>{seg.text}</span>
                               ),
                             )}
-                          </span>
-                          {example.vi ? <span className="vocab-examples__vi">{example.vi}</span> : null}
+                          </button>
+                          {example.vi ? (
+                            <button
+                              type="button"
+                              className="vocab-examples__vi"
+                              title="Bấm để nghe tiếng Việt"
+                              aria-label={`Nghe tiếng Việt: ${example.vi}`}
+                              onClick={(e) => handleExampleVietnamese(e, example.vi)}
+                            >
+                              {example.vi}
+                            </button>
+                          ) : null}
                           <ExampleEnglish text={example.en} className="vocab-examples__en" />
                         </p>
                         <button
                           type="button"
                           className="vocab-round-btn vocab-round-btn--sm"
-                          title="Nghe ví dụ"
-                          aria-label="Nghe ví dụ"
+                          title="Nghe ví dụ (Nhật rồi Việt)"
+                          aria-label="Nghe ví dụ (Nhật rồi Việt)"
                           onClick={(e) => handleExamplePronounce(e, example.speak, example.vi)}
                         >
                           <SpeakerIcon className="vocab-speaker-icon" size={16} />
@@ -609,7 +636,9 @@ export default function VocabView({
                       </li>
                     ))}
                   </ul>
-                  <p className="vocab-examples__note">Dịch tiếng Việt · EN: dịch máy, bấm để nghe</p>
+                  <p className="vocab-examples__note">
+                    Bấm câu Nhật để nghe JA · bấm bản Việt để nghe VI · EN: dịch máy, bấm để nghe
+                  </p>
                 </div>
                 <VocabPicture
                   word={currentVocab.romaji}

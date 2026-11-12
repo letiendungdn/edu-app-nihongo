@@ -15,7 +15,7 @@ import { useLessons, useVocab } from '../hooks/queries';
 import { resolveVocabImage } from '@edu/vocab-images';
 import { getStrokeText } from '../utils/japanese';
 import { isKanji } from '../utils/kanji-structure';
-import { meaningForSpeech, speakJapaneseThenMeaning } from '../utils/speech';
+import { meaningForSpeech, playAudio, speakJapaneseThenMeaning } from '../utils/speech';
 import { lessonHeading, lessonShortLabel, splitLessonHeading } from '../utils/lessonHeading';
 import { getVocabExamples } from '../utils/vocabPatternExample';
 import KanjiStructureButton from '../components/KanjiStructureButton';
@@ -243,15 +243,36 @@ function StrokeModal({
               {example.kana && example.kana !== example.ja ? (
                 <span className="vocab-stroke-modal__example-kana japanese-text">{example.kana}</span>
               ) : null}
-              <span className="vocab-stroke-modal__example-ja japanese-text">{example.ja}</span>
-              {example.vi ? <span className="vocab-stroke-modal__example-vi">{example.vi}</span> : null}
+              <button
+                type="button"
+                className="vocab-stroke-modal__example-ja japanese-text"
+                title="Bấm để nghe tiếng Nhật"
+                aria-label={`Nghe tiếng Nhật: ${example.ja}`}
+                onClick={() => playAudio(example.speak || example.ja, 'ja-JP')}
+              >
+                {example.ja}
+              </button>
+              {example.vi ? (
+                <button
+                  type="button"
+                  className="vocab-stroke-modal__example-vi"
+                  title="Bấm để nghe tiếng Việt"
+                  aria-label={`Nghe tiếng Việt: ${example.vi}`}
+                  onClick={() => {
+                    const text = meaningForSpeech(example.vi) || example.vi.trim();
+                    if (text) playAudio(text, 'vi-VN');
+                  }}
+                >
+                  {example.vi}
+                </button>
+              ) : null}
               <ExampleEnglish text={example.en} />
             </div>
             <button
               type="button"
               className="vocab-list-audio vocab-list-audio--lg"
-              aria-label="Nghe ví dụ"
-              title="Nghe ví dụ"
+              aria-label="Nghe ví dụ (Nhật rồi Việt)"
+              title="Nghe ví dụ (Nhật rồi Việt)"
               onClick={() => speakJapaneseThenMeaning(example.speak, example.vi)}
             >
               <SpeakerIcon size={22} />
