@@ -313,9 +313,9 @@ Layout gốc import gì                → MỌI trang tải thứ đó
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 2/5.
+Bạn đang ở **8. Frontend web và desktop** — bài 3/6.
 
-- Bài trước: [roadmap-reactjs.md](./roadmap-reactjs.md) — React + Next.js qua apps/nihongo-web
+- Bài trước: [roadmap-reactjs.md](./roadmap-reactjs.md) — Lộ trình dài React + Next.js qua apps/nihongo-web
 - **Bài tiếp: [canvas-tools.md](./canvas-tools.md)** — Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

@@ -524,10 +524,10 @@ Muốn thêm câu hỏi: [interview-mobile.md](./interview-mobile.md).
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 9/12.
+Bạn đang ở **9. Mobile** — bài 9/13.
 
 - Bài trước: [learn-swift-ios.md](./learn-swift-ios.md) — Swift/SwiftUI qua nihongo-ios
-- **Bài tiếp: [learn-ml-mobile.md](./learn-ml-mobile.md)** — Machine learning trong app mobile: on-device, LLM, SRS thông minh
+- **Bài tiếp: [learn-react-native.md](./learn-react-native.md)** — React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

@@ -373,7 +373,7 @@ Cách dọn sạch nhất: **xoá cả project** — `gcloud projects delete edu
 Bạn đang ở **7. Cloud** — bài 5/5.
 
 - Bài trước: [learn-aws-serverless.md](./learn-aws-serverless.md) — Thực hành serverless: S3 + Lambda + IAM bằng Terraform, chạy trên LocalStack hoặc AWS
-- Xong nhóm này. **Nhóm tiếp: 8. Frontend web và desktop** — bắt đầu bằng [roadmap-reactjs.md](./roadmap-reactjs.md) (React + Next.js qua apps/nihongo-web)
+- Xong nhóm này. **Nhóm tiếp: 8. Frontend web và desktop** — bắt đầu bằng [learn-react.md](./learn-react.md) (React qua web Nihongo: component, state, effect, custom hook, React Query, test)
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

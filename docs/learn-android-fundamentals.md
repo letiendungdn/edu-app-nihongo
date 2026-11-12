@@ -559,7 +559,7 @@ Làm trên emulator `pixel_api_35` với bản debug ([learn-android-kotlin.md](
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 5/12.
+Bạn đang ở **9. Mobile** — bài 5/13.
 
 - Bài trước: [learn-android-architecture.md](./learn-android-architecture.md) — Android 2/4: kiến trúc, Room, offline, mạng, Hilt, native, test, 14 lỗi đã sửa
 - **Bài tiếp: [learn-android-features.md](./learn-android-features.md)** — Android 4/4: nhật ký làm 9 tính năng và 5 lỗi chỉ lộ ra khi chạy thật

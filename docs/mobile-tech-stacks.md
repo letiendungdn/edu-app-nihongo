@@ -392,7 +392,7 @@ Thuật toán SM-2 port song song: `srs.ts` · `SrsAlgorithm.kt` · `srs_algorit
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 1/12.
+Bạn đang ở **9. Mobile** — bài 1/13.
 
 - **Bài tiếp: [run-mobile.md](./run-mobile.md)** — Chạy các app mobile
 

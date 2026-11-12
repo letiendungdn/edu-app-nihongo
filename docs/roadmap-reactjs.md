@@ -310,8 +310,9 @@ npm run docker:up:nihongo   # → http://localhost:8080
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 1/5.
+Bạn đang ở **8. Frontend web và desktop** — bài 2/6.
 
+- Bài trước: [learn-react.md](./learn-react.md) — React qua web Nihongo: component, state, effect, custom hook, React Query, test
 - **Bài tiếp: [learn-webpack.md](./learn-webpack.md)** — Webpack qua bản build của web: chia chunk, đo và giảm dung lượng
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

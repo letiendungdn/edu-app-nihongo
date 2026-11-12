@@ -996,7 +996,7 @@ Dùng Keychain (được mã hóa, có `kSecAttrAccessibleAfterFirstUnlockThisDe
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 8/12.
+Bạn đang ở **9. Mobile** — bài 8/13.
 
 - Bài trước: [learn-android-framework.md](./learn-android-framework.md) — Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive
 - **Bài tiếp: [learn-flutter.md](./learn-flutter.md)** — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter

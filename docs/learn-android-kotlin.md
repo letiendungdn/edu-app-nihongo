@@ -983,7 +983,7 @@ Text(
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 3/12.
+Bạn đang ở **9. Mobile** — bài 3/13.
 
 - Bài trước: [run-mobile.md](./run-mobile.md) — Chạy các app mobile
 - **Bài tiếp: [learn-android-architecture.md](./learn-android-architecture.md)** — Android 2/4: kiến trúc, Room, offline, mạng, Hilt, native, test, 14 lỗi đã sửa

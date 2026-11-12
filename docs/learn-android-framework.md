@@ -456,7 +456,7 @@ Thực hành thêm (ngoài repo): trong Android Studio, **Device Manager → Cre
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 7/12.
+Bạn đang ở **9. Mobile** — bài 7/13.
 
 - Bài trước: [learn-android-features.md](./learn-android-features.md) — Android 4/4: nhật ký làm 9 tính năng và 5 lỗi chỉ lộ ra khi chạy thật
 - **Bài tiếp: [learn-swift-ios.md](./learn-swift-ios.md)** — Swift/SwiftUI qua nihongo-ios

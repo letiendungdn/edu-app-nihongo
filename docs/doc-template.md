@@ -120,6 +120,7 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 - [ ] learn-google-cloud.md
 
 **8. Frontend**
+- [x] learn-react.md (mới)
 - [ ] roadmap-reactjs.md
 - [ ] learn-webpack.md
 - [ ] canvas-tools.md
@@ -136,6 +137,7 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 - [x] learn-android-framework.md (Android nâng cao, mới)
 - [ ] learn-swift-ios.md
 - [ ] learn-flutter.md
+- [x] learn-react-native.md (mới)
 - [ ] learn-ml-mobile.md
 - [ ] security-owasp-mobile.md
 - [ ] mobile-qa.md

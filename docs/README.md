@@ -27,7 +27,7 @@ Người viết bài: theo [doc-template.md](./doc-template.md).
 5. [Kiểm thử](#5-kiểm-thử) — Viết test, đọc test có sẵn, đo tải.
 6. [DevOps và hạ tầng](#6-devops-và-hạ-tầng) — Đóng gói, định tuyến, triển khai, theo dõi và xử lý sự cố.
 7. [Cloud](#7-cloud) — Đưa project lên cloud, giả lập cloud trên máy, Terraform, serverless.
-8. [Frontend web và desktop](#8-frontend-web-và-desktop) — Next.js, webpack, các công cụ trên web, AI local và app desktop.
+8. [Frontend web và desktop](#8-frontend-web-và-desktop) — React, Next.js, webpack, các công cụ trên web, AI local và app desktop.
 9. [Mobile](#9-mobile) — Các app mobile của project, từ nền tảng đến tính năng và bảo mật.
 10. [Tích hợp: đăng nhập, mail, thanh toán](#10-tích-hợp-đăng-nhập-mail-thanh-toán) — Cài đặt và thực hành các dịch vụ bên ngoài.
 
@@ -168,11 +168,12 @@ Next.js, các công cụ trên web, AI local và app desktop.
 
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
-| 1 | [roadmap-reactjs.md](./roadmap-reactjs.md) | React + Next.js qua apps/nihongo-web |
-| 2 | [learn-webpack.md](./learn-webpack.md) | Webpack qua bản build của web: chia chunk, đo và giảm dung lượng |
-| 3 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
-| 4 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
-| 5 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
+| 1 | [learn-react.md](./learn-react.md) | React qua web Nihongo: component, state, effect, custom hook, React Query, test |
+| 2 | [roadmap-reactjs.md](./roadmap-reactjs.md) | Lộ trình dài React + Next.js qua apps/nihongo-web |
+| 3 | [learn-webpack.md](./learn-webpack.md) | Webpack qua bản build của web: chia chunk, đo và giảm dung lượng |
+| 4 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
+| 5 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
+| 6 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
 
 ---
 
@@ -191,9 +192,10 @@ Các app mobile của project, từ nền tảng đến tính năng và bảo m�
 | 7 | [learn-android-framework.md](./learn-android-framework.md) | Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive |
 | 8 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
 | 9 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
-| 10 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
-| 11 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
-| 12 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
+| 10 | [learn-react-native.md](./learn-react-native.md) | React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test |
+| 11 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
+| 12 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
+| 13 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
 
 ---
 

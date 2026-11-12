@@ -215,7 +215,7 @@ code_challenge_method=plain ← reject ngay
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 11/12.
+Bạn đang ở **9. Mobile** — bài 12/13.
 
 - Bài trước: [learn-ml-mobile.md](./learn-ml-mobile.md) — Machine learning trong app mobile: on-device, LLM, SRS thông minh
 - **Bài tiếp: [mobile-qa.md](./mobile-qa.md)** — Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp

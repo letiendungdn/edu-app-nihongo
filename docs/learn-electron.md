@@ -232,7 +232,7 @@ Lộ `window.nihongoDesktop.version()` trả `app.getVersion()` từ `package.js
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 5/5.
+Bạn đang ở **8. Frontend web và desktop** — bài 6/6.
 
 - Bài trước: [learn-ollama-local.md](./learn-ollama-local.md) — Chạy AI local bằng Ollama
 - Xong nhóm này. **Nhóm tiếp: 9. Mobile** — bắt đầu bằng [mobile-tech-stacks.md](./mobile-tech-stacks.md) (Tech stack từng app mobile)
