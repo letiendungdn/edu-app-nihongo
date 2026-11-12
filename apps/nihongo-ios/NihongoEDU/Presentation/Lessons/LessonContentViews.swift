@@ -17,7 +17,14 @@ struct GrammarList: View {
     let lesson: Int
     @Environment(\.modelContext) private var context
     @Query private var items: [GrammarItem]
+    @Query private var extras: [GrammarExampleExtra]
     @State private var state = CachedListState()
+
+    private var englishByExampleId: [Int: String] {
+        let ids = Set(items.flatMap { $0.examples.map(\.id) })
+        return Dictionary(extras.compactMap { e in ids.contains(e.exampleId) ? e.en.map { (e.exampleId, $0) } : nil },
+                          uniquingKeysWith: { a, _ in a })
+    }
 
     init(lesson: Int) {
         self.lesson = lesson
@@ -35,6 +42,12 @@ struct GrammarList: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(ex.jp).font(.subheadline)
                             if let vi = ex.vi { Text(vi).font(.caption).foregroundStyle(.secondary) }
+                            if let en = englishByExampleId[ex.id], !en.isEmpty {
+                                HStack(spacing: 4) {
+                                    Text("EN").font(.caption2).foregroundStyle(.secondary)
+                                    SpeakEnglishButton(text: en)
+                                }
+                            }
                         }
                         .padding(.leading, 8)
                     }

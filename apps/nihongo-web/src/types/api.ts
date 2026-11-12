@@ -62,6 +62,7 @@ export interface Vocabulary {
   exampleJa?: string | null;
   exampleKana?: string | null;
   exampleVi?: string | null;
+  exampleEn?: string | null;
   examples?: VocabularyExample[];
   /** Sách khác cũng có mục này, kèm bài để mở. */
   alsoInTextbooks?: AlsoInTextbook[];
@@ -72,6 +73,8 @@ export interface VocabularyExample {
   ja: string;
   kana: string | null;
   vi: string | null;
+  /** Bản dịch tiếng Anh (dịch máy). */
+  en?: string | null;
 }
 
 /** Kết quả tra từ vựng (GET /vocabularies?q=) — kèm bài chứa từ để mở đúng bài. */
@@ -163,6 +166,8 @@ export interface KanjiEntry {
     exampleJa?: string | null;
     exampleKana?: string | null;
     exampleVi?: string | null;
+    /** Bản dịch tiếng Anh của câu ví dụ (dịch máy). */
+    exampleEn?: string | null;
     sortOrder?: number;
   }>;
 }

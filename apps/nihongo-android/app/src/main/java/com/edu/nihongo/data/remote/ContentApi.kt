@@ -58,6 +58,7 @@ data class GrammarExampleDto(
     val jp: String? = null,
     val romaji: String? = null,
     val vi: String? = null,
+    val en: String? = null,
     val sortOrder: Int? = null,
 )
 

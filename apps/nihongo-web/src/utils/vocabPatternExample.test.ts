@@ -45,6 +45,19 @@ describe('vocabPatternExample', () => {
     expect(examples[1]).toMatchObject({ kana: undefined, vi: '', speak: '本を買った' });
   });
 
+  it('carries the English translation from examples[] or exampleEn', () => {
+    expect(
+      getVocabExamples({
+        kana: 'ほん',
+        examples: [{ ja: '本を読む。', vi: 'Đọc sách.', en: ' I read a book. ' }],
+      })[0].en,
+    ).toBe('I read a book.');
+    expect(
+      getVocabExamples({ kana: 'ほん', exampleJa: '本を読む。', exampleEn: 'I read a book.' })[0].en,
+    ).toBe('I read a book.');
+    expect(getVocabExamples({ kana: 'ほん', exampleJa: '本を読む。' })[0].en).toBe('');
+  });
+
   it('returns empty when DB example is missing', () => {
     expect(
       getVocabExamples({

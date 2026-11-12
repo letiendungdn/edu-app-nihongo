@@ -986,6 +986,8 @@ model KanjiVocab {
   exampleJa    String?
   exampleKana  String?
   exampleVi    String?
+  /// Bản dịch tiếng Anh của câu ví dụ (AI dịch, xem scripts/vocab-enrich/example-translations.tsv)
+  exampleEn    String?
   sortOrder    Int         @default(0)
   kanjiEntryId Int
   kanjiEntry   KanjiEntry  @relation(fields: [kanjiEntryId], references: [id], onDelete: Cascade)
@@ -1006,6 +1008,8 @@ model VocabularyExample {
   ja           String
   kana         String?
   vi           String?
+  /// Bản dịch tiếng Anh (AI dịch, xem scripts/vocab-enrich/example-translations.tsv)
+  en           String?
   sortOrder    Int        @default(0)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

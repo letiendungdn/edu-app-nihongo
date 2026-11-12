@@ -3,7 +3,7 @@ import Foundation
 // DTO khớp đúng JSON thật của gateway (đã lấy mẫu bằng curl). Field nào cũng có thể vắng nên đều Optional.
 
 struct GrammarDTO: Decodable {
-    struct Example: Decodable { let id: Int; let jp: String?; let romaji: String?; let vi: String?; let sortOrder: Int? }
+    struct Example: Decodable { let id: Int; let jp: String?; let romaji: String?; let vi: String?; var en: String? = nil; let sortOrder: Int? }
     let id: Int
     let pattern: String?
     let meaning: String?

@@ -66,13 +66,22 @@ function keyOf(word: string, reading: string): string {
   return `${word}|${reading}`;
 }
 
-function generateExample(word: string, reading: string, meaningVi: string): Example {
+/** Số đếm viết bằng chữ Hán hoặc chữ số: 三, 十二, ２… (chỉ những từ này mới ghép khuôn câu an toàn). */
+const NUMERAL = /^[一二三四五六七八九十百千0-9０-９]+/;
+
+/**
+ * Chỉ sinh câu khi chắc chắn tự nhiên: câu soạn tay (CURATED) và vài khuôn cho từ chỉ số lượng/thời gian
+ * (三分 → 三分待ってください). Trước đây mọi từ còn lại bị ghép vào 「これは〜です」/「このりんごは〜です」
+ * và sinh ra hàng nghìn câu vô nghĩa (このりんごは忙しいです) — giờ để trống cho người soạn điền.
+ */
+function generateExample(word: string, reading: string, meaningVi: string): Example | null {
   const curated = CURATED[keyOf(word, reading)];
   if (curated) return curated;
+  if (!NUMERAL.test(word)) return null;
 
   const meaning = shortMeaning(meaningVi);
 
-  if (/分$/.test(word) || /ふん$|ぷん$/.test(reading)) {
+  if (/分$/.test(word) && /ふん$|ぷん$/.test(reading)) {
     return {
       exampleJa: `${word}待ってください。`,
       exampleKana: `${reading}まってください。`,
@@ -86,54 +95,21 @@ function generateExample(word: string, reading: string, meaningVi: string): Exam
       exampleVi: `${meaning} tôi đi du lịch.`,
     };
   }
-  if (/時$/.test(word) || /じ$/.test(reading)) {
+  if (/時$/.test(word) && /じ$/.test(reading)) {
     return {
       exampleJa: `今、${word}です。`,
       exampleKana: `いま、${reading}です。`,
       exampleVi: `Bây giờ là ${meaning}.`,
     };
   }
-  if (/つ$/.test(word) || /つ$/.test(reading)) {
-    return {
-      exampleJa: `${word}ください。`,
-      exampleKana: `${reading}ください。`,
-      exampleVi: `Cho tôi ${meaning}.`,
-    };
-  }
-  if (/人$/.test(word) || /にん$|り$/.test(reading)) {
-    return {
-      exampleJa: `${word}います。`,
-      exampleKana: `${reading}います。`,
-      exampleVi: `Có ${meaning}.`,
-    };
-  }
-  if (/本$/.test(word) || /ほん$|ぽん$|ぼん$/.test(reading)) {
+  if (/本$/.test(word) && /ほん$|ぽん$|ぼん$/.test(reading)) {
     return {
       exampleJa: `ペンが${word}あります。`,
       exampleKana: `ペンが${reading}あります。`,
       exampleVi: `Có ${meaning} bút.`,
     };
   }
-  if (/日$/.test(word)) {
-    return {
-      exampleJa: `今日は${word}です。`,
-      exampleKana: `きょうは${reading}です。`,
-      exampleVi: `Hôm nay là ${meaning}.`,
-    };
-  }
-  if (/番$/.test(word) || /ばん$/.test(reading)) {
-    return {
-      exampleJa: `これが${word}です。`,
-      exampleKana: `これが${reading}です。`,
-      exampleVi: `Đây là ${meaning}.`,
-    };
-  }
-
-  return {
-    exampleJa: `これは${word}です。`,
-    exampleKana: `これは${reading}です。`,
-    exampleVi: `Đây là ${meaning}.`,
-  };
+  return null;
 }
 
 export async function seedKanjiVocabExamples(prisma: PrismaClientType) {
@@ -188,9 +164,9 @@ export async function seedKanjiVocabExamples(prisma: PrismaClientType) {
   let updated = 0;
   for (let i = 0; i < rows.length; i += BATCH) {
     const chunk = rows.slice(i, i + BATCH);
-    await prisma.$transaction(
-      chunk.map((row) => {
+    const writes = chunk.flatMap((row) => {
         const ex = generateExample(row.word, row.reading, row.meaningVi);
+        if (!ex) return [];
         return prisma.kanjiVocab.update({
           where: { id: row.id },
           data: {
@@ -199,9 +175,9 @@ export async function seedKanjiVocabExamples(prisma: PrismaClientType) {
             exampleVi: ex.exampleVi,
           },
         });
-      }),
-    );
-    updated += chunk.length;
+      });
+    await prisma.$transaction(writes);
+    updated += writes.length;
   }
 
   const filled = await prisma.kanjiVocab.count({

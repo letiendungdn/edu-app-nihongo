@@ -153,7 +153,35 @@ UPDATE "KanjiEntry" k SET "meaningEn" = kd.meaning_en FROM kd
 WHERE k.character = kd.character AND coalesce(k."meaningEn",'') = '';
 ```
 
-### 6. Lưu vào seed
+### 6. Bản dịch tiếng Anh của câu ví dụ
+
+`example-translations.tsv` (`ja<TAB>en`, có dòng tiêu đề) chứa bản dịch máy cho mọi câu ví dụ đang có trong
+`VocabularyExample.ja`, `Example.jp` (ngữ pháp) và `KanjiVocab.exampleJa`. Bản dịch được viết dựa trên câu tiếng
+Việt sẵn có và câu tiếng Nhật, nên giao diện ghi "EN: dịch máy". Chỉ điền vào câu còn trống, không ghi đè bản đã sửa tay:
+
+```bash
+tail -n +2 example-translations.tsv > /tmp/exen.tsv
+docker cp /tmp/exen.tsv edu-postgres-nihongo:/tmp/exen.tsv
+docker exec -u root edu-postgres-nihongo chmod 644 /tmp/exen.tsv
+$DB <<'SQL'
+BEGIN;
+CREATE TEMP TABLE exen(ja text, en text);
+COPY exen FROM '/tmp/exen.tsv';
+UPDATE "VocabularyExample" t SET en = e.en FROM exen e WHERE trim(t.ja) = e.ja AND coalesce(t.en,'') = '';
+UPDATE "Example" t SET en = e.en FROM exen e WHERE trim(t.jp) = e.ja AND coalesce(t.en,'') = '';
+UPDATE "KanjiVocab" t SET "exampleEn" = e.en FROM exen e WHERE trim(t."exampleJa") = e.ja AND coalesce(t."exampleEn",'') = '';
+COMMIT;
+SQL
+```
+
+Câu ví dụ mới thêm sau này chưa có trong file thì `en` để trống (giao diện chỉ ẩn dòng EN). Thêm bản dịch vào file
+rồi chạy lại khối trên.
+
+Khoảng 2.300 câu ví dụ của kanji/từ vựng trước đây được script ghép khuôn (「このりんごは忙しいです」,
+「これは努力です」, 「涙から来ました」…) đã được viết lại thành câu tự nhiên cho từng từ (đủ ja, kana, vi, en).
+`seed-kanji-vocab-examples.ts` giờ chỉ sinh câu cho từ chỉ số lượng/thời gian; từ khác để trống cho người soạn điền.
+
+### 7. Lưu vào seed
 
 ```bash
 npm run db:export-content

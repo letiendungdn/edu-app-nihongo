@@ -128,6 +128,31 @@ class AppDatabaseMigrationTest {
         }
     }
 
+    /** v5→v6 thêm cột en cho câu ví dụ ngữ pháp: dòng cũ giữ nguyên, cột mới NULL tới lần tải sau. */
+    @Test
+    fun migrate5To6_addsGrammarExampleEn() {
+        helper.createDatabase(TEST_DB, 5).apply {
+            execSQL(
+                "INSERT INTO grammar (id, lesson_number, pattern, meaning, explanation, jlpt_level, sort_order) " +
+                    "VALUES (1, 1, 'N1 は N2 です', 'N1 là N2', NULL, 'N5', 0)",
+            )
+            execSQL(
+                "INSERT INTO grammar_example (id, grammar_id, jp, romaji, vi, sort_order) " +
+                    "VALUES (10, 1, 'わたしは がくせいです。', NULL, 'Tôi là học sinh.', 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true)
+
+        db.query("SELECT jp, vi, en FROM grammar_example WHERE id = 10").use { c ->
+            c.moveToFirst()
+            assertEquals("わたしは がくせいです。", c.getString(0))
+            assertEquals("Tôi là học sinh.", c.getString(1))
+            assertEquals(true, c.isNull(2))
+        }
+    }
+
         private companion object {
         const val TEST_DB = "migration-test.db"
     }

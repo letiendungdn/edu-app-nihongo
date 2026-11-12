@@ -265,6 +265,27 @@ describe("VocabulariesService", () => {
     });
   });
 
+  it("withExampleFields exposes the English translation of the first example", async () => {
+    prisma.vocabulary.create.mockResolvedValue({
+      id: 2,
+      kana: "え",
+      examples: [
+        { ja: "絵を描く。", kana: "えを かく。", vi: "Vẽ tranh.", en: "I draw a picture." },
+      ],
+    });
+    const result = await service.create({
+      kana: "え",
+      romaji: "e",
+      meaning: "tranh",
+      lessonId: 1,
+      exampleJa: "絵を描く。",
+    });
+    expect(result).toMatchObject({
+      exampleEn: "I draw a picture.",
+      examples: [expect.objectContaining({ en: "I draw a picture." })],
+    });
+  });
+
   it("update upserts the first example and keeps other fields", async () => {
     prisma.vocabulary.findUnique.mockResolvedValue({ lessonId: 1 });
     prisma.vocabulary.update.mockResolvedValue({ id: 7, lessonId: 1 });

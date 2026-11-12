@@ -120,6 +120,16 @@ private fun GrammarCard(g: Grammar) {
             g.examples.forEach { ex ->
                 Text(ex.jp, style = MaterialTheme.typography.bodyMedium)
                 ex.vi?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                ex.en?.takeIf { it.isNotBlank() }?.let {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "EN  ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        SpeakEnglishText(it)
+                    }
+                }
             }
         }
     }

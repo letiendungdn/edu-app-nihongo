@@ -125,7 +125,7 @@ class ContentRepositoryImpl @Inject constructor(
                     pattern = row.grammar.pattern,
                     meaning = row.grammar.meaning,
                     explanation = row.grammar.explanation,
-                    examples = row.examples.sortedBy { it.sortOrder }.map { GrammarExample(it.jp, it.romaji, it.vi) },
+                    examples = row.examples.sortedBy { it.sortOrder }.map { GrammarExample(it.jp, it.romaji, it.vi, it.en) },
                 )
             }
         }
@@ -139,7 +139,7 @@ class ContentRepositoryImpl @Inject constructor(
             },
             items.flatMap { g ->
                 g.examples.orEmpty().mapIndexed { i, e ->
-                    GrammarExampleEntity(e.id, g.id, e.jp.orEmpty(), e.romaji, e.vi, e.sortOrder ?: i)
+                    GrammarExampleEntity(e.id, g.id, e.jp.orEmpty(), e.romaji, e.vi, e.sortOrder ?: i, e.en)
                 }
             },
         )

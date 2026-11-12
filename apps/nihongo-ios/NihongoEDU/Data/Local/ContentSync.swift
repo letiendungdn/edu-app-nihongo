@@ -19,6 +19,14 @@ struct ContentSync {
                 GrammarExample(id: e.id, jp: e.jp ?? "", romaji: e.romaji, vi: e.vi, sortOrder: e.sortOrder ?? j)
             }
         }
+        // Bản dịch tiếng Anh ở entity riêng (GrammarExampleExtra, SchemaV5): cập nhật hoặc tạo mới theo id
+        let examples = items.flatMap { $0.examples ?? [] }
+        let ids = examples.map(\.id)
+        let extras = (try? context.fetch(FetchDescriptor<GrammarExampleExtra>(predicate: #Predicate { ids.contains($0.exampleId) }))) ?? []
+        let byId = Dictionary(extras.map { ($0.exampleId, $0) }, uniquingKeysWith: { a, _ in a })
+        for e in examples {
+            if let x = byId[e.id] { x.en = e.en } else { context.insert(GrammarExampleExtra(exampleId: e.id, en: e.en)) }
+        }
         try context.save()
     }
 

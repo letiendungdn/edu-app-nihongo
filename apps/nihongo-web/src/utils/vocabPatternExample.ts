@@ -9,13 +9,16 @@ export type VocabPatternSource = {
   exampleJa?: string | null;
   exampleKana?: string | null;
   exampleVi?: string | null;
-  examples?: Array<{ ja: string; kana?: string | null; vi?: string | null }>;
+  exampleEn?: string | null;
+  examples?: Array<{ ja: string; kana?: string | null; vi?: string | null; en?: string | null }>;
 };
 
 export type VocabPatternExample = {
   ja: string;
   kana?: string;
   vi: string;
+  /** Bản dịch tiếng Anh (dịch máy); rỗng nếu chưa có. */
+  en: string;
   speak: string;
 };
 
@@ -37,6 +40,7 @@ function toExample(
   jaRaw: string | null | undefined,
   kanaRaw: string | null | undefined,
   viRaw: string | null | undefined,
+  enRaw?: string | null,
 ): VocabPatternExample | null {
   const ja = jaRaw?.trim();
   if (!ja) return null;
@@ -45,6 +49,7 @@ function toExample(
     ja,
     kana,
     vi: viRaw?.trim() || '',
+    en: enRaw?.trim() || '',
     speak: (kana || ja).replace(/[。！？]/g, ''),
   };
 }
@@ -52,10 +57,10 @@ function toExample(
 export function getVocabExamples(vocab: VocabPatternSource): VocabPatternExample[] {
   if (vocab.examples?.length) {
     return vocab.examples
-      .map((e) => toExample(e.ja, e.kana, e.vi))
+      .map((e) => toExample(e.ja, e.kana, e.vi, e.en))
       .filter((e): e is VocabPatternExample => e !== null);
   }
-  const single = toExample(vocab.exampleJa, vocab.exampleKana, vocab.exampleVi);
+  const single = toExample(vocab.exampleJa, vocab.exampleKana, vocab.exampleVi, vocab.exampleEn);
   return single ? [single] : [];
 }
 

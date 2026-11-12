@@ -20,7 +20,7 @@ import { lessonHeading, lessonShortLabel, splitLessonHeading } from '../utils/le
 import { getVocabExamples } from '../utils/vocabPatternExample';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import SpeakerIcon from '../components/SpeakerIcon';
-import { JmdictAttribution, SpeakEnglishButton, VocabExtraMeanings } from '../components/VocabReading';
+import { ExampleEnglish, JmdictAttribution, SpeakEnglishButton, VocabExtraMeanings } from '../components/VocabReading';
 import type { Vocabulary } from '../types/api';
 import './VocabLessonListView.css';
 
@@ -245,6 +245,7 @@ function StrokeModal({
               ) : null}
               <span className="vocab-stroke-modal__example-ja japanese-text">{example.ja}</span>
               {example.vi ? <span className="vocab-stroke-modal__example-vi">{example.vi}</span> : null}
+              <ExampleEnglish text={example.en} />
             </div>
             <button
               type="button"

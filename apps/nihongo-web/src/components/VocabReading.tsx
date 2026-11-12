@@ -41,6 +41,21 @@ export function SpeakEnglishButton({ text, className }: { text: string; classNam
   );
 }
 
+/**
+ * Bản dịch tiếng Anh của câu ví dụ (dịch máy, xem scripts/vocab-enrich/example-translations.tsv):
+ * nút bấm để nghe giọng en-US. Không có bản dịch thì không vẽ gì.
+ */
+export function ExampleEnglish({ text, className }: { text?: string | null; className?: string }) {
+  const en = text?.trim();
+  if (!en) return null;
+  return (
+    <span className={`example-en${className ? ` ${className}` : ''}`} title="Bản dịch máy">
+      <span className="example-en__label">EN</span>
+      <SpeakEnglishButton text={en} />
+    </span>
+  );
+}
+
 /** Cột Vocabulary.furigana: JSON [[chữ, cách đọc], …]. Hỏng hoặc trống → null. */
 export function parseFurigana(raw: string | null | undefined): [string, string][] | null {
   if (!raw) return null;

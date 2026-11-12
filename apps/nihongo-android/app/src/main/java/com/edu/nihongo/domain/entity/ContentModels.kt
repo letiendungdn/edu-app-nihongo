@@ -31,7 +31,7 @@ data class Grammar(
     val examples: List<GrammarExample>,
 )
 
-data class GrammarExample(val jp: String, val romaji: String?, val vi: String?)
+data class GrammarExample(val jp: String, val romaji: String?, val vi: String?, val en: String? = null)
 
 data class Kanji(
     val id: Long,

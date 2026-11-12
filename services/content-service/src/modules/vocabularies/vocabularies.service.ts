@@ -19,11 +19,16 @@ import { withAlsoIn } from "../shared/book-overlap";
 const EXAMPLES_INCLUDE = {
   examples: {
     orderBy: { sortOrder: "asc" as const },
-    select: { ja: true, kana: true, vi: true },
+    select: { ja: true, kana: true, vi: true, en: true },
   },
 };
 
-type VocabExampleRow = { ja: string; kana: string | null; vi: string | null };
+type VocabExampleRow = {
+  ja: string;
+  kana: string | null;
+  vi: string | null;
+  en?: string | null;
+};
 
 /**
  * Giữ exampleJa/Kana/Vi (câu đầu tiên) trong response để client cũ vẫn chạy;
@@ -40,6 +45,7 @@ export function withExampleFields<T extends { examples?: VocabExampleRow[] }>(
     exampleJa: first?.ja ?? null,
     exampleKana: first?.kana ?? null,
     exampleVi: first?.vi ?? null,
+    exampleEn: first?.en ?? null,
   };
 }
 

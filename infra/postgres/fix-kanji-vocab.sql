@@ -1,3 +1,6 @@
+-- LƯU Ý (2026-11): câu ví dụ trong file này là bản cũ ghép khuôn (「このりんごは〜です」…), đã được viết lại
+-- và dịch tiếng Anh trực tiếp trong DB (xem packages/prisma-nihongo/scripts/vocab-enrich/README.md).
+-- Đừng chạy lại file này trên dữ liệu hiện tại: nó sẽ ghi đè câu ví dụ đã sửa.
 -- Khôi phục KanjiVocab (Kanji Look and Learn bài 1–32): dữ liệu cào từ vnjpclub bị lệch hàng —
 -- từ đầu tiên của mỗi chữ Hán bị thay bằng chữ khác, okurigana bị cắt, nghĩa lệch sang từ bên cạnh.
 -- Sửa word/reading theo nghĩa, liên kết lại Vocabulary, tạo lại câu ví dụ, xóa dòng rác,

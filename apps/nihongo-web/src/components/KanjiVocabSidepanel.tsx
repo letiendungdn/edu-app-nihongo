@@ -12,6 +12,7 @@ import { queryKeys } from '../hooks/queries';
 import { useAuth } from '../hooks/useAuth';
 import type { KanjiVocabItem } from '../types/api';
 import SpeakerIcon from './SpeakerIcon';
+import { ExampleEnglish } from './VocabReading';
 import KanjiStructureButton from './KanjiStructureButton';
 
 type Props = {
@@ -408,6 +409,7 @@ export default function KanjiVocabSidepanel({
                     {v.exampleVi ? (
                       <span className="kanji-vocab-example-vi">{v.exampleVi}</span>
                     ) : null}
+                    <ExampleEnglish text={v.exampleEn} />
                   </div>
                 )}
               </div>

@@ -64,6 +64,8 @@ data class GrammarExampleEntity(
     val romaji: String?,
     val vi: String?,
     @ColumnInfo(name = "sort_order") val sortOrder: Int,
+    /** Bản dịch tiếng Anh (dịch máy); NULL với dữ liệu tải trước v6. */
+    val en: String? = null,
 )
 
 /** Room tự JOIN theo khóa ngoại: một query cho grammar, một query cho mọi example. */

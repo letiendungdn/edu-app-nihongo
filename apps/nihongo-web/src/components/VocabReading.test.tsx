@@ -5,6 +5,7 @@ const speech = vi.hoisted(() => ({ playAudio: vi.fn() }));
 vi.mock('@/utils/speech', () => speech);
 
 import {
+  ExampleEnglish,
   FuriganaWord,
   SpeakEnglishButton,
   VocabExtraMeanings,
@@ -80,5 +81,13 @@ describe('nghĩa tiếng Anh bấm để nghe', () => {
   it('VocabExtraMeanings hiện nghĩa tiếng Anh dạng nút', () => {
     render(<VocabExtraMeanings vocab={{ hanViet: null, meaningEn: 'student', meaningEnSource: 'jmdict' }} />);
     expect(screen.getByRole('button', { name: 'Nghe tiếng Anh: student' })).toBeTruthy();
+  });
+
+  it('ExampleEnglish: câu ví dụ tiếng Anh là nút nghe; trống thì không vẽ', () => {
+    const { container, rerender } = render(<ExampleEnglish text="I read a book." />);
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe tiếng Anh: I read a book.' }));
+    expect(speech.playAudio).toHaveBeenCalledWith('I read a book.', 'en-US');
+    rerender(<ExampleEnglish text="  " />);
+    expect(container.innerHTML).toBe('');
   });
 });

@@ -46,6 +46,7 @@ import {
   unpinGrammar,
 } from '../utils/grammarSrs';
 import SpeakerIcon from '../components/SpeakerIcon';
+import { ExampleEnglish } from '../components/VocabReading';
 import './GrammarView.css';
 import { lessonHeading, splitLessonHeading } from '../utils/lessonHeading';
 
@@ -916,6 +917,7 @@ export default function GrammarView({
                             {(ex.vi || ex.en) && (
                               <div className="example-vi">{ex.vi || ex.en}</div>
                             )}
+                            {ex.vi && ex.en ? <ExampleEnglish text={ex.en} /> : null}
                             {quickAnalysis && (
                               <div className="example-analysis">{quickAnalysis}</div>
                             )}

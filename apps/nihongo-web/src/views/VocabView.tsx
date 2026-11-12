@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech } from '../utils/speech';
-import { FuriganaWord, JmdictAttribution, VocabExtraMeanings } from '../components/VocabReading';
+import { ExampleEnglish, FuriganaWord, JmdictAttribution, VocabExtraMeanings } from '../components/VocabReading';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
@@ -595,6 +595,7 @@ export default function VocabView({
                             )}
                           </span>
                           {example.vi ? <span className="vocab-examples__vi">{example.vi}</span> : null}
+                          <ExampleEnglish text={example.en} className="vocab-examples__en" />
                         </p>
                         <button
                           type="button"
@@ -608,7 +609,7 @@ export default function VocabView({
                       </li>
                     ))}
                   </ul>
-                  <p className="vocab-examples__note">Dịch tiếng Việt</p>
+                  <p className="vocab-examples__note">Dịch tiếng Việt · EN: dịch máy, bấm để nghe</p>
                 </div>
                 <VocabPicture
                   word={currentVocab.romaji}

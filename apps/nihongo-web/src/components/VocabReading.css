@@ -84,3 +84,19 @@
   opacity: 1;
   color: var(--primary-color);
 }
+
+/* Câu ví dụ: dòng tiếng Anh dưới dòng tiếng Việt */
+.example-en {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 0.9em;
+}
+.example-en__label {
+  flex: none;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #6b7280);
+}
