@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages ./packages
@@ -14,7 +14,7 @@ WORKDIR /app
 RUN npm prune --omit=dev
 
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 # Bảo mật: app chạy bằng `node`, không cần npm. npm đi kèm image gốc mang theo lỗ hổng
 # (brace-expansion, pacote, ip-address… — Trivy quét 09/11/2026) và là công cụ có sẵn cho kẻ tấn công.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
