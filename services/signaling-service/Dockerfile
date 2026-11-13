@@ -1,11 +1,11 @@
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY services/signaling-service ./services/signaling-service
 RUN npm ci --workspace=@edu/signaling-service --include-workspace-root
 RUN npm run build -w @edu/signaling-service
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
