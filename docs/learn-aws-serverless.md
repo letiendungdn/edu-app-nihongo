@@ -174,6 +174,10 @@ LocalStack chạy mỗi lần gọi Lambda trong **một container riêng** (ima
 5. Cold start là gì, làm sao giảm?
 6. Vì sao không dùng khóa truy cập (access key) trong code Lambda?
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---

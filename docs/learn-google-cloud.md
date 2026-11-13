@@ -364,6 +364,10 @@ Cách dọn sạch nhất: **xoá cả project** — `gcloud projects delete edu
 8. (Nâng cao) Tạo GKE Autopilot, cài chart `infra/helm/edu-app` với Cloud SQL + Workload Identity.
 9. Dọn toàn bộ tài nguyên theo mục 11, kiểm tra trang Billing không còn phát sinh.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---

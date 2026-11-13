@@ -401,6 +401,10 @@ Kiểm tra tài nguyên còn sót ở **mọi region** (dễ lỡ tay tạo ở 
 8. (Nâng cao) Viết lại mục 10 thành Terraform chạy được, `terraform apply` rồi `terraform destroy`.
 9. Dọn toàn bộ theo mục 11, xem Cost Explorer vài ngày sau để chắc không còn phát sinh.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---

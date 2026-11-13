@@ -307,6 +307,10 @@ import type { T } from 'lib'        → 0 byte
 Layout gốc import gì                → MỌI trang tải thứ đó
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScript/TypeScript, HTTP, webpack): [interview-web.md](./interview-web.md).
+
 <!-- nav:start -->
 
 ---

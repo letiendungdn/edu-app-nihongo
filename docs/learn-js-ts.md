@@ -251,7 +251,7 @@ console.log(JSON.parse('{"success":true,"data":[1,2]}').data);  // chuỗi → o
 
 Gọi API, đọc database, đọc file đều **mất thời gian**. JavaScript không đứng chờ: nó chạy tiếp các dòng sau, và quay lại khi có kết quả. Đây là điều khó nhất cho người mới, và cũng quan trọng nhất.
 
-Ví dụ thật, gọi API của project. Stack phải đang chạy: [docker.md](./docker.md), hoặc chạy được thì làm, chưa thì đọc output.
+Ví dụ thật, gọi API của project. Stack phải đang chạy: [learn-docker.md](./learn-docker.md), hoặc chạy được thì làm, chưa thì đọc output.
 
 ```ts
 async function layBai(so: number) {
@@ -554,6 +554,10 @@ Làm trong `~/hoc-ts`, chạy bằng `node`, kiểm bằng `npx -p typescript ts
 2. Gọi `http://localhost:8080/api/lessons?jlptLevel=N5` bằng `fetch`, in ra số bài và tên 3 bài đầu. So kết quả với [learn-web-http.md](./learn-web-http.md).
 3. Mở [packages/nest-common/src/utils/string.ts](../packages/nest-common/src/utils/string.ts). Giải thích `parseJsonArray` từng dòng: vì sao có `try/catch`, vì sao kiểm `Array.isArray`, và nó trả gì khi `raw` là `null`?
 4. Mở [services/api-gateway/src/auth/jwt-secret.ts](../services/api-gateway/src/auth/jwt-secret.ts). Đọc hàm `resolveJwtSecret` và trả lời: trong production, chuyện gì xảy ra nếu `JWT_SECRET` là `"secret"`?
+
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScript/TypeScript, HTTP, webpack): [interview-web.md](./interview-web.md).
 
 <!-- nav:start -->
 

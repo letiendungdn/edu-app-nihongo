@@ -39,7 +39,7 @@ Frontend là **thin client** (Next.js, mobile). Không Route Handler gọi DB tr
 ```
 
 > Chat & notification: REST + React Query polling (5–8s).. Luồng chi tiết: [core-flows.md](./core-flows.md).  
-> Nginx routing: [learn-nginx.md](./learn-nginx.md). Docker services: [docker.md](./docker.md).
+> Nginx routing: [learn-nginx.md](./learn-nginx.md). Docker services: [learn-docker.md](./learn-docker.md).
 
 ---
 
@@ -252,7 +252,7 @@ Các topic `edu.session.completed`, `edu.vocab.reviewed`, `edu.exam.scored` đã
 
 ## 9. Infrastructure
 
-Docker Compose (Nihongo full ≈13 container): `postgres-nihongo`, `postgres-keycloak`, `keycloak`, `redis`, `mongodb`, `kafka`, `zookeeper`, `livekit`, `api-gateway`, `content-service`, `exam-service`, `nihongo-web`, `nginx`. Chi tiết: [docker.md](./docker.md).
+Docker Compose (Nihongo full ≈13 container): `postgres-nihongo`, `postgres-keycloak`, `keycloak`, `redis`, `mongodb`, `kafka`, `zookeeper`, `livekit`, `api-gateway`, `content-service`, `exam-service`, `nihongo-web`, `nginx`. Chi tiết: [learn-docker.md](./learn-docker.md).
 
 Kubernetes: `infra/k8s/`, `infra/helm/edu-app/`
 

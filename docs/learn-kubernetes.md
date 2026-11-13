@@ -249,7 +249,7 @@ Nên chọn **một** nguồn (Helm) và cho `deploy.yml` dùng `helm upgrade --
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 5/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 4/8.
 
 - Bài trước: [learn-infra.md](./learn-infra.md) — Thư mục infra/, cổng, healthcheck và các sự cố thật
 - **Bài tiếp: [learn-release-cicd.md](./learn-release-cicd.md)** — CI/CD: migrate khi deploy, canary, feature flag, rollback

@@ -1220,6 +1220,10 @@ Trả lời trước, rồi mở phần đáp án.
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế bảng trong [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md); câu hỏi Senior chung (race condition, thanh toán, system design) trong [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

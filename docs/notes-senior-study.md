@@ -201,7 +201,7 @@ findFirst(conflict)     // A và B cùng thấy trống
 |------|----------|
 | Log correlation | 1 `requestId` xuyên gateway → gRPC (hiện có thể chưa đủ) |
 | Metrics | Latency p50/p99, error rate auth / webhook / bookSession |
-| Tracing | Nếu Compose có Jaeger — [docker.md](./docker.md); trace 1 request vocab list |
+| Tracing | Nếu Compose có Jaeger — [learn-docker.md](./learn-docker.md); trace 1 request vocab list |
 | Audit sẵn có | `AuditInterceptor` → MongoDB `audit_logs` (TTL) — [system-design.md](./system-design.md) |
 
 **Checkpoint:** sau reproduce 1 bug, chỉ ra *chỗ nào thiếu log* khiến debug chậm.
@@ -953,7 +953,7 @@ async function getValidToken() {
 | [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) | Webhook idempotent |
 | [system-design.md](./system-design.md) | Kiến trúc + Kafka topics |
 | [db-design.md](./db-design.md) | Schema + `WebhookEvent` |
-| [docker.md](./docker.md) | Containers / Jaeger |
+| [learn-docker.md](./learn-docker.md) | Containers / Jaeger |
 | [roadmap-reactjs.md](./roadmap-reactjs.md) | React/Next.js roadmap chi tiết |
 | [roadmap-flutter.md](./roadmap-flutter.md) | Flutter roadmap chi tiết |
 

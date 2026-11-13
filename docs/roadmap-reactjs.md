@@ -3,7 +3,7 @@
 > **Lộ trình học** (React 19 + Next.js + TanStack Query), không phải bảng status feature.  
 > App thật: `nihongo-web` (Next 15). Chạy dev (`npm run dev:nihongo-web`): cổng **5173**. Chạy bằng Docker: vào qua nginx ở **8080** (container web nghe cổng 8080, không mở ra máy).  
 > Build và tối ưu bundle: [learn-webpack.md](./learn-webpack.md).  
-> Chạy: [run-local.md](./run-local.md) · Docker: [docker.md](./docker.md) · Mobile RN: [roadmap-react-native.md](./roadmap-react-native.md).
+> Chạy: [run-local.md](./run-local.md) · Docker: [learn-docker.md](./learn-docker.md) · Mobile RN: [roadmap-react-native.md](./roadmap-react-native.md).
 
 ---
 
@@ -303,6 +303,10 @@ npm run docker:up:nihongo   # → http://localhost:8080
 | [keycloak-setup.md](./keycloak-setup.md) | OIDC client web |
 | [learn-edu-app.md](./learn-edu-app.md) | Lộ trình monorepo tổng |
 | [React docs](https://react.dev/) · [Next.js docs](https://nextjs.org/docs) · [TanStack Query](https://tanstack.com/query/latest) | Official |
+
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScript/TypeScript, HTTP, webpack): [interview-web.md](./interview-web.md).
 
 <!-- nav:start -->
 

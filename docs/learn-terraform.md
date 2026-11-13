@@ -275,6 +275,10 @@ terraform workspace select -or-create localstack
 (known after apply) = giá trị chỉ biết sau khi apply
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---

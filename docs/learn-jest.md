@@ -846,6 +846,10 @@ Toàn bộ chuỗi request thật: routing, guard, `ValidationPipe` (DTO sai tr�
 
 Giả Redis vừa đủ (`pipeline` với các lệnh nối chuỗi và `exec`), cố định thời gian bằng `setSystemTime`, rồi test các biên: dưới giới hạn cho qua, **đúng bằng** giới hạn thì chặn với 429, route không có cấu hình thì không gọi Redis. Kiểm tra cả khóa Redis được tạo đúng (theo IP, controller, handler). Xem [sliding-window.guard.spec.ts](../packages/nest-common/src/rate-limit/sliding-window.guard.spec.ts).
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án (system design, testing, câu hỏi hành vi): [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

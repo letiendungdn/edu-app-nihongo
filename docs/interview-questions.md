@@ -1,5 +1,11 @@
 # Bộ Câu Hỏi Phỏng Vấn Senior — EDU APP
 
+> **Mục tiêu:** Trả lời câu hỏi Senior backend chung: PostgreSQL, NestJS, Kafka, thanh toán, system design, testing, câu hỏi hành vi và bài race condition.
+>
+> **Cần biết trước:** [learn-postgres.md](./learn-postgres.md), [learn-nestjs.md](./learn-nestjs.md), [learn-kafka.md](./learn-kafka.md), [learn-stripe-idempotency.md](./learn-stripe-idempotency.md), [learn-system-design.md](./learn-system-design.md), [learn-testing.md](./learn-testing.md).
+
+Cách dùng: tự trả lời thành tiếng rồi mới bấm mở **Đáp án**.
+
 Mỗi câu trả lời đều dựa vào **code thực trong project**. Không trả lời chung chung.
 
 Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Flyway, DDD): [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md).
@@ -10,37 +16,61 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q1: Giải thích Keyset Pagination và tại sao nó tốt hơn OFFSET trên bảng lớn?**
 
+<details><summary>Đáp án</summary>
+
 > OFFSET phải scan và bỏ qua N rows trước khi lấy page. Ở trang 50,000 với limit 20, PostgreSQL phải đọc 1,000,020 rows để trả về 20. Keyset dùng `WHERE id > last_cursor` — PostgreSQL seek thẳng tới vị trí đó qua index, O(log n) thay vì O(n). Trong project, Vocabulary có thể lên đến hàng triệu records khi scale, endpoint `GET /vocabularies` phải dùng cursor thay vì OFFSET. Trade-off: không thể nhảy tới page N tùy ý.
+
+</details>
 
 ---
 
 **Q2: Tại sao cần SELECT FOR UPDATE khi book coaching session?**
 
+<details><summary>Đáp án</summary>
+
 > Hai user cùng book coach A lúc 8:00 sáng. Cả 2 query conflict check đều thấy 0 rows → cả 2 INSERT thành công → double booking. SELECT FOR UPDATE lock coach row, buộc transaction thứ 2 đợi transaction 1 COMMIT. Sau khi transaction 1 COMMIT tạo session, transaction 2 mới chạy conflict check → thấy đã có → rollback. Đây là pessimistic locking, phù hợp khi conflict rate cao (booking slots).
+
+</details>
 
 ---
 
 **Q3: Phân biệt 4 isolation levels. Project dùng level nào và tại sao?**
 
+<details><summary>Đáp án</summary>
+
 > PostgreSQL default là READ COMMITTED — đủ cho hầu hết queries (vocab fetch, profile load). REPEATABLE READ dùng khi cần snapshot nhất quán across multiple queries trong 1 transaction, ví dụ report cuối tháng tính doanh thu. SERIALIZABLE dùng cho financial reconciliation — transaction chạy như thể tuần tự, tránh anomaly. Project dùng READ COMMITTED mặc định, chỉ raise level cho Payout reconciliation cron job. READ UNCOMMITTED PostgreSQL không support (treat như READ COMMITTED).
+
+</details>
 
 ---
 
 **Q4: Covering index là gì? Cho ví dụ trong project.**
 
+<details><summary>Đáp án</summary>
+
 > Covering index include đủ các cột SELECT — PostgreSQL chỉ đọc index mà không cần đọc heap (bảng chính), tiết kiệm 1 random I/O per row. Trong project, coach search query `SELECT id, hourlyRateUsd, avgRating, totalSessions FROM CoachProfile WHERE isActive=true ORDER BY avgRating DESC LIMIT 10` có thể dùng covering index: `CREATE INDEX ON CoachProfile (isActive, avgRating DESC) INCLUDE (hourlyRateUsd, totalSessions)`. Trên bảng 100k coaches, difference là ~200ms vs ~20ms.
+
+</details>
 
 ---
 
 **Q5: COUNT(*) trên bảng 1 triệu rows có vấn đề gì? Fix thế nào?**
 
+<details><summary>Đáp án</summary>
+
 > COUNT(*) phải scan toàn bộ bảng dù có index — khoảng 800ms-1s trên 1M rows. Fix tùy trường hợp: (1) Estimate từ `pg_class.reltuples` — sai lệch 1-5%, đủ để hiển thị "khoảng 1 triệu từ vựng". (2) Chỉ COUNT với WHERE clause có index và selective (ví dụ count payments của 1 user). (3) Maintain counter riêng — denormalized field `totalVocabCount` update khi insert/delete. Trong project, `/admin/stats` nên dùng estimate, không COUNT(*) trực tiếp.
+
+</details>
 
 ---
 
 **Q6: Giải thích deadlock và cách phòng tránh trong transaction.**
 
+<details><summary>Đáp án</summary>
+
 > Deadlock xảy ra khi 2 transactions lock resources theo thứ tự ngược nhau: Tx A lock User 1 → đợi User 2, Tx B lock User 2 → đợi User 1. Phòng tránh: (1) Luôn lock resources theo cùng thứ tự (alphabetical, numeric ID). (2) Giảm scope transaction — lock muộn nhất, release sớm nhất. (3) Dùng `SELECT FOR UPDATE SKIP LOCKED` cho queue-style processing. PostgreSQL tự detect deadlock và rollback 1 transaction — app cần catch và retry.
+
+</details>
 
 ---
 
@@ -48,25 +78,41 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q7: Execution order của Guard, Interceptor, Pipe, ExceptionFilter?**
 
+<details><summary>Đáp án</summary>
+
 > Middleware → Guard → Interceptor (before) → Pipe → Controller → Interceptor (after) → ExceptionFilter. Quan trọng: nếu Guard throw UnauthorizedException, Interceptor after không chạy — ExceptionFilter bắt thẳng. AuditInterceptor trong project dùng `tap()` operator vì nó là side-effect operator — Observable vẫn flow xuống client, audit log ghi sau. Nếu dùng `subscribe()` sẽ consume Observable, client không nhận được response.
+
+</details>
 
 ---
 
 **Q8: Tại sao dùng `void asyncMethod()` trong AuditInterceptor thay vì `await`?**
 
+<details><summary>Đáp án</summary>
+
 > Audit log là fire-and-forget — không cần đợi MongoDB write trước khi trả response cho client. `await` sẽ block response thêm 5-20ms mỗi request. `void` là signal explicit rằng đây là intentional unhandled Promise, TypeScript không warning. Trade-off: nếu MongoDB down, audit log mất nhưng request vẫn thành công — đây là correct behavior vì audit là non-critical.
+
+</details>
 
 ---
 
 **Q9: Tại sao Redis Sliding Window tốt hơn Fixed Window cho rate limiting?**
 
+<details><summary>Đáp án</summary>
+
 > Fixed Window (INCR + TTL): user gửi 5 requests lúc 00:59, counter reset lúc 01:00, gửi thêm 5 requests — trong 2 giây user đã gửi 10 requests, bypass limit. Sliding Window (ZADD/ZREMRANGEBYSCORE): mỗi request là 1 entry với timestamp, luôn đếm đúng trong 60 giây trước hiện tại, không có edge case ở boundary. Trong project, `POST /auth/login` limit 5 req/60s dùng sliding window — critical vì brute force attack tại boundary sẽ bypass fixed window.
+
+</details>
 
 ---
 
 **Q10: Giải thích Scope của NestJS Provider. Khi nào dùng REQUEST scope?**
 
+<details><summary>Đáp án</summary>
+
 > DEFAULT (Singleton): 1 instance cho toàn app, shared across requests. REQUEST: 1 instance mỗi request, useful khi cần inject request context (user ID, correlation ID). TRANSIENT: mới mỗi lần inject. REQUEST scope có overhead — tạo/destroy mỗi request, tạo chain reaction lên tất cả dependencies cũng phải REQUEST scoped. Trong project, AuditInterceptor dùng Singleton nhưng đọc request từ ExecutionContext — không cần REQUEST scope vì ExecutionContext cung cấp context on-demand.
+
+</details>
 
 ---
 
@@ -74,25 +120,41 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q11: Kafka đảm bảo "at least once" delivery nghĩa là gì? Xử lý thế nào?**
 
+<details><summary>Đáp án</summary>
+
 > Consumer đọc message → xử lý → commit offset. Nếu consumer crash sau khi xử lý nhưng trước khi commit, Kafka retry → message được process 2 lần. "At least once" = có thể duplicate, không bao giờ mất. Xử lý bằng idempotent consumer: mỗi message có unique key, check DB trước khi xử lý. Trong project, `edu.exam.submitted` consumer check `processedMessage` table trước khi update SrsCard — cùng message process 2 lần chỉ update 1 lần.
+
+</details>
 
 ---
 
 **Q12: Tại sao publish Kafka event thay vì xử lý ngay trong webhook handler?**
 
+<details><summary>Đáp án</summary>
+
 > Stripe timeout là 30 giây. Webhook handler cần respond 200 trong thời gian đó. Nếu xử lý synchronous: UPDATE Subscription + INSERT Notification + trigger payout + send email = 2-3 giây trong trường hợp tốt, có thể 30+ giây nếu email service chậm → Stripe timeout → retry → double processing. Với Kafka: handler chỉ verify signature + check idempotency + publish event = 65ms → return 200. Consumer xử lý async, có thể retry riêng, scale riêng.
+
+</details>
 
 ---
 
 **Q13: Dead Letter Queue là gì? Khi nào dùng?**
 
+<details><summary>Đáp án</summary>
+
 > DLQ là topic đặc biệt chứa messages đã fail sau N lần retry. Sau 3 lần fail, message move sang `edu.payment.succeeded.dlq` thay vì retry infinite. DLQ consumer không business logic — chỉ alert on-call engineer và lưu vào DB để manual review. Quan trọng: sau khi move vào DLQ phải commit offset (không throw), nếu không consumer sẽ stuck tại message đó mãi. Trong project, payment DLQ cực quan trọng — mất message = mất tiền của user.
+
+</details>
 
 ---
 
 **Q14: Tại sao Kafka message key quan trọng?**
 
+<details><summary>Đáp án</summary>
+
 > Key quyết định partition. Cùng key → cùng partition → messages của cùng 1 entity luôn theo thứ tự. `edu.exam.submitted` dùng `key=userId`: user A submit exam 2 lần nhanh → cả 2 messages vào cùng partition → consumer xử lý đúng thứ tự → SrsCard update không bị race condition. Nếu không có key → round-robin → 2 messages có thể vào 2 partition → 2 consumer xử lý song song → race condition.
+
+</details>
 
 ---
 
@@ -100,19 +162,31 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q15: Giải thích webhook idempotency. Tại sao cần WebhookEvent table?**
 
+<details><summary>Đáp án</summary>
+
 > Stripe retry webhook nếu không nhận 200 trong 30 giây (server crash, timeout). Không có idempotency: cùng `payment_intent.succeeded` event xử lý 2 lần → UPDATE Subscription 2 lần (ok) nhưng INSERT Payment 2 lần (BUG — user thấy 2 charges). WebhookEvent table dùng `eventId` (Stripe `evt_...`) với UNIQUE constraint. Trước khi xử lý: check `eventId` đã tồn tại với `status=PROCESSED` → skip. Pattern: UPSERT status=RECEIVED → process → UPDATE status=PROCESSED.
+
+</details>
 
 ---
 
 **Q16: Tại sao dùng $transaction khi xử lý payment_intent.succeeded?**
 
+<details><summary>Đáp án</summary>
+
 > Cần UPDATE Payment status=SUCCEEDED và UPDATE Subscription status=ACTIVE phải atomic. Nếu không transaction: UPDATE Payment succeed → UPDATE Subscription crash → Payment SUCCEEDED nhưng Subscription vẫn PENDING → user thanh toán rồi nhưng không được upgrade. Với $transaction: nếu Subscription update fail → rollback cả Payment update → Stripe retry webhook → xử lý lại từ đầu → eventually consistent. Rule: mọi thứ liên quan đến money phải trong transaction.
+
+</details>
 
 ---
 
 **Q17: Stripe Idempotency Key khi gọi API là gì?**
 
+<details><summary>Đáp án</summary>
+
 > Khi ta gọi Stripe API, nếu request timeout và retry, Stripe có thể tạo 2 subscription. Idempotency Key là header `Idempotency-Key: unique-value` — Stripe cache result trong 24h, cùng key → return cached result thay vì execute lại. Key phải stable và unique: `sub-create-{userId}-{plan}-{date}`. Scope phải đúng: date-scoped để user có thể retry ngày hôm sau nếu muốn.
+
+</details>
 
 ---
 
@@ -120,31 +194,51 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q18: Tại sao app tiếng Anh dùng DB riêng (và nay tách hẳn sang repo `edu-app-english`)?**
 
+<details><summary>Đáp án</summary>
+
 > Schema conflict: nihongo.User có `stripeCustomerId`, english.User không có. Rollout independence: team nihongo migrate schema không ảnh hưởng english. Scale independence: nihongo có content lớn hơn nhiều (vocab, grammar, kanji, JLPT data) — có thể scale PostgreSQL riêng. Auth riêng biệt: nihongo dùng JWT Bearer + Google OAuth, english dùng JWT Cookie với `aud:english` claim — nếu 1 DB sẽ phức tạp. Trade-off: không SSO, không cross-query, user phải đăng ký 2 account. Bước tiếp theo của chính lập luận này: app tiếng Anh đã được tách sang repo riêng (10/2026) — repo này chỉ còn sản phẩm tiếng Nhật.
+
+</details>
 
 ---
 
 **Q19: Giải thích CAP theorem với ví dụ cụ thể từ project.**
 
+<details><summary>Đáp án</summary>
+
 > CAP: chỉ đảm bảo được 2 trong 3 (Consistency, Availability, Partition Tolerance). PostgreSQL là CP: khi network partition, refuse writes để giữ consistency — booking session trả lỗi 503 còn hơn double-book. Redis là AP: khi Redis down, rate limit bypass tạm thời, cache miss query DB trực tiếp — app vẫn chạy. MongoDB audit là AP: khi MongoDB down, không ghi log nhưng request vẫn serve — audit là non-critical. Quyết định CP vs AP phụ thuộc vào: failure của component này có acceptable không?
+
+</details>
 
 ---
 
 **Q20: Scale bottleneck nào sẽ xuất hiện đầu tiên khi traffic tăng 10x?**
 
+<details><summary>Đáp án</summary>
+
 > PostgreSQL connection pool. NestJS default 10 connections/instance, 10 instances = 100 connections, PostgreSQL default `max_connections=100`. Ở 10x traffic, 100 concurrent DB operations = deadlock và timeout. Fix: PgBouncer trước PostgreSQL — 1000 app connections pool thành 100 DB connections. Sau đó: Redis connection pool (ioredis default 10), Kafka partition count (mỗi partition 1 consumer), content-service/exam-service instances (gRPC load balance).
+
+</details>
 
 ---
 
 **Q21: Tại sao WebhookEvent không bao giờ xóa records?**
 
+<details><summary>Đáp án</summary>
+
 > Audit trail cho financial compliance — phải giữ tối thiểu 7 năm. Nếu dispute với Stripe hoặc user claim bị charge sai, cần replay lịch sử. Debug: khi bug xảy ra trong payment flow, cần biết event nào đã processed, event nào failed. Idempotency: nếu xóa record cũ và Stripe retry event đó sau 1 năm (edge case) → process lại. Dùng partitioning theo year để archive records cũ sang cold storage mà không xóa.
+
+</details>
 
 ---
 
 **Q22: Tại sao CoachingSession.priceUsdCents lưu snapshot thay vì JOIN CoachProfile?**
 
+<details><summary>Đáp án</summary>
+
 > Snapshot pattern: lưu giá tại thời điểm booking. Coach A charge $50/hr lúc user book → sau đó coach tăng lên $80/hr → history vẫn hiển thị $50 (đúng). Nếu JOIN: history hiển thị $80 (sai — user bị charged $50). Payment reconciliation: SUM(CoachingSession.priceUsdCents) phải khớp SUM(Payment.amountCents). Tương tự: `platformFeePercent` lưu % tại thời điểm tạo session — thay đổi policy sau không ảnh hưởng records cũ.
+
+</details>
 
 ---
 
@@ -152,19 +246,31 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q23: Tại sao không mock Prisma trong integration test?**
 
+<details><summary>Đáp án</summary>
+
 > Mock Prisma pass test nhưng không test thực tế. Ví dụ: mock `prisma.payment.create` luôn return success — test pass. Production: UNIQUE constraint `stripePaymentIntentId` fail vì duplicate. Nếu mock: không bao giờ biết. Integration test với real DB catch: constraint violations, transaction rollback behavior, query performance, migration correctness. Chỉ mock external services (Stripe API, email service) — không mock DB của mình.
+
+</details>
 
 ---
 
 **Q24: Phân biệt khi nào viết unit test, integration test, E2E test?**
 
+<details><summary>Đáp án</summary>
+
 > Unit test: pure functions không có side effects — SM-2 algorithm, formatPrice, encodeCursor. Chạy < 5ms, không cần DB. Integration test: code + DB thực, không HTTP — WebhookService idempotency, BookingService double-book prevention. Verify transaction behavior, constraint enforcement. E2E test: full flow qua HTTP — `POST /subscriptions → Stripe → webhook → GET /subscriptions/status = ACTIVE`. Tỷ lệ lý tưởng: 70% unit, 20% integration, 10% E2E. E2E chậm (2-5s/test) — không viết nhiều.
+
+</details>
 
 ---
 
 **Q25: Test gì trong payment flow là quan trọng nhất?**
 
+<details><summary>Đáp án</summary>
+
 > Idempotency — cùng webhook event được deliver 2 lần → chỉ 1 subscription được active, không tạo 2 payment records. Transaction rollback — UPDATE Payment succeed, UPDATE Subscription fail → cả 2 rollback → user thấy vẫn PENDING (consistent). Double booking — 10 concurrent requests book cùng slot → chỉ 1 CoachingSession, 9 nhận lỗi. Đây là những test mà nếu fail → user mất tiền hoặc thấy data sai.
+
+</details>
 
 ---
 
@@ -172,19 +278,31 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 
 **Q26: Kể về lần ta xử lý bug production liên quan đến data.**
 
+<details><summary>Đáp án</summary>
+
 > Câu trả lời tốt cần có: (1) Context — bug xảy ra khi nào, impact gì. (2) Investigation — dùng tool gì để debug (logs, EXPLAIN ANALYZE, Stripe dashboard). (3) Root cause — tìm ra nguyên nhân cụ thể. (4) Fix — code change cụ thể. (5) Prevention — thêm test/monitor gì để không tái diễn. Ví dụ từ project: "Payment webhook được process 2 lần vì chưa có idempotency table — user thấy 2 charges. Fix: thêm WebhookEvent table với UNIQUE eventId. Prevention: integration test gửi cùng event 2 lần."
+
+</details>
 
 ---
 
 **Q27: Tại sao ta chọn Kafka thay vì Redis Queue cho async processing?**
 
+<details><summary>Đáp án</summary>
+
 > Redis Queue (Bull/BullMQ): dễ setup, message bị xóa sau khi consume, không replay, max retention giới hạn. Kafka: message persist theo configured retention (7 ngày default), có thể replay từ bất kỳ offset nào, nhiều consumer groups độc lập cùng đọc 1 topic, partition cho ordering. Trong project, `edu.payment.succeeded` cần: (1) audit trail — không xóa. (2) Nhiều consumers — payment service + notification service + analytics service đọc cùng topic. (3) Replay khi bug — reprocess tất cả payments của 1 ngày để fix incorrect subscription status.
+
+</details>
 
 ---
 
 **Q28: Cách ta thiết kế API cho tính năng mới.**
 
+<details><summary>Đáp án</summary>
+
 > Quy trình: (1) Clarify: bao nhiêu users? Read-heavy hay write-heavy? Real-time cần không? (2) Data model trước khi code: normalize hay denormalize? Indexes nào cần? (3) API contract: REST resource, HTTP verbs, response shape. (4) Failure modes: component nào fail thì sao? (5) Scale: query đắt nhất là gì khi 10x traffic? Ví dụ: feature group study — cần clarify max members, cần WebSocket hay polling, billing per-user hay per-group trước khi viết 1 dòng code.
+
+</details>
 
 ---
 
@@ -429,7 +547,11 @@ async syncInventoryToRedis() {
 Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 
 - [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
-- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-devops.md](./interview-devops.md) — DevOps: Kubernetes (probe, rolling update, HPA, securityContext), pipeline CI/CD và deploy thật, monitoring — 19 câu
+- [interview-docker.md](./interview-docker.md) — Docker: 25 câu từ Junior tới Senior, đáp án bằng compose/Dockerfile của project (có sự cố `.env` trong image)
+- [interview-web.md](./interview-web.md) — Web: React, Next.js, JavaScript/TypeScript, HTTP, webpack — 25 câu, đáp án theo code nihongo-web
+- [interview-infra-cloud.md](./interview-infra-cloud.md) — Hạ tầng và cloud: nginx, Terraform, AWS/LocalStack/serverless, GCP, k6, xử lý sự cố
+- [interview-backend-security.md](./interview-backend-security.md) — Bảo mật API (OWASP), thanh toán chống trùng, outbox, timeout, retry, circuit breaker
 - [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
 - [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive

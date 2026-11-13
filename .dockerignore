@@ -1,0 +1,29 @@
+# Mọi image build với context là thư mục gốc repo (docker-compose.yml: context: .).
+# Không có file này, `COPY apps/nihongo-web ...` chép cả node_modules, .next và .env của máy vào image:
+# image web từng chứa apps/nihongo-web/.env (có MORI_PLAYBACK_SECRET). Xem docs/learn-docker.md.
+
+# Bí mật: biến môi trường đưa vào lúc chạy (environment trong compose) hoặc build arg, không chép file
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Thư viện và kết quả build của máy (Mac/Windows): image tự cài/tự build lại bên trong Linux
+**/node_modules
+**/.next
+**/dist
+**/build
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+
+# Không thuộc image nào
+.git
+infra/backups
+**/*.log
+**/.DS_Store
+apps/nihongo-android
+apps/nihongo-ios
+apps/nihongo_flutter
+apps/nihongo-mobile
+apps/nihongo-desktop

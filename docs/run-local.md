@@ -2,7 +2,7 @@
 
 Monorepo `edu-app-nihongo` — **Windows / PowerShell**. Chạy frontend Next.js + backend NestJS; hạ tầng qua Docker (PostgreSQL, Redis, MongoDB, Kafka).
 
-> **Chạy full stack trong Docker / chuyển máy:** [docker.md](./docker.md) (~13 container, gồm Keycloak + LiveKit).  
+> **Chạy full stack trong Docker / chuyển máy:** [learn-docker.md](./learn-docker.md) (~13 container, gồm Keycloak + LiveKit).  
 > **Mobile:** [run-mobile.md](./run-mobile.md). **Tài khoản:** [accounts.md](./accounts.md).
 
 ---
@@ -116,7 +116,7 @@ npm run media:setup
 
 > **Docker full Nihongo (không cần `npm run dev:*`):**  
 > `npm run docker:up:nihongo` → http://localhost:8080  
-> Danh sách **~14 container** (có Keycloak + LiveKit qua `depends_on`): [docker.md](./docker.md).
+> Danh sách **~14 container** (có Keycloak + LiveKit qua `depends_on`): [learn-docker.md](./learn-docker.md).
 
 Mỗi lệnh **một terminal**, thư mục gốc `edu_app`:
 
@@ -272,7 +272,7 @@ Chi tiết: [infra/backups/README.md](../infra/backups/README.md)
 
 | File | Nội dung |
 |------|----------|
-| [docker.md](./docker.md) | Full stack Docker, Keycloak, LiveKit |
+| [learn-docker.md](./learn-docker.md) | Full stack Docker, Keycloak, LiveKit |
 | [run-mobile.md](./run-mobile.md) | 4 app mobile |
 | [learn-nginx.md](./learn-nginx.md) | Routing `:8080` |
 | [accounts.md](./accounts.md) | User/password |
@@ -288,7 +288,7 @@ Chi tiết: [infra/backups/README.md](../infra/backups/README.md)
 
 Bạn đang ở **1. Bắt đầu: chạy được project** — bài 1/5.
 
-- **Bài tiếp: [docker.md](./docker.md)** — Chạy full stack bằng Docker, danh sách container, chuyển sang máy khác
+- **Bài tiếp: [learn-docker.md](./learn-docker.md)** — Docker qua EDU APP: chạy stack, đọc compose và Dockerfile, mạng, dữ liệu, gỡ lỗi
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

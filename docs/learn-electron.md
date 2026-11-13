@@ -100,7 +100,7 @@ npm install
 const START_URL = process.env.NIHONGO_URL || "http://localhost:8080";
 ```
 
-Mặc định là cổng nginx trong [docker.md](./docker.md). Biến môi trường để trỏ sang bản dev mà không sửa code.
+Mặc định là cổng nginx trong [learn-docker.md](./learn-docker.md). Biến môi trường để trỏ sang bản dev mà không sửa code.
 
 ### 4.2. Một cửa sổ
 

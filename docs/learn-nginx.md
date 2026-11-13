@@ -1,7 +1,7 @@
 # Học Nginx — áp vào EDU APP
 
 Tài liệu học Nginx **bằng cấu hình thật** của project: [infra/nginx/nginx.conf](../infra/nginx/nginx.conf).
-Học Docker trước nếu chưa quen: [learn-docker.md](./learn-docker.md) (bài này là bài số 1 trong mục "Học tiếp" của nó).
+Học Docker trước nếu chưa quen: [learn-docker.md](./learn-docker.md) (nhóm 1).
 
 ---
 
@@ -415,15 +415,19 @@ proxy_pass có "/" cuối  → cắt phần location khỏi URL
 proxy_pass dùng biến    → cần resolver + tự thêm $request_uri
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 3/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 2/8.
 
-- Bài trước: [learn-docker.md](./learn-docker.md) — Docker: image, container, volume, compose
+- Bài trước: [learn-devops-roadmap.md](./learn-devops-roadmap.md) — Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự (Docker đã học ở nhóm 1: [learn-docker.md](./learn-docker.md))
 - **Bài tiếp: [learn-infra.md](./learn-infra.md)** — Thư mục infra/, cổng, healthcheck và các sự cố thật
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

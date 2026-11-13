@@ -235,6 +235,10 @@ Làm trên server **edu-app nihongo**, database `nihongo`:
 5. Explain Analyze câu ở mục 6. Chụp hoặc chép dòng plan có tên index.
 6. `BEGIN` → `UPDATE` một dòng nghĩa (ví dụ thêm dấu cách) → `SELECT` thấy đổi → `ROLLBACK` → `SELECT` lại thấy nghĩa cũ.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế bảng trong [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md); câu hỏi Senior chung (race condition, thanh toán, system design) trong [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

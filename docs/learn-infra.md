@@ -464,13 +464,17 @@ Chi tiết: [learn-performance-k6.md](./learn-performance-k6.md).
    (Gợi ý: bash `>` ghi byte nguyên vẹn.)
 7. **Restore an toàn.** Tạo DB `restoretest`, nạp bản backup mới nhất vào đó theo mục 6.3, đếm số user, rồi xoá DB.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 4/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 3/8.
 
 - Bài trước: [learn-nginx.md](./learn-nginx.md) — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
 - **Bài tiếp: [learn-kubernetes.md](./learn-kubernetes.md)** — Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update

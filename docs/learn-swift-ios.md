@@ -990,6 +990,10 @@ Dùng Keychain (được mã hóa, có `kSecAttrAccessibleAfterFirstUnlockThisDe
 | Khóa tránh race         | `actor` / `@MainActor`                | `Mutex` / `Dispatchers.Main`              |
 | Việc nền đúng giờ       | Không có (hẹn thông báo trước)        | `WorkManager`                             |
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án phần Swift/iOS: [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md#swift--ios).
+
 <!-- nav:start -->
 
 ---

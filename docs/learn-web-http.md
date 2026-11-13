@@ -139,7 +139,7 @@ Content-Type: application/json; charset=utf-8
 
 **Windows PowerShell:** gõ `curl.exe` thay vì `curl`. Trong Windows PowerShell 5.1, `curl` là tên tắt của một lệnh khác (`Invoke-WebRequest`) với cú pháp khác hẳn.
 
-Các ví dụ dưới đây cần stack đang chạy ở cổng 8080 ([docker.md](./docker.md)). Output là output thật, đã rút gọn chỗ có `…`.
+Các ví dụ dưới đây cần stack đang chạy ở cổng 8080 ([learn-docker.md](./learn-docker.md)). Output là output thật, đã rút gọn chỗ có `…`.
 
 ### 4.1 GET đơn giản
 
@@ -330,7 +330,7 @@ Chuột phải vào một request → **Copy → Copy as cURL**. Bạn được 
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |---|---|---|
-| `curl: (7) Failed to connect to localhost port 8080` | Không có gì nghe cổng 8080: stack chưa chạy | Bật stack ([docker.md](./docker.md)); `docker ps` xem nginx có chạy không |
+| `curl: (7) Failed to connect to localhost port 8080` | Không có gì nghe cổng 8080: stack chưa chạy | Bật stack ([learn-docker.md](./learn-docker.md)); `docker ps` xem nginx có chạy không |
 | `502 Bad Gateway` | nginx chạy nhưng gateway phía sau chết/chưa lên | `docker ps`, `docker logs edu-gateway` |
 | `401 Unauthorized` dù đã đăng nhập | Quên header, thiếu chữ `Bearer `, hoặc token hết hạn (15 phút) | Đăng nhập lại; kiểm header |
 | `403 Forbidden` | Đăng nhập rồi nhưng không đủ quyền (gọi API admin bằng tài khoản thường) | Dùng tài khoản đúng vai trò |
@@ -367,6 +367,10 @@ Chuột phải vào một request → **Copy → Copy as cURL**. Bạn được 
 2. Làm trọn mục 5: đăng nhập, lấy token, gọi `/api/auth/me`. Đợi hơn 15 phút rồi gọi lại bằng token cũ. Status là gì?
 3. Mở web, tab Network, đăng nhập bằng giao diện. Tìm request `login`, xem tab **Headers** phần response có `Set-Cookie` không. Sau đó tìm một request gọi API khác và xem header `Authorization` của nó.
 4. Mở Swagger <http://localhost:3000/api/docs> (gateway phải chạy với `ENABLE_SWAGGER=true`, mặc định bật trên máy dev). Tìm API lấy danh sách bài học và bấm **Try it out**.
+
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScript/TypeScript, HTTP, webpack): [interview-web.md](./interview-web.md).
 
 <!-- nav:start -->
 

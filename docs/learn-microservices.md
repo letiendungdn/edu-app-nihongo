@@ -313,6 +313,10 @@ Ví dụ: tính năng "dịch câu bằng AI" gọi một mô hình chạy trên
 4. Mở Jaeger <http://localhost:16686>, chọn service `api-gateway`, tìm một request `GET /api/lessons`. Đếm xem nó đi qua bao nhiêu service và mỗi bước mất bao lâu.
 5. Thử phá quy tắc sở hữu bảng: thêm vào một file của gateway dòng `prisma.vocabulary.update(...)`, rồi chạy `cd services && npx jest table-ownership`. Đọc thông báo lỗi, rồi xóa dòng vừa thêm.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế bảng trong [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md); câu hỏi Senior chung (race condition, thanh toán, system design) trong [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

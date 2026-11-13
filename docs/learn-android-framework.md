@@ -450,6 +450,10 @@ Thực hành thêm (ngoài repo): trong Android Studio, **Device Manager → Cre
 5. **Thấy `Application.onCreate` chạy hai lần.** Tạm thêm `Log.d("EduApp", "onCreate in ${currentProcessName()}")` làm dòng đầu của `EduApp.onCreate()`, cài lại, chạy test IPC, rồi `adb logcat -s EduApp`. Kiểm: một dòng cho `com.edu.nihongo`, một dòng cho `com.edu.nihongo:ipc`. Hoàn tác.
 6. **AAOS (ngoài repo).** Tạo emulator Automotive trong Android Studio. Viết app nhỏ dùng `CarPropertyManager` đọc `PERF_VEHICLE_SPEED` (cần khai báo quyền `android.car.permission.CAR_SPEED`) và đổi tốc độ giả lập bằng bảng điều khiển của emulator.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án (gồm Framework, Binder, Automotive): [interview-android.md](./interview-android.md).
+
 <!-- nav:start -->
 
 ---

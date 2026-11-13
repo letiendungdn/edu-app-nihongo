@@ -61,7 +61,7 @@ Dựng stack trên máy, đăng nhập, kết nối DB, rồi xem lộ trình t�
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
 | 1 | [run-local.md](./run-local.md) | Chạy EDU APP Nihongo trên máy từng bước |
-| 2 | [docker.md](./docker.md) | Chạy full stack bằng Docker, danh sách container, chuyển sang máy khác |
+| 2 | [learn-docker.md](./learn-docker.md) | Docker qua EDU APP: chạy stack, đọc compose và Dockerfile, mạng, dữ liệu, gỡ lỗi |
 | 3 | [accounts.md](./accounts.md) | Tài khoản dev đang dùng |
 | 4 | [dev-tools-connect.md](./dev-tools-connect.md) | Kết nối DB, Redis, Mongo, Kafka từ máy host |
 | 5 | [learn-edu-app.md](./learn-edu-app.md) | Lộ trình 10 tuần học cả project |
@@ -136,15 +136,14 @@ Viết test, đọc test có sẵn, đo tải.
 
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
-| 1 | [learn-devops-roadmap.md](./learn-devops-roadmap.md) | Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự |
-| 2 | [learn-docker.md](./learn-docker.md) | Docker: image, container, volume, compose |
-| 3 | [learn-nginx.md](./learn-nginx.md) | Nginx: reverse proxy cổng 8080, HTTPS, triển khai |
-| 4 | [learn-infra.md](./learn-infra.md) | Thư mục infra/, cổng, healthcheck và các sự cố thật |
-| 5 | [learn-kubernetes.md](./learn-kubernetes.md) | Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update |
-| 6 | [learn-release-cicd.md](./learn-release-cicd.md) | CI/CD: migrate khi deploy, canary, feature flag, rollback |
-| 7 | [learn-observability.md](./learn-observability.md) | Log, metric, trace với Prometheus, Grafana, Jaeger |
-| 8 | [learn-incident-postmortem.md](./learn-incident-postmortem.md) | Xử lý sự cố, runbook, postmortem (có postmortem thật) |
-| 9 | [learn-devsecops.md](./learn-devsecops.md) | DevSecOps: quét bí mật, thư viện, image, hạ tầng — có kết quả quét thật |
+| 1 | [learn-devops-roadmap.md](./learn-devops-roadmap.md) | Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự (Docker đã học ở nhóm 1: [learn-docker.md](./learn-docker.md)) |
+| 2 | [learn-nginx.md](./learn-nginx.md) | Nginx: reverse proxy cổng 8080, HTTPS, triển khai |
+| 3 | [learn-infra.md](./learn-infra.md) | Thư mục infra/, cổng, healthcheck và các sự cố thật |
+| 4 | [learn-kubernetes.md](./learn-kubernetes.md) | Kubernetes qua infra/k8s + Helm: probe, HPA, rolling update |
+| 5 | [learn-release-cicd.md](./learn-release-cicd.md) | CI/CD: migrate khi deploy, canary, feature flag, rollback |
+| 6 | [learn-observability.md](./learn-observability.md) | Log, metric, trace với Prometheus, Grafana, Jaeger |
+| 7 | [learn-incident-postmortem.md](./learn-incident-postmortem.md) | Xử lý sự cố, runbook, postmortem (có postmortem thật) |
+| 8 | [learn-devsecops.md](./learn-devsecops.md) | DevSecOps: quét bí mật, thư viện, image, hạ tầng — có kết quả quét thật |
 
 ---
 
@@ -249,7 +248,11 @@ Câu hỏi và đáp án phỏng vấn, trả lời bằng code của project.
 |----------|----------|
 | [interview-questions.md](./interview-questions.md) | Bộ câu hỏi Senior chung |
 | [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) | Backend NestJS, MQTT, DB |
-| [interview-devops.md](./interview-devops.md) | DevOps |
+| [interview-devops.md](./interview-devops.md) | DevOps: Kubernetes (probe, rolling update, HPA, securityContext), pipeline CI/CD và deploy thật, monitoring — 19 câu |
+| [interview-docker.md](./interview-docker.md) | Docker: 25 câu từ Junior tới Senior, đáp án bằng compose/Dockerfile của project (có sự cố `.env` trong image) |
+| [interview-web.md](./interview-web.md) | Web: React, Next.js, JavaScript/TypeScript, HTTP, webpack — 25 câu, đáp án theo code nihongo-web |
+| [interview-infra-cloud.md](./interview-infra-cloud.md) | Hạ tầng và cloud: nginx, Terraform, AWS/LocalStack/serverless, GCP, k6, xử lý sự cố |
+| [interview-backend-security.md](./interview-backend-security.md) | Bảo mật API (OWASP), thanh toán chống trùng, outbox, timeout, retry, circuit breaker |
 | [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) | Backend, Android, React Native, Swift |
 | [interview-mobile.md](./interview-mobile.md) | Senior Mobile |
 | [interview-android.md](./interview-android.md) | Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive |

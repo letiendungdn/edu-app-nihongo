@@ -342,6 +342,10 @@ Step 5: Scale consideration
    → Có ảnh hưởng subscription plan không?
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án (system design, testing, câu hỏi hành vi): [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

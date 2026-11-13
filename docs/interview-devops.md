@@ -1,659 +1,320 @@
-# Câu hỏi phỏng vấn DevOps + Lộ trình học
-> Ví dụ lấy từ project Nihongo thực tế
+# Phỏng vấn DevOps: Kubernetes, CI/CD, monitoring
+
+> **Mục tiêu:** Trả lời được câu hỏi phỏng vấn DevOps về Kubernetes, pipeline CI/CD, monitoring và vận hành, mỗi câu dẫn manifest, workflow hoặc code thật trong repo.
+>
+> **Cần biết trước:** [learn-kubernetes.md](./learn-kubernetes.md), [learn-release-cicd.md](./learn-release-cicd.md), [learn-observability.md](./learn-observability.md), [learn-devops-roadmap.md](./learn-devops-roadmap.md). Docker: [interview-docker.md](./interview-docker.md). nginx, Terraform, cloud, đo tải, xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md). Bảo mật API: [interview-backend-security.md](./interview-backend-security.md).
+
+Cách dùng: tự trả lời thành tiếng 1–2 phút rồi mới mở đáp án. Mỗi đáp án có phần "Trong project" để bạn làm ví dụ.
+
+Mức độ: 🟢 Junior · 🟡 Middle · 🔴 Senior.
 
 ---
 
-## DOCKER & CONTAINER
+## A. Container (tóm tắt)
 
-**Q: Container vs VM khác nhau thế nào?**
+Bộ đầy đủ 25 câu Docker nằm ở [interview-docker.md](./interview-docker.md). Ở đây chỉ giữ câu hay gặp nhất trong buổi phỏng vấn DevOps.
 
-A: VM: virtualize hardware, có OS riêng, nặng (~GB), boot chậm (phút). Container: share OS kernel, isolate process, nhẹ (~MB), boot nhanh (giây).
+### 1. 🟢 Container khác máy ảo thế nào?
 
-Project Nihongo chạy local bằng Docker Compose: api-gateway + PostgreSQL + Redis + Kafka — 4 service khởi động trong vài giây thay vì cần 4 VM.
+<details><summary>Đáp án</summary>
 
----
+Máy ảo giả lập phần cứng, mỗi máy có hệ điều hành riêng, nặng (GB), khởi động tính bằng phút. Container dùng chung kernel của máy chủ, chỉ cô lập tiến trình, nhẹ (MB), khởi động tính bằng giây. Đổi lại, container cô lập kém hơn máy ảo: lỗ hổng kernel ảnh hưởng mọi container.
 
-**Q: Dockerfile best practice — giải thích layer cache.**
+**Trong project:** cả stack (Postgres, Redis, MongoDB, Kafka, Keycloak, 4 service NestJS, web Next.js, nginx) chạy bằng một file `docker-compose.yml` trên laptop.
 
-A: Layer cache: lệnh ít thay đổi → để lên trên. `package.json` ít thay đổi hơn source code → copy trước → Docker cache layer install deps, không reinstall mỗi lần build.
+</details>
+
+### 2. 🟡 Dockerfile của gateway có gì đáng nói?
+
+<details><summary>Đáp án</summary>
+
+**Trong project:** [services/api-gateway/Dockerfile](../services/api-gateway/Dockerfile), rút gọn:
 
 ```dockerfile
-# services/api-gateway/Dockerfile
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# Copy package files TRƯỚC — layer này cache khi source code thay đổi
-COPY package*.json ./
-COPY tsconfig*.json ./
-RUN npm ci                    # cache layer này nếu package.json không đổi
-
-# Copy source SAU — thay đổi thường xuyên hơn
-COPY src/ ./src/
-RUN npm run build
-
-# Stage 2: runtime — image nhỏ, không có devDependencies
-FROM node:20-alpine
+COPY package.json package-lock.json ./
+COPY packages ./packages
+COPY services ./services
+RUN npm ci
+WORKDIR /app/services
+RUN npm run prisma:generate -w @edu/nihongo-services
+RUN npm run build:all -w @edu/nihongo-services
 WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules  # chỉ prod deps
-EXPOSE 3000
-CMD ["node", "dist/main.js"]
+RUN npm prune --omit=dev          # bỏ thư viện dev (ts-jest kéo theo handlebars có CVE CRITICAL)
+
+FROM node:22-alpine AS runner
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+WORKDIR /app/services
+ENV NODE_ENV=production
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/services/dist ./dist
+COPY --from=builder /app/packages /app/packages
+USER node
+CMD ["node", "dist/apps/api-gateway/services/api-gateway/src/main.js"]
 ```
 
-Multi-stage: image cuối không có TypeScript source, devDependencies, build tools → nhỏ hơn ~60%.
+Ba điểm để kể:
+- **Multi-stage, không root, không npm:** `npm prune` và xóa npm là hai bản sửa sau khi Trivy quét ra 22 lỗ hổng HIGH/CRITICAL mà `npm audit` không thấy ([learn-devsecops.md](./learn-devsecops.md) mục 3).
+- **Điểm yếu còn lại:** chép toàn bộ `packages` và `services` trước `npm ci`, nên sửa một dòng code là cài lại toàn bộ thư viện. Cách tối ưu: chép riêng các `package.json` của workspace, `npm ci`, rồi mới chép mã nguồn (bài tập 4 trong [learn-docker.md](./learn-docker.md)).
+- **CMD dạng mảng:** `node` là PID 1, nhận SIGTERM để tắt êm (`enableShutdownHooks`).
+
+</details>
 
 ---
 
-**Q: `.dockerignore` cần thiết không?**
+## B. Kubernetes
 
-A: Bắt buộc — exclude `node_modules`, `.env`, `.git` khỏi build context. Nếu thiếu:
-- `node_modules` (~500MB) copy vào build context → build chậm
-- `.env` bị copy vào image → secrets leak nếu push lên registry
+### 3. 🟢 Pod, Deployment, Service, Ingress — giải thích qua project.
 
-```
-# .dockerignore
-node_modules
-dist
-.env
-.env.*
-*.log
-.git
-coverage
-```
+<details><summary>Đáp án</summary>
 
----
+- **Pod:** một bản chạy của container api-gateway.
+- **Deployment:** giữ đủ số pod, rolling update, rollback.
+- **Service:** tên và IP ổn định trong cluster (`api-gateway:3000`); IP pod đổi mỗi lần tạo lại.
+- **Ingress:** nhận traffic từ ngoài và định tuyến theo host/đường dẫn tới Service.
 
-**Q: Docker Compose trong project Nihongo dùng thế nào?**
+**Trong project:** [infra/k8s/api-gateway.yaml](../infra/k8s/api-gateway.yaml) gồm Service `ClusterIP` + Deployment trong namespace `edu-app`; [ingress.yaml](../infra/k8s/ingress.yaml) định tuyến từ ngoài vào. Chart Helm tương đương ở [infra/helm/edu-app](../infra/helm/edu-app).
 
-A: Toàn bộ infrastructure local chạy bằng 1 lệnh:
+</details>
 
-```yaml
-# docker-compose.yml
-services:
-  api-gateway:
-    build: ./services/api-gateway
-    ports: ["3000:3000"]
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/nihongo
-      REDIS_URL: redis://redis:6379
-      GEMINI_API_KEY: ${GEMINI_API_KEY}  # từ .env, không hardcode
-      LIVEKIT_URL: ${LIVEKIT_URL}
-    depends_on:
-      db:
-        condition: service_healthy    # chờ DB sẵn sàng mới start
-      redis:
-        condition: service_started
+### 4. 🟡 Liveness và readiness probe khác nhau thế nào? Project làm sao?
 
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: nihongo
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data  # persist data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+<details><summary>Đáp án</summary>
 
-  redis:
-    image: redis:7-alpine
+- **Liveness** fail → Kubernetes **khởi động lại** container. Chỉ được kiểm "tiến trình còn sống", không gọi DB: DB chết mà liveness gọi DB thì mọi pod bị restart liên tục, làm sự cố tệ hơn.
+- **Readiness** fail → pod bị **rút khỏi Service** (không nhận traffic) nhưng không restart. Đây là chỗ kiểm phụ thuộc.
 
-  livekit:
-    image: livekit/livekit-server:latest
-    ports: ["7880:7880"]
-    command: --dev  # dev mode, không cần cert
+**Trong project:** [health.controller.ts](../services/api-gateway/src/health/health.controller.ts) có ba endpoint:
+- `/health/live`: không gọi gì bên ngoài.
+- `/health/ready`: kiểm DB (`SELECT 1`), content-service, exam-service (timeout 3 giây mỗi cái), thiếu thì trả 503.
+- `/health`: luôn 200 kèm chi tiết, cho người xem.
 
-volumes:
-  postgres_data:
-```
+Manifest: liveness `initialDelaySeconds: 20`, readiness `periodSeconds: 5`, `failureThreshold: 3`.
 
----
+</details>
 
-## KUBERNETES (K8s)
+### 5. 🟡 Làm sao rolling update không rớt request nào?
 
-**Q: Pod, Deployment, Service, Ingress — giải thích qua project Nihongo.**
+<details><summary>Đáp án</summary>
 
-A:
-- **Pod**: 1 instance của api-gateway container
-- **Deployment**: quản lý 3 replica api-gateway, rolling update, rollback
-- **Service**: stable endpoint cho api-gateway (Pod IP thay đổi khi restart, Service IP không đổi)
-- **Ingress**: route `api.nihongo.app → api-gateway Service`, `nihongo.app → frontend Service`
+Bốn thứ phải cùng có:
+1. `maxUnavailable: 0`, `maxSurge: 1`: pod mới phải Ready rồi mới gỡ pod cũ.
+2. Readiness probe đúng nghĩa (câu 4).
+3. `preStop: sleep 5`: khi pod bị xóa, Service/Ingress cần vài giây để gỡ nó khỏi danh sách; không chờ thì vài request vẫn bay vào pod đang tắt.
+4. App xử lý SIGTERM: làm xong request đang chạy rồi mới thoát; `terminationGracePeriodSeconds: 30`.
 
-```yaml
-# k8s/api-gateway-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-gateway
-spec:
-  replicas: 3
-  selector:
-    matchLabels: { app: api-gateway }
-  template:
-    metadata:
-      labels: { app: api-gateway }
-    spec:
-      containers:
-        - name: api-gateway
-          image: nihongo/api-gateway:1.2.0
-          ports: [{ containerPort: 3000 }]
-          env:
-            - name: GEMINI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: nihongo-secrets
-                  key: gemini-api-key   # không hardcode trong yaml
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef: { name: nihongo-secrets, key: database-url }
-          resources:
-            requests: { memory: "128Mi", cpu: "100m" }
-            limits:   { memory: "256Mi", cpu: "500m" }
-          readinessProbe:
-            httpGet: { path: /health, port: 3000 }
-            initialDelaySeconds: 5   # chờ NestJS bootstrap
-          livenessProbe:
-            httpGet: { path: /health, port: 3000 }
-            initialDelaySeconds: 30  # chờ DB connection
-```
+**Trong project:** cả bốn có trong [api-gateway.yaml](../infra/k8s/api-gateway.yaml). Deployment **không đặt `replicas`**, vì HPA quyết định số pod — đặt cứng thì mỗi lần `kubectl apply` ép số pod về giá trị đó.
 
----
+</details>
 
-**Q: Liveness vs Readiness Probe — project có `/health` endpoint không?**
+### 6. 🟡 HPA hoạt động thế nào? Project đặt thông số gì?
 
-A: Có — `health.controller.ts`:
+<details><summary>Đáp án</summary>
 
-```typescript
-// services/api-gateway/src/health/health.controller.ts
-@Controller('health')
-export class HealthController {
-  @Get()
-  check() {
-    return { status: 'ok', timestamp: new Date().toISOString() };
-  }
+HPA đọc metric (thường là CPU so với `requests`) và tăng giảm số pod để giữ mức mục tiêu. Bắt buộc phải khai `resources.requests`, không thì không có gốc để tính phần trăm.
 
-  @Get('ready')
-  ready() {
-    // Kiểm tra DB và Redis có connect không
-    return this.healthService.checkDependencies();
-  }
-}
-```
+**Trong project:** [api-gateway-hpa.yaml](../infra/k8s/api-gateway-hpa.yaml): 2–5 pod, CPU mục tiêu 70%. Pod đặt `requests: cpu 100m, memory 128Mi`, `limits: cpu 500m, memory 512Mi`. Các service gRPC có HPA và PodDisruptionBudget riêng ([grpc-services-autoscaling.yaml](../infra/k8s/grpc-services-autoscaling.yaml)) để khi bảo trì node, Kubernetes không gỡ cùng lúc mọi pod. Muốn biết nên đặt bao nhiêu pod thì đo bằng k6 ([interview-infra-cloud.md](./interview-infra-cloud.md) câu 19).
 
-```yaml
-# Readiness: app sẵn sàng nhận traffic? (DB connected?)
-readinessProbe:
-  httpGet: { path: /health/ready, port: 3000 }
-  initialDelaySeconds: 5
+</details>
 
-# Liveness: app còn sống? (không deadlock?)
-livenessProbe:
-  httpGet: { path: /health, port: 3000 }
-  initialDelaySeconds: 30
-```
+### 7. 🟡 Secret trong Kubernetes quản lý thế nào?
 
-Readiness fail → K8s không route traffic đến pod này (nhưng không restart).
-Liveness fail → K8s restart pod.
+<details><summary>Đáp án</summary>
 
----
+Không commit secret. K8s Secret chỉ là base64, không phải mã hóa — phải hạn chế quyền đọc (RBAC) và bật mã hóa etcd. Mức cao hơn: External Secrets Operator lấy từ Vault/AWS Secrets Manager, hoặc Sealed Secrets để commit bản đã mã hóa.
 
-**Q: Secret trong K8s — GEMINI_API_KEY, LIVEKIT_API_SECRET lưu thế nào?**
+**Trong project:** GitHub Secrets → bước "Sync secrets" trong [deploy.yml](../.github/workflows/deploy.yml) ghi ra file tạm (`umask 077`, xóa bằng `trap`) rồi `kubectl create secret generic edu-app-secrets --dry-run=client -o yaml | kubectl apply -f -` (tạo hoặc cập nhật, không lỗi khi đã tồn tại). Pod đọc qua `secretKeyRef`. Lab Vault cấp mật khẩu DB động: [learn-devsecops.md](./learn-devsecops.md) mục 12.
 
-A: Không commit secret vào git. Dùng K8s Secret hoặc External Secrets Operator.
+</details>
+
+### 8. 🔴 Pod chạy với `securityContext` nào? Vì sao?
+
+<details><summary>Đáp án</summary>
+
+**Trong project:** `runAsNonRoot`, `runAsUser: 1000`, `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem: true`, bỏ mọi capability, `seccompProfile: RuntimeDefault`, `automountServiceAccountToken: false` (app không gọi Kubernetes API, lọt container cũng không có token để dò cluster). Vì hệ thống file chỉ đọc, `/tmp` gắn `emptyDir`.
+
+Cái giá: mọi chỗ app ghi file (cache, file tạm, `$HOME` của Prisma) phải trỏ vào volume ghi được; volume cũ do root tạo sẽ báo `EACCES`. Kyverno trong cluster bắt buộc các chính sách này ([learn-devsecops.md](./learn-devsecops.md) mục 13).
+
+</details>
+
+### 9. 🟡 Deployment lỗi: bạn debug theo thứ tự nào?
+
+<details><summary>Đáp án</summary>
 
 ```bash
-# Tạo secret từ .env file
-kubectl create secret generic nihongo-secrets \
-  --from-literal=gemini-api-key="$GEMINI_API_KEY" \
-  --from-literal=livekit-api-secret="$LIVEKIT_API_SECRET" \
-  --from-literal=database-url="postgresql://..."
-
-# Hoặc dùng Sealed Secrets — encrypt secret, commit được lên git
-kubeseal --format yaml < secret.yaml > sealed-secret.yaml
-git add sealed-secret.yaml  # an toàn vì đã encrypt
+kubectl get pods -n edu-app -l app=api-gateway        # trạng thái
+kubectl describe pod <tên-pod> -n edu-app             # Events: lý do thật nằm ở đây
+kubectl logs <tên-pod> -n edu-app --previous          # log của lần chạy vừa chết
+kubectl rollout undo deployment/api-gateway -n edu-app
 ```
+
+Đọc trạng thái:
+- `ImagePullBackOff`: sai tag hoặc thiếu quyền kéo image (project dùng `ghcr-pull-secret`; workflow cảnh báo khi phải dùng tạm `GITHUB_TOKEN` vì token đó hết hạn khi job xong).
+- `CrashLoopBackOff`: app chết ngay khi chạy — thường do thiếu env (gateway cố ý không khởi động khi thiếu `JWT_SECRET`).
+- `Pending`: không node nào đủ `requests`.
+- `Running` nhưng `0/1 Ready`: readiness fail — gọi thử `/health/ready` xem phụ thuộc nào `down`.
+- `OOMKilled`: vượt `limits.memory`.
+
+</details>
+
+### 10. 🟡 Container bị OOMKilled: xử lý thế nào?
+
+<details><summary>Đáp án</summary>
+
+Xác nhận bằng `kubectl describe pod` (Last State: `OOMKilled`, exit code 137). Tăng limit chỉ là chữa cháy; phải tìm xem bộ nhớ tăng đều (rò rỉ) hay nhảy vọt (một request lớn). Với Node, đo heap bằng `--inspect` / heap snapshot, xem metric bộ nhớ theo thời gian.
+
+**Trong project:** `AiService` chỉ gửi 10 tin gần nhất của lịch sử hội thoại (`history.slice(-10)` trong [ai.service.ts](../services/api-gateway/src/ai/ai.service.ts)) — vừa giới hạn bộ nhớ vừa giới hạn kích thước request tới model.
+
+</details>
 
 ---
 
-**Q: Rolling update — deploy api-gateway version mới thế nào?**
+## C. CI/CD
 
-A:
-```bash
-# Build và push image mới
-docker build -t nihongo/api-gateway:1.3.0 ./services/api-gateway
-docker push nihongo/api-gateway:1.3.0
+### 11. 🟢 Pipeline của project gồm những bước nào?
 
-# Update deployment — K8s tự rolling update
-kubectl set image deployment/api-gateway api-gateway=nihongo/api-gateway:1.3.0
+<details><summary>Đáp án</summary>
 
-# Theo dõi rollout
-kubectl rollout status deployment/api-gateway
+**Trong project:**
+- [ci.yml](../.github/workflows/ci.yml) chạy trên mọi push/PR, gồm các job:
+  - `security`: gitleaks, audit-ci, Semgrep, `trivy config`.
+  - `image-scan`: Trivy quét image đã build.
+  - `backend`: Postgres 16 + Redis làm service container, migrate, test.
+  - `nihongo-web`, `android` (test JVM + build release qua R8), `flutter` (kiểm code Drift sinh ra có khớp schema không), `ios`.
+- [deploy.yml](../.github/workflows/deploy.yml) chạy **sau khi CI trên main xanh** (`workflow_run`). Trước đây deploy chạy song song với CI nên test đỏ vẫn lên production.
+- [dast.yml](../.github/workflows/dast.yml): OWASP ZAP quét app đang chạy.
 
-# Rollback nếu có vấn đề
-kubectl rollout undo deployment/api-gateway
-```
+</details>
 
-K8s tạo pod mới (1.3.0) → wait readiness → terminate pod cũ (1.2.0). Zero downtime.
+### 12. 🟡 Vì sao gắn tag image theo commit SHA, không dùng `latest`?
 
----
+<details><summary>Đáp án</summary>
 
-## CI/CD PIPELINE
+`latest` không cho biết đang chạy code nào, không rollback chính xác được, và hai node có thể kéo hai bản khác nhau. Tag theo SHA: bất biến, truy được về commit, rollback là đổi tag.
 
-**Q: GitHub Actions pipeline cho project Nihongo — viết hoàn chỉnh.**
-
-A:
-```yaml
-# .github/workflows/api-gateway.yml
-name: API Gateway CI/CD
-
-on:
-  push:
-    branches: [main]
-    paths: ['services/api-gateway/**']
-  pull_request:
-    paths: ['services/api-gateway/**']
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env: { POSTGRES_PASSWORD: test, POSTGRES_DB: nihongo_test }
-        options: --health-cmd pg_isready --health-interval 5s
-      redis:
-        image: redis:7-alpine
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-
-      - run: cd services/api-gateway && npm ci
-      - run: cd services/api-gateway && npm run lint
-      - run: cd services/api-gateway && npm run build
-      - run: cd services/api-gateway && npm test
-        env:
-          DATABASE_URL: postgresql://postgres:test@localhost:5432/nihongo_test
-          REDIS_URL: redis://localhost:6379
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-
-      # Build Docker image với tag = git SHA → immutable, traceable
-      - run: |
-          docker build -t nihongo/api-gateway:${{ github.sha }} \
-                       -t nihongo/api-gateway:latest \
-                       ./services/api-gateway
-
-      # Push lên registry
-      - uses: docker/login-action@v3
-        with: { username: ${{ secrets.DOCKER_USER }}, password: ${{ secrets.DOCKER_TOKEN }} }
-      - run: docker push nihongo/api-gateway:${{ github.sha }}
-
-      # Deploy lên K8s
-      - run: |
-          kubectl set image deployment/api-gateway \
-            api-gateway=nihongo/api-gateway:${{ github.sha }}
-          kubectl rollout status deployment/api-gateway --timeout=120s
-```
-
----
-
-**Q: EAS Build cho Expo (nihongo-mobile) — CI/CD thế nào?**
-
-A:
-```yaml
-# .github/workflows/expo.yml
-name: Expo EAS Build
-on:
-  push:
-    branches: [main]
-    paths: ['apps/nihongo-mobile/**']
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - run: cd apps/nihongo-mobile && npm ci
-      - run: cd apps/nihongo-mobile && eas build --profile preview --non-interactive
-        # Tạo APK → share link cho QA test ngay, không cần cài Android Studio
-```
-
-```json
-// apps/nihongo-mobile/eas.json
-{
-  "build": {
-    "preview": {
-      "distribution": "internal",
-      "android": { "buildType": "apk" }  // share APK link cho team
-    },
-    "production": {
-      "android": { "buildType": "aab" },  // Google Play Store
-      "ios": { "distribution": "store" }  // App Store
-    }
-  }
-}
-```
-
----
-
-**Q: Flutter CI pipeline — project đã có gì?**
-
-A:
-```yaml
-# .github/workflows/flutter.yml
-name: Flutter CI
-on:
-  push:
-    branches: [main]
-    paths: ['apps/nihongo_flutter/**']
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.27.x', cache: true }
-      - run: cd apps/nihongo_flutter && flutter pub get
-      - run: cd apps/nihongo_flutter && flutter analyze --fatal-infos
-      - run: cd apps/nihongo_flutter && flutter test
-
-  build-android:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.27.x', cache: true }
-      - run: cd apps/nihongo_flutter && flutter build apk --release
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: apps/nihongo_flutter/build/app/outputs/flutter-apk/app-release.apk
-```
-
----
-
-## MONITORING & OBSERVABILITY
-
-**Q: Project Nihongo đã có Prometheus — HttpMetricsInterceptor làm gì?**
-
-A: Đếm HTTP request theo method/path/status. Grafana query Prometheus để vẽ dashboard.
-
-```typescript
-// services/api-gateway/src/metrics/http-metrics.interceptor.ts
-// Counter: http_requests_total{method="POST", path="/ai/chat", status="200"}
-this.counter.inc({ method, path, status });
-
-// Query Grafana:
-// rate(http_requests_total{status=~"5.."}[5m])  → error rate
-// histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))  → p99 latency
-```
-
-Cũng có Sentry (`instrument.ts`) và OpenTelemetry tracing (`tracing.ts`) trong project.
-
----
-
-**Q: SLA, SLO, SLI cho API Gateway — ví dụ cụ thể.**
-
-A:
-- **SLI**: `(requests không có 5xx error) / total requests = 99.5%`
-- **SLO**: 99.9% requests thành công mỗi tháng
-- **SLA**: cam kết với user — vi phạm → refund/penalty
-
-Error budget: 99.9% uptime → 0.1% downtime/tháng = ~43 phút được phép down.
-Khi deploy AI feature mới (Gemini integration) → dùng error budget cho risk này.
-
----
-
-**Q: Pino logger trong project dùng thế nào — tốt hơn console.log gì?**
-
-A: Pino structured JSON logging, tốt hơn `console.log` vì:
-- JSON format → dễ query trong Loki/ELK
-- Không block event loop (async write)
-- Log level filter (production chỉ `warn` + `error`)
-
-```typescript
-// services/api-gateway/src/main.ts
-import { Logger as PinoLogger } from 'nestjs-pino';
-app.useLogger(app.get(PinoLogger));
-
-// Output: {"level":"info","msg":"API Gateway: http://localhost:3000","time":1234567890}
-// Thay vì: [Nest] 123 - LOG Bootstrap: API Gateway: http://localhost:3000
-```
-
----
-
-## CLOUD (AWS/GCP)
-
-**Q: Secrets trong production — GEMINI_API_KEY, LIVEKIT_API_SECRET lưu thế nào?**
-
-A: Không hardcode, không commit vào git. Hierarchy:
-
-```
-Local dev:
-  .env file (gitignored)
-  GEMINI_API_KEY=xxx
-
-CI/CD (GitHub Actions):
-  GitHub Secrets → inject qua env trong workflow
-  secrets.GEMINI_API_KEY
-
-Production (K8s):
-  AWS Secrets Manager / HashiCorp Vault
-  → External Secrets Operator sync vào K8s Secret
-  → Pod đọc từ K8s Secret env var
-```
+**Trong project:** manifest trong repo ghi `:latest` cho dễ chạy tay, còn bước deploy thay bằng SHA đã qua CI trước khi apply:
 
 ```bash
-# AWS Secrets Manager
-aws secretsmanager create-secret \
-  --name prod/nihongo/gemini \
-  --secret-string '{"api_key":"xxx"}'
-
-# Rotate tự động mỗi 30 ngày
-aws secretsmanager rotate-secret --secret-id prod/nihongo/gemini
+sed "s#\(${IMAGE_PREFIX}/[a-z-]*\):latest#\1:${DEPLOY_SHA}#g" "$f" | kubectl apply -f -
 ```
 
----
+`DEPLOY_SHA` là `head_sha` của lần CI vừa xanh, và job build cũng checkout đúng SHA đó — build đúng commit đã được test.
 
-**Q: Database trong production — RDS hay tự host PostgreSQL?**
+</details>
 
-A: RDS (managed) tốt hơn tự host vì: auto backup, multi-AZ failover, auto minor version update, không lo disk full. Nhược điểm: đắt hơn ~30%.
+### 13. 🔴 Mô tả luồng deploy từ lúc merge tới lúc chạy trên cluster.
 
-```
-nihongo-db.cluster.ap-southeast-1.rds.amazonaws.com
-  - Multi-AZ: primary (write) + replica (read)
-  - Read heavy (vocab fetch) → dùng read replica
-  - Write (SRS update, progress) → primary
-```
+<details><summary>Đáp án</summary>
 
-**Q: S3 cho upload ảnh — presigned URL pattern trong project.**
+**Trong project** ([deploy.yml](../.github/workflows/deploy.yml)):
+1. CI trên main xanh → kích hoạt deploy; `concurrency: deploy-production` để hai lần deploy không chồng nhau.
+2. `build-and-push`: build 5 image (gateway, content, exam, web, migrator), đẩy lên GHCR, **ký bằng cosign keyless** (token OIDC của GitHub, không giữ khóa riêng).
+3. `deploy` (environment `production`): `cosign verify` mọi image — image bị thay trên registry thì dừng.
+4. Đồng bộ secret, apply Postgres/Redis/Mosquitto, chờ Postgres sẵn sàng.
+5. **Migrate DB bằng Job riêng** gắn SHA (`prisma-migrate-<sha>`), chờ hoàn tất; lỗi thì in log và dừng trước khi đụng vào app.
+6. Apply workload với tag SHA, `rollout status` từng Deployment; quá 300 giây không xong → `rollout undo` tự động.
+7. Smoke test: chạy pod curl gọi `/health/ready`.
+8. Thiếu secret `KUBE_CONFIG` → bỏ qua phần cluster kèm thông báo, thay vì fail khó hiểu.
 
-A: Project đã có `upload.controller.ts`. Client upload thẳng lên S3, không qua server.
+Các Action được ghim theo SHA (không theo `@v5`) để tránh tag bị chiếm quyền sửa.
 
-```typescript
-// services/api-gateway/src/http/upload/upload.service.ts
-async presign(userId: number, filename: string, mimeType: string) {
-  const key = `uploads/${userId}/${Date.now()}-${filename}`;
-  const uploadUrl = await this.s3.getSignedUrlPromise('putObject', {
-    Bucket: process.env.S3_BUCKET,
-    Key: key,
-    ContentType: mimeType,
-    Expires: 300,  // 5 phút TTL
-  });
-  return { uploadUrl, publicUrl: `https://${process.env.CDN_HOST}/${key}` };
-}
-```
+</details>
 
----
+### 14. 🔴 Migration DB trong production không downtime thế nào?
 
-## SECURITY
+<details><summary>Đáp án</summary>
 
-**Q: OWASP — project Nihongo đã protect những gì?**
-
-A:
-1. **Injection**: Prisma parameterized query → không SQL inject được
-2. **Broken Access Control**: JWT Guard, `@Public()` decorator chỉ cho route public
-3. **Security Misconfiguration**: `helmet()` trong main.ts set security headers
-4. **Sensitive Data Exposure**: `toPublicUser()` strip `passwordHash` trước khi return
-5. **CORS**: whitelist origin trong `app.enableCors()`
-
-```typescript
-// auth.service.ts — không bao giờ trả passwordHash ra ngoài
-toPublicUser(user: PublicUserRow) {
-  const { passwordHash, googleId, ...rest } = user;  // destructure + discard
-  return { ...rest, hasPassword: !!passwordHash, isGoogleLinked: !!googleId };
-}
-
-// Prisma — không thể SQL inject
-// ❌ NGUY HIỂM (nếu ai đó viết thế này)
-await prisma.$queryRawUnsafe(`SELECT * FROM users WHERE email = '${email}'`);
-// ✅ An toàn — Prisma tự parameterize
-await prisma.user.findUnique({ where: { email } });
-```
-
----
-
-## LỘ TRÌNH HỌC DEVOPS — 8 tháng
-
-> Bản chi tiết theo tuần, nối với bài học và code thật của repo: [learn-devops-roadmap.md](./learn-devops-roadmap.md). Phần dưới là khung tóm tắt.
-
-```
-Tháng 1: Linux cơ bản
-  - File system, permission, process, SSH
-  - Bash scripting
-  - Networking: TCP/IP, DNS, HTTP/HTTPS
-  - Thực hành: SSH vào VPS, setup project chạy tay
-
-Tháng 2: Docker
-  - Dockerfile, image, container, volume, network
-  - Docker Compose
-  - Thực hành: Container hóa api-gateway + postgres + redis
-    → docker compose up chạy được toàn bộ project
-
-Tháng 3: CI/CD
-  - GitHub Actions
-  - Docker registry (Docker Hub / ECR)
-  - Thực hành: Pipeline test → build image → push registry
-    → Đã có trong project, hiểu và mở rộng thêm deploy step
-
-Tháng 4: Cloud cơ bản (AWS)
-  - EC2, S3, RDS, VPC, IAM
-  - Thực hành: Deploy api-gateway lên EC2
-    → S3 upload đã có trong project (upload.service.ts)
-
-Tháng 5: Kubernetes
-  - Pod, Deployment, Service, Ingress
-  - Helm chart
-  - Thực hành: Deploy project lên k3s (K8s local nhẹ)
-
-Tháng 6: Monitoring
-  - Prometheus + Grafana (đã có HttpMetricsInterceptor)
-  - Loki cho logs (đã có Pino structured logging)
-  - Thực hành: Dashboard request rate, error rate, latency p99
-
-Tháng 7-8: Nâng cao
-  - Terraform (IaC)
-  - EKS / GKE
-  - GitOps (ArgoCD)
-```
-
-**Certification:**
-- **AWS Solutions Architect Associate** — phổ biến nhất, tăng lương tốt
-- **CKA** (Certified Kubernetes Administrator) — nếu muốn K8s chuyên
-- **Terraform Associate** — nếu thích IaC
-
----
-
-## CÂU HỎI PHỎNG VẤN HAY GẶP
-
-**Q: Deployment api-gateway bị lỗi — debug thế nào?**
-
-A:
-```bash
-# 1. Pod đang ở trạng thái gì?
-kubectl get pods -l app=api-gateway
-# CrashLoopBackOff → container crash liên tục
-# Pending → không schedule được (resource?)
-# ImagePullBackOff → image không pull được
-
-# 2. Xem event và resource
-kubectl describe pod api-gateway-xxx
-
-# 3. Log của container bị crash
-kubectl logs api-gateway-xxx --previous
-
-# 4. Rollback nếu cần
-kubectl rollout undo deployment/api-gateway
-```
-
-**Q: NestJS app start chậm (30s) — nguyên nhân thường là gì?**
-
-A: Thường do chờ DB connection. Fix: tách readiness probe (chờ DB) vs liveness probe (chỉ check process).
-
-```typescript
-// health.controller.ts
-@Get('ready')
-async ready() {
-  // Chỉ return ok khi Prisma connect được
-  await this.prisma.$queryRaw`SELECT 1`;
-  return { status: 'ready' };
-}
-
-@Get()
-check() {
-  // Luôn return ok nếu process còn sống
-  return { status: 'ok' };
-}
-```
-
-**Q: Database migration trong production — không downtime thế nào?**
-
-A: Expand-contract pattern:
-1. **Expand**: thêm column `nullable` (không break app cũ)
-2. Deploy code mới — read/write cả old và new column
-3. Backfill data
-4. **Contract**: remove old column (chỉ khi chắc code cũ không dùng nữa)
+Expand–contract: (1) thêm cột nullable hoặc có default — app cũ vẫn chạy; (2) deploy code đọc/ghi cả cũ và mới; (3) backfill dữ liệu theo lô; (4) thêm ràng buộc, bỏ cột cũ khi chắc không còn code cũ dùng. Mỗi migration phải chạy được khi bản app **trước** vẫn đang phục vụ, vì rolling update có lúc hai bản cùng chạy.
 
 ```sql
--- ❌ Break ngay: NOT NULL không có default
-ALTER TABLE users ADD COLUMN display_name VARCHAR NOT NULL;
-
--- ✅ An toàn: nullable trước
-ALTER TABLE users ADD COLUMN display_name VARCHAR;
--- Deploy code → backfill → sau đó mới add constraint
+-- ❌ bảng có dữ liệu: lỗi hoặc khóa bảng lâu
+ALTER TABLE "User" ADD COLUMN "displayName" TEXT NOT NULL;
+-- ✅ nullable trước, backfill, rồi mới SET NOT NULL
+ALTER TABLE "User" ADD COLUMN "displayName" TEXT;
 ```
 
-**Q: Container bị OOMKilled — xử lý thế nào?**
+**Trong project:** migration chạy bằng Job trước khi rollout app (câu 13). Cột `en` cho câu ví dụ được thêm dạng nullable (`VocabularyExample.en`), nên app cũ không biết cột này vẫn chạy bình thường.
 
-A:
-```bash
-# Xác nhận OOMKilled
-kubectl describe pod api-gateway-xxx | grep OOMKilled
+</details>
 
-# Tăng memory limit tạm
-kubectl set resources deployment/api-gateway --limits=memory=512Mi
+---
 
-# Profile memory — AiService giữ conversation history có thể tích lũy
-# ai.service.ts: history.slice(-10) → giới hạn 10 messages, tránh leak
+## D. Monitoring và vận hành
+
+### 15. 🟢 Metrics, logs, traces khác nhau thế nào?
+
+<details><summary>Đáp án</summary>
+
+- **Metrics:** con số theo thời gian, rẻ, dùng để alert ("tỉ lệ 5xx tăng").
+- **Logs:** từng sự kiện chi tiết, dùng để tìm nguyên nhân ("lỗi gì, request nào").
+- **Traces:** đường đi của một request qua nhiều service, dùng để biết chậm ở đâu.
+
+**Trong project:** Prometheus + Grafana + Alertmanager và Jaeger có trong `docker-compose.yml`; log JSON bằng pino; trace bằng OpenTelemetry ([tracing.ts](../services/api-gateway/src/tracing.ts)); lỗi gửi Sentry ([instrument.ts](../services/api-gateway/src/instrument.ts)).
+
+</details>
+
+### 16. 🟡 Gateway xuất metric HTTP thế nào? Query nào bạn hay dùng?
+
+<details><summary>Đáp án</summary>
+
+**Trong project:** [http-metrics.middleware.ts](../services/api-gateway/src/metrics/http-metrics.middleware.ts) ghi `http_requests_total` (counter) và `http_request_duration_seconds` (histogram) theo method, route, status.
+
+```promql
+# tỉ lệ lỗi 5xx
+sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))
+# p95 độ trễ
+histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))
 ```
+
+Nhãn phải là **mẫu route** (`/api/vocab/:id`), không phải URL thật; nếu không mỗi id tạo một chuỗi metric mới và Prometheus nổ bộ nhớ (cardinality).
+
+</details>
+
+### 17. 🟡 SLI, SLO, SLA và error budget?
+
+<details><summary>Đáp án</summary>
+
+- **SLI:** số đo, ví dụ tỉ lệ request không lỗi 5xx và nhanh hơn 500 ms.
+- **SLO:** mục tiêu nội bộ cho SLI, ví dụ 99,9% mỗi 30 ngày.
+- **SLA:** cam kết với khách, vi phạm thì đền bù; luôn lỏng hơn SLO.
+- **Error budget:** 99,9% trong 30 ngày = khoảng 43 phút được phép lỗi. Còn budget thì deploy nhanh; hết budget thì dừng tính năng mới, tập trung độ ổn định.
+
+Alert nên theo tốc độ đốt budget (burn rate), không theo từng lần CPU vọt lên.
+
+</details>
+
+### 18. 🟡 Vì sao log JSON (pino) tốt hơn `console.log`?
+
+<details><summary>Đáp án</summary>
+
+Máy đọc được: lọc theo trường (`level`, `requestId`, `userId`) trong Loki/ELK thay vì grep chuỗi. Xuống dòng trong input người dùng không giả được dòng log mới. Có mức log để production bớt ồn.
+
+**Trong project:** `LoggerModule.forRoot(pinoConfig)` trong [app.module.ts](../services/api-gateway/src/app.module.ts), cấu hình chung ở `@app/common/logger/pino.config`. Chỉ log method/url/id, **không log header** để không lộ token. Mỗi service đặt `SERVICE_NAME` để phân biệt log và trace.
+
+</details>
+
+### 19. 🔴 Một service NestJS khởi động mất 30 giây và bị restart liên tục trên Kubernetes. Vì sao?
+
+<details><summary>Đáp án</summary>
+
+Liveness probe bắt đầu kiểm tra trước khi app sẵn sàng (initialDelay quá ngắn), fail 3 lần → restart → lại khởi động 30 giây → vòng lặp. Hoặc liveness gọi DB, DB chậm thì app bị giết oan.
+
+Sửa: liveness chỉ kiểm tiến trình (`/health/live`); dùng `startupProbe` cho app khởi động chậm (liveness chỉ bắt đầu khi startup thành công); kiểm phụ thuộc ở readiness. Đồng thời tìm vì sao chậm: chờ kết nối Kafka, generate Prisma lúc chạy, nạp dữ liệu lớn khi khởi động.
+
+</details>
+
+---
+
+## E. Lộ trình
+
+Lộ trình học DevOps chi tiết theo tuần, nối với code thật của repo: [learn-devops-roadmap.md](./learn-devops-roadmap.md). Chứng chỉ hay được hỏi: AWS Solutions Architect Associate, CKA, Terraform Associate.
+
+## Câu hỏi mở để tự luyện
+
+1. Viết `startupProbe` cho exam-service và giải thích chọn `failureThreshold × periodSeconds` bao nhiêu.
+2. Workflow deploy apply cả Postgres trong cluster. Khi chuyển sang RDS/Cloud SQL, bước nào đổi, bước nào bỏ?
+3. Viết một alert Prometheus cho tỉ lệ 5xx của gateway, kèm runbook ba dòng: kiểm gì trước, rollback khi nào.
 
 <!-- nav:start -->
 
@@ -665,6 +326,10 @@ Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 
 - [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
 - [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
+- [interview-docker.md](./interview-docker.md) — Docker: 25 câu từ Junior tới Senior, đáp án bằng compose/Dockerfile của project (có sự cố `.env` trong image)
+- [interview-web.md](./interview-web.md) — Web: React, Next.js, JavaScript/TypeScript, HTTP, webpack — 25 câu, đáp án theo code nihongo-web
+- [interview-infra-cloud.md](./interview-infra-cloud.md) — Hạ tầng và cloud: nginx, Terraform, AWS/LocalStack/serverless, GCP, k6, xử lý sự cố
+- [interview-backend-security.md](./interview-backend-security.md) — Bảo mật API (OWASP), thanh toán chống trùng, outbox, timeout, retry, circuit breaker
 - [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
 - [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive

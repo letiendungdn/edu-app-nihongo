@@ -494,6 +494,10 @@ it('should mark payment as succeeded', async () => {
    → Cancel lần 2 → verify nhận lỗi 409 (không cancel lần 2)
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án (system design, testing, câu hỏi hành vi): [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

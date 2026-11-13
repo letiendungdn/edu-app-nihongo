@@ -62,7 +62,7 @@ docker exec edu-gateway sh -c 'cat /etc/resolv.conf; getent hosts postgres-nihon
 
 ### Tuần 3–4: Docker
 
-**Đọc:** [learn-docker.md](./learn-docker.md), [docker.md](./docker.md).
+**Đọc:** [learn-docker.md](./learn-docker.md).
 
 **Làm:** 7 bài tập ở mục 11 của learn-docker. Thêm:
 - Đọc [Dockerfile của web](../apps/nihongo-web/Dockerfile): vì sao build 2 giai đoạn (multi-stage).
@@ -261,9 +261,9 @@ Câu hỏi phỏng vấn DevOps: [interview-devops.md](./interview-devops.md).
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 1/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 1/8.
 
-- **Bài tiếp: [learn-docker.md](./learn-docker.md)** — Docker: image, container, volume, compose
+- **Bài tiếp: [learn-nginx.md](./learn-nginx.md)** — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

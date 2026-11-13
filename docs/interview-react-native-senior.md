@@ -1,6 +1,10 @@
 # Phỏng vấn Senior React Native — Câu hỏi & Đáp án
 
-> File local — không upload cloud. Tổng hợp: Expo vs CLI · REST vs GraphQL · TanStack vs Redux · MQTT · IoT System Design · RN System Design.
+> **Mục tiêu:** Ôn các chủ đề Senior React Native: Expo vs CLI, REST vs GraphQL, TanStack Query vs Redux, MQTT/IoT, system design, OTA, CI/CD và ký app, OAuth.
+>
+> **Cần biết trước:** [learn-react-native.md](./learn-react-native.md), [roadmap-react-native.md](./roadmap-react-native.md). Cấu trúc thư mục và tên file trong các ví dụ (navigator, `mqttService`, `storage.ts`) là **app mẫu** để minh họa, không phải code của `apps/nihongo-mobile` — app thật dùng expo-router, xem [learn-react-native.md](./learn-react-native.md).
+
+Cách dùng: tự trả lời thành tiếng rồi mới bấm mở **Đáp án**. Các mục dài dạng hướng dẫn (targetSdk, Fastlane, AWS, OAuth) để mở sẵn.
 
 ---
 
@@ -32,6 +36,8 @@
 
 ### Q: Khi nào dùng Expo, khi nào dùng React Native CLI?
 
+<details><summary>Đáp án</summary>
+
 | Tiêu chí | Expo (Managed) | React Native CLI |
 |----------|---------------|-----------------|
 | Native module tùy chỉnh | ❌ | ✅ |
@@ -58,25 +64,37 @@
 
 **Expo Bare Workflow** — trung gian: giữ Expo tooling nhưng mở native modules.
 
+</details>
+
 ---
 
 ### Q: ICUCO dùng React Native CLI hay Expo? Tại sao?
 
+<details><summary>Đáp án</summary>
+
 **A:** CLI. Vì cần kết nối nhiều thiết bị BLE đồng thời (`react-native-ble-manager`), push notification qua Firebase, và QR scan. Các library này cần native module không có trong Expo Managed.
+
+</details>
 
 ---
 
 ### Q: EAS Build khác gì `react-native run-android`?
 
+<details><summary>Đáp án</summary>
+
 **A:**
 - `run-android` — build local, cần Android Studio + JDK + device kết nối trực tiếp. Chỉ dùng dev.
 - EAS Build — build trên cloud Expo, không cần môi trường local. Xuất APK/IPA production. Kết hợp với GitHub Actions cho CI/CD.
+
+</details>
 
 ---
 
 ## 2. REST API vs GraphQL
 
 ### Q: Khi nào dùng REST, khi nào dùng GraphQL?
+
+<details><summary>Đáp án</summary>
 
 **REST — dùng khi:**
 - CRUD resource rõ ràng, ít quan hệ (`GET /users`, `POST /orders`)
@@ -93,9 +111,13 @@
 
 > **Rule of thumb:** Server quyết định shape data → REST. Client quyết định shape data → GraphQL.
 
+</details>
+
 ---
 
 ### Q: ICUCO dùng GraphQL + REST. Tại sao không dùng REST thuần?
+
+<details><summary>Đáp án</summary>
 
 **A:** ICUCO có 2 client rất khác nhau:
 - **Parent mobile app**: cần realtime location + alert, ít field, cần gọi nhanh
@@ -103,9 +125,13 @@
 
 GraphQL cho phép mobile chỉ lấy `{ child { name, location, busId } }` trong khi admin lấy toàn bộ object graph. Nếu dùng REST, phải tạo 2 endpoint riêng hoặc chịu over-fetch.
 
+</details>
+
 ---
 
 ### Q: Nhược điểm của GraphQL?
+
+<details><summary>Đáp án</summary>
 
 **A:**
 - N+1 query — mỗi resolver có thể gọi DB riêng → cần DataLoader để batch
@@ -114,11 +140,15 @@ GraphQL cho phép mobile chỉ lấy `{ child { name, location, busId } }` trong
 - Schema overhead — phải duy trì schema, resolver, codegen
 - Debugging khó hơn REST (không có curl đơn giản)
 
+</details>
+
 ---
 
 ## 3. TanStack Query vs Redux Thunk/Saga
 
 ### Q: Khi nào dùng TanStack Query, khi nào dùng Redux?
+
+<details><summary>Đáp án</summary>
 
 | Vấn đề | TanStack Query | Redux Thunk/Saga |
 |--------|---------------|-----------------|
@@ -151,9 +181,13 @@ Client/UI state → Zustand hoặc Redux Toolkit (nếu cần)
 Complex async  → Redux Saga
 ```
 
+</details>
+
 ---
 
 ### Q: Phân biệt `useQuery` và `useMutation` trong TanStack?
+
+<details><summary>Đáp án</summary>
 
 **A:**
 - `useQuery` — fetch data (GET), tự cache, tự refetch, chạy ngay khi mount
@@ -182,9 +216,13 @@ const mutation = useMutation({
 });
 ```
 
+</details>
+
 ---
 
 ### Q: Saga vs Thunk — sự khác nhau thực tế?
+
+<details><summary>Đáp án</summary>
 
 ```javascript
 // Thunk — đơn giản, inline async
@@ -226,11 +264,15 @@ function* watchLogin() {
 }
 ```
 
+</details>
+
 ---
 
 ## 4. Axios — khi nào dùng
 
 ### Q: Khi nào dùng Axios, khi nào dùng `fetch`?
+
+<details><summary>Đáp án</summary>
 
 **Dùng Axios khi:**
 - Cần interceptor tập trung (thêm auth header, handle 401 refresh token tự động)
@@ -297,11 +339,15 @@ api.interceptors.response.use(
 export default api;
 ```
 
+</details>
+
 ---
 
 ## 5. Parallel calls — GraphQL + REST
 
 ### Q: Khi nào nên gọi song song GraphQL với API REST?
+
+<details><summary>Đáp án</summary>
 
 **Dùng `Promise.all` khi:**
 - 2+ request độc lập nhau (không cần kết quả của nhau)
@@ -357,11 +403,15 @@ const results = useQueries({
 });
 ```
 
+</details>
+
 ---
 
 ## 6. MQTT & IoT trên React Native
 
 ### Q: MQTT là gì? Khi nào dùng MQTT thay vì REST/WebSocket?
+
+<details><summary>Đáp án</summary>
 
 **MQTT (Message Queuing Telemetry Transport):**
 - Protocol publish/subscribe nhẹ, thiết kế cho IoT, mạng không ổn định
@@ -387,9 +437,13 @@ const results = useQueries({
 - Chat, game realtime, collaboration
 - Browser client (MQTT over WS cũng được nhưng phức tạp hơn)
 
+</details>
+
 ---
 
 ### Q: Implement MQTT trong React Native thế nào?
+
+<details><summary>Đáp án</summary>
 
 ```bash
 npm install mqtt
@@ -463,9 +517,13 @@ useEffect(() => {
 }, [busId]);
 ```
 
+</details>
+
 ---
 
 ### Q: MQTT QoS 0, 1, 2 khác nhau thế nào? Dùng cái nào cho IoT?
+
+<details><summary>Đáp án</summary>
 
 | QoS | Đảm bảo | Overhead | Dùng cho |
 |-----|---------|---------|---------|
@@ -478,11 +536,15 @@ useEffect(() => {
 - BLE child detection → QoS 1 (quan trọng, chấp nhận duplicate check)
 - Emergency alert → QoS 2 (bắt buộc nhận đúng 1 lần)
 
+</details>
+
 ---
 
 ## 7. Thiết kế hệ thống IoT
 
 ### Q: Thiết kế hệ thống IoT monitoring cho trường mầm non (ICUCO-style)
+
+<details><summary>Đáp án</summary>
 
 **Yêu cầu:**
 - 50 xe bus, mỗi xe có 1 BLE scanner + GPS
@@ -536,9 +598,13 @@ CREATE INDEX idx_child_tag ON Child(bleTagMac);  -- lookup nhanh khi receive MQT
 - Kafka cho event queue nếu >100k events/day (không mất data khi processor restart)
 - PostgreSQL partitioning theo tháng cho BusEvent
 
+</details>
+
 ---
 
 ### Q: Xử lý mất kết nối trong IoT mobile app như thế nào?
+
+<details><summary>Đáp án</summary>
 
 ```typescript
 // 3 layers của offline handling
@@ -572,11 +638,15 @@ class IoTConnectionManager {
 }
 ```
 
+</details>
+
 ---
 
 ## 8. System Design — React Native
 
 ### Q: Thiết kế offline-first app học tiếng Nhật (EDU App mobile)
+
+<details><summary>Đáp án</summary>
 
 **Yêu cầu:**
 - 5000 vocab, 200 grammar, sync với server
@@ -619,9 +689,13 @@ async function syncVocab() {
 }
 ```
 
+</details>
+
 ---
 
 ### Q: Làm thế nào handle refresh token race condition trong React Native?
+
+<details><summary>Đáp án</summary>
 
 **Vấn đề:** 2 API call cùng nhận 401 → cả 2 cùng call refresh → 1 cái fail (refresh token dùng 1 lần)
 
@@ -643,9 +717,13 @@ async function getValidToken(): Promise<string> {
 }
 ```
 
+</details>
+
 ---
 
 ### Q: Navigation architecture cho app lớn (>20 màn hình)?
+
+<details><summary>Đáp án</summary>
 
 ```
 Stack       → trang có back button (Detail, Settings)
@@ -671,9 +749,13 @@ app/
   _layout.tsx         → root layout, auth guard
 ```
 
+</details>
+
 ---
 
 ### Q: Performance optimization trong React Native list lớn?
+
+<details><summary>Đáp án</summary>
 
 ```typescript
 // ❌ FlatList render hết
@@ -700,9 +782,13 @@ const handlePress = useCallback((id: number) => {
 }, []);
 ```
 
+</details>
+
 ---
 
 ### Q: Memory leak phổ biến nhất trong React Native?
+
+<details><summary>Đáp án</summary>
 
 ```typescript
 // ❌ Leak 1: EventEmitter không remove
@@ -742,15 +828,21 @@ useEffect(() => {
 // Animated.loop() → gọi animation.stop() khi unmount
 ```
 
+</details>
+
 ---
 
 ### Q: Tại sao dùng Hermes JS engine?
+
+<details><summary>Đáp án</summary>
 
 **A:** Hermes là JS engine của Meta tối ưu cho React Native:
 - Compile JS → bytecode lúc build, không phải lúc runtime → **TTI (Time to Interactive) nhanh hơn 30-50%**
 - Memory footprint nhỏ hơn V8/JSC
 - Bật trong `android/app/build.gradle`: `hermesEnabled = true`
 - iOS: bật trong Podfile kể từ RN 0.70+
+
+</details>
 
 ---
 
@@ -942,10 +1034,14 @@ export const useAuthStore = create<AuthState>()(
 
 ### Q: TanStack Query có replace Redux được không?
 
+<details><summary>Đáp án</summary>
+
 **Không hoàn toàn** — vì chúng giải quyết 2 vấn đề khác nhau:
 
 - **TanStack Query** → **Server state**: fetch, cache, sync data từ API
 - **Redux** → **Client state**: UI state, global state không liên quan server
+
+</details>
 
 ### Phân loại state:
 
@@ -1004,6 +1100,8 @@ const { data, isLoading, isError, refetch } = useQuery({
 
 ### Q: OTA Update là gì? Khi nào dùng?
 
+<details><summary>Đáp án</summary>
+
 **OTA (Over-The-Air)** = cập nhật app không qua App Store/Play Store — user mở app là tự nhận code mới.
 
 ```
@@ -1032,9 +1130,13 @@ appcenter codepush release-react -a MyOrg/NihongoApp -d Production
 
 **Rule:** Fix JS bug nhanh → OTA. Thêm native SDK mới → submit store.
 
+</details>
+
 ---
 
 ### Q: EAS Build khác gì build local?
+
+<details><summary>Đáp án</summary>
 
 **EAS Build** — build APK/IPA trên cloud Expo, **không cần máy Mac**:
 
@@ -1055,11 +1157,15 @@ eas build --platform android  # cloud Linux build APK/AAB
 | CI/CD | ✅ tích hợp GitHub Actions | Tự setup |
 | Debug native crash | Khó hơn | Dễ |
 
+</details>
+
 ---
 
 ## 11. Sensor trên React Native
 
 ### Q: Sensor là gì? Các loại sensor thường gặp?
+
+<details><summary>Đáp án</summary>
 
 Sensor = cảm biến vật lý trên điện thoại, đọc dữ liệu từ phần cứng:
 
@@ -1074,7 +1180,11 @@ Sensor = cảm biến vật lý trên điện thoại, đọc dữ liệu từ p
 | **Ambient Light** | Độ sáng môi trường | Auto brightness |
 | **GPS** | Vị trí lat/lng | Map, tracking |
 
+</details>
+
 ### Q: Implement sensor trong React Native CLI?
+
+<details><summary>Đáp án</summary>
 
 ```typescript
 import {accelerometer, SensorTypes, setUpdateIntervalForType} from 'react-native-sensors';
@@ -1093,7 +1203,11 @@ useEffect(() => {
 }, []);
 ```
 
+</details>
+
 ### Q: BLE có phải sensor không?
+
+<details><summary>Đáp án</summary>
 
 **BLE (Bluetooth Low Energy)** không phải sensor vật lý nhưng cùng pattern đọc dữ liệu thiết bị ngoài:
 
@@ -1121,6 +1235,8 @@ function rssiToDistance(rssi: number): number {
 
 **Sensor + BLE chỉ dùng được với React Native CLI** — Expo Managed không hỗ trợ native BLE.
 
+</details>
+
 ---
 
 ---
@@ -1128,6 +1244,8 @@ function rssiToDistance(rssi: number): number {
 ## 13. Khi nào nâng version React Native / thư viện?
 
 ### Q: Khi nào bắt buộc phải nâng?
+
+<details><summary>Đáp án</summary>
 
 **Apple/Google yêu cầu target SDK mới:**
 ```
@@ -1146,9 +1264,13 @@ npm audit  # thấy "critical" → nâng ngay
 React Native 0.73 drop support Flipper → build lỗi → phải nâng
 ```
 
+</details>
+
 ---
 
 ### Q: Khi nào nên nâng (có lợi rõ ràng)?
+
+<details><summary>Đáp án</summary>
 
 | Tình huống | Lý do |
 |---|---|
@@ -1157,14 +1279,20 @@ React Native 0.73 drop support Flipper → build lỗi → phải nâng
 | Bug fix ảnh hưởng production | Crash trên iOS 17, Android 14 |
 | Major version thư viện core | React Navigation, TanStack — API mới, perf tốt hơn |
 
+</details>
+
 ---
 
 ### Q: Khi nào KHÔNG nên nâng vội?
+
+<details><summary>Đáp án</summary>
 
 - Thư viện native quan trọng chưa support version mới (check GitHub issues)
 - Đang gần deadline release
 - Major version vừa ra < 1 tháng (còn nhiều bug)
 - App đang ổn định, không có issue
+
+</details>
 
 ---
 
@@ -1300,6 +1428,8 @@ cd android && ./gradlew dependencies | grep "compileSdk"
 
 ### Q: CI/CD cho React Native CLI thường dùng gì?
 
+<details><summary>Đáp án</summary>
+
 **Stack phổ biến nhất:** GitHub Actions (pipeline) + Fastlane (build/sign/upload)
 
 | | GitHub Actions + Fastlane | EAS Build | Bitrise |
@@ -1309,6 +1439,8 @@ cd android && ./gradlew dependencies | grep "compileSdk"
 | Setup | Trung bình | Dễ | Dễ nhất |
 | Flexible | Cao | Thấp (Expo only) | Trung bình |
 | Phổ biến | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
+
+</details>
 
 ---
 
@@ -2140,7 +2272,11 @@ Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 
 - [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
 - [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
-- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-devops.md](./interview-devops.md) — DevOps: Kubernetes (probe, rolling update, HPA, securityContext), pipeline CI/CD và deploy thật, monitoring — 19 câu
+- [interview-docker.md](./interview-docker.md) — Docker: 25 câu từ Junior tới Senior, đáp án bằng compose/Dockerfile của project (có sự cố `.env` trong image)
+- [interview-web.md](./interview-web.md) — Web: React, Next.js, JavaScript/TypeScript, HTTP, webpack — 25 câu, đáp án theo code nihongo-web
+- [interview-infra-cloud.md](./interview-infra-cloud.md) — Hạ tầng và cloud: nginx, Terraform, AWS/LocalStack/serverless, GCP, k6, xử lý sự cố
+- [interview-backend-security.md](./interview-backend-security.md) — Bảo mật API (OWASP), thanh toán chống trùng, outbox, timeout, retry, circuit breaker
 - [interview-backend-android-rn-swift.md](./interview-backend-android-rn-swift.md) — Backend, Android, React Native, Swift
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
 - [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive

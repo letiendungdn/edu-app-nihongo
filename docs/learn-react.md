@@ -62,7 +62,7 @@ Muốn sửa code và xem ngay trên trình duyệt (không qua Docker):
 npm run dev          # mở http://localhost:5173
 ```
 
-Trang đầy đủ qua nginx ở cổng 8080 là bản đã build trong container `edu-nihongo-web`. Sửa code xong muốn thấy ở cổng 8080 thì phải build lại container (xem [docker.md](./docker.md)); khi học, dùng cổng 5173 cho nhanh.
+Trang đầy đủ qua nginx ở cổng 8080 là bản đã build trong container `edu-nihongo-web`. Sửa code xong muốn thấy ở cổng 8080 thì phải build lại container (xem [learn-docker.md](./learn-docker.md)); khi học, dùng cổng 5173 cho nhanh.
 
 ## 3. Component đầu tiên: một trang Next.js
 
@@ -309,6 +309,10 @@ const [index, setIndex] = useState(0);   // lúc có, lúc không → React lẫ
 2. **Viết hook:** tạo `src/hooks/useToggle.ts` trả về `[on, toggle]` (bấm một lần bật, lần nữa tắt). Viết test bằng `renderHook` như `useDebouncedValue.test.ts`. Tự kiểm: `npx vitest run src/hooks` xanh.
 3. **Làm hỏng có chủ đích:** trong `useVocabSearchQuery`, xóa dòng `enabled: …`. Mở trang vocab, xóa trống ô tìm kiếm và xem tab Network. Giải thích request vừa xuất hiện, rồi `git checkout -- src/hooks/queries.ts`.
 4. **Thêm component:** viết component `WordCount` nhận props `count: number` và hiện "50 từ"; dùng nó trong `VocabLessonListView`. Viết một test kiểm chữ hiện đúng. Tự kiểm: test xanh và trang hiện đúng số từ.
+
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScript/TypeScript, HTTP, webpack): [interview-web.md](./interview-web.md).
 
 <!-- nav:start -->
 

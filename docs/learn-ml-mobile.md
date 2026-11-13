@@ -483,6 +483,10 @@ A: SM-2: công thức cố định cho mọi user
    điều chỉnh interval theo context (giờ trong ngày, chuỗi learning streak)
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án cho Senior Mobile: [interview-mobile.md](./interview-mobile.md); React Native: [interview-react-native-senior.md](./interview-react-native-senior.md).
+
 <!-- nav:start -->
 
 ---

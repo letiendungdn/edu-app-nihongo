@@ -153,6 +153,10 @@ Góp ý bằng **câu hỏi** và **rủi ro cụ thể**, không bằng sở th
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án (system design, testing, câu hỏi hành vi): [interview-questions.md](./interview-questions.md).
+
 <!-- nav:start -->
 
 ---

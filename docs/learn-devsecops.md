@@ -349,13 +349,17 @@ Thêm: app không gọi Kubernetes API nên mọi pod của app đặt `automoun
 
 Ngoài repo (làm ở cluster): bật mã hóa Secret trong etcd (EKS envelope encryption; GKE mã hóa sẵn), RBAC không cho tài khoản thường `get secrets`.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án: bảo mật API và quét lỗ hổng trong [interview-backend-security.md](./interview-backend-security.md); image và container trong [interview-docker.md](./interview-docker.md). Mục 8 ở trên là danh sách câu hỏi ngắn để tự ôn.
+
 <!-- nav:start -->
 
 ---
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 9/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 8/8.
 
 - Bài trước: [learn-incident-postmortem.md](./learn-incident-postmortem.md) — Xử lý sự cố, runbook, postmortem (có postmortem thật)
 - Xong nhóm này. **Nhóm tiếp: 7. Cloud** — bắt đầu bằng [learn-localstack.md](./learn-localstack.md) (Giả lập AWS trên máy bằng LocalStack)

@@ -1,5 +1,10 @@
 # Câu hỏi phỏng vấn — Backend · Android · React Native · Swift
-> Ví dụ lấy từ project Nihongo thực tế
+
+> **Mục tiêu:** Ôn câu hỏi trộn nhiều mảng — NestJS, xác thực, AI, database, Flutter, Android, React Native, Swift — với ví dụ từ project.
+>
+> **Cần biết trước:** [learn-nestjs.md](./learn-nestjs.md), [learn-android-kotlin.md](./learn-android-kotlin.md), [learn-react-native.md](./learn-react-native.md), [learn-swift-ios.md](./learn-swift-ios.md). Bộ sâu hơn cho từng mảng: [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md), [interview-android.md](./interview-android.md), [interview-react-native-senior.md](./interview-react-native-senior.md).
+
+Cách dùng: tự trả lời thành tiếng rồi mới bấm mở **Đáp án**.
 
 ---
 
@@ -9,7 +14,9 @@
 
 **Q: Module, Controller, Service trong NestJS khác nhau thế nào?**
 
-A: Module = đơn vị tổ chức code, khai báo provider và import dependency. Controller = nhận HTTP request, route sang Service. Service = business logic, không biết HTTP.
+<details><summary>Đáp án</summary>
+
+Module = đơn vị tổ chức code, khai báo provider và import dependency. Controller = nhận HTTP request, route sang Service. Service = business logic, không biết HTTP.
 
 Ví dụ trong project:
 ```typescript
@@ -26,44 +33,35 @@ export class AiModule {}
 
 Rule: Controller không chứa logic — nếu logic nằm trong Controller là sai thiết kế.
 
+</details>
+
 ---
 
 **Q: Guard vs Middleware vs Interceptor khác nhau thế nào?**
 
-A:
+<details><summary>Đáp án</summary>
+
 - **Middleware**: chạy trước route handler, không biết context NestJS. Dùng cho CORS, cookie, logging raw.
 - **Guard**: quyết định request có được thực thi không (auth/role). Trả `true/false`.
 - **Interceptor**: wrap request/response — transform, log metrics, cache.
 
-Ví dụ trong project — `HttpMetricsInterceptor` đếm request theo method/path/status:
+Ví dụ trong project — đo metric HTTP **từng** là interceptor, nay là middleware ([http-metrics.middleware.ts](../services/api-gateway/src/metrics/http-metrics.middleware.ts)). Lý do: interceptor chỉ chạy khi request đã qua guard, nên bản cũ không bao giờ đếm được 401/403 (guard chặn), 429 (throttler), 413 (body quá lớn). Middleware nghe sự kiện `finish` của response, luôn xảy ra dù request bị chặn ở tầng nào:
+
 ```typescript
-// services/api-gateway/src/metrics/http-metrics.interceptor.ts
-@Injectable()
-export class HttpMetricsInterceptor implements NestInterceptor {
-  constructor(
-    @InjectMetric('http_requests_total')
-    private readonly counter: Counter<string>,
-  ) {}
-
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const req = context.switchToHttp().getRequest<Request>();
-    const method = req.method;
-    const path = req.path || req.url.split('?')[0] || '/';
-
-    return next.handle().pipe(
-      tap({
-        next: () => {
-          const status = String(context.switchToHttp().getResponse<Response>().statusCode);
-          this.counter.inc({ method, path, status });
-        },
-        error: (err) => {
-          this.counter.inc({ method, path, status: String(err?.status ?? 500) });
-        },
-      }),
-    );
-  }
+// services/api-gateway/src/metrics/http-metrics.middleware.ts (rút gọn)
+use(req: Request, res: Response, next: NextFunction): void {
+  const endTimer = this.histogram.startTimer();
+  res.on("finish", () => {
+    // req.route chỉ có SAU khi Express khớp route → đọc lúc response xong
+    const labels = { method: req.method, route: routeLabel(req), status: String(res.statusCode) };
+    this.counter.inc(labels);
+    endTimer(labels);
+  });
+  next();
 }
 ```
+
+Nhãn `route` là mẫu (`/api/vocabularies/:id`), không phải URL thật, để tránh bùng nổ cardinality. Interceptor thật trong project: `ResponseInterceptor` bọc response, `AuditInterceptor` ghi audit vào MongoDB.
 
 `main.ts` đăng ký global:
 ```typescript
@@ -71,11 +69,15 @@ app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
 app.useGlobalFilters(new AllExceptionsFilter());
 ```
 
+</details>
+
 ---
 
 **Q: ValidationPipe dùng để làm gì, cấu hình thế nào?**
 
-A: Validate và transform input trước khi vào handler. `whitelist: true` strip field không có trong DTO. `forbidNonWhitelisted` throw nếu có field lạ.
+<details><summary>Đáp án</summary>
+
+Validate và transform input trước khi vào handler. `whitelist: true` strip field không có trong DTO. `forbidNonWhitelisted` throw nếu có field lạ.
 
 Thực tế trong `main.ts`:
 ```typescript
@@ -89,11 +91,15 @@ app.useGlobalPipes(
 );
 ```
 
+</details>
+
 ---
 
 **Q: Microservice pattern trong project — VocabulariesController giao tiếp thế nào với content-service?**
 
-A: API Gateway không trực tiếp query DB — gửi message qua gRPC đến content-service thông qua `ClientProxy`.
+<details><summary>Đáp án</summary>
+
+API Gateway không trực tiếp query DB — gửi message qua gRPC đến content-service thông qua `ClientProxy`.
 
 ```typescript
 // services/api-gateway/src/http/vocabularies.controller.ts
@@ -120,13 +126,17 @@ export class VocabulariesController {
 
 Ưu điểm: API Gateway không cần biết DB schema, content-service có thể scale độc lập.
 
+</details>
+
 ---
 
 ### Authentication & Security
 
 **Q: JWT Access Token + Refresh Token — project implement thế nào?**
 
-A: Access token TTL 15 phút, refresh token TTL 7 ngày lưu DB với `revoked` flag. Refresh token dùng pattern `id.secret` — lưu bcrypt hash, không lưu plaintext.
+<details><summary>Đáp án</summary>
+
+Access token TTL 15 phút, refresh token TTL 7 ngày lưu DB với `revoked` flag. Refresh token dùng pattern `id.secret` — lưu bcrypt hash, không lưu plaintext.
 
 ```typescript
 // services/api-gateway/src/auth/auth.service.ts
@@ -177,11 +187,15 @@ async refreshTokens(refreshToken: string) {
 }
 ```
 
+</details>
+
 ---
 
 **Q: Google OAuth login — flow trong project?**
 
-A: Client gửi `credential` (Google ID token) lên server. Server verify bằng `google-auth-library`, lấy `sub + email`, tìm hoặc tạo user.
+<details><summary>Đáp án</summary>
+
+Client gửi `credential` (Google ID token) lên server. Server verify bằng `google-auth-library`, lấy `sub + email`, tìm hoặc tạo user.
 
 ```typescript
 // auth.service.ts
@@ -208,11 +222,14 @@ async loginWithGoogle(dto: GoogleAuthDto) {
 }
 ```
 
+</details>
+
 ---
 
 **Q: Security setup trong main.ts — project dùng gì?**
 
-A:
+<details><summary>Đáp án</summary>
+
 ```typescript
 // services/api-gateway/src/main.ts
 app.use(helmet({           // set security headers: X-Frame-Options, CSP, etc.
@@ -234,13 +251,17 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: t
 
 Helmet tự động set: `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`.
 
+</details>
+
 ---
 
 ### AI & External Services
 
 **Q: AiService dùng Gemini thế nào — có gì đặc biệt so với OpenAI?**
 
-A: Gemini dùng `"model"` thay vì `"assistant"` cho role. API dùng `chats.create()` + `sendMessage()` thay vì `messages.create()`.
+<details><summary>Đáp án</summary>
+
+Gemini dùng `"model"` thay vì `"assistant"` cho role. API dùng `chats.create()` + `sendMessage()` thay vì `messages.create()`.
 
 ```typescript
 // services/api-gateway/src/ai/ai.service.ts
@@ -273,11 +294,15 @@ export class AiService {
 
 History giới hạn 10 messages cuối — tránh token quá lớn.
 
+</details>
+
 ---
 
 **Q: LiveService tạo token LiveKit thế nào — host vs viewer khác gì?**
 
-A: Host có `canPublish: true` (stream camera/mic). Viewer có `canPublish: false` (chỉ xem).
+<details><summary>Đáp án</summary>
+
+Host có `canPublish: true` (stream camera/mic). Viewer có `canPublish: false` (chỉ xem).
 
 ```typescript
 // services/api-gateway/src/http/live.service.ts
@@ -314,13 +339,17 @@ async joinAsViewer(userId: number, sessionId: number) {
 }
 ```
 
+</details>
+
 ---
 
 ### Database
 
 **Q: Tại sao VocabulariesController không query DB trực tiếp mà gửi qua ClientProxy?**
 
-A: Microservice architecture — API Gateway là entry point, content-service quản lý vocab data. Lợi ích:
+<details><summary>Đáp án</summary>
+
+Microservice architecture — API Gateway là entry point, content-service quản lý vocab data. Lợi ích:
 - content-service scale độc lập khi load vocab cao
 - API Gateway không cần biết DB schema của content-service
 - Thay đổi DB trong content-service không ảnh hưởng API Gateway
@@ -335,9 +364,13 @@ return firstValueFrom(
 );
 ```
 
+</details>
+
 **Q: `publicUserSelect` trong AuthService dùng để làm gì?**
 
-A: Prisma select object đảm bảo không bao giờ trả `passwordHash` ra ngoài. Compile-time safe — nếu thêm field nhạy cảm mà quên thêm vào select, type sẽ không compile.
+<details><summary>Đáp án</summary>
+
+Prisma select object đảm bảo không bao giờ trả `passwordHash` ra ngoài. Compile-time safe — nếu thêm field nhạy cảm mà quên thêm vào select, type sẽ không compile.
 
 ```typescript
 const publicUserSelect = {
@@ -352,6 +385,8 @@ toPublicUser(user: PublicUserRow) {
 }
 ```
 
+</details>
+
 ---
 
 ## FLUTTER / DART
@@ -360,7 +395,9 @@ toPublicUser(user: PublicUserRow) {
 
 **Q: Giải thích Clean Architecture — ví dụ từ VocabularyRepository.**
 
-A: 3 layer rõ ràng:
+<details><summary>Đáp án</summary>
+
+3 layer rõ ràng:
 
 ```
 Domain layer (không import Flutter/Dio/Drift):
@@ -403,11 +440,15 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
 }
 ```
 
+</details>
+
 ---
 
 **Q: UseCase trong project dùng để làm gì — tại sao không để logic đó trong Repository?**
 
-A: `GetReviewQueueUseCase` lọc card đến hạn theo thời gian. Logic này thuộc business domain, không phải data access. Nếu thay đổi rule lọc (ví dụ: thêm max 20 cards/session), chỉ sửa 1 chỗ.
+<details><summary>Đáp án</summary>
+
+`GetReviewQueueUseCase` lọc card đến hạn theo thời gian. Logic này thuộc business domain, không phải data access. Nếu thay đổi rule lọc (ví dụ: thêm max 20 cards/session), chỉ sửa 1 chỗ.
 
 ```dart
 // domain/usecase/get_review_queue_usecase.dart
@@ -429,11 +470,15 @@ final getReviewQueueUseCaseProvider = Provider(
 );
 ```
 
+</details>
+
 ---
 
 **Q: Offline-first sync flow trong project — updateSrsCard làm gì khi offline?**
 
-A: Write local DB trước → thêm vào sync queue → nếu online thì flush ngay, nếu offline giữ pending.
+<details><summary>Đáp án</summary>
+
+Write local DB trước → thêm vào sync queue → nếu online thì flush ngay, nếu offline giữ pending.
 
 ```dart
 // data/repository/vocabulary_repository_impl.dart
@@ -469,11 +514,15 @@ Future<Result<void>> updateSrsCard(SrsCard card) async {
 
 UI không bao giờ chờ network → luôn responsive.
 
+</details>
+
 ---
 
 **Q: `watchReviewQueue()` trả về Stream — tại sao SrsScreen tự cập nhật khi DB thay đổi?**
 
-A: Drift watch query trả Stream. Mỗi lần DB thay đổi → Stream emit giá trị mới → Riverpod `StreamProvider` notify → widget rebuild.
+<details><summary>Đáp án</summary>
+
+Drift watch query trả Stream. Mỗi lần DB thay đổi → Stream emit giá trị mới → Riverpod `StreamProvider` notify → widget rebuild.
 
 ```dart
 // providers.dart
@@ -492,11 +541,15 @@ queue.when(
 
 Không cần `setState`, không cần manual refresh.
 
+</details>
+
 ---
 
 **Q: `ref.watch` vs `ref.read` — dùng sai có gì không?**
 
-A: `ref.watch` trong `build()` → subscribe, rebuild khi thay đổi.
+<details><summary>Đáp án</summary>
+
+`ref.watch` trong `build()` → subscribe, rebuild khi thay đổi.
 `ref.read` trong callback (onTap) → đọc 1 lần, không subscribe.
 
 ```dart
@@ -518,11 +571,15 @@ onPressed: () {
 }
 ```
 
+</details>
+
 ---
 
 **Q: `KanjiDrawScreen` dùng `shouldRepaint` thế nào?**
 
-A: Tránh repaint không cần thiết — chỉ repaint khi strokes hoặc current nét thay đổi.
+<details><summary>Đáp án</summary>
+
+Tránh repaint không cần thiết — chỉ repaint khi strokes hoặc current nét thay đổi.
 
 ```dart
 // presentation/kanji_draw/kanji_draw_screen.dart
@@ -541,6 +598,8 @@ class _StrokePainter extends CustomPainter {
 }
 ```
 
+</details>
+
 ---
 
 ## ANDROID (Kotlin / Jetpack)
@@ -549,7 +608,9 @@ class _StrokePainter extends CustomPainter {
 
 **Q: Coroutine vs Thread — tại sao Android dùng Coroutine?**
 
-A: Thread tốn ~1MB RAM/thread, OS-managed. Coroutine lightweight, suspend khi chờ I/O thay vì block thread. 1 thread xử lý được nhiều coroutine.
+<details><summary>Đáp án</summary>
+
+Thread tốn ~1MB RAM/thread, OS-managed. Coroutine lightweight, suspend khi chờ I/O thay vì block thread. 1 thread xử lý được nhiều coroutine.
 
 Pattern trong project (tương đương Flutter's async/await):
 ```kotlin
@@ -565,9 +626,13 @@ viewModelScope.launch {
 
 Tương đương `_network.isOnline()` trong Flutter — suspend, không block.
 
+</details>
+
 **Q: Flow vs LiveData — project Flutter dùng Stream, Android dùng gì tương đương?**
 
-A: Android Room + Flow (tương đương Drift + Stream trong Flutter). `StateFlow` tương đương `StreamController` + `stream`.
+<details><summary>Đáp án</summary>
+
+Android Room + Flow (tương đương Drift + Stream trong Flutter). `StateFlow` tương đương `StreamController` + `stream`.
 
 ```kotlin
 // Room DAO — tương đương watchVocabByLesson() của Drift
@@ -584,9 +649,13 @@ val vocabs: StateFlow<List<Vocabulary>> = vocabRepository
   .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 ```
 
+</details>
+
 **Q: `launch` vs `async` — khi nào dùng cái nào?**
 
-A: `launch` = fire and forget. `async` = cần kết quả (trả `Deferred<T>`). Chạy song song:
+<details><summary>Đáp án</summary>
+
+`launch` = fire and forget. `async` = cần kết quả (trả `Deferred<T>`). Chạy song song:
 ```kotlin
 // Fetch vocab và user song song — giống Future.wait() trong Flutter
 val vocabDeferred = async(Dispatchers.IO) { vocabApi.fetchLesson(1) }
@@ -595,13 +664,17 @@ val vocab = vocabDeferred.await()  // chờ cả 2 hoàn thành
 val user = userDeferred.await()
 ```
 
+</details>
+
 ---
 
 ### Architecture
 
 **Q: ViewModel không bị destroy khi rotation — tại sao?**
 
-A: ViewModel sống trong `ViewModelStore` gắn với Activity, không phải Activity instance. Rotation destroy Activity instance nhưng ViewModelStore survive.
+<details><summary>Đáp án</summary>
+
+ViewModel sống trong `ViewModelStore` gắn với Activity, không phải Activity instance. Rotation destroy Activity instance nhưng ViewModelStore survive.
 
 ```kotlin
 // Tương đương Riverpod provider trong Flutter
@@ -615,9 +688,13 @@ class SrsViewModel @HiltViewModel constructor(
 }
 ```
 
+</details>
+
 **Q: WorkManager — tương đương gì trong Flutter? Dùng khi nào?**
 
-A: Flutter dùng Workmanager package (wrapper WorkManager Android). Dùng cho background sync — tương đương `syncAllPending()` chạy background.
+<details><summary>Đáp án</summary>
+
+Flutter dùng Workmanager package (wrapper WorkManager Android). Dùng cho background sync — tương đương `syncAllPending()` chạy background.
 
 ```kotlin
 // Tương đương SyncService trong Flutter
@@ -644,9 +721,13 @@ WorkManager.getInstance(context)
   .enqueueUniquePeriodicWork("vocab-sync", ExistingPeriodicWorkPolicy.KEEP, syncRequest)
 ```
 
+</details>
+
 **Q: Hilt inject thế nào — tương đương Riverpod Provider?**
 
-A: Riverpod `Provider` ~ Hilt `@Singleton`. Riverpod `ref.watch` ~ Hilt `@Inject`.
+<details><summary>Đáp án</summary>
+
+Riverpod `Provider` ~ Hilt `@Singleton`. Riverpod `ref.watch` ~ Hilt `@Inject`.
 
 ```kotlin
 // Tương đương vocabRepositoryProvider trong Flutter
@@ -665,13 +746,17 @@ class VocabViewModel @Inject constructor(
 ) : ViewModel()
 ```
 
+</details>
+
 ---
 
 ### Compose & Performance
 
 **Q: `remember` vs `rememberSaveable` — tương đương trong Flutter?**
 
-A: `remember` ~ `StatefulWidget` state (mất khi widget unmount). `rememberSaveable` ~ `PageStorage` (survive rotation).
+<details><summary>Đáp án</summary>
+
+`remember` ~ `StatefulWidget` state (mất khi widget unmount). `rememberSaveable` ~ `PageStorage` (survive rotation).
 
 ```kotlin
 @Composable
@@ -694,9 +779,13 @@ fun KanjiDrawScreen(kanji: String) {
 }
 ```
 
+</details>
+
 **Q: LazyColumn tốt hơn Column vì sao — tương đương Flutter?**
 
-A: `LazyColumn` ~ `ListView.builder` trong Flutter. Chỉ compose item visible.
+<details><summary>Đáp án</summary>
+
+`LazyColumn` ~ `ListView.builder` trong Flutter. Chỉ compose item visible.
 
 ```kotlin
 // ❌ Column — compose tất cả → OOM với 1000 vocab
@@ -710,6 +799,8 @@ LazyColumn {
 }
 ```
 
+</details>
+
 ---
 
 ## REACT NATIVE
@@ -718,13 +809,19 @@ LazyColumn {
 
 **Q: Bridge cũ vs JSI (New Architecture) — khác nhau thế nào?**
 
-A: Bridge: JS ↔ Native qua JSON serialization bất đồng bộ → latency. JSI: JS gọi native function trực tiếp qua C++ → synchronous, không serialize.
+<details><summary>Đáp án</summary>
+
+Bridge: JS ↔ Native qua JSON serialization bất đồng bộ → latency. JSI: JS gọi native function trực tiếp qua C++ → synchronous, không serialize.
 
 Ảnh hưởng thực tế trong project: Camera translate screen — Old Architecture phải serialize frame data qua bridge mỗi frame → lag. JSI cho phép xử lý frame native mà không serialize.
 
+</details>
+
 **Q: FlatList trong vocab screen — optimize thế nào?**
 
-A: Tương đương `ListView.builder` Flutter. `getItemLayout` skip measure nếu item fixed height.
+<details><summary>Đáp án</summary>
+
+Tương đương `ListView.builder` Flutter. `getItemLayout` skip measure nếu item fixed height.
 
 ```jsx
 // Tương đương VocabScreen Flutter
@@ -751,9 +848,13 @@ function VocabScreen({ lessonNumber }) {
 }
 ```
 
+</details>
+
 **Q: `useCallback` và `useMemo` — khi nào cần?**
 
-A: Không cần cho mọi function. Cần khi: function là prop của component được memo, hoặc trong dependency array của useEffect/useMemo.
+<details><summary>Đáp án</summary>
+
+Không cần cho mọi function. Cần khi: function là prop của component được memo, hoặc trong dependency array của useEffect/useMemo.
 
 ```jsx
 // ❌ Không có useCallback → renderItem tạo mới mỗi render → FlatList re-render toàn bộ
@@ -769,13 +870,17 @@ const dueCards = useMemo(
 );
 ```
 
+</details>
+
 ---
 
 ### State Management
 
 **Q: Context vs Redux vs Zustand — project nên dùng gì?**
 
-A: Project Nihongo (React Native) — Zustand là lựa chọn tốt nhất vì selector pattern tránh re-render không cần thiết.
+<details><summary>Đáp án</summary>
+
+Project Nihongo (React Native) — Zustand là lựa chọn tốt nhất vì selector pattern tránh re-render không cần thiết.
 
 ```javascript
 // Zustand — tương đương Riverpod trong Flutter
@@ -807,11 +912,15 @@ const dueCards = useVocabStore(state =>
 );
 ```
 
+</details>
+
 ---
 
 **Q: Navigation deep link trong React Native — tương đương go_router?**
 
-A: Tương đương `GoRouter` Flutter với `redirect`.
+<details><summary>Đáp án</summary>
+
+Tương đương `GoRouter` Flutter với `redirect`.
 
 ```javascript
 // React Navigation — tương đương app.dart GoRouter
@@ -834,6 +943,8 @@ const linking = {
 navigation.navigate('Vocab', { lessonId: 5 });
 ```
 
+</details>
+
 ---
 
 ## SWIFT / iOS
@@ -842,7 +953,9 @@ navigation.navigate('Vocab', { lessonId: 5 });
 
 **Q: Strong, weak, unowned — khi nào dùng cái nào?**
 
-A: `strong` (default) giữ object alive. `weak` không giữ, tự set nil khi object deallocate. `unowned` không giữ, crash nếu truy cập sau khi deallocate.
+<details><summary>Đáp án</summary>
+
+`strong` (default) giữ object alive. `weak` không giữ, tự set nil khi object deallocate. `unowned` không giữ, crash nếu truy cập sau khi deallocate.
 
 ```swift
 // Tương đương pattern callback trong Flutter/Dart (không có ARC)
@@ -867,11 +980,15 @@ class LiveViewController: UIViewController {
 }
 ```
 
+</details>
+
 ---
 
 **Q: Struct vs Class — khi nào dùng cái nào? Tương đương trong Dart?**
 
-A: Dart không phân biệt struct/class — Dart class đều là reference type. Nhưng Dart có `@immutable` annotation tương tự struct semantics.
+<details><summary>Đáp án</summary>
+
+Dart không phân biệt struct/class — Dart class đều là reference type. Nhưng Dart có `@immutable` annotation tương tự struct semantics.
 
 ```swift
 // Struct — value type, tương đương Freezed entity trong Flutter
@@ -897,11 +1014,15 @@ class SrsViewModel: ObservableObject {
 }
 ```
 
+</details>
+
 ---
 
 **Q: async/await trong Swift — tương đương Dart?**
 
-A: Rất giống Dart async/await. Swift thêm `actor` cho thread safety.
+<details><summary>Đáp án</summary>
+
+Rất giống Dart async/await. Swift thêm `actor` cho thread safety.
 
 ```swift
 // Swift async/await — gần giống Dart
@@ -925,11 +1046,15 @@ actor VocabCache {
 }
 ```
 
+</details>
+
 ---
 
 **Q: @State, @StateObject, @ObservedObject — dùng sai có gì không?**
 
-A: Dùng sai `@ObservedObject` thay vì `@StateObject` → ViewModel bị tạo lại mỗi lần view re-render → mất state.
+<details><summary>Đáp án</summary>
+
+Dùng sai `@ObservedObject` thay vì `@StateObject` → ViewModel bị tạo lại mỗi lần view re-render → mất state.
 
 ```swift
 // Tương đương Flutter ConsumerWidget với Riverpod
@@ -958,11 +1083,15 @@ struct SrsView: View {
 }
 ```
 
+</details>
+
 ---
 
 **Q: Codable — serialize Vocabulary từ API response thế nào?**
 
-A: Tương đương Dart `fromJson`/`toJson` hoặc Freezed. Swift tự generate code nếu field names khớp.
+<details><summary>Đáp án</summary>
+
+Tương đương Dart `fromJson`/`toJson` hoặc Freezed. Swift tự generate code nếu field names khớp.
 
 ```swift
 // Tương đương Vocabulary entity trong Flutter
@@ -985,6 +1114,8 @@ struct Vocabulary: Codable, Identifiable {
 let vocabs = try JSONDecoder().decode([Vocabulary].self, from: responseData)
 ```
 
+</details>
+
 <!-- nav:start -->
 
 ---
@@ -995,7 +1126,11 @@ Tài liệu tham khảo thuộc **13. Phỏng vấn**. Cùng nhóm:
 
 - [interview-questions.md](./interview-questions.md) — Bộ câu hỏi Senior chung
 - [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) — Backend NestJS, MQTT, DB
-- [interview-devops.md](./interview-devops.md) — DevOps
+- [interview-devops.md](./interview-devops.md) — DevOps: Kubernetes (probe, rolling update, HPA, securityContext), pipeline CI/CD và deploy thật, monitoring — 19 câu
+- [interview-docker.md](./interview-docker.md) — Docker: 25 câu từ Junior tới Senior, đáp án bằng compose/Dockerfile của project (có sự cố `.env` trong image)
+- [interview-web.md](./interview-web.md) — Web: React, Next.js, JavaScript/TypeScript, HTTP, webpack — 25 câu, đáp án theo code nihongo-web
+- [interview-infra-cloud.md](./interview-infra-cloud.md) — Hạ tầng và cloud: nginx, Terraform, AWS/LocalStack/serverless, GCP, k6, xử lý sự cố
+- [interview-backend-security.md](./interview-backend-security.md) — Bảo mật API (OWASP), thanh toán chống trùng, outbox, timeout, retry, circuit breaker
 - [interview-mobile.md](./interview-mobile.md) — Senior Mobile
 - [interview-android.md](./interview-android.md) — Android: câu hỏi theo code nihongo-android, gồm cả Framework, Binder, Automotive
 - [interview-java-dsa.md](./interview-java-dsa.md) — Java, OOP và 10 bài thuật toán gắn với app (lời giải Java đã chạy), kế hoạch luyện bài test lập trình

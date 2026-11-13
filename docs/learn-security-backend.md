@@ -273,6 +273,10 @@ await prisma.$queryRawUnsafe(`SELECT * FROM "Vocabulary" WHERE "kana" = '${input
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về bảo mật API, thanh toán chống trùng và các pattern chịu lỗi: [interview-backend-security.md](./interview-backend-security.md).
+
 <!-- nav:start -->
 
 ---

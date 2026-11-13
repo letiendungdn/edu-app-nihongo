@@ -179,7 +179,7 @@ docker run --rm hello-world
 
 Lệnh cuối tải một image nhỏ rồi chạy. Thấy dòng **Hello from Docker!** là Docker đã hoạt động. `--rm` xóa container ngay sau khi chạy xong.
 
-Docker là gì và vì sao project dùng nó: bài [learn-docker.md](./learn-docker.md) ở nhóm 6. Lúc này chỉ cần nó chạy được.
+Docker là gì và vì sao project dùng nó: bài [learn-docker.md](./learn-docker.md), ngay sau [run-local.md](./run-local.md) ở nhóm 1. Lúc này chỉ cần nó chạy được.
 
 ---
 

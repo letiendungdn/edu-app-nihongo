@@ -8,7 +8,7 @@
 > - `/metrics` public + không rate limit + **trả text thô**: ngoài lỗi 401, khi mở ra còn lộ thêm lỗi thứ hai —
 >   `ResponseInterceptor` bọc kết quả thành JSON `{success, data}` mà Prometheus không đọc được → thêm `@RawResponse()`
 >   ([`metrics.controller.ts`](../services/api-gateway/src/metrics/metrics.controller.ts)). Target Prometheus `api-gateway`: **up**.
-> - Nhãn `route` theo mẫu (`/api/vocabularies/:id`) + histogram `http_request_duration_seconds` ([`http-metrics.interceptor.ts`](../services/api-gateway/src/metrics/http-metrics.interceptor.ts)).
+> - Nhãn `route` theo mẫu (`/api/vocabularies/:id`) + histogram `http_request_duration_seconds` ([`http-metrics.middleware.ts`](../services/api-gateway/src/metrics/http-metrics.middleware.ts); trước đây là interceptor nên không đếm được 401/403/429 do guard chặn).
 > - `/health/live` và `/health/ready` (503 khi thiếu phụ thuộc); `/health` giữ như cũ ([`health.controller.ts`](../services/api-gateway/src/health/health.controller.ts)).
 > - 5 alert ([`infra/prometheus/alerts.yml`](../infra/prometheus/alerts.yml), `promtool` hợp lệ) — đã thử: tắt gateway →
 >   `ApiGatewayTargetDown` inactive → pending → **firing** sau 2 phút.
@@ -90,7 +90,7 @@ PrometheusModule.register({ path: "/metrics", controller: MetricsController, def
 
 ### 2.2. Metric: nhãn `path` gây **bùng nổ cardinality**
 
-`http-metrics.interceptor.ts` dùng `req.path` làm nhãn:
+Bản cũ (`http-metrics.interceptor.ts`, đã thay bằng middleware) dùng `req.path` làm nhãn:
 
 ```
 http_requests_total{method="GET", path="/api/vocabularies/101", status="200"}
@@ -286,13 +286,17 @@ Tắt trace khi chỉ dev nhanh: `OTEL_SDK_DISABLED=true` (tracing.ts đã hỗ 
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án: monitoring, log, trace trong [interview-devops.md](./interview-devops.md); đo tải và xử lý sự cố trong [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 7/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 6/8.
 
 - Bài trước: [learn-release-cicd.md](./learn-release-cicd.md) — CI/CD: migrate khi deploy, canary, feature flag, rollback
 - **Bài tiếp: [learn-incident-postmortem.md](./learn-incident-postmortem.md)** — Xử lý sự cố, runbook, postmortem (có postmortem thật)

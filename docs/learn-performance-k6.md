@@ -186,6 +186,10 @@ Luôn ghi **giả định** kèm con số — giả định sai thì biết sử
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---
@@ -195,7 +199,7 @@ Luôn ghi **giả định** kèm con số — giả định sai thì biết sử
 Bạn đang ở **5. Kiểm thử** — bài 3/3.
 
 - Bài trước: [learn-jest.md](./learn-jest.md) — Jest qua các test thật của repo
-- Xong nhóm này. **Nhóm tiếp: 6. DevOps và hạ tầng** — bắt đầu bằng [learn-devops-roadmap.md](./learn-devops-roadmap.md) (Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự)
+- Xong nhóm này. **Nhóm tiếp: 6. DevOps và hạ tầng** — bắt đầu bằng [learn-devops-roadmap.md](./learn-devops-roadmap.md) (Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự (Docker đã học ở nhóm 1: [learn-docker.md](./learn-docker.md)))
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

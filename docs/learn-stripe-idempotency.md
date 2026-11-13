@@ -406,6 +406,10 @@ stripe trigger invoice.payment_failed
    → Đảm bảo không refund quá 100%
 ```
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về bảo mật API, thanh toán chống trùng và các pattern chịu lỗi: [interview-backend-security.md](./interview-backend-security.md).
+
 <!-- nav:start -->
 
 ---

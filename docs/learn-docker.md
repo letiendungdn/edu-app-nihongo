@@ -1,554 +1,694 @@
-# Học Docker — áp vào EDU APP
+# Docker qua EDU APP: chạy stack, đọc compose và Dockerfile, giữ dữ liệu, gỡ lỗi
 
-Tài liệu này dạy Docker **bằng chính stack của project**, không phải lý thuyết chung chung.
-Mỗi mục đi theo cùng một khuôn:
+> **Mục tiêu:** Học xong bài này bạn làm được:
+> - Dựng stack của project bằng một lệnh, biết container nào làm gì, mở đúng URL.
+> - Đọc [docker-compose.yml](../docker-compose.yml) và một Dockerfile của project, giải thích từng dòng quan trọng.
+> - Giải thích một request đi qua mạng Docker thế nào: vì sao trong container gọi `redis:6379`, còn trên máy gọi `localhost:6379`.
+> - Build lại một service sau khi sửa code mà không làm mất dữ liệu; sao lưu, khôi phục, chuyển stack sang máy khác.
+> - Tự tìm nguyên nhân khi một container "không lên".
+>
+> **Cần biết trước:** [learn-terminal.md](./learn-terminal.md), [setup-tools.md](./setup-tools.md) (đã cài Docker Desktop), [run-local.md](./run-local.md).
+>
+> **Thời gian:** khoảng 6–8 giờ, chia 3 buổi: mục 1–3 (chạy được), mục 4–7 (hiểu compose, mạng, Dockerfile), mục 8–12 (dữ liệu, vận hành, gỡ lỗi).
 
-- **Là gì:** giải thích bằng lời thường.
-- **Trong project:** chỗ nào đang dùng nó.
-- **Lệnh:** gõ gì, và kết quả trông ra sao.
-- **Hay nhầm:** những lỗi người mới thường gặp.
+Đây là bài Docker duy nhất của project: trước đây chia làm `docker.md` (cách chạy) và `learn-docker.md` (khái niệm), người mới phải đọc qua lại hai nơi nên đã gộp làm một. Câu hỏi phỏng vấn về Docker, trả lời bằng code project: [interview-docker.md](./interview-docker.md). Docker trên Kubernetes: [learn-kubernetes.md](./learn-kubernetes.md). Cổng vào 8080 (nginx): [learn-nginx.md](./learn-nginx.md).
 
-Lệnh chạy full stack xem thêm [docker.md](./docker.md); nginx (cổng 8080) xem [learn-nginx.md](./learn-nginx.md).
-Lệnh viết cho macOS/Linux (zsh, bash). Trên Windows dùng PowerShell, lệnh `docker` giống hệt, chỉ khác cách viết đường dẫn (`D:\...`).
+Lệnh viết cho macOS/Linux (zsh, bash). Trên Windows dùng PowerShell: lệnh `docker` giống hệt, chỉ khác cách xuống dòng (`` ` `` thay cho `\`) và đường dẫn (`D:\...`). Số liệu trong bài đo trên máy dev ngày 13/11/2026.
+
+## Từ khóa trong bài
+
+| Từ | Nghĩa ngắn gọn |
+|---|---|
+| Image | Gói **chỉ đọc**: hệ điều hành nhỏ + runtime + code + lệnh khởi động. Là khuôn, không chạy. |
+| Container | Một tiến trình chạy từ image, có lớp ghi riêng. Xóa container là mất mọi thứ ghi trong đó. |
+| Volume | Ổ đĩa do Docker quản lý, nằm ngoài container, giữ dữ liệu bền (DB). |
+| Dockerfile | Công thức build image. |
+| Docker Compose | Mô tả nhiều container cùng lúc trong một file YAML, dựng bằng một lệnh. |
+| Service (compose) | Một mục trong `services:` của compose, ví dụ `api-gateway`. Khác với tên container `edu-gateway`. |
+| Port mapping | `'5433:5432'`: cổng 5433 trên máy dẫn vào cổng 5432 trong container. |
+| Network | Mạng ảo nối các container; trong mạng, container gọi nhau bằng tên service. |
+| Healthcheck | Lệnh Docker chạy định kỳ để biết container đã thật sự sẵn sàng chưa. |
+| Build context | Thư mục gửi cho Docker khi build; `COPY` chỉ lấy được file trong đây. |
+| `.dockerignore` | Danh sách file **không** đưa vào build context (bí mật, `node_modules`…). |
+| Multi-stage build | Dockerfile có nhiều `FROM`: stage đầu build, stage cuối chỉ chép kết quả sang. |
+| Layer | Mỗi lệnh trong Dockerfile tạo một lớp; lớp không đổi thì dùng lại cache. |
 
 ---
 
-## 1. Docker giải quyết vấn đề gì?
+## 1. Docker giải quyết vấn đề gì trong project này
 
-**Vấn đề.** Để chạy EDU APP "trần" trên máy, bạn phải tự cài:
+Chạy EDU APP "trần" trên máy, bạn phải tự cài đúng phiên bản: Node 22, Postgres 16, Redis 7, MongoDB 7, Kafka + Zookeeper, Keycloak 26, nginx, LiveKit, Mosquitto… Máy mỗi người một kiểu, nên rất hay gặp câu "máy tôi chạy được mà máy bạn lỗi".
 
-- Node 22, Postgres 16, Redis, MongoDB, Kafka + Zookeeper, Keycloak, nginx…
-- Đúng phiên bản, đúng cấu hình, đúng cổng.
-
-Máy mỗi người một kiểu, nên rất hay gặp câu "chạy được trên máy tôi mà máy bạn lỗi".
-
-**Docker làm gì.** Docker đóng gói **cả môi trường** thành một khối chạy được ở mọi máy có Docker. Một khối gồm:
-
-- một hệ điều hành Linux rất nhỏ,
-- runtime (Node, Postgres…),
-- code và thư viện của app.
+Docker đóng gói **cả môi trường** thành khối chạy được trên mọi máy có Docker. File [docker-compose.yml](../docker-compose.yml) mô tả toàn bộ hệ thống (hơn 20 service), và một lệnh dựng tất cả.
 
 **So với máy ảo (VirtualBox, VMware):**
 
-| | Máy ảo | Docker container |
-|--|--------|------------------|
-| Chứa gì | Cả một hệ điều hành đầy đủ | Chỉ app + thư viện, **dùng chung nhân (kernel) Linux** |
-| Khởi động | Vài phút | Vài giây |
-| Dung lượng | Hàng GB mỗi máy | Từ vài chục MB (nginx ~76 MB) |
-| Chạy song song | Vài máy là nặng | Project này chạy ~23 container cùng lúc |
+| | Máy ảo | Container |
+|--|--------|-----------|
+| Chứa gì | Cả hệ điều hành | Chỉ app + thư viện, **dùng chung nhân (kernel) Linux** |
+| Khởi động | Vài phút | Vài giây (`edu-redis` lên trong chưa tới 1 giây) |
+| Dung lượng | Hàng GB mỗi máy | `redis:7-alpine` 59 MB, `edu-app-nginx` 99 MB |
 
-Trên Mac và Windows, Docker Desktop chạy ngầm **một** máy ảo Linux nhỏ, và mọi container nằm trong máy ảo đó. Đó là lý do Docker Desktop chiếm RAM ngay cả khi chưa chạy container nào.
+Trên macOS và Windows, Docker Desktop chạy ngầm **một** máy ảo Linux nhỏ, mọi container nằm trong đó. Vì thế Docker Desktop chiếm RAM ngay cả khi chưa chạy container nào, và `localhost` trong container không phải máy của bạn (mục 6).
 
-**Trong project:** bạn không cài Postgres, Redis, Kafka bằng tay. File [docker-compose.yml](../docker-compose.yml) mô tả toàn bộ hệ thống, và một lệnh `docker compose up -d` dựng tất cả.
+## 2. Ba khái niệm phải nhớ: image, container, volume
 
----
-
-## 2. Ba khái niệm bắt buộc nhớ: Image, Container, Volume
-
-### 2.1. Image — "bộ cài đặt" đóng băng
-
-- **Là gì:** một gói **chỉ đọc**, chứa hệ điều hành nhỏ, runtime, code và lệnh khởi động. Image không chạy; nó chỉ là khuôn.
-- **Ví dụ trong project:**
-  - Image có sẵn, tải về từ Docker Hub: `postgres:16-alpine`, `nginx:1.30-alpine`.
-  - Image tự build từ code: `edu-app-nihongo-web:latest` (~590 MB), `edu-app-api-gateway:latest`.
-- **Tên image** có dạng `tên:tag`. Tag thường là phiên bản; `latest` chỉ là tag mặc định, **không** tự hiểu là "mới nhất".
-- **Tiền tố `edu-app-`** đến từ dòng `name: edu-app` đầu file compose. Image được đặt tên theo kiểu `<tên project>-<tên service>`.
+### 2.1. Image
 
 ```bash
-docker images | grep edu-app
-# edu-app-nihongo-web   latest   ...   590MB
-# edu-app-api-gateway   latest   ...   1.39GB
+docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | grep -E 'edu-app|redis:7|postgres:16'
 ```
 
-### 2.2. Container — image đang chạy
+```
+edu-app-nihongo-web:latest       591MB
+edu-app-api-gateway:latest       1.08GB
+edu-app-content-service:latest   1.08GB
+edu-app-signaling-service:latest 834MB
+edu-app-nginx:latest             99.4MB
+redis:7-alpine                   58.7MB
+postgres:16-alpine               411MB
+```
 
-- **Là gì:** một tiến trình được tạo **từ** image, có thêm một lớp ghi riêng. Từ một image có thể tạo nhiều container.
-- **Ví dụ trong project:** `edu-nihongo-web`, `edu-gateway`, `edu-postgres-nihongo`. Tên do `container_name:` trong compose đặt.
-- **Điểm quan trọng:** mọi thứ ghi vào container (file tạm, log…) **mất khi container bị xóa**. Container dùng xong là bỏ, không phải chỗ để cất dữ liệu.
+- Image **tải về** từ Docker Hub: `redis:7-alpine`, `postgres:16-alpine`. Không có Dockerfile trong repo.
+- Image **tự build** từ code: `edu-app-*`. Tiền tố `edu-app-` đến từ dòng `name: edu-app` đầu file compose: tên image = `<tên project>-<tên service>`.
+- Tên có dạng `tên:tag`. `latest` chỉ là tag mặc định, **không** có nghĩa là "mới nhất".
+
+### 2.2. Container
+
+Container là image đang chạy. Tên do `container_name:` trong compose đặt: service `api-gateway` → container `edu-gateway`.
 
 ```bash
-docker ps
-# NAMES                  STATUS                 PORTS
-# edu-nginx              Up 5 hours (healthy)   0.0.0.0:8080->80/tcp
-# edu-postgres-nihongo   Up 5 hours (healthy)   0.0.0.0:5433->5432/tcp
+docker ps --filter name=edu- --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 ```
 
-### 2.3. Volume — ổ đĩa giữ dữ liệu bền
+```
+NAMES                  STATUS                  PORTS
+edu-nginx              Up 2 hours (healthy)    0.0.0.0:8080->8080/tcp
+edu-postgres-nihongo   Up 2 hours (healthy)    0.0.0.0:5433->5432/tcp
+edu-redis              Up 2 hours (healthy)    127.0.0.1:6379->6379/tcp
+```
 
-- **Là gì:** một vùng lưu trữ do Docker quản lý, **nằm ngoài** container, được gắn vào một thư mục bên trong container.
-- **Vì sao cần:** Postgres ghi dữ liệu vào `/var/lib/postgresql/data`. Nếu chỗ đó nằm trong container, xóa container là mất cả DB. Gắn volume vào đó thì dữ liệu sống tiếp, container mới gắn lại volume cũ là thấy đủ dữ liệu.
-- **Trong project:**
+Mọi thứ ghi vào container (file tạm, upload…) **mất khi container bị xóa**. Container dùng xong là bỏ, không phải chỗ cất dữ liệu.
+
+### 2.3. Volume
+
+Postgres ghi dữ liệu vào `/var/lib/postgresql/data`. Nếu thư mục đó nằm trong container, xóa container là mất DB. Gắn volume vào đó thì dữ liệu sống tiếp:
 
 ```yaml
-# docker-compose.yml
 postgres-nihongo:
   volumes:
     - postgres_nihongo_data:/var/lib/postgresql/data
 
 volumes:
   postgres_nihongo_data:
-    external: true                     # volume có sẵn, compose không tự tạo/xóa
+    external: true                     # volume có sẵn: compose không tự tạo, không tự xóa
     name: nihongo-app_postgres_data    # tên thật, giữ từ stack cũ "nihongo-app"
 ```
 
-Toàn bộ từ vựng, kanji, ngữ pháp, đề thi, tài khoản đều nằm trong volume `nihongo-app_postgres_data`.
+Toàn bộ từ vựng, kanji, ngữ pháp, đề thi, tài khoản nằm trong volume `nihongo-app_postgres_data`.
 
 ### 2.4. Ghép lại
 
 ```text
-Dockerfile ──docker build──▶ Image ──docker run / compose up──▶ Container ◀──gắn── Volume
-(công thức)                  (khuôn)                          (đang chạy)          (dữ liệu bền)
+Dockerfile ──docker build──▶ Image ──compose up──▶ Container ◀──gắn── Volume
+(công thức)                  (khuôn)              (đang chạy)       (dữ liệu bền)
 ```
-
-Ví von: Dockerfile là **công thức**, image là **bánh đông lạnh**, container là **bánh đang hâm trên bàn**, volume là **hộp cất đồ** không bị dọn khi dọn bàn.
-
-**Hay nhầm:** file `.tar` mang trên USB **không phải** image đang chạy được. Nó chỉ là bản sao lưu. Phải `docker load` để thành image trên máy, rồi mới `compose up` (xem mục 8).
 
 ---
 
-## 3. Lệnh tối thiểu
+## 3. Chạy stack của project
 
-Chạy trong thư mục gốc của repo, nơi có `docker-compose.yml`.
+### 3.1. Chọn kiểu chạy
 
-### 3.1. Xem trạng thái
+| Bạn muốn | Lệnh (ở thư mục gốc repo) | Chạy gì |
+|---|---|---|
+| Sửa backend/web bằng `npm run dev:*` trên máy | `npm run docker:up:infra` | Chỉ hạ tầng: Postgres, Redis (mở `127.0.0.1:6379`), Mongo, Zookeeper, Kafka |
+| Học app như người dùng, mọi thứ trong Docker | `npm run docker:up:nihongo` | Hạ tầng + S3 giả + content, exam, gateway, web, nginx; compose tự kéo thêm Keycloak, LiveKit, Mosquitto |
+| Mọi service | `npm run docker:up` (`docker:up:build` nếu cần build lại) | Toàn bộ, trừ service có `profiles:` |
+| Tắt (giữ dữ liệu) | `npm run docker:down` | Xóa container và mạng, **giữ volume** |
 
-| Lệnh | Dùng để | Ghi chú |
-|------|---------|---------|
-| `docker ps` | Liệt kê container **đang chạy** | Cột `STATUS` có `(healthy)` nghĩa là healthcheck đạt |
-| `docker ps -a` | Cả container **đã dừng** | Container `Exited (1)` là chạy lỗi rồi tắt; xem log của nó |
-| `docker images` | Liệt kê image trên máy | |
-| `docker compose ps` | Chỉ container thuộc stack này | Gọn hơn `docker ps` khi máy có project khác |
-| `docker logs -f edu-gateway` | Xem log liên tục | `Ctrl+C` để thoát; `--tail 50` để chỉ xem 50 dòng cuối |
-| `docker stats` | CPU/RAM từng container | Tìm container ngốn tài nguyên |
+`npm run dev:gateway` tự bật Redis kèm cổng trước khi chạy gateway (script `predev:gateway`), xem mục 6.4.
 
-### 3.2. Chạy và dừng
-
-| Lệnh | Làm gì | Dữ liệu |
-|------|--------|---------|
-| `docker compose up -d` | Tạo (nếu chưa có) và chạy mọi service | Giữ nguyên |
-| `docker compose up -d nihongo-web` | Chạy một service **kèm các service nó phụ thuộc** | Giữ nguyên |
-| `docker compose up -d --no-deps api-gateway` | Chạy **đúng** một service, không đụng phụ thuộc | Giữ nguyên |
-| `docker compose stop` | Dừng, **giữ** container | Giữ nguyên |
-| `docker compose start` | Chạy lại container đã `stop` | Giữ nguyên |
-| `docker compose restart content-service` | Dừng rồi chạy lại một service (không build lại) | Giữ nguyên |
-| `docker compose down` | Dừng **và xóa** container + mạng | Volume **vẫn còn** |
-| `docker compose down -v` | Như trên **và xóa volume** | ⚠️ **Mất DB** |
-
-`-d` (detached) nghĩa là chạy nền và trả lại cửa sổ lệnh. Thiếu `-d` thì log tràn màn hình, và `Ctrl+C` sẽ dừng luôn container.
-
-**`stop/start` khác `down/up` thế nào:**
-
-- `stop/start`: tắt rồi bật **đúng container cũ**, giống tắt máy rồi mở máy.
-- `down/up`: xóa container rồi tạo container **mới** từ image. Bắt buộc dùng cách này khi đổi cấu hình trong compose (biến môi trường, cổng, volume), vì container cũ không tự nhận cấu hình mới.
-
-### 3.3. Build lại sau khi sửa code
-
-Code nằm **trong image** (được chép vào lúc build). Sửa file trong `apps/nihongo-web` thì container đang chạy **không** tự thấy thay đổi. Phải build image mới, rồi tạo container mới từ nó:
+Lần đầu trên máy mới cần hai bước trước:
 
 ```bash
-docker compose build nihongo-web                 # build image mới từ Dockerfile
-docker compose up -d --no-deps nihongo-web       # thay container cũ bằng container mới
-# hoặc gộp: docker compose up -d --build nihongo-web
+cp .env.docker.example .env                     # rồi đặt JWT_SECRET, mật khẩu…
+docker volume create nihongo-app_postgres_data  # volume external phải tự tạo
 ```
 
-Sửa gì thì build lại service nào:
+Thiếu `JWT_SECRET` thì compose dừng ngay với thông báo `JWT_SECRET chua dat - xem .env`. Đó là cố ý (mục 4.3).
 
-| Bạn sửa | Cần làm |
-|---------|---------|
-| `apps/nihongo-web/**` | Build lại `nihongo-web` |
-| `services/api-gateway/**` | Build lại `api-gateway` |
-| `infra/nginx/nginx.conf` | Build lại `nginx` |
-| Dữ liệu trong DB (chạy file seed `.sql`) | **Không** build gì; dữ liệu nằm trong volume. Chỉ restart service nào có cache (gateway cache kho câu 30 phút) |
-| Biến môi trường trong `docker-compose.yml` | `docker compose up -d <service>` để tạo lại container |
-| Biến `NEXT_PUBLIC_*` của web | **Build lại** web: biến này được ghi cứng vào JavaScript lúc build |
+### 3.2. Bản đồ container
+
+```mermaid
+flowchart TB
+  Browser --> Nginx["nginx :8080"]
+  Mobile["Emulator 10.0.2.2:8080"] --> Nginx
+  Nginx --> NW["nihongo-web"]
+  Nginx --> KC["keycloak"]
+  Nginx -->|"/api/*"| GW["api-gateway :3000"]
+  Nginx -->|"/s3/*"| S3["s3 (S3Mock)"]
+  NW --> GW
+  GW -->|gRPC| CS["content-service :50051"]
+  GW -->|gRPC| ES["exam-service :50052"]
+  GW --> PG[(postgres-nihongo)]
+  GW --> RD[(redis)]
+  GW --> MG[(mongodb)]
+  GW --> KF[(kafka)]
+  GW --> MQ[(mosquitto)]
+  GW --> LK["livekit :7880"]
+  KC --> PGC[(postgres-keycloak)]
+  CS --> PG
+  CS --> RD
+  ES --> PG
+  ES --> KF
+  KF --> ZK[(zookeeper)]
+```
+
+| Service | Container | Cổng trên máy | Vai trò |
+|---|---|---|---|
+| `postgres-nihongo` | `edu-postgres-nihongo` | **5433** | DB chính `nihongo` |
+| `flyway` | `edu-flyway` | — | Chạy migration SQL một lần rồi thoát (`restart: "no"`) |
+| `redis` | `edu-redis` | không mở (chỉ `127.0.0.1:6379` khi bật bằng `docker:up:infra`) | Cache, rate-limit, signaling |
+| `mongodb` | `edu-mongodb` | 27017 | Audit log ([mongodb.md](./mongodb.md)) |
+| `zookeeper`, `kafka` | `edu-zookeeper`, `edu-kafka` | 2181, 9092 | Event thi thử, outbox |
+| `mosquitto` | `edu-mosquitto` | `127.0.0.1:1883` | MQTT |
+| `s3` | `edu-s3` | không mở, đi qua nginx `/s3/` | S3 giả cho ảnh upload ([media-storage.md](./media-storage.md)) |
+| `postgres-keycloak`, `keycloak` | `edu-postgres-keycloak`, `edu-keycloak` | 5435, 8081 | Đăng nhập OIDC |
+| `content-service`, `exam-service` | `edu-content`, `edu-exam` | 50051, 50052 | gRPC nội dung, thi |
+| `api-gateway` | `edu-gateway` | **3000** | REST, Swagger `/api/docs` |
+| `nihongo-web` | `edu-nihongo-web` | không mở, đi qua nginx | Next.js |
+| `nginx` | `edu-nginx` | **8080** | Cổng vào duy nhất cho trình duyệt |
+| `livekit`, `coturn`, `signaling-service` | `edu-livekit`, `edu-coturn`, `edu-signaling` | 7880, 3478, 3002 | Livestream, video call |
+| `jaeger`, `prometheus`, `grafana`, `alertmanager`, `mailpit` | `edu-…` | 16686, 9090, 4000, 9093, 8025 | Quan sát, mail giả |
+| `airflow`, `airflow-db` | | 8090 | Chỉ khi `--profile airflow` |
+| `localstack` | `edu-localstack` | `127.0.0.1:4566` | Chỉ khi `--profile aws-learn` ([learn-aws-serverless.md](./learn-aws-serverless.md)) |
+
+### 3.3. URL sau khi chạy
+
+| Mục | URL |
+|---|---|
+| App tiếng Nhật | http://localhost:8080 |
+| Keycloak | http://auth.localhost:8080 (cần dòng `127.0.0.1 nihongo.localhost auth.localhost` trong file hosts) |
+| Swagger | http://localhost:3000/api/docs |
+| Health | http://localhost:8080/health, http://localhost:3000/health |
+| Grafana | http://localhost:4000 (`admin`/`admin`) |
+| Mailpit | http://localhost:8025 |
+| Postgres | `localhost:5433`, user `nihongo`, DB `nihongo` |
+
+Tài khoản đăng nhập app: [accounts.md](./accounts.md).
 
 ---
 
-## 4. Docker Compose: chỉ huy cả dàn nhạc
+## 4. Đọc docker-compose.yml
 
-### 4.1. Là gì
-
-`docker run` chạy **một** container, và cấu hình phải gõ dài trên dòng lệnh. Compose cho phép mô tả **cả hệ thống** trong một file YAML: có những service nào, mỗi service dùng image gì, cổng nào, volume nào, service nào chờ service nào.
-
-### 4.2. Đọc một service thật
+### 4.1. Một service đầy đủ
 
 ```yaml
-nihongo-web:                                   # (1) tên service
-  build:                                       # (2) tự build image
-    context: .
-    dockerfile: apps/nihongo-web/Dockerfile
-    args:
-      NEXT_PUBLIC_KEYCLOAK_URL: ${NEXT_PUBLIC_KEYCLOAK_URL:-http://auth.localhost:8080}
-  container_name: edu-nihongo-web              # (3) tên container cố định
-  environment:                                 # (4) biến môi trường lúc chạy
-    API_URL: http://api-gateway:3000
-  volumes:                                     # (5) gắn thư mục từ máy vào
-    - ./apps/nihongo-web/public/media/book-audio:/app/apps/nihongo-web/public/media/book-audio
-  healthcheck:                                 # (6) cách kiểm tra "còn sống"
-    test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:8080/ || exit 1']
-  depends_on:                                  # (7) chạy sau service nào
-    - api-gateway
-  # (8) không có "ports:" — chỉ vào được qua nginx
+postgres-nihongo:
+  image: postgres:16-alpine                 # (1) dùng image có sẵn, không build
+  container_name: edu-postgres-nihongo      # (2) tên container
+  restart: unless-stopped                   # (3) tự bật lại, trừ khi bạn chủ động dừng
+  environment:
+    POSTGRES_USER: nihongo
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nihongo}   # (4) lấy từ .env, không có thì "nihongo"
+    POSTGRES_DB: nihongo
+  ports:
+    - '5433:5432'                           # (5) máy:container
+  volumes:
+    - postgres_nihongo_data:/var/lib/postgresql/data   # (6)
+  healthcheck:                              # (7)
+    test: ['CMD-SHELL', 'pg_isready -U nihongo -d nihongo']
+    interval: 5s
+    timeout: 5s
+    retries: 10
 ```
 
-1. **Tên service** là tên dùng trong lệnh `docker compose ...`, đồng thời là **tên máy** để các container khác gọi tới (`http://nihongo-web:8080`).
-2. **`build`**: `context: .` gửi cả repo cho Docker làm nguyên liệu, `dockerfile` chỉ ra công thức. Service có `image: postgres:16-alpine` thay cho `build` thì chỉ tải image về, không build.
-3. **`container_name`** đặt tên dễ nhớ cho `docker logs` hay `docker exec`. Thiếu dòng này, Docker tự đặt tên kiểu `edu-app-nihongo-web-1`.
-4. **`environment`**: cấu hình lúc chạy. Cú pháp `${BIẾN:-mặc định}` lấy giá trị từ file `.env` hoặc shell; nếu không có thì dùng giá trị mặc định.
-5. **`volumes`** có hai kiểu:
-   - **Bind mount** (`./đường/dẫn:/trong/container`): gắn thư mục thật trên máy vào container. Sửa file trên máy thì container thấy ngay. Ở đây dùng cho file âm thanh.
-   - **Named volume** (`postgres_nihongo_data:/var/lib/...`): ổ do Docker quản lý (mục 2.3).
-6. **`healthcheck`**: lệnh Docker chạy định kỳ trong container. Lệnh trả về 0 thì container được đánh dấu `healthy`.
-7. **`depends_on`**: thứ tự khởi động. Dạng `condition: service_healthy` (service `nginx` đang dùng) nghĩa là chờ service kia **khỏe** chứ không chỉ chờ nó **bật**. Nếu chỉ chờ bật, Postgres vừa start nhưng chưa nhận kết nối thì API đã chạy và báo lỗi.
-8. **`ports`**: dạng `"máy:container"`. Ví dụ `5433:5432` nghĩa là máy bạn gọi cổng 5433 sẽ vào cổng 5432 của Postgres trong container. Web không có `ports` nên chỉ vào được qua nginx ở `localhost:8080`.
+(5): bên trong Postgres vẫn nghe 5432; máy bạn nối qua 5433 vì 5432 thường đã có Postgres cài sẵn hoặc của project khác.
 
-### 4.3. Tên service ≠ tên container
+### 4.2. Tên service khác tên container
 
 | Dùng ở đâu | Dùng tên nào | Ví dụ |
-|------------|--------------|-------|
-| `docker compose up/build/restart/logs` | **Tên service** | `docker compose restart api-gateway` |
-| `docker logs/exec/inspect` (không có chữ `compose`) | **Tên container** | `docker logs edu-gateway` |
-| Container gọi nhau qua mạng | **Tên service** | `http://api-gateway:3000` |
+|---|---|---|
+| Lệnh `docker compose …` | tên **service** | `docker compose logs api-gateway` |
+| Lệnh `docker …` | tên **container** | `docker logs edu-gateway` |
+| Container gọi container khác | tên **service** (là tên DNS trong mạng) | `redis://redis:6379`, `postgres-nihongo:5432` |
+
+### 4.3. Biến môi trường và `.env`
+
+Compose tự đọc file `.env` cạnh `docker-compose.yml` và thay vào `${…}`. Project dùng cả ba cách viết, mỗi cách một ý:
+
+| Cách viết | Nghĩa | Chỗ dùng thật |
+|---|---|---|
+| `${POSTGRES_PASSWORD:-nihongo}` | Không đặt **hoặc để trống** → dùng `nihongo` | Hầu hết biến |
+| `${JWT_SECRET:?JWT_SECRET chua dat…}` | Không đặt → **dừng hẳn**, in thông báo | Bí mật không được có giá trị mặc định |
+| `${AWS_ENDPOINT_URL-http://s3:9090}` (không có `:`) | Không đặt → mặc định; **để trống thì giữ trống** | Đặt `AWS_ENDPOINT_URL=` để chuyển sang S3 thật |
+
+Xem giá trị cuối cùng sau khi thay biến:
 
 ```bash
-docker compose up -d nihongo-web       # ✅ tên service
-docker compose up -d edu-nihongo-web   # ❌ "no such service"
+docker compose config | grep -A3 'REDIS_URL'
 ```
 
-### 4.4. Script có sẵn trong package.json
+### 4.4. `profiles`: service chỉ chạy khi gọi tên
 
-| Script | Tương đương |
-|--------|-------------|
-| `npm run docker:up:nihongo` | Chỉ chạy phần app tiếng Nhật: DB, Redis, Mongo, Kafka, S3 giả lập, content, exam, gateway, web, nginx |
-| `npm run docker:up:infra` | Chỉ hạ tầng (DB, Redis, Mongo, Kafka), để chạy code bằng `npm run dev` ngoài Docker |
-| `npm run docker:up` | Toàn bộ stack (~23 container: thêm Keycloak, Grafana, Jaeger, Airflow…) |
-| `npm run docker:down` | `docker compose down` |
+`airflow`, `airflow-db` có `profiles: [airflow]`, `localstack` có `profiles: ['aws-learn']`. `docker compose up -d` bỏ qua chúng; muốn bật:
 
-Máy yếu thì dùng `docker:up:nihongo`, không cần bật Grafana hay Airflow để học.
+```bash
+docker compose --profile airflow up -d airflow
+```
+
+### 4.5. File compose phụ (override)
+
+Có thể ghép nhiều file: file sau đè lên file trước. Project có [docker-compose.host-dev.yml](../docker-compose.host-dev.yml) chỉ để mở cổng Redis cho máy:
+
+```yaml
+services:
+  redis:
+    ports:
+      - '127.0.0.1:6379:6379'
+```
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-dev.yml up -d redis
+```
+
+Lý do có file này nằm ở mục 6.4.
 
 ---
 
-## 5. Mạng: request đi đâu khi mở app?
+## 5. Thứ tự khởi động: `depends_on`, healthcheck, restart
 
-### 5.1. Đường đi
+### 5.1. "Đã chạy" khác "đã sẵn sàng"
 
-```text
-Trình duyệt
-  └─▶ http://localhost:8080                       (máy bạn)
-        └─▶ edu-nginx :80                         (cổng 8080 của máy → 80 trong container)
-              ├─▶ /           → edu-nihongo-web :8080   (Next.js)
-              └─▶ /api/...    → edu-gateway :3000       (NestJS)
-                                  ├─▶ gRPC → edu-content :50051
-                                  ├─▶ gRPC → edu-exam    :50052
-                                  └─▶ edu-postgres-nihongo :5432
+Container Postgres "chạy" sau 1 giây, nhưng phải thêm vài giây mới nhận kết nối. Gateway lên trước lúc đó sẽ lỗi. Healthcheck giải quyết việc này:
+
+```yaml
+api-gateway:
+  healthcheck:
+    test: ['CMD-SHELL', 'wget -qO /dev/null http://127.0.0.1:3000/health/live || exit 1']
+    interval: 10s
+    retries: 5
+    start_period: 90s    # 90 giây đầu, lỗi không bị tính (Nest + Prisma khởi động chậm)
+    start_interval: 3s   # trong 90 giây đó kiểm 3 giây một lần, healthy là báo ngay
+  depends_on:
+    postgres-nihongo:
+      condition: service_healthy   # đợi Postgres healthy
+    content-service:
+      condition: service_started   # chỉ cần đã bật
 ```
 
-### 5.2. Mạng nội bộ của Compose
+`/health/live` chỉ báo tiến trình Node đã nghe cổng, không gọi DB. Lý do: nếu healthcheck gọi DB, DB chậm một lúc là Docker coi gateway "unhealthy" và nginx (đang `depends_on: api-gateway: service_healthy`) không lên được, dù gateway không có lỗi gì.
 
-Compose tạo một **mạng ảo riêng** (ở đây tên là `edu-app_default`) và cho mọi container vào đó. Trong mạng này:
+Trạng thái xem ở cột STATUS: `(health: starting)` → `(healthy)` hoặc `(unhealthy)`.
 
-- Mỗi container được gọi bằng **tên service**, vì Docker có DNS nội bộ dịch `api-gateway` thành IP của container.
-- Các container gọi nhau **thẳng bằng cổng bên trong** (`5432`, `3000`), không cần khai báo `ports`.
-- `ports` chỉ dùng để **máy bạn** gọi vào container.
+### 5.2. Container chạy một lần: Flyway
 
-### 5.3. `localhost` là ai?
+```yaml
+flyway:
+  command: -connectRetries=60 migrate
+  depends_on:
+    postgres-nihongo:
+      condition: service_healthy
+  restart: "no"
+```
 
-Trong container, `localhost` là **chính container đó**, không phải máy Mac/Windows của bạn. Đây là lỗi số một của người mới.
+Flyway áp migration rồi **thoát**. `docker ps -a` thấy `edu-flyway  Exited (0)`: mã 0 là thành công, không phải lỗi.
 
-| Ai gọi | Đúng | Sai | Vì sao sai |
-|--------|------|-----|-----------|
-| Web (trong container) → API | `http://api-gateway:3000` | `http://localhost:3000` | `localhost` là chính container web, mà trong đó không có gì nghe cổng 3000 |
-| Gateway → Postgres | `postgres-nihongo:5432` | `localhost:5433` | 5433 là cổng **của máy bạn**, không phải trong mạng Docker |
-| Máy bạn → API | `http://localhost:3000` hoặc `http://localhost:8080/api/...` | `http://api-gateway:3000` | Máy bạn không dùng DNS nội bộ của Docker |
-| Máy bạn → Postgres (DBeaver, Prisma) | `localhost:5433` | `localhost:5432` | Cổng 5432 trên máy có thể là Postgres khác |
-| Container → app chạy trên máy bạn (Ollama) | `http://host.docker.internal:11434` | `http://localhost:11434` | `host.docker.internal` là tên đặc biệt trỏ về máy thật |
+### 5.3. `restart: unless-stopped` không theo `depends_on`
+
+Comment ở service `nginx` ghi lại một bài học thật: `depends_on` chỉ có tác dụng khi chạy `docker compose up`. Khi Docker Desktop tự bật lại container sau khi máy ngủ dậy, mọi container lên cùng lúc, nginx có thể lên trước gateway. Vì vậy cấu hình nginx phải tự chịu được khoảng chờ đó (xem [learn-nginx.md](./learn-nginx.md)), không dựa hết vào thứ tự.
 
 ---
 
-## 6. Dockerfile: công thức build image
+## 6. Mạng: request đi đâu
 
-### 6.1. Image có sẵn và image tự build
+### 6.1. Mạng mặc định và DNS theo tên service
 
-| Loại | Ví dụ | Lấy ở đâu | Khi nào làm lại |
-|------|-------|-----------|-----------------|
-| Có sẵn | `postgres:16-alpine`, `redis`, `nginx`, `kafka` | `docker pull` từ Docker Hub | Gần như không; chỉ khi muốn nâng phiên bản |
-| Tự build | `edu-app-nihongo-web`, `edu-app-api-gateway` | `docker compose build` từ Dockerfile | **Mỗi lần sửa code** |
+```yaml
+networks:
+  default:
+    name: edu-app_default
+```
 
-Hậu tố `-alpine` là bản dựng trên Alpine Linux, rất nhỏ (vài MB). Image nhẹ hơn nhiều so với bản Debian.
+Mọi service vào mạng `edu-app_default`. Trong mạng này Docker có DNS riêng: gateway gọi `redis:6379`, `postgres-nihongo:5432`, `kafka:9092`. Không cần biết IP.
 
-### 6.2. Đọc Dockerfile của web
+Thử:
 
-File: [apps/nihongo-web/Dockerfile](../apps/nihongo-web/Dockerfile). Nó dùng kỹ thuật **multi-stage**, tức hai giai đoạn.
+```bash
+docker exec edu-gateway getent hosts redis postgres-nihongo
+# 172.18.0.5   redis
+# 172.18.0.3   postgres-nihongo
+```
 
-**Giai đoạn 1 — `builder` (bếp nấu):**
+(IP trên máy bạn sẽ khác; điều cần thấy là tên service phân giải được.)
+
+### 6.2. `localhost` là ai?
+
+| Bạn đang ở đâu | `localhost` là | Muốn gọi Redis thì |
+|---|---|---|
+| Terminal trên máy | Máy của bạn | `localhost:6379` (chỉ khi cổng được mở, mục 6.4) |
+| Trong container `edu-gateway` | **Chính container đó** | `redis:6379` |
+| Trong máy ảo Android | Chính máy ảo | không gọi thẳng; app gọi `10.0.2.2:8080` (máy bạn) |
+| Container muốn gọi ra máy (Ollama) | — | `host.docker.internal:11434` |
+
+Vì vậy `services/.env` (dùng khi chạy `npm run dev:*` trên máy) ghi `REDIS_URL=redis://localhost:6379`, còn compose ghi `REDIS_URL: redis://redis:6379` cho container. Cùng biến, khác giá trị, đều đúng.
+
+### 6.3. `ports` và `expose`
+
+- `ports: ['5433:5432']`: mở cổng ra máy (và cả mạng LAN, vì mặc định nghe `0.0.0.0`).
+- `ports: ['127.0.0.1:1883:1883']` (Mosquitto): chỉ máy bạn vào được, máy khác cùng Wi-Fi thì không.
+- `expose: ['6379']` (Redis): chỉ ghi chú cho container cùng mạng; **không** mở ra máy.
+- Không ghi gì (`nihongo-web`, `s3`): container khác vẫn gọi được qua mạng; trình duyệt chỉ vào qua nginx.
+
+### 6.4. Bài học thật: Redis không mở cổng
+
+Commit `81eed11` (20/09/2026) bỏ `ports` của Redis vì trên Windows, Docker Desktop đôi khi làm Redis mất kết nối vào mạng `edu-app_default` sau khi máy ngủ. Hậu quả: gateway chạy bằng `npm run dev:gateway` trên máy báo `ECONNREFUSED 127.0.0.1:6379` dù container `edu-redis` đang `healthy`.
+
+Cách sửa: không đổi file compose chính (giữ an toàn cho Windows) mà thêm file phụ `docker-compose.host-dev.yml` mở `127.0.0.1:6379`. `docker:up:infra` và `predev:gateway` dùng file phụ này.
+
+Một hệ quả cần biết: nếu sau đó bạn chạy `npm run docker:up:nihongo` (chỉ file chính), compose thấy cấu hình Redis khác nên **tạo lại** container Redis không có cổng. Gateway trên máy lại mất Redis; chạy `npm run docker:up:redis-host` là có lại. Dữ liệu Redis ở đây chỉ là cache nên tạo lại không mất gì quan trọng.
+
+### 6.5. Kafka: một broker, hai địa chỉ
+
+```yaml
+kafka:
+  ports:
+    - '9092:9093'
+  environment:
+    KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093
+    KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9092
+```
+
+Client Kafka nối vào broker xong, broker trả lại "địa chỉ của tôi là…" và client dùng địa chỉ đó cho các lần sau. Container cần nhận `kafka:9092`; máy bạn cần nhận `localhost:9092`. Hai listener giải quyết đúng việc đó: container vào cổng 9092 trong mạng, máy vào cổng 9092 của máy (dẫn tới 9093 của container). Chỉ có một listener thì một trong hai phía sẽ nhận địa chỉ không gọi được.
+
+---
+
+## 7. Dockerfile: đọc bản build của gateway và web
+
+### 7.1. Multi-stage: build một nơi, chạy một nơi
+
+[services/api-gateway/Dockerfile](../services/api-gateway/Dockerfile) rút gọn:
 
 ```dockerfile
-FROM node:22-alpine AS builder            # bắt đầu từ image có sẵn Node 22
-WORKDIR /app                              # các lệnh sau chạy trong /app
-COPY package.json package-lock.json ./    # chép file khai báo thư viện TRƯỚC
-COPY packages/vocab-images ./packages/vocab-images
-COPY apps/nihongo-web ./apps/nihongo-web
-RUN npm ci                                # cài thư viện (cả devDependencies)
-ARG NEXT_PUBLIC_KEYCLOAK_URL=...          # nhận giá trị từ compose (build.args)
+FROM node:22-alpine AS builder          # ── stage 1: có đủ công cụ build
+WORKDIR /app
+COPY package.json package-lock.json ./  # (a) chép file khai báo thư viện trước
+COPY packages ./packages
+COPY services ./services
+RUN npm ci                              # (b) cài đúng phiên bản trong lock file
+RUN npm run build:all -w @edu/nihongo-services
+RUN npm prune --omit=dev                # (c) bỏ thư viện chỉ dùng khi build/test
+
+FROM node:22-alpine AS runner           # ── stage 2: chỉ thứ cần để chạy
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx   # (d)
+ENV NODE_ENV=production
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/services/dist ./dist
+USER node                               # (e)
+CMD ["node", "dist/apps/api-gateway/services/api-gateway/src/main.js"]
+```
+
+- Stage `builder` có TypeScript, jest, mã nguồn… Image cuối **chỉ** có những gì được `COPY --from=builder`. Mã nguồn `.ts` không có trong image chạy.
+- (c) `npm prune --omit=dev`: theo comment trong file, `ts-jest` kéo theo `handlebars` có lỗ hổng CRITICAL; bỏ thư viện dev trước khi chép sang là bỏ luôn lỗ hổng đó ([learn-devsecops.md](./learn-devsecops.md)).
+- (d) App chạy bằng `node`, không cần `npm`. Xóa npm khỏi image chạy bớt được lỗ hổng mà Trivy tìm thấy và bớt công cụ cho kẻ tấn công.
+- (e) `USER node`: chạy bằng user thường, không phải root. Kiểm:
+
+```bash
+docker run --rm --entrypoint id edu-app-api-gateway:latest
+# uid=1000(node) gid=1000(node) groups=1000(node)
+```
+
+### 7.2. Biến lúc build và biến lúc chạy
+
+[apps/nihongo-web/Dockerfile](../apps/nihongo-web/Dockerfile):
+
+```dockerfile
+ARG NEXT_PUBLIC_KEYCLOAK_URL=http://auth.localhost:8080
 ENV NEXT_PUBLIC_KEYCLOAK_URL=$NEXT_PUBLIC_KEYCLOAK_URL
-RUN npm run build                         # next build → ra thư mục .next/standalone
+RUN npm run build
 ```
 
-**Giai đoạn 2 — `runner` (đĩa mang ra bàn):**
+Next.js **chép thẳng** giá trị `NEXT_PUBLIC_*` vào JavaScript gửi cho trình duyệt lúc `npm run build`. Đổi biến trong `environment:` của compose rồi restart **không có tác dụng**: phải build lại. Vì thế compose truyền chúng qua `build.args`:
 
-```dockerfile
-FROM node:22-alpine AS runner             # bắt đầu lại từ image sạch
-RUN apk add --no-cache libc6-compat ffmpeg
-ENV NODE_ENV=production PORT=8080
-COPY --from=builder /app/apps/nihongo-web/.next/standalone ./   # chỉ lấy THÀNH PHẨM
-COPY --from=builder /app/apps/nihongo-web/.next/static ./apps/nihongo-web/.next/static
-COPY --from=builder /app/apps/nihongo-web/public ./apps/nihongo-web/public
-EXPOSE 8080                               # ghi chú: app nghe cổng 8080
-CMD ["node", "apps/nihongo-web/server.js"]   # lệnh chạy khi container khởi động
+```yaml
+nihongo-web:
+  build:
+    args:
+      NEXT_PUBLIC_KEYCLOAK_URL: ${NEXT_PUBLIC_KEYCLOAK_URL:-http://auth.localhost:8080}
+      NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
 ```
 
-**Vì sao chia hai giai đoạn:** giai đoạn 1 cần cả TypeScript, công cụ build và devDependencies, nặng hàng GB. Giai đoạn 2 chỉ chép bản build đã xong sang một image sạch. Kết quả là image web chỉ ~590 MB, và không mang theo mã nguồn hay công cụ build.
+Biến **không** có `NEXT_PUBLIC_` (như `API_URL`, `MORI_PLAYBACK_SECRET`) chỉ server đọc, nên đặt ở `environment:` là đủ, đổi xong restart là có.
 
-### 6.3. Các lệnh Dockerfile cần biết
+### 7.3. Cache theo lớp: vì sao chép `package.json` trước
 
-| Lệnh | Ý nghĩa |
-|------|---------|
-| `FROM` | Image nền để bắt đầu |
-| `WORKDIR` | Thư mục làm việc (tự tạo nếu chưa có) |
-| `COPY` | Chép file từ repo (context) vào image |
-| `RUN` | Chạy lệnh **lúc build** (cài đặt, biên dịch) |
-| `ARG` | Biến chỉ có **lúc build**, nhận từ `build.args` |
-| `ENV` | Biến môi trường, có cả lúc build lẫn lúc chạy |
-| `EXPOSE` | Ghi chú cổng app nghe. **Không** tự mở cổng ra máy; mở cổng là việc của `ports` |
-| `CMD` | Lệnh chạy **khi container khởi động** |
-| `HEALTHCHECK` | Lệnh kiểm tra sức khỏe (ví dụ trong [infra/nginx/Dockerfile](../infra/nginx/Dockerfile)) |
+Mỗi lệnh tạo một lớp. Build lại, Docker dùng lại lớp cũ cho tới lệnh đầu tiên có đầu vào thay đổi; từ đó trở đi chạy lại hết.
 
-### 6.4. Cache theo lớp — vì sao build lần hai nhanh
+- Bạn sửa một file `.ts`. `COPY services ./services` đổi → `npm ci` và mọi thứ sau chạy lại.
+- Nếu chỉ chép `package.json` rồi `npm ci`, rồi mới chép mã nguồn, thì sửa code **không** làm cài lại thư viện. Đó là thứ tự tối ưu. Dockerfile của web và gateway hiện chép cả thư mục trước `npm ci`, nên mỗi lần sửa code đều cài lại thư viện: một chỗ còn cải thiện được (bài tập 4).
 
-Mỗi lệnh trong Dockerfile tạo ra một **lớp** (layer). Khi build lại, Docker dùng lại các lớp có đầu vào không đổi, và chỉ chạy lại từ lớp đầu tiên có thay đổi trở đi.
+### 7.4. Các lệnh Dockerfile cần biết
 
-Vì vậy Dockerfile thường chép `package.json` **trước** và chạy `npm ci`, rồi mới chép code. Nếu chỉ sửa code, lớp `npm ci` được dùng lại, và build nhanh hơn rất nhiều.
-
-Cache build có thể phình rất to (máy này đang có ~39 GB cache). Cách dọn xem mục 9.
+| Lệnh | Làm gì |
+|---|---|
+| `FROM image AS tên` | Bắt đầu một stage từ image gốc |
+| `WORKDIR /app` | Đổi thư mục làm việc (tự tạo nếu chưa có) |
+| `COPY nguồn đích` / `COPY --from=stage` | Chép từ build context / từ stage trước |
+| `RUN lệnh` | Chạy lúc **build**, kết quả thành một lớp |
+| `ARG` / `ENV` | Biến lúc build / biến có trong image khi chạy |
+| `USER` | Đổi user cho các lệnh sau và khi chạy |
+| `EXPOSE 8080` | Ghi chú cổng app nghe; **không** tự mở cổng ra máy |
+| `HEALTHCHECK` | Healthcheck mặc định của image (nginx của project có) |
+| `CMD` | Lệnh chạy khi container bật |
 
 ---
 
-## 7. Volume: chỗ dữ liệu thật sự nằm
+## 8. `.dockerignore`: sự cố bí mật nằm trong image
 
-### 7.1. Xem volume
+Mọi image của project build với `context: .` (cả thư mục repo). Ngày 13/11/2026, khi viết bài này, kiểm thử image web:
 
 ```bash
-docker volume ls | grep nihongo
-# nihongo-app_postgres_data          ← DB chính của app tiếng Nhật
-# nihongo_postgres_keycloak_data     ← tài khoản đăng nhập Keycloak
-# nihongo_mongodb_data
-
-docker volume inspect nihongo-app_postgres_data   # xem nơi lưu, ngày tạo
+docker run --rm --entrypoint sh edu-app-nihongo-web:latest -c 'ls -a /app/apps/nihongo-web'
 ```
 
-### 7.2. Lệnh nào xóa dữ liệu?
+```
+.env  .next  node_modules  package.json  public  server.js
+```
 
-| Lệnh | Container | Volume (DB) |
-|------|-----------|-------------|
-| `docker compose stop` | Còn | Còn |
-| `docker compose down` | Xóa | **Còn** |
-| `docker compose down -v` | Xóa | **Xóa** (volume `external` như DB nihongo thì được giữ, nhưng **đừng dựa vào điều đó**) |
-| `docker volume rm <tên>` | — | **Xóa** |
-| `docker system prune --volumes` | Xóa container đã dừng | **Xóa mọi volume không gắn container nào**, kể cả của project khác |
+Image chạy thật có file `.env`, trong đó có `MORI_PLAYBACK_SECRET` (khóa ký link xem video). Ai có image là đọc được khóa.
 
-Quy tắc an toàn: **sao lưu trước** khi chạy bất cứ lệnh nào có chữ `-v`, `rm` hay `prune`.
+**Vì sao lọt vào?** Repo chưa có `.dockerignore`. `COPY apps/nihongo-web ./apps/nihongo-web` chép mọi thứ trong thư mục, kể cả những file Git bỏ qua: `.env`, `node_modules` (307 MB của máy Mac), `.next` (634 MB). Bản build `standalone` của Next.js lại chép `.env` sang thư mục chạy. `.gitignore` chỉ có tác dụng với Git, Docker không đọc file này.
 
-### 7.3. Sao lưu và khôi phục DB
+**Đã sửa:** thêm [.dockerignore](../.dockerignore) ở gốc repo:
 
-Project có sẵn script [infra/backups/backup.sh](../infra/backups/backup.sh):
+```gitignore
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+**/.next
+**/dist
+.git
+infra/backups
+```
+
+`NEXT_PUBLIC_MAPBOX_TOKEN` trước đây chỉ vào được bản build nhờ file `.env` bị chép theo, nên được chuyển sang `build.args` (mục 7.2). Nếu bạn dùng bản đồ `/japan-map`, đặt biến này trong `.env` ở **gốc** repo rồi build lại web.
+
+**Bài học:**
+
+1. Có build context là phải có `.dockerignore`, viết ngay khi tạo Dockerfile đầu tiên.
+2. Bí mật vào container lúc **chạy** (`environment:`, secret của orchestrator), không vào lúc build.
+3. Image đã từng chứa bí mật thì coi như bí mật đã lộ cho ai có image đó: đổi khóa (image này chỉ nằm trên máy dev, chưa đẩy lên registry).
+
+---
+
+## 9. Dữ liệu: volume, sao lưu, lệnh nào xóa dữ liệu
+
+### 9.1. Xem volume
 
 ```bash
-bash infra/backups/backup.sh
+docker volume ls --format '{{.Name}}' | grep -E 'edu-app|nihongo'
+```
+
+```
+edu-app_grafana_data
+edu-app_mongodb_data
+edu-app_s3_data
+...
+nihongo-app_postgres_data       ← DB chính (external)
+nihongo_mongodb_data            ← sót lại từ stack cũ, compose hiện tại không dùng
+```
+
+Volume do compose tạo có tiền tố `edu-app_`. Volume `external` giữ đúng tên ghi trong `name:`.
+
+### 9.2. Lệnh nào xóa dữ liệu?
+
+| Lệnh | Container | Volume thường | Volume `external` |
+|---|---|---|---|
+| `docker compose stop` | giữ | giữ | giữ |
+| `docker compose down` | **xóa** | giữ | giữ |
+| `docker compose down -v` | **xóa** | **xóa** (Keycloak, Mongo, S3, Grafana…) | giữ |
+| `docker volume rm nihongo-app_postgres_data` | — | — | **xóa DB chính** |
+
+DB chính để `external` chính vì lý do này: gõ nhầm `down -v` cũng không mất từ vựng và tài khoản.
+
+### 9.3. Sao lưu và khôi phục
+
+```bash
+npm run db:backup
 # → infra/backups/nihongo_<ngày_giờ>.sql          (toàn bộ dữ liệu)
-# → infra/backups/nihongo_schema_<ngày_giờ>.sql   (chỉ cấu trúc bảng)
+# → infra/backups/nihongo_schema_<ngày_giờ>.sql   (chỉ cấu trúc)
+
+docker cp infra/backups/nihongo_<ngày_giờ>.sql edu-postgres-nihongo:/tmp/restore.sql
+docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -f /tmp/restore.sql
 ```
 
-Script này chỉ gọi `pg_dump` **bên trong** container rồi ghi kết quả ra máy:
-
-```bash
-docker exec edu-postgres-nihongo pg_dump -U nihongo nihongo > nihongo.sql
-```
-
-Khôi phục từ file `.sql`:
-
-```bash
-docker exec -i edu-postgres-nihongo psql -U nihongo -d nihongo < nihongo.sql
-```
-
-`-i` giữ đầu vào mở, để nội dung file `.sql` chảy vào `psql` trong container.
+Bản sao lưu không commit vào Git ([ADR-0009](./adr/0009-db-backups-out-of-git.md)). Chi tiết: [infra/backups/README.md](../infra/backups/README.md).
 
 ---
 
-## 8. Mang image sang máy khác (USB, không có internet)
+## 10. Chuyển stack sang máy khác
 
-**Ý tưởng:** đóng các image thành một file `.tar`, chép sang máy kia, nạp vào Docker của máy đó.
+Không "chép container". Chuyển **image hoặc mã nguồn + dữ liệu + cấu hình**.
 
-**Máy A — xuất:**
-
-```bash
-docker save -o /Volumes/USB/edu-app-images.tar \
-  edu-app-nihongo-web:latest edu-app-api-gateway:latest \
-  edu-app-content-service:latest edu-app-exam-service:latest edu-app-nginx:latest
-bash infra/backups/backup.sh       # nhớ mang theo cả DB (file .sql)
-```
-
-**Máy B — nạp rồi chạy:**
+**Cách 1 — clone repo và build (khuyên dùng):**
 
 ```bash
-docker load -i /Volumes/USB/edu-app-images.tar
-cd ~/Projects/edu-app-nihongo      # vẫn cần source để có docker-compose.yml
-docker compose up -d
-docker exec -i edu-postgres-nihongo psql -U nihongo -d nihongo < nihongo_<ngày_giờ>.sql
+# máy cũ
+npm run db:backup
+# máy mới
+git clone <url-repo> edu_app && cd edu_app
+cp .env.docker.example .env           # đặt JWT_SECRET, mật khẩu, NGINX_HTTP_PORT…
+docker volume create nihongo-app_postgres_data
+npm run docker:up:nihongo
+# đợi postgres healthy, rồi khôi phục như mục 9.3
 ```
 
-**Hay nhầm:**
+Thiếu ảnh KanjiVG/OpenMoji thì chạy `npm install && npm run media:setup` rồi `docker compose build nihongo-web` ([media-storage.md](./media-storage.md)).
 
-- Không thể "chạy app thẳng từ USB". File `.tar` chỉ là gói vận chuyển.
-- Máy B vẫn cần **source** (ít nhất là `docker-compose.yml` và thư mục `infra/`). Image chỉ thay cho bước build.
-- Image **không chứa DB**. DB nằm trong volume, phải mang bằng file sao lưu.
-- Máy Mac chip M (ARM) và máy Windows/Intel (x86) có kiến trúc khác nhau. Image build trên máy này có thể không chạy được trên máy kia; khi đó build lại trên máy đích.
+**Cách 2 — mang image bằng file (không có mạng hoặc không muốn build lại):**
+
+```bash
+# máy cũ
+docker compose build
+docker save -o edu-images.tar edu-app-api-gateway edu-app-content-service edu-app-exam-service \
+  edu-app-nihongo-web edu-app-nginx edu-app-signaling-service
+# máy mới
+docker load -i edu-images.tar
+```
+
+File `.tar` chưa phải image: phải `docker load` rồi mới `compose up`. Image hạ tầng (`postgres`, `redis`, `kafka`…) máy mới tự tải lần đầu.
+
+**Cách 3 — registry (cách làm khi triển khai thật):** `docker tag` + `docker push` lên registry, máy chạy dùng `image:` thay `build:` và `docker compose pull`. Xem [learn-release-cicd.md](./learn-release-cicd.md).
+
+**Chuyển nguyên volume Postgres** (khi DB quá lớn để dump):
+
+```bash
+docker compose stop postgres-nihongo
+docker run --rm -v nihongo-app_postgres_data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/postgres_volume.tar.gz -C /data .
+# máy mới: docker volume create … rồi chạy lệnh tương tự với "tar xzf"
+```
 
 ---
 
-## 9. Giải phóng ổ đĩa
-
-Docker rất ăn ổ đĩa. Xem tổng quan trước khi dọn:
+## 11. Dọn ổ đĩa
 
 ```bash
 docker system df
-# TYPE            TOTAL   ACTIVE   SIZE      RECLAIMABLE
-# Images          32      30       24.21GB   924.5MB
-# Build Cache     229     0        39.11GB   20.57GB    ← thường là thủ phạm lớn nhất
 ```
 
-Dọn theo mức an toàn, từ an toàn nhất trở xuống:
+```
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          54        32        32.93GB   9.332GB (28%)
+Containers      43        5         559.1MB   558.7MB (99%)
+Local Volumes   55        35        16.47GB   3.087GB (18%)
+Build Cache     258       19        35.61GB   19.49GB
+```
+
+Build cache thường là thủ phạm lớn nhất. Dọn từ an toàn tới nguy hiểm:
 
 | Lệnh | Xóa gì | Mức độ |
-|------|--------|--------|
-| `docker builder prune` | Cache build | An toàn. Lần build sau chậm hơn một chút |
-| `docker image prune` | Image "lơ lửng" (`<none>`), sinh ra mỗi lần build lại | An toàn |
-| `docker container prune` | Container đã dừng | Cẩn thận: có thể là container của project khác đang tạm tắt |
-| `docker image prune -a` | Mọi image không có container nào dùng | Lần sau phải tải hoặc build lại |
-| `docker system prune --volumes` | Tất cả những thứ trên **và volume** | ⚠️ Nguy hiểm: có thể mất DB |
+|---|---|---|
+| `docker builder prune` | Cache build | An toàn; build sau chậm hơn chút |
+| `docker image prune` | Image `<none>` sinh ra mỗi lần build lại | An toàn |
+| `docker container prune` | Container đã dừng | Cẩn thận: có thể là container project khác đang tạm tắt |
+| `docker image prune -a` | Mọi image không có container dùng | Lần sau phải tải/build lại |
+| `docker system prune --volumes` | Tất cả trên **và volume** | Nguy hiểm: có thể mất DB |
 
-Máy này còn có các project khác (ví dụ `edu-english-nginx`), nên đừng dọn kiểu "xóa hết".
+Máy dev này còn container của project khác. Đừng dọn kiểu "xóa hết".
 
-**Riêng Windows:** Docker Desktop lưu mọi thứ trong một file đĩa ảo (`docker_data.vhdx`). Xóa image xong file này **không tự co lại**. Muốn lấy lại dung lượng trên ổ C:
-
-1. Tắt Docker Desktop.
-2. Compact file VHDX (cần quyền Admin, ví dụ bằng `diskpart` hoặc `Optimize-VHD`).
-3. Bật lại Docker.
-
-Nếu chuyển cả dữ liệu Docker sang USB, phải cắm USB **trước** khi bật Docker. Rút USB khi Docker đang chạy rất dễ làm hỏng volume.
+Windows: Docker Desktop lưu mọi thứ trong file đĩa ảo `docker_data.vhdx`; xóa image xong file **không tự co lại**. Tắt Docker Desktop rồi compact file (`Optimize-VHD`, quyền Admin).
 
 ---
 
-## 10. Debug khi "không lên"
+## 12. Gỡ lỗi khi container "không lên"
 
-### 10.1. Quy trình 4 bước
+Quy trình 4 bước, theo thứ tự:
 
-1. **Container có chạy không?** Gõ `docker compose ps`. Container mang trạng thái `Exited`, `Restarting` hoặc `unhealthy` là thủ phạm.
-2. **Nó nói gì?** Gõ `docker logs --tail 50 <tên container>`. Dòng lỗi thường nằm ở cuối.
-3. **Gọi thẳng nó được không?** Ví dụ gọi `curl localhost:3000/health` để bỏ qua nginx. Nếu gọi thẳng chạy được mà qua 8080 lỗi, vấn đề nằm ở nginx.
-4. **Vào trong xem:** `docker exec -it <tên container> sh`, rồi kiểm tra file, biến môi trường (`env`), mạng (`wget -qO- http://api-gateway:3000/health`).
+1. **Trạng thái:** `docker compose ps` (hoặc `docker ps -a --filter name=edu-`). Đọc cột STATUS và mã thoát.
+2. **Log:** `docker compose logs --tail 100 <service>`. Dòng lỗi đầu tiên thường là nguyên nhân, các dòng sau là hệ quả.
+3. **Healthcheck:** `docker inspect --format '{{json .State.Health}}' edu-gateway` cho biết lần kiểm gần nhất in gì.
+4. **Vào trong:** `docker exec -it edu-gateway sh` để kiểm biến môi trường (`env | grep REDIS`), tên miền (`getent hosts redis`), gọi thử (`wget -qO- http://127.0.0.1:3000/health/live`).
 
-### 10.2. Bảng triệu chứng
+Đọc mã thoát:
 
-| Triệu chứng | Nguyên nhân thường gặp | Làm gì |
-|-------------|------------------------|--------|
-| `Cannot connect to the Docker daemon` | Docker Desktop chưa bật | Bật Docker Desktop, đợi biểu tượng báo đang chạy |
-| `port is already allocated` | Cổng 8080/3000/5433 đã có app khác dùng | `lsof -i :8080` (Mac) để tìm app đó, rồi tắt nó hoặc đổi cổng (`NGINX_HTTP_PORT=8081`) |
-| Trang 8080 báo "Hệ thống đang khởi động…" | Web hoặc gateway chưa lên xong | Đợi 30–60 giây; kiểm tra `docker compose ps` |
-| Trang 8080 trắng hoặc 502 | Web chết | `docker logs edu-nihongo-web`, `docker logs edu-nginx` |
-| Dữ liệu "Đang tải…" mãi | Gateway hoặc content-service lỗi | `docker logs edu-gateway`; thử `curl localhost:3000/api/lessons` |
-| Sửa code mà không thấy đổi | Quên build lại, hoặc trình duyệt dùng cache | `docker compose up -d --build <service>`, rồi tải lại trang bằng `Cmd+Shift+R` |
-| Container `Restarting` liên tục | App lỗi ngay khi khởi động (thiếu biến môi trường, sai URL DB) | `docker logs` xem lỗi đầu tiên |
-| `no space left on device` | Hết ổ đĩa Docker | Mục 9 |
-| `exec format error` | Image build cho kiến trúc CPU khác | Build lại trên máy đang dùng |
+| Mã | Nghĩa thường gặp |
+|---|---|
+| `Exited (0)` | Chạy xong bình thường (Flyway) hoặc bị dừng êm |
+| `Exited (1)` | App tự báo lỗi rồi thoát: đọc log |
+| `Exited (137)` | Bị giết bằng SIGKILL: hết RAM (OOM) hoặc `docker stop` quá hạn chờ |
+| `Exited (143)` | Nhận SIGTERM và thoát: thường do `docker stop`/`down` |
+| `Restarting (1)` liên tục | Lỗi ngay khi khởi động, `restart` cứ bật lại: đọc log lần đầu |
 
-### 10.3. Vào bên trong container
+## Lỗi hay gặp
 
-```bash
-docker exec -it edu-postgres-nihongo psql -U nihongo -d nihongo   # mở SQL
-docker exec -it edu-nihongo-web sh                                 # mở shell
-docker exec edu-gateway env | grep DATABASE                        # xem biến môi trường
-docker inspect edu-gateway --format '{{.State.Health.Status}}'     # trạng thái healthcheck
-```
+| Triệu chứng | Nguyên nhân | Cách sửa |
+|---|---|---|
+| `JWT_SECRET chua dat` khi `compose up` | Chưa có `.env` ở gốc repo | `cp .env.docker.example .env`, đặt `JWT_SECRET` |
+| `external volume "nihongo-app_postgres_data" not found` | Máy mới chưa tạo volume | `docker volume create nihongo-app_postgres_data` |
+| **502 Bad Gateway** ở `:8080` | Web/gateway/Keycloak chưa healthy | Đợi 30–60 giây, xem `docker compose ps`; vẫn lỗi thì xem log gateway |
+| Cổng 8080 (hoặc 3000, 5433) đã bị dùng | Chương trình khác chiếm cổng | `NGINX_HTTP_PORT=8888` trong `.env` rồi `docker compose up -d nginx`; tìm chương trình: `lsof -nP -iTCP:8080` |
+| `npm run dev:gateway` báo `ECONNREFUSED 127.0.0.1:6379` | Redis chạy nhưng không mở cổng ra máy | `npm run docker:up:redis-host` (mục 6.4) |
+| Sửa code mà app trong Docker không đổi | Image cũ; container chạy code đã build | `docker compose up -d --build <service>` |
+| Đổi `NEXT_PUBLIC_*` mà web không đổi | Biến được chép vào lúc build | Build lại `nihongo-web` (mục 7.2) |
+| Gateway khởi động lại liên tục | Thiếu DB/Kafka/Mongo/Keycloak, hoặc sai biến | `docker compose logs api-gateway`, kiểm các service phụ thuộc |
+| Container `Exited (137)` | Hết RAM | Docker Desktop → Settings → Resources tăng RAM; tắt bớt service (monitoring, Airflow) |
+| Video `/mori` báo "Không phát được video" | Thư mục khóa học (`MORI_COURSE_DIR`) trên USB chưa cắm khi container bật | Cắm USB rồi `docker compose up -d --no-deps --force-recreate nihongo-web` ([media-storage.md](./media-storage.md)) |
+| Thư mục Google Drive trong container rỗng | macOS chặn Docker đọc `~/Library/CloudStorage` | Chép dữ liệu ra thư mục thường hoặc USB |
+| Đăng nhập lỗi CORS | `ALLOWED_ORIGINS` không có URL đang mở | Thêm URL vào `ALLOWED_ORIGINS` trong `.env`, `docker compose up -d api-gateway` |
 
-`-it` = `-i` (giữ đầu vào) + `-t` (giả lập terminal). Bắt buộc khi muốn gõ lệnh tương tác.
+## Tự kiểm tra
 
----
+1. `docker compose down` và `docker compose down -v` khác nhau thế nào với DB chính của project?
+<details><summary>Đáp án</summary>Cả hai xóa container. `-v` xóa thêm volume thường (Keycloak, Mongo, S3…), nhưng DB chính `nihongo-app_postgres_data` là `external` nên không bị xóa.</details>
 
-## 11. Bài tập trên stack này
+2. Trong container `edu-gateway`, `REDIS_URL` phải là `redis://redis:6379` chứ không phải `redis://localhost:6379`. Vì sao?
+<details><summary>Đáp án</summary>Trong container, `localhost` là chính container gateway. `redis` là tên service, được DNS của mạng `edu-app_default` phân giải ra IP container Redis.</details>
 
-Làm lần lượt và ghi lại lệnh đã gõ. Mỗi bài có câu hỏi để tự kiểm tra.
+3. Vì sao đổi `NEXT_PUBLIC_KEYCLOAK_URL` trong `environment:` rồi restart web vẫn không có tác dụng?
+<details><summary>Đáp án</summary>Next.js chép giá trị `NEXT_PUBLIC_*` vào JavaScript lúc build. Phải truyền qua `build.args` và build lại image.</details>
 
-1. **Nhận diện.** Chạy `docker compose ps`. Kể tên 3 container và việc của từng cái. Container nào không có cột cổng ra máy, và vì sao?
-2. **Theo dấu request.** Mở `http://localhost:8080/srs`, rồi chạy `docker logs --tail 5 edu-nginx`. Request của bạn hiện lên ra sao?
-3. **Build lại.** Sửa một chữ trên giao diện, chạy `docker compose up -d --build nihongo-web`, rồi tải lại trang. Chạy `docker images`: có image `<none>` mới xuất hiện không, và vì sao?
-4. **Vào DB.** Chạy `docker exec edu-postgres-nihongo psql -U nihongo -d nihongo -c 'SELECT COUNT(*) FROM "Vocabulary";'`. Tại sao phải dùng `5433` khi kết nối từ máy, nhưng ở lệnh này không cần cổng?
-5. **stop/start và down/up.** Chạy `docker compose stop nihongo-web` rồi `start`, sau đó xem cột `CREATED` trong `docker ps`. Làm lại với `docker compose rm -sf nihongo-web && docker compose up -d nihongo-web`. Cột đó khác gì?
-6. **localhost.** Chạy `docker exec edu-nihongo-web wget -qO- http://localhost:3000/health`, rồi thay `localhost` bằng `api-gateway`. Giải thích kết quả.
-7. **Sao lưu.** Chạy `bash infra/backups/backup.sh`, mở file `.sql` vừa tạo, tìm lệnh tạo bảng `"Vocabulary"`.
+4. `EXPOSE 8080` trong Dockerfile nginx có mở cổng 8080 trên máy không?
+<details><summary>Đáp án</summary>Không. `EXPOSE` chỉ là ghi chú. Cổng được mở nhờ `ports: ['${NGINX_HTTP_PORT:-8080}:8080']` trong compose.</details>
 
----
+5. Healthcheck của gateway gọi `/health/live` chứ không gọi endpoint kiểm DB. Lý do?
+<details><summary>Đáp án</summary>DB chậm một lúc thì gateway bị coi là unhealthy, kéo theo nginx (đợi gateway healthy) không lên, dù gateway vẫn chạy được. Healthcheck "sống" chỉ nên kiểm tiến trình còn phục vụ.</details>
 
-## 12. Cheat sheet
+6. `.gitignore` đã có `apps/nihongo-web/.env`. Vì sao file đó vẫn vào image?
+<details><summary>Đáp án</summary>Docker không đọc `.gitignore`. Thứ quyết định file nào vào build context là `.dockerignore`, và repo khi đó chưa có file này.</details>
 
-```bash
-# Chạy app tiếng Nhật — mở http://localhost:8080
-npm run docker:up:nihongo
+7. Vì sao Kafka cần hai listener?
+<details><summary>Đáp án</summary>Broker trả cho client địa chỉ để nối tiếp. Container cần `kafka:9092`, máy cần `localhost:9092`; mỗi listener quảng bá đúng địa chỉ cho một phía.</details>
 
-# Trạng thái và log
-docker compose ps
-docker logs -f --tail 50 edu-gateway
+## Bài tập
 
-# Sửa code → build lại một service
-docker compose up -d --build nihongo-web
-docker compose build api-gateway && docker compose up -d --no-deps api-gateway
-
-# DB
-docker exec -it edu-postgres-nihongo psql -U nihongo -d nihongo
-bash infra/backups/backup.sh
-
-# Dọn ổ đĩa an toàn
-docker system df
-docker builder prune
-
-# Tắt (giữ DB) — KHÔNG thêm -v
-docker compose down
-```
-
-**Năm ý cần nắm** để dùng Docker hằng ngày cho EDU APP:
-
-1. **Image** là khuôn, **container** là bản đang chạy, **volume** giữ dữ liệu.
-2. Sửa code thì phải **build lại** image. Sửa dữ liệu DB thì không cần.
-3. Trong container, **`localhost` là chính nó**. Gọi service khác bằng **tên service**.
-4. Lệnh `compose` dùng **tên service**; `docker logs/exec` dùng **tên container**.
-5. Thấy `-v`, `rm`, `prune` thì **sao lưu trước**.
-
----
-
-## 13. Học tiếp
-
-Xong Docker, đi tiếp nhóm **DevOps và hạ tầng** theo thứ tự dưới đây. Mỗi bài dựa trên bài trước, và đều học trên chính stack này.
-
-| Thứ tự | Tài liệu | Học gì | Vì sao học sau bài trước |
-|--------|----------|--------|--------------------------|
-| **1** | [learn-nginx.md](./learn-nginx.md) | Reverse proxy cổng 8080, đọc `nginx.conf`, HTTPS, triển khai lên VPS | Là "cửa vào" của mọi container bạn vừa học |
-| 2 | [learn-infra.md](./learn-infra.md) | Thư mục `infra/` và các sự cố thật của stack, cách chẩn đoán từng bước | Áp kỹ năng debug ở mục 10 vào lỗi thật |
-| 3 | [learn-kubernetes.md](./learn-kubernetes.md) | Manifest `infra/k8s/`, Helm chart, chạy nhiều bản sao | Bước tiếp theo của Compose khi lên production |
-| 4 | [learn-release-cicd.md](./learn-release-cicd.md) | `ci.yml`, `deploy.yml`: build image tự động, deploy, rollback | Tự động hóa những lệnh `build` / `up` bạn đang gõ tay |
-| 5 | [learn-observability.md](./learn-observability.md) | Log, metric (Prometheus, Grafana), trace (Jaeger) | Biết container đang làm gì mà không phải đọc `docker logs` mãi |
-| 6 | [learn-incident-postmortem.md](./learn-incident-postmortem.md) | Xử lý sự cố, viết postmortem | Dùng log/metric vừa học để xử lý sự cố thật |
-
-Volume ở mục 7 chứa gì và truy vấn chạy nhanh hay chậm: học ở nhóm **Cơ sở dữ liệu**, bắt đầu từ [learn-sql.md](./learn-sql.md).
-Mọi nhóm khác (backend, cloud, mobile…) xem [mục lục tài liệu](./README.md).
+1. **Đọc compose:** liệt kê mọi service có `depends_on … condition: service_healthy` và vẽ thứ tự khởi động. Tự kiểm: tắt hết (`npm run docker:down`), chạy `npm run docker:up:nihongo` và xem thứ tự `Started`/`Healthy` trong output có khớp.
+2. **Làm hỏng có chủ đích:** trong `.env`, đổi `POSTGRES_PASSWORD` thành giá trị sai rồi `docker compose up -d --force-recreate api-gateway`. Dùng quy trình 4 bước ở mục 12 tìm ra lỗi trong log. Trả lại giá trị cũ. (Lưu ý: mật khẩu Postgres chỉ được đặt lần đầu tạo volume, nên đổi biến không đổi mật khẩu thật trong DB, chỉ làm gateway nối sai.)
+3. **Kiểm `.dockerignore`:** build lại web (`docker compose build nihongo-web`), rồi chạy lệnh `ls -a` ở mục 8. Tự kiểm: không còn `.env` trong image.
+4. **Tối ưu cache:** sửa Dockerfile của gateway để chép `package.json` của các workspace và chạy `npm ci` **trước** khi chép mã nguồn. Đo: sửa một dòng comment trong `api-gateway/src/main.ts`, build lại, so thời gian với trước khi sửa.
+5. **Mạng:** từ trong `edu-gateway` chạy `getent hosts redis kafka mongodb`; từ máy chạy `nc -z localhost 6379` trước và sau `npm run docker:up:redis-host`. Giải thích kết quả bằng mục 6.
 
 <!-- nav:start -->
 
@@ -556,10 +696,10 @@ Mọi nhóm khác (backend, cloud, mobile…) xem [mục lục tài liệu](./RE
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 2/9.
+Bạn đang ở **1. Bắt đầu: chạy được project** — bài 2/5.
 
-- Bài trước: [learn-devops-roadmap.md](./learn-devops-roadmap.md) — Lộ trình 16 tuần: nối các bài DevOps thành đường đi có thứ tự
-- **Bài tiếp: [learn-nginx.md](./learn-nginx.md)** — Nginx: reverse proxy cổng 8080, HTTPS, triển khai
+- Bài trước: [run-local.md](./run-local.md) — Chạy EDU APP Nihongo trên máy từng bước
+- **Bài tiếp: [accounts.md](./accounts.md)** — Tài khoản dev đang dùng
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

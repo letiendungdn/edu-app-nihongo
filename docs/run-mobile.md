@@ -18,7 +18,7 @@ Repo có **4 app mobile** dùng chung backend NestJS. Bảng tra nhanh:
 ```powershell
 cd C:\Users\dungle\Desktop\edu_app
 npm run docker:up:nihongo
-# ≈14 container (nginx :8080, Keycloak, LiveKit, …) — xem docker.md
+# ≈14 container (nginx :8080, Keycloak, LiveKit, …) — xem learn-docker.md
 ```
 
 Kiểm tra: `curl.exe http://localhost:8080/api/lessons` phải trả `200`.
@@ -206,7 +206,7 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 | File | Nội dung |
 |------|----------|
 | [run-local.md](./run-local.md) | Chạy backend + web local |
-| [docker.md](./docker.md) | Full stack trong Docker |
+| [learn-docker.md](./learn-docker.md) | Full stack trong Docker |
 | [learn-nginx.md](./learn-nginx.md) | Nginx reverse proxy — cổng `:8080`, route API/web/Keycloak |
 | [apps/nihongo-mobile/README.md](../apps/nihongo-mobile/README.md) | Chi tiết app Expo |
 | [apps/nihongo-android/README.md](../apps/nihongo-android/README.md) | Chi tiết app Kotlin |

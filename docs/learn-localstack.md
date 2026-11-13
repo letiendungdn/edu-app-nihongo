@@ -358,6 +358,10 @@ chữ ký, CORS, Content-Type… những thứ mock không bắt được.
 6. Viết integration test mục 7 cho `UploadService` (Testcontainers), chạy trong `npm test` của `services`.
 7. (Nâng cao) Gửi email xác thực tài khoản qua SES LocalStack thay vì SMTP, xem nội dung ở `/_aws/ses`.
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---

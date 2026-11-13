@@ -53,18 +53,23 @@ Lộ trình dành cho người học **2 giờ/ngày, 5 ngày/tuần, trong 10 t
 
 
 
+## Đọc
+
+- [run-local.md](./run-local.md): chạy project trên máy.
+- [learn-docker.md](./learn-docker.md) mục 1–3 (chạy stack, bản đồ container, URL) và mục 12 (gỡ lỗi). Phần còn lại học ở Tuần 9.
+- [accounts.md](./accounts.md): tài khoản đăng nhập.
+
 ## Thực hành
 
-```powershell
-cd C:\Users\dungle\Desktop\edu_app
+Ở thư mục gốc repo (macOS/Linux; Windows dùng `curl.exe` và `start` thay cho `curl` và `open`):
+
+```bash
 npm install
 npm run docker:up:nihongo
 
-curl.exe http://localhost:8080/health
-start http://localhost:8080
+curl http://localhost:8080/health
+open http://localhost:8080
 ```
-
-Tài khoản: xem [accounts.md](./accounts.md). Cách chạy chi tiết: [run-local.md](./run-local.md), [docker.md](./docker.md).
 
 ## Hoàn thành khi
 
@@ -545,7 +550,8 @@ cd apps\nihongo_flutter; flutter test test/srs_algorithm_test.dart
 - `docker-compose.yml`
 - `infra/nginx/nginx.conf`
 - `infra/k8s/`, `infra/helm/`, `infra/terraform/`
-- [docker.md](./docker.md)
+- [learn-docker.md](./learn-docker.md) mục 4–11: compose, thứ tự khởi động, mạng, Dockerfile, `.dockerignore`, dữ liệu
+- [interview-docker.md](./interview-docker.md): tự trả lời 25 câu, mở đáp án sau
 
 
 

@@ -22,6 +22,10 @@ ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+# Token công khai (lộ ra trình duyệt là bình thường). Trước đây chỉ vào được bản build qua file .env bị chép
+# vào image; .dockerignore giờ chặn .env nên phải truyền bằng build arg.
+ARG NEXT_PUBLIC_MAPBOX_TOKEN=
+ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 RUN npm run build
 
 FROM node:22-alpine AS runner

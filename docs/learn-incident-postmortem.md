@@ -206,13 +206,17 @@ Cố tình gây lỗi trong môi trường dev để kiểm tra runbook và giá
 
 </details>
 
+## Luyện phỏng vấn
+
+Câu hỏi phỏng vấn kèm đáp án về nginx, Terraform, AWS, GCP, đo tải và xử lý sự cố: [interview-infra-cloud.md](./interview-infra-cloud.md).
+
 <!-- nav:start -->
 
 ---
 
 ## Đi tiếp
 
-Bạn đang ở **6. DevOps và hạ tầng** — bài 8/9.
+Bạn đang ở **6. DevOps và hạ tầng** — bài 7/8.
 
 - Bài trước: [learn-observability.md](./learn-observability.md) — Log, metric, trace với Prometheus, Grafana, Jaeger
 - **Bài tiếp: [learn-devsecops.md](./learn-devsecops.md)** — DevSecOps: quét bí mật, thư viện, image, hạ tầng — có kết quả quét thật

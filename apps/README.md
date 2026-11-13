@@ -16,7 +16,7 @@ Hướng dẫn đầy đủ: [docs/run-local.md](../docs/run-local.md) · Lộ t
 
 ## Docker
 
-- `nihongo.localhost` (hoặc `localhost`) qua nginx `:8080` — [docs/docker.md](../docs/docker.md)
+- `nihongo.localhost` (hoặc `localhost`) qua nginx `:8080` — [docs/learn-docker.md](../docs/learn-docker.md)
 
 ## Shared packages
 
