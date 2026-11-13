@@ -1,6 +1,6 @@
 # Image chỉ để chạy `prisma migrate deploy` trước mỗi lần deploy (Job K8s infra/k8s/jobs/prisma-migrate.job.yaml).
 # Tách khỏi image service: pod service không tự migrate khi khởi động (5 pod = 5 lần migrate cùng lúc).
-FROM node:22-alpine
+FROM node:25-alpine
 # Prisma engine trên Alpine cần OpenSSL
 RUN apk add --no-cache openssl
 WORKDIR /migrate
