@@ -55,6 +55,28 @@ Trên macOS và Windows, Docker Desktop chạy ngầm **một** máy ảo Linux 
 
 ### 2.1. Image
 
+**Image là gì:** một gói đóng sẵn chứa **mọi thứ cần để chạy một chương trình**. Ví dụ image `edu-app-api-gateway` gồm:
+
+- file hệ điều hành tối giản (Alpine Linux, vài MB),
+- Node.js 22,
+- thư viện trong `node_modules`,
+- code gateway đã build ra JavaScript (`dist/`),
+- lệnh khởi động (`node dist/.../main.js`) và user chạy (`node`).
+
+Hai tính chất cần nhớ:
+
+- **Chỉ đọc.** Image không bao giờ thay đổi sau khi build. Muốn đổi code thì build image mới.
+- **Giống nhau ở mọi máy.** Máy bạn, máy CI, server chạy cùng một image thì có cùng Node, cùng thư viện. Hết cảnh "máy tôi chạy được".
+
+So sánh cho dễ nhớ: image giống **file cài đặt** (hoặc cái khuôn bánh). Bản thân nó không chạy; phải "mở" nó ra thành container (mục 2.2).
+
+Image đến từ hai nguồn:
+
+- **Tải về từ registry** — kho chứa image trên mạng, phổ biến nhất là Docker Hub (`hub.docker.com`). `docker pull redis:7-alpine` tải image Redis người khác đã làm sẵn.
+- **Tự build** từ một **Dockerfile** — file văn bản liệt kê từng bước tạo image (chọn image gốc, chép code, cài thư viện, build). Mục 7 đọc kỹ Dockerfile.
+
+Xem các image đang có trên máy:
+
 ```bash
 docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | grep -E 'edu-app|redis:7|postgres:16'
 ```
@@ -71,11 +93,26 @@ postgres:16-alpine               411MB
 
 - Image **tải về** từ Docker Hub: `redis:7-alpine`, `postgres:16-alpine`. Không có Dockerfile trong repo.
 - Image **tự build** từ code: `edu-app-*`. Tiền tố `edu-app-` đến từ dòng `name: edu-app` đầu file compose: tên image = `<tên project>-<tên service>`.
-- Tên có dạng `tên:tag`. `latest` chỉ là tag mặc định, **không** có nghĩa là "mới nhất".
+- Tên có dạng `tên:tag`. **Tag** là nhãn phiên bản: `redis:7-alpine` là Redis bản 7, dựng trên Alpine. `latest` chỉ là tag mặc định khi bạn không ghi tag, **không** có nghĩa là "mới nhất".
+- Image cỡ vài trăm MB tới hơn 1 GB vì chứa cả Node và `node_modules`. Image dùng chung phần giống nhau (gọi là **layer**), nên 3 image service NestJS không tốn gấp 3 lần ổ đĩa.
 
 ### 2.2. Container
 
-Container là image đang chạy. Tên do `container_name:` trong compose đặt: service `api-gateway` → container `edu-gateway`.
+**Container là gì:** một chương trình **đang chạy** được tạo ra từ image. Nếu image là file cài đặt thì container là chương trình đã cài và đang mở.
+
+Container chạy trên máy bạn nhưng bị **tách riêng**:
+
+- **File riêng:** nó chỉ thấy file trong image của nó, không thấy ổ đĩa của bạn (trừ chỗ bạn cố ý gắn vào, xem 2.3).
+- **Mạng riêng:** nó có địa chỉ IP riêng trong mạng Docker. Các container trong cùng compose gọi nhau bằng tên service, ví dụ gateway gọi `redis:6379`.
+- **Tiến trình riêng:** bên trong chỉ có chương trình của nó, ví dụ chỉ `node` hoặc chỉ `postgres`.
+
+Container **không phải máy ảo**: nó dùng chung nhân hệ điều hành với máy bạn nên khởi động trong vài giây và nhẹ hơn nhiều (so sánh kỹ ở [interview-docker.md](./interview-docker.md)).
+
+Từ **một** image tạo được **nhiều** container, giống một file cài đặt cài lên nhiều máy. Ví dụ chạy 3 container gateway từ cùng image để chia tải.
+
+Vì image chỉ đọc, mỗi container có thêm một lớp mỏng **ghi được** ở trên cùng. File container tạo ra (log, file tạm) nằm ở lớp này.
+
+Tên container do `container_name:` trong compose đặt: service `api-gateway` → container `edu-gateway`.
 
 ```bash
 docker ps --filter name=edu- --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
@@ -92,7 +129,16 @@ Mọi thứ ghi vào container (file tạm, upload…) **mất khi container b�
 
 ### 2.3. Volume
 
-Postgres ghi dữ liệu vào `/var/lib/postgresql/data`. Nếu thư mục đó nằm trong container, xóa container là mất DB. Gắn volume vào đó thì dữ liệu sống tiếp:
+**Volume là gì:** một vùng lưu trữ do Docker quản lý, nằm **ngoài** container, rồi được gắn vào một thư mục bên trong container. Chương trình trong container ghi vào thư mục đó như bình thường, nhưng dữ liệu thật nằm trong volume.
+
+Vì sao cần: lớp ghi được của container (mục 2.2) bị xóa cùng container. Volume thì không: xóa container, tạo container mới, gắn lại volume cũ là thấy lại dữ liệu. So sánh: container là cái máy tính, volume là ổ cứng rời — thay máy thì cắm ổ sang máy mới.
+
+Có hai cách gắn hay gặp:
+
+- **Volume có tên** (`postgres_nihongo_data:/var/lib/postgresql/data`): Docker tự lo chỗ lưu. Dùng cho dữ liệu của DB.
+- **Bind mount** (`./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro`): gắn thẳng một file/thư mục trên máy bạn vào container. Dùng cho file cấu hình bạn muốn sửa trực tiếp; `:ro` (read-only) để container chỉ đọc, không sửa được file của bạn.
+
+Ví dụ trong project: Postgres ghi dữ liệu vào `/var/lib/postgresql/data`. Nếu thư mục đó nằm trong container, xóa container là mất DB. Gắn volume vào đó thì dữ liệu sống tiếp:
 
 ```yaml
 postgres-nihongo:
