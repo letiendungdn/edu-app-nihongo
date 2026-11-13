@@ -65,7 +65,7 @@ docker compose up -d postgres-nihongo redis mongodb zookeeper kafka `
 | Container | Port host |
 |-----------|-----------|
 | PostgreSQL Nihongo (`edu-postgres-nihongo`) | **5433** |
-| Redis | 6379 |
+| Redis | 6379 (chỉ `127.0.0.1`, khi bật bằng `npm run docker:up:infra` hoặc `npm run dev:gateway`) |
 | MongoDB | 27017 |
 | Kafka | 9092 |
 | Keycloak | qua nginx `:8080` hoặc nội bộ — [keycloak-setup.md](./keycloak-setup.md) |
@@ -235,7 +235,7 @@ npm run docker:up:infra
 | Triệu chứng | Cách xử lý |
 |-------------|------------|
 | `Cannot find module '@prisma/client'` | `npm run prisma:generate` |
-| Gateway `[ioredis] Unhandled error` | `docker compose up -d redis` → restart gateway |
+| Gateway `[ioredis] Unhandled error` / `ECONNREFUSED 127.0.0.1:6379` | File compose chính cố ý không mở cổng 6379 ra máy, nên `docker compose up -d redis` không đủ. Chạy `npm run docker:up:redis-host` (dùng thêm `docker-compose.host-dev.yml`), rồi chạy lại gateway. `npm run dev:gateway` đã tự làm bước này |
 | Content `EADDRINUSE :50051` | Kill process trên 50051 |
 | API 401 / không load bài | Postgres :5433, restore backup hoặc seed |
 | Keycloak / OIDC lỗi | Up `keycloak` + hosts `auth.localhost` — [keycloak-setup.md](./keycloak-setup.md) |

@@ -1,0 +1,8 @@
+# Bổ sung cho docker-compose.yml khi chạy service Node trên máy (npm run dev:gateway, dev:content…).
+# docker-compose.yml cố ý không publish Redis (xem comment ở service redis), nên gateway chạy ngoài Docker
+# không gọi được redis://localhost:6379. File này mở cổng, chỉ trên 127.0.0.1 (máy khác trong LAN không vào được).
+# Dùng: docker compose -f docker-compose.yml -f docker-compose.host-dev.yml up -d redis
+services:
+  redis:
+    ports:
+      - '127.0.0.1:6379:6379'

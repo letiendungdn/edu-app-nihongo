@@ -13,6 +13,7 @@
   "scripts": {
     "dev:nihongo-web": "npm run dev -w @edu/nihongo-web",
     "dev:desktop": "node scripts/run-os.mjs desktop",
+    "predev:gateway": "npm run -s docker:up:redis-host",
     "dev:gateway": "npm run start:dev -w @edu/nihongo-services",
     "dev:content": "npm run start:content -w @edu/nihongo-services",
     "dev:exam": "npm run start:exam -w @edu/nihongo-services",
@@ -23,7 +24,8 @@
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
     "docker:up:build": "docker compose up -d --build",
-    "docker:up:infra": "docker compose up -d postgres-nihongo redis mongodb zookeeper kafka",
+    "docker:up:infra": "docker compose -f docker-compose.yml -f docker-compose.host-dev.yml up -d postgres-nihongo redis mongodb zookeeper kafka",
+    "docker:up:redis-host": "docker compose -f docker-compose.yml -f docker-compose.host-dev.yml up -d redis",
     "docker:up:nihongo": "docker compose up -d postgres-nihongo redis mongodb zookeeper kafka s3 content-service exam-service api-gateway nihongo-web nginx",
     "ai:ollama": "node scripts/run-os.mjs ollama",
     "ai:ollama:pull": "ollama pull qwen2.5:7b",
