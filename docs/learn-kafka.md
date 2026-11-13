@@ -378,7 +378,7 @@ Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 4/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 5/9.
 
 - Bài trước: [mongodb.md](./mongodb.md) — MongoDB chỉ dùng cho audit log
 - **Bài tiếp: [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md)** — MQTT, RxJS, Flyway, view và DDD

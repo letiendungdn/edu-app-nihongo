@@ -2,10 +2,22 @@
 
 Mọi tài liệu ở đây đều học trên **chính code và stack của project này**: ví dụ lấy từ file thật, output in ra là output thật.
 
+Hai loại bài:
+
+- **Bài "đọc code"**: hiểu một hệ thống thật đang chạy — microservice, Kafka, Kubernetes, 4 app mobile.
+- **Bài "làm một tính năng từ đầu đến cuối"**: theo từng bước làm tính năng *Sổ từ của tôi* (bảng → API → web → app Expo → app Android) trong chính project này, kèm danh sách kiểm để áp vào tính năng hay project khác, và mục "khi bạn tự tạo project mới" ghi những gì khác ở phiên bản thư viện mới nhất.
+
 ## Bắt đầu từ đâu
 
 - **Mới học lập trình** (chưa quen terminal, Git, JavaScript): bắt đầu ở nhóm 0, bài [learn-terminal.md](./learn-terminal.md).
 - **Đã biết lập trình, mới vào project:** đọc lướt nhóm 0, bắt đầu thật sự ở [run-local.md](./run-local.md).
+- **Muốn tự làm một sản phẩm (web, API, app mobile):** sau nhóm 0 và [run-local.md](./run-local.md), làm một tính năng trọn vẹn qua mọi phía:
+  1. [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) — bảng, migration, API NestJS, đăng nhập, test trên Postgres thật.
+  2. [learn-react-build-app.md](./learn-react-build-app.md) — trang web: React Query, form zod, lọc trên URL, test.
+  3. [learn-redux-state.md](./learn-redux-state.md) — quản lý state: Redux Toolkit, RTK Query, Saga, Zustand.
+  4. [learn-react-native-build-app.md](./learn-react-native-build-app.md) — màn hình app Expo.
+  5. [learn-android-build-app.md](./learn-android-build-app.md) — màn hình app Android (Kotlin, Compose, Hilt).
+  6. [learn-react-native-native-code.md](./learn-react-native-native-code.md) — React Native CLI và code native Kotlin/Swift.
 
 Đi theo nhóm 0 → 10 theo thứ tự. Mỗi bài mở đầu bằng **Mục tiêu**, **Cần biết trước** và **Thời gian**, kết thúc bằng **Tự kiểm tra**, **Bài tập** và mục **Đi tiếp** dẫn sang bài kế. Hết nhóm thì sang nhóm sau. Nhóm 11 → 14 là tài liệu tham khảo, đọc khi cần.
 
@@ -92,14 +104,15 @@ Gateway, message queue, cache và các pattern backend.
 
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
-| 1 | [learn-nestjs.md](./learn-nestjs.md) | NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe |
-| 2 | [redis.md](./redis.md) | Redis dùng vào việc gì trong project |
-| 3 | [mongodb.md](./mongodb.md) | MongoDB chỉ dùng cho audit log |
-| 4 | [learn-kafka.md](./learn-kafka.md) | Kafka: vì sao dùng, producer/consumer |
-| 5 | [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) | MQTT, RxJS, Flyway, view và DDD |
-| 6 | [learn-reliability-patterns.md](./learn-reliability-patterns.md) | Outbox, timeout, retry, consumer idempotent, circuit breaker |
-| 7 | [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) | Thanh toán Stripe không trừ tiền hai lần |
-| 8 | [learn-security-backend.md](./learn-security-backend.md) | Bảo mật API theo OWASP API Top 10 |
+| 1 | [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) | Làm một tính năng backend trọn vẹn (Sổ từ của tôi): bảng, migration an toàn, module NestJS, chống IDOR, test Postgres thật |
+| 2 | [learn-nestjs.md](./learn-nestjs.md) | NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe |
+| 3 | [redis.md](./redis.md) | Redis dùng vào việc gì trong project |
+| 4 | [mongodb.md](./mongodb.md) | MongoDB chỉ dùng cho audit log |
+| 5 | [learn-kafka.md](./learn-kafka.md) | Kafka: vì sao dùng, producer/consumer |
+| 6 | [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) | MQTT, RxJS, Flyway, view và DDD |
+| 7 | [learn-reliability-patterns.md](./learn-reliability-patterns.md) | Outbox, timeout, retry, consumer idempotent, circuit breaker |
+| 8 | [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) | Thanh toán Stripe không trừ tiền hai lần |
+| 9 | [learn-security-backend.md](./learn-security-backend.md) | Bảo mật API theo OWASP API Top 10 |
 
 ---
 
@@ -168,11 +181,13 @@ Next.js, các công cụ trên web, AI local và app desktop.
 | # | Tài liệu | Nội dung |
 |---|----------|----------|
 | 1 | [learn-react.md](./learn-react.md) | React qua web Nihongo: component, state, effect, custom hook, React Query, test |
-| 2 | [roadmap-reactjs.md](./roadmap-reactjs.md) | Lộ trình dài React + Next.js qua apps/nihongo-web |
-| 3 | [learn-webpack.md](./learn-webpack.md) | Webpack qua bản build của web: chia chunk, đo và giảm dung lượng |
-| 4 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
-| 5 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
-| 6 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
+| 2 | [learn-react-build-app.md](./learn-react-build-app.md) | Làm một trang web trọn vẹn (Sổ từ của tôi): React Query, form zod, lọc trên URL, xóa lạc quan, test, chạy trên Chrome |
+| 3 | [learn-redux-state.md](./learn-redux-state.md) | Quản lý state: Redux Toolkit (trang ôn sổ từ), selector, Thunk, RTK Query, Saga, Zustand, Context — chọn cái nào khi nào |
+| 4 | [roadmap-reactjs.md](./roadmap-reactjs.md) | Lộ trình dài React + Next.js qua apps/nihongo-web |
+| 5 | [learn-webpack.md](./learn-webpack.md) | Webpack qua bản build của web: chia chunk, đo và giảm dung lượng |
+| 6 | [canvas-tools.md](./canvas-tools.md) | Luyện viết kanji, bảng trắng, worksheet, flashcard editor trên web |
+| 7 | [learn-ollama-local.md](./learn-ollama-local.md) | Chạy AI local bằng Ollama |
+| 8 | [learn-electron.md](./learn-electron.md) | Electron: app desktop Nihongo |
 
 ---
 
@@ -189,12 +204,15 @@ Các app mobile của project, từ nền tảng đến tính năng và bảo m�
 | 5 | [learn-android-fundamentals.md](./learn-android-fundamentals.md) | Android 3/4: hệ điều hành chạy app thế nào: tiến trình, vòng đời, chạy nền, quyền, bảo mật |
 | 6 | [learn-android-features.md](./learn-android-features.md) | Android 4/4: nhật ký làm 9 tính năng và 5 lỗi chỉ lộ ra khi chạy thật |
 | 7 | [learn-android-framework.md](./learn-android-framework.md) | Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive |
-| 8 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
-| 9 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
-| 10 | [learn-react-native.md](./learn-react-native.md) | React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test |
-| 11 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
-| 12 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
-| 13 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
+| 8 | [learn-android-build-app.md](./learn-android-build-app.md) | Làm một màn hình Android trọn vẹn (Sổ từ của tôi): Retrofit, Hilt, ViewModel, Compose, test MockWebServer, chạy trên máy ảo |
+| 9 | [learn-swift-ios.md](./learn-swift-ios.md) | Swift/SwiftUI qua nihongo-ios |
+| 10 | [learn-flutter.md](./learn-flutter.md) | Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter |
+| 11 | [learn-react-native.md](./learn-react-native.md) | React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test |
+| 12 | [learn-react-native-build-app.md](./learn-react-native-build-app.md) | Làm một màn hình Expo trọn vẹn (Sổ từ của tôi): gọi API qua axios, đăng nhập, danh sách, form, test, chạy trên máy ảo |
+| 13 | [learn-react-native-native-code.md](./learn-react-native-native-code.md) | React Native CLI + code native: tự viết Turbo Module bằng Kotlin và Swift, chạy thật trên Android/iOS |
+| 14 | [learn-ml-mobile.md](./learn-ml-mobile.md) | Machine learning trong app mobile: on-device, LLM, SRS thông minh |
+| 15 | [security-owasp-mobile.md](./security-owasp-mobile.md) | Bảo mật mobile theo OWASP |
+| 16 | [mobile-qa.md](./mobile-qa.md) | Hỏi đáp mobile: lưu ảnh, tràn cache, kéo xuống tải tiếp |
 
 ---
 

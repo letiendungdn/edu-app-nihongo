@@ -10,7 +10,12 @@
 >
 > **Thời gian:** khoảng 6–8 giờ, chia 3–4 buổi.
 
-Bài này là đường đi ngắn, bám sát code. Lộ trình dài theo chiều rộng (animation, native module, release) nằm ở [roadmap-react-native.md](./roadmap-react-native.md); câu hỏi phỏng vấn ở [interview-react-native-senior.md](./interview-react-native-senior.md).
+Bài này là đường đi ngắn, bám sát code của app Expo trong project. Học tiếp theo thứ tự:
+
+- **Quản lý state, Redux, gọi API, form, test:** dùng y nguyên kiến thức ở [learn-react-build-app.md](./learn-react-build-app.md) và [learn-redux-state.md](./learn-redux-state.md) — React Query, Redux Toolkit, Zustand, zod chạy giống hệt trên React Native (khác biệt nằm ở [learn-redux-state.md](./learn-redux-state.md) mục 10).
+- **Làm một màn hình mới từ đầu đến cuối** trong chính app này (Sổ từ của tôi: đăng nhập, gọi API, form, danh sách, test, chạy máy ảo): [learn-react-native-build-app.md](./learn-react-native-build-app.md).
+- **React Native CLI và code native Kotlin/Swift:** [learn-react-native-native-code.md](./learn-react-native-native-code.md) — tạo app CLI, tự viết Turbo Module, chạy thật trên Android và iOS.
+- Lộ trình dài theo chiều rộng (animation, release, OTA): [roadmap-react-native.md](./roadmap-react-native.md); câu hỏi phỏng vấn: [interview-react-native-senior.md](./interview-react-native-senior.md).
 
 **Phiên bản đang dùng:** Expo SDK 57, React Native 0.86, React 19.3, expo-router 57, expo-sqlite 57, Vitest 3. Kết quả lệnh trong bài đã được chạy thử ngày 12/11/2026.
 
@@ -347,10 +352,10 @@ Bài học: **đẩy logic ra hàm thuần** (nhận vào, trả ra, không đ�
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 10/13.
+Bạn đang ở **9. Mobile** — bài 11/16.
 
 - Bài trước: [learn-flutter.md](./learn-flutter.md) — Lộ trình 8 tuần học Flutter từ code thật của nihongo_flutter
-- **Bài tiếp: [learn-ml-mobile.md](./learn-ml-mobile.md)** — Machine learning trong app mobile: on-device, LLM, SRS thông minh
+- **Bài tiếp: [learn-react-native-build-app.md](./learn-react-native-build-app.md)** — Làm một màn hình Expo trọn vẹn (Sổ từ của tôi): gọi API qua axios, đăng nhập, danh sách, form, test, chạy trên máy ảo
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

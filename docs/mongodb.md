@@ -91,7 +91,7 @@ db.audit_logs.find({ success: false }).limit(20)
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 3/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 4/9.
 
 - Bài trước: [redis.md](./redis.md) — Redis dùng vào việc gì trong project
 - **Bài tiếp: [learn-kafka.md](./learn-kafka.md)** — Kafka: vì sao dùng, producer/consumer

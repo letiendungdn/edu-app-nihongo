@@ -1,6 +1,6 @@
 # Học NestJS qua chính code của project
 
-Bài này đi qua NestJS bằng code đang chạy trong repo, không dùng ví dụ bịa. Mỗi mục có:
+Bài này đi qua NestJS bằng code đang chạy trong repo, không dùng ví dụ bịa. Chưa từng tự dựng một API? Làm [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) trước: dựng API từ thư mục trống (Prisma, JWT, test, Docker), rồi quay lại đây để hiểu sâu pipeline và các mẫu nâng cao của gateway. Mỗi mục có:
 
 - **Khái niệm**: Nest làm gì, chạy lúc nào.
 - **Code thật**: trích từ file, kèm link để mở xem đầy đủ.
@@ -1230,8 +1230,9 @@ Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 1/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 2/9.
 
+- Bài trước: [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) — Làm một tính năng backend trọn vẹn (Sổ từ của tôi): bảng, migration an toàn, module NestJS, chống IDOR, test Postgres thật
 - **Bài tiếp: [redis.md](./redis.md)** — Redis dùng vào việc gì trong project
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

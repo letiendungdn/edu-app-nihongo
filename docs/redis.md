@@ -316,7 +316,7 @@ Xem thêm: `docs/microservices-communication.md` (Redis Pub/Sub vs Kafka),
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 2/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 3/9.
 
 - Bài trước: [learn-nestjs.md](./learn-nestjs.md) — NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe
 - **Bài tiếp: [mongodb.md](./mongodb.md)** — MongoDB chỉ dùng cho audit log

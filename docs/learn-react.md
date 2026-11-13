@@ -10,7 +10,7 @@
 >
 > **Thời gian:** khoảng 6–8 giờ, chia 3–4 buổi.
 
-Bài này là đường đi ngắn, bám sát code. Muốn học React và Next.js theo chiều rộng (20 tuần, auth, thanh toán, Storybook) thì đọc tiếp [roadmap-reactjs.md](./roadmap-reactjs.md) sau khi xong bài này.
+Bài này dạy **đọc** code React có sẵn trong project. Đọc xong, sang [learn-react-build-app.md](./learn-react-build-app.md) để **tự làm** một trang mới từ đầu đến cuối trong chính web này (gọi API, form, lọc, test), rồi [learn-redux-state.md](./learn-redux-state.md) cho Redux và các cách quản lý state. Lộ trình dài theo chiều rộng (Next.js, auth, thanh toán, Storybook): [roadmap-reactjs.md](./roadmap-reactjs.md).
 
 **Phiên bản đang dùng:** React 19.3, Next.js 15.5, TanStack React Query 5, Vitest 3, Testing Library 16. Kết quả lệnh trong bài đã được chạy thử ngày 12/11/2026.
 
@@ -320,9 +320,9 @@ Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScri
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 1/6.
+Bạn đang ở **8. Frontend web và desktop** — bài 1/8.
 
-- **Bài tiếp: [roadmap-reactjs.md](./roadmap-reactjs.md)** — Lộ trình dài React + Next.js qua apps/nihongo-web
+- **Bài tiếp: [learn-react-build-app.md](./learn-react-build-app.md)** — Làm một trang web trọn vẹn (Sổ từ của tôi): React Query, form zod, lọc trên URL, xóa lạc quan, test, chạy trên Chrome
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

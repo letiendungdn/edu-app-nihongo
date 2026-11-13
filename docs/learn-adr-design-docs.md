@@ -166,7 +166,7 @@ Câu hỏi phỏng vấn kèm đáp án (system design, testing, câu hỏi hàn
 Bạn đang ở **2. Kiến trúc hệ thống** — bài 7/7.
 
 - Bài trước: [learn-system-design.md](./learn-system-design.md) — Tư duy system design qua các quyết định của project
-- Xong nhóm này. **Nhóm tiếp: 3. Backend (NestJS)** — bắt đầu bằng [learn-nestjs.md](./learn-nestjs.md) (NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe)
+- Xong nhóm này. **Nhóm tiếp: 3. Backend (NestJS)** — bắt đầu bằng [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) (Làm một tính năng backend trọn vẹn (Sổ từ của tôi): bảng, migration an toàn, module NestJS, chống IDOR, test Postgres thật)
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

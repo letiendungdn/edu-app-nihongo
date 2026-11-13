@@ -29,6 +29,12 @@ export default function HomeScreen() {
         onPress={() => router.push('/vocab')}
       />
       <NavCard
+        icon="📒"
+        title="Sổ từ của tôi"
+        subtitle="Từ bạn tự thêm, đồng bộ với web"
+        onPress={() => router.push('/my-words')}
+      />
+      <NavCard
         icon="🔎"
         title="Tra từ"
         subtitle="Gõ romaji tới đâu gợi ý tới đó, không cần mạng"

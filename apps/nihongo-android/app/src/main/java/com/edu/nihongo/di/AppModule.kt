@@ -1,5 +1,8 @@
 package com.edu.nihongo.di
 
+import com.edu.nihongo.domain.repository.PersonalWordsRepository
+import com.edu.nihongo.data.repository.PersonalWordsRepositoryImpl
+import com.edu.nihongo.data.remote.PersonalWordsApi
 import android.content.Context
 import com.edu.nihongo.BuildConfig
 import com.edu.nihongo.data.NetworkMonitor
@@ -159,6 +162,9 @@ object AppModule {
     @Provides fun provideSubscriptionApi(retrofit: Retrofit): SubscriptionApi =
         retrofit.create(SubscriptionApi::class.java)
 
+    @Provides fun providePersonalWordsApi(retrofit: Retrofit): PersonalWordsApi =
+        retrofit.create(PersonalWordsApi::class.java)
+
     @Provides fun provideAuthApi(retrofit: Retrofit): AuthApi =
         retrofit.create(AuthApi::class.java)
 
@@ -215,6 +221,11 @@ object AppModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+    @Binds
+    abstract fun bindPersonalWordsRepo(
+        impl: PersonalWordsRepositoryImpl,
+    ): PersonalWordsRepository
+
     @Binds
     abstract fun bindVocabRepo(impl: VocabularyRepositoryImpl): VocabularyRepository
 

@@ -1079,6 +1079,7 @@ model User {
   learnerChatMembers      LearnerChatMember[]
   learnerChatMessages     LearnerChatMessage[]     @relation("LearnerChatMessages")
   liveSessions            LiveSession[]
+  personalWords           PersonalWord[]
 
   @@index([role])
 }
@@ -1986,4 +1987,22 @@ model MindMapLevel {
 
   @@unique([kind, level])
   @@index([kind, sortOrder])
+}
+
+/// Sổ từ vựng cá nhân: từ người học tự thêm (ngoài từ vựng của giáo trình).
+/// Bảng thuộc api-gateway (ADR-0010). Bài học: docs/learn-nestjs-build-api.md
+model PersonalWord {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kana      String
+  meaning   String
+  lesson    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Mỗi người không có hai từ trùng cách đọc: luật nằm trong DB, hai request đồng thời cũng không lọt.
+  @@unique([userId, kana])
+  // Truy vấn chính: "từ của tôi, lọc theo bài".
+  @@index([userId, lesson])
 }

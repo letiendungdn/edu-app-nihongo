@@ -314,9 +314,9 @@ Câu hỏi phỏng vấn kèm đáp án cho phần web (React, Next.js, JavaScri
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 2/6.
+Bạn đang ở **8. Frontend web và desktop** — bài 4/8.
 
-- Bài trước: [learn-react.md](./learn-react.md) — React qua web Nihongo: component, state, effect, custom hook, React Query, test
+- Bài trước: [learn-redux-state.md](./learn-redux-state.md) — Quản lý state: Redux Toolkit (trang ôn sổ từ), selector, Thunk, RTK Query, Saga, Zustand, Context — chọn cái nào khi nào
 - **Bài tiếp: [learn-webpack.md](./learn-webpack.md)** — Webpack qua bản build của web: chia chunk, đo và giảm dung lượng
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

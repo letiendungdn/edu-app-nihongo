@@ -65,4 +65,9 @@ export const queryKeys = {
   communityRoom: (id: number) => ['community', 'room', id] as const,
   communityOnline: ['community', 'online'] as const,
   sessionMessages: (sessionId: number) => ['session', sessionId, 'messages'] as const,
+  /** Sổ từ cá nhân: khóa dạng cây — invalidate `all` làm mới mọi danh sách theo bài. */
+  personalWords: {
+    all: ['personal-words'] as const,
+    list: (lesson?: number) => ['personal-words', 'list', lesson ?? 'all'] as const,
+  },
 } as const;

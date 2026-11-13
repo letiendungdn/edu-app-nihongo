@@ -21,6 +21,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ title: 'Nihongo — EDU APP' }} />
         <Stack.Screen name="vocab" options={{ title: 'Từ vựng' }} />
+        <Stack.Screen name="my-words" options={{ title: 'Sổ từ của tôi' }} />
         <Stack.Screen name="srs" options={{ title: 'Ôn tập SRS' }} />
         <Stack.Screen name="login" options={{ title: 'Đăng nhập' }} />
         <Stack.Screen name="sentence-practice" options={{ title: 'Luyện câu AI' }} />

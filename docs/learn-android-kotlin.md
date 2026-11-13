@@ -22,6 +22,8 @@
 
 Câu hỏi phỏng vấn của cả bốn bài nằm ở [interview-android.md](./interview-android.md); Java, OOP và thuật toán ở [interview-java-dsa.md](./interview-java-dsa.md), nên luyện song song từ tuần 1. Danh sách thư viện Jetpack kèm code mẫu: [roadmap-android.md](./roadmap-android.md) (tham khảo).
 
+Muốn tự làm một màn hình mới từ đầu đến cuối trong app này (Retrofit, Hilt, ViewModel, Compose, test): [learn-android-build-app.md](./learn-android-build-app.md).
+
 ## Lộ trình 9 tuần cho cả bốn bài
 
 Code đã sửa xong, nên cách học tốt nhất là **tự sửa lại từng lỗi trên bản cũ rồi so với bản sửa**. Tìm bản cũ của một file: `git log --oneline -- apps/nihongo-android` để tìm commit trước khi sửa, rồi `git show <commit>:apps/nihongo-android/<đường dẫn>`. Mã lỗi L1–L14 tra ở [bảng 14 lỗi](./learn-android-architecture.md#35-bảng-tổng-hợp).
@@ -983,7 +985,7 @@ Text(
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 3/13.
+Bạn đang ở **9. Mobile** — bài 3/16.
 
 - Bài trước: [run-mobile.md](./run-mobile.md) — Chạy các app mobile
 - **Bài tiếp: [learn-android-architecture.md](./learn-android-architecture.md)** — Android 2/4: kiến trúc, Room, offline, mạng, Hilt, native, test, 14 lỗi đã sửa

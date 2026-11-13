@@ -706,7 +706,7 @@ Unit test đều xanh, nhưng ba việc kiểm chứng sau mới bắt được 
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 4/13.
+Bạn đang ở **9. Mobile** — bài 4/16.
 
 - Bài trước: [learn-android-kotlin.md](./learn-android-kotlin.md) — Android 1/4: Kotlin, coroutine/Flow, Compose. Có lộ trình 9 tuần cho cả 4 bài Android
 - **Bài tiếp: [learn-android-fundamentals.md](./learn-android-fundamentals.md)** — Android 3/4: hệ điều hành chạy app thế nào: tiến trình, vòng đời, chạy nền, quyền, bảo mật

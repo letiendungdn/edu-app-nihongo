@@ -635,7 +635,7 @@ Test: `RomajiTrieTest` (6 test: chuẩn hóa, gõ có/không trường âm, th�
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 6/13.
+Bạn đang ở **9. Mobile** — bài 6/16.
 
 - Bài trước: [learn-android-fundamentals.md](./learn-android-fundamentals.md) — Android 3/4: hệ điều hành chạy app thế nào: tiến trình, vòng đời, chạy nền, quyền, bảo mật
 - **Bài tiếp: [learn-android-framework.md](./learn-android-framework.md)** — Android nâng cao: khởi động, system service, Binder, lab AIDL trong app, SELinux, HAL, Android Automotive

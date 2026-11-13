@@ -1,0 +1,16 @@
+.pw-page { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
+.pw-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pw-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 12px; align-items: end; }
+.pw-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+.pw-form input { padding: 8px; border: 1px solid var(--border, #d1d5db); border-radius: 6px; font: inherit; }
+.pw-form input[aria-invalid='true'] { border-color: #dc2626; }
+.pw-form .pw-error { grid-column: 1 / -1; margin: 0; }
+.pw-error { color: #dc2626; }
+.pw-list { list-style: none; margin: 0; padding: 0; }
+.pw-list li { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border, #e5e7eb); }
+.pw-kana { font-size: 1.4rem; min-width: 8ch; }
+.pw-meaning { flex: 1; color: var(--text-muted, #6b7280); }
+.pw-empty, .pw-total { color: var(--text-muted, #6b7280); }
+.pw-quiz { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding: 16px 0; }
+.pw-quiz .pw-kana { font-size: 2.5rem; }
+.pw-quiz-actions { display: flex; gap: 8px; }

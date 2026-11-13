@@ -31,6 +31,7 @@ import { HttpModule } from "./http/http.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { AiModule } from "./ai/ai.module";
 import { PushModule } from "./push/push.module";
+import { PersonalWordsModule } from "./personal-words/personal-words.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { MailSchedulerModule } from "./mail-scheduler/mail-scheduler.module";
 import { EmailTemplateModule } from "./email-template/email-template.module";
@@ -101,6 +102,7 @@ class NoopAuditService {
     HttpModule,
     AiModule,
     PushModule,
+    PersonalWordsModule,
     WebhooksModule,
     MailSchedulerModule,
     EmailTemplateModule,

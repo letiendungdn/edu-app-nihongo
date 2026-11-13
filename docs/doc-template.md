@@ -120,6 +120,9 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 
 **8. Frontend**
 - [x] learn-react.md (mới)
+- [x] learn-react-build-app.md (mới, tính năng Sổ từ trong apps/nihongo-web)
+- [x] learn-nestjs-build-api.md (mới, module personal-words trong api-gateway)
+- [x] learn-redux-state.md (mới)
 - [ ] roadmap-reactjs.md
 - [ ] learn-webpack.md
 - [ ] canvas-tools.md
@@ -137,6 +140,9 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 - [ ] learn-swift-ios.md
 - [ ] learn-flutter.md
 - [x] learn-react-native.md (mới)
+- [x] learn-android-build-app.md (mới, màn mywords trong apps/nihongo-android)
+- [x] learn-react-native-build-app.md (mới, màn my-words trong apps/nihongo-mobile)
+- [x] learn-react-native-native-code.md (mới, code ở examples/rn-native-module)
 - [ ] learn-ml-mobile.md
 - [ ] security-owasp-mobile.md
 - [ ] mobile-qa.md

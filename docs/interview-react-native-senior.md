@@ -29,6 +29,7 @@ Cách dùng: tự trả lời thành tiếng rồi mới bấm mở **Đáp án*
 17. [Lộ trình học AWS cho Mobile Developer](#17-lộ-trình-học-aws-cho-mobile-developer)
 18. [OAuth 2.0 / OIDC trên React Native](#18-oauth-20--oidc-trên-react-native)
 19. [Expo — Kinh nghiệm thực tế](#19-expo--kinh-nghiệm-thực-tế)
+20. [Kiến trúc mới và native module](#20-kiến-trúc-mới-và-native-module)
 
 ---
 
@@ -2261,6 +2262,66 @@ async function checkUpdate() {
 | [interview-devops.md](./interview-devops.md) | Câu hỏi DevOps / infra |
 | [system-design.md](./system-design.md) | Kiến trúc EDU App |
 | [security-owasp-mobile.md](./security-owasp-mobile.md) | OWASP Mobile Top 10 + thực tế trong app |
+
+## 20. Kiến trúc mới và native module
+
+Đáp án dựa trên project mẫu đã build và chạy thật trên Android và iOS: [examples/rn-native-module](../examples/rn-native-module), bài học [learn-react-native-native-code.md](./learn-react-native-native-code.md).
+
+### Q: Bridge cũ và kiến trúc mới (JSI, Turbo Module, Fabric, Codegen) khác nhau thế nào?
+
+<details><summary>Đáp án</summary>
+
+- **Bridge cũ:** mọi lời gọi JS ↔ native được đổi thành JSON, xếp hàng đợi và gửi bất đồng bộ. Chậm khi gọi nhiều, không gọi đồng bộ được, kiểu dữ liệu chỉ kiểm lúc chạy.
+- **JSI:** JS giữ tham chiếu tới đối tượng C++ và gọi thẳng hàm, không qua JSON. Gọi đồng bộ được.
+- **Turbo Module:** native module chạy trên JSI, tạo khi JS dùng lần đầu (lazy) thay vì tạo hết lúc mở app → khởi động nhanh hơn.
+- **Fabric:** bộ vẽ giao diện mới, cũng dựa trên JSI; đo layout đồng bộ, hỗ trợ tính năng concurrent của React.
+- **Codegen:** đọc spec TypeScript và sinh code C++/Java/ObjC++ → sai kiểu hoặc thiếu hàm là **lỗi biên dịch**.
+
+Từ RN 0.82 chỉ còn kiến trúc mới; project mẫu chạy RN 0.88.
+
+</details>
+
+### Q: Kể các bước viết một Turbo Module cho cả Android và iOS.
+
+<details><summary>Đáp án</summary>
+
+1. Viết spec `specs/NativeX.ts`: `interface Spec extends TurboModule`, export `TurboModuleRegistry.getEnforcing<Spec>('NativeX')`.
+2. Thêm `codegenConfig` vào `package.json` (tên thư viện, `jsSrcsDir`, `javaPackageName`, `modulesProvider` cho iOS).
+3. Android: lớp Kotlin kế thừa `NativeXSpec` (Codegen sinh), một `BaseReactPackage`, đăng ký trong `MainApplication` nếu module nằm trong app.
+4. iOS: lớp Objective-C++ kế thừa `NativeXSpecBase`, cài `getTurboModule:`, gọi sang lớp Swift `@objc public` qua header `<App>-Swift.h`; thêm file vào target; `pod install`.
+5. JS: bọc trong hook; test bằng Jest với `jest.mock` theo spec.
+
+Lỗi thật khi làm: đặt tên `NativeDeviceInfo` trùng module lõi của RN → lỗi C++ `redefinition of 'NativeDeviceInfoSpecJSI'`; phải đặt tên riêng có tiền tố.
+
+</details>
+
+### Q: Vì sao Turbo Module trên iOS viết bằng Swift vẫn cần file `.mm`?
+
+<details><summary>Đáp án</summary>
+
+Codegen sinh lớp cơ sở Objective-C++ và đối tượng JSI bằng C++; module phải kế thừa lớp đó và trả về `std::shared_ptr<TurboModule>` trong `getTurboModule:`. Swift không làm trực tiếp được, nên dùng lớp vỏ `.mm` mỏng chuyển lời gọi sang Swift. Bẫy gặp thật: header `<App>-Swift.h` chứa cả `SceneDelegate` (kế thừa lớp React), mà file `.mm` không bật Clang module → phải import `RCTDefaultReactNativeFactoryDelegate.h` trước header Swift.
+
+Expo Modules API cho viết thuần Swift/Kotlin vì Expo tự lo phần C++.
+
+</details>
+
+### Q: Native gửi dữ liệu lên JS nhiều lần (pin thay đổi, BLE nhận gói tin) thì làm thế nào? Tránh rò rỉ ra sao?
+
+<details><summary>Đáp án</summary>
+
+Khai báo `readonly onX: CodegenTypes.EventEmitter<T>` trong spec; Codegen sinh hàm `emitOnX(...)` cho Kotlin và `emitOnX:` cho ObjC++. JS: `const sub = NativeX.onX(cb)` và `sub.remove()` khi xong. Callback thì chỉ gọi được một lần.
+
+Chống rò rỉ phải dọn **hai phía**: JS gỡ subscription, native gỡ listener (BroadcastReceiver, NotificationCenter observer) qua một hàm `stop…` và trong `invalidate()` (RN gọi khi reload hoặc tắt). Bên iOS dùng `__weak self` trong block để không giữ module mãi.
+
+</details>
+
+### Q: Hàm native chạy trên luồng nào? Có được đụng UI không?
+
+<details><summary>Đáp án</summary>
+
+Hàm đồng bộ chạy trên luồng JS; hàm Promise/void chạy trên hàng đợi của module — đều **không** phải main thread. API giao diện (UIKit trên iOS, View trên Android) phải chuyển về main thread (`DispatchQueue.main.async`, `UiThreadUtil.runOnUiThread`). Hàm đồng bộ phải rất nhanh vì nó chặn luồng JS; việc chậm (đọc file, mạng, tính toán) phải trả Promise.
+
+</details>
 
 <!-- nav:start -->
 

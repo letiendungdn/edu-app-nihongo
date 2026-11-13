@@ -193,7 +193,7 @@ Layout: `src/app/admin/(protected)/layout.tsx` wrap `AdminGuard` + `AdminShell`.
 
 ## Đi tiếp
 
-Bạn đang ở **8. Frontend web và desktop** — bài 4/6.
+Bạn đang ở **8. Frontend web và desktop** — bài 6/8.
 
 - Bài trước: [learn-webpack.md](./learn-webpack.md) — Webpack qua bản build của web: chia chunk, đo và giảm dung lượng
 - **Bài tiếp: [learn-ollama-local.md](./learn-ollama-local.md)** — Chạy AI local bằng Ollama

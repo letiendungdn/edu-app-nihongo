@@ -1554,3 +1554,34 @@ export function fetchSentenceFeedback(sentence: string) {
     body: JSON.stringify({ sentence }),
   });
 }
+
+// ─── Sổ từ vựng cá nhân (/api/personal-words) ───────────────
+
+export interface PersonalWord {
+  id: number;
+  kana: string;
+  meaning: string;
+  lesson: number;
+}
+
+export type NewPersonalWord = Omit<PersonalWord, 'id'>;
+
+export interface PersonalWordPage {
+  data: PersonalWord[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function fetchPersonalWords(lesson?: number) {
+  const qs = lesson ? `?lesson=${lesson}&limit=200` : '?limit=200';
+  return apiRequest<PersonalWordPage>(`/personal-words${qs}`);
+}
+
+export function createPersonalWord(data: NewPersonalWord) {
+  return apiRequest<PersonalWord>('/personal-words', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function deletePersonalWord(id: number) {
+  return apiRequest<{ ok: true }>(`/personal-words/${id}`, { method: 'DELETE' });
+}

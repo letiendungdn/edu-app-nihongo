@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Bookmarks
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Search
@@ -76,6 +77,7 @@ fun HomeScreen(
     onKana: () -> Unit,
     onPremium: () -> Unit,
     onSearch: () -> Unit,
+    onMyWords: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle(initialValue = true)
@@ -128,6 +130,16 @@ fun HomeScreen(
             item { NotificationPermissionCard() }
 
             item { SectionLabel("HỌC TẬP") }
+
+            item {
+                NavCard(
+                    title = "Sổ từ của tôi",
+                    subtitle = "Từ bạn tự thêm, đồng bộ với web và app khác",
+                    icon = Icons.Rounded.Bookmarks,
+                    onClick = onMyWords,
+                    badge = "MỚI",
+                )
+            }
 
             item {
                 NavCard(

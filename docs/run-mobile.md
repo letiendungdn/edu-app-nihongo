@@ -218,7 +218,7 @@ Quyền camera/micro đã khai báo trong `Info.plist` (`NSCameraUsageDescriptio
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 2/13.
+Bạn đang ở **9. Mobile** — bài 2/16.
 
 - Bài trước: [mobile-tech-stacks.md](./mobile-tech-stacks.md) — Tech stack từng app mobile
 - **Bài tiếp: [learn-android-kotlin.md](./learn-android-kotlin.md)** — Android 1/4: Kotlin, coroutine/Flow, Compose. Có lộ trình 9 tuần cho cả 4 bài Android

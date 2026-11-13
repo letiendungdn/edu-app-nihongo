@@ -1,5 +1,6 @@
 package com.edu.nihongo.presentation
 
+import com.edu.nihongo.presentation.mywords.PersonalWordsScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -56,6 +57,7 @@ object Routes {
     const val KANA = "kana"
     const val PREMIUM = "premium"
     const val VOCAB_SEARCH = "vocab-search"
+    const val MY_WORDS = "my-words"
 
     fun chat(roomId: Long) = "community/$roomId"
     fun reading(id: Long) = "reading/$id"
@@ -95,6 +97,13 @@ fun NihongoApp() {
                 onKana = { navController.navigate(Routes.KANA) },
                 onPremium = { navController.navigate(Routes.PREMIUM) },
                 onSearch = { navController.navigate(Routes.VOCAB_SEARCH) },
+                onMyWords = { navController.navigate(Routes.MY_WORDS) },
+            )
+        }
+        composable(Routes.MY_WORDS) {
+            PersonalWordsScreen(
+                onBack = { navController.popBackStack() },
+                onLogin = { navController.navigate(Routes.LOGIN) },
             )
         }
         composable(Routes.VOCAB_SEARCH) {

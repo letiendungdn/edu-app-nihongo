@@ -558,7 +558,7 @@ Xong mục 8 là nói được trọn vòng: thiết kế, viết, đo, sửa, d
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 5/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 6/9.
 
 - Bài trước: [learn-kafka.md](./learn-kafka.md) — Kafka: vì sao dùng, producer/consumer
 - **Bài tiếp: [learn-reliability-patterns.md](./learn-reliability-patterns.md)** — Outbox, timeout, retry, consumer idempotent, circuit breaker

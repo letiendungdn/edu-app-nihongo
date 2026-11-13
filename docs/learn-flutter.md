@@ -524,7 +524,7 @@ Muốn thêm câu hỏi: [interview-mobile.md](./interview-mobile.md).
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 9/13.
+Bạn đang ở **9. Mobile** — bài 10/16.
 
 - Bài trước: [learn-swift-ios.md](./learn-swift-ios.md) — Swift/SwiftUI qua nihongo-ios
 - **Bài tiếp: [learn-react-native.md](./learn-react-native.md)** — React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test

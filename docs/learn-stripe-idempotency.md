@@ -416,7 +416,7 @@ Câu hỏi phỏng vấn kèm đáp án về bảo mật API, thanh toán chốn
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 7/8.
+Bạn đang ở **3. Backend (NestJS)** — bài 8/9.
 
 - Bài trước: [learn-reliability-patterns.md](./learn-reliability-patterns.md) — Outbox, timeout, retry, consumer idempotent, circuit breaker
 - **Bài tiếp: [learn-security-backend.md](./learn-security-backend.md)** — Bảo mật API theo OWASP API Top 10

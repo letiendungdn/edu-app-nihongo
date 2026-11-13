@@ -493,9 +493,9 @@ Câu hỏi phỏng vấn kèm đáp án cho Senior Mobile: [interview-mobile.md]
 
 ## Đi tiếp
 
-Bạn đang ở **9. Mobile** — bài 11/13.
+Bạn đang ở **9. Mobile** — bài 14/16.
 
-- Bài trước: [learn-react-native.md](./learn-react-native.md) — React Native qua nihongo-mobile: màn hình, điều hướng, SQLite offline, test
+- Bài trước: [learn-react-native-native-code.md](./learn-react-native-native-code.md) — React Native CLI + code native: tự viết Turbo Module bằng Kotlin và Swift, chạy thật trên Android/iOS
 - **Bài tiếp: [security-owasp-mobile.md](./security-owasp-mobile.md)** — Bảo mật mobile theo OWASP
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
