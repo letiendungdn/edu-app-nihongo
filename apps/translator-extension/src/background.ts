@@ -55,7 +55,7 @@ Rules:
 }
 
 chrome.runtime.onMessage.addListener(
-  (message: BgMessage, _sender, sendResponse: (r: BgResponse) => void) => {
+  (message: BgMessage, _sender: chrome.runtime.MessageSender, sendResponse: (r: BgResponse) => void) => {
     if (message.type !== 'TRANSLATE') return false;
 
     translate(message.text)
