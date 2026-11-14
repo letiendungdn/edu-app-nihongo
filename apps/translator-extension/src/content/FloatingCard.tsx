@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BgResponse, TranslationResult } from '../types';
 import { speakText, stopSpeech } from '../utils/speak';
 
@@ -93,11 +93,10 @@ export default function FloatingCard({ text, anchorX, anchorY, onClose }: Props)
           <div className="tn-langs">
             {(['vi', 'en', 'ja'] as const).map((lang) => {
               const cfg   = LANG[lang];
-              const entry = result[lang];
-              const mainText   = lang === 'ja' ? result.ja.text : entry.text;
+              const mainText   = result[lang].text;
               const subText    = lang === 'ja'
                 ? `${result.ja.kana}　${result.ja.romaji}`
-                : entry.pronunciation;
+                : result[lang].pronunciation;
               const isSource = result.detected === lang;
 
               return (
