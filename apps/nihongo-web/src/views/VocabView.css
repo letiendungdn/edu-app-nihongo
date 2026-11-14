@@ -2265,8 +2265,10 @@
 }
 
 .vocab-view--study .vocab-body-layout {
+  position: relative;
   max-width: 1320px;
   gap: 1.25rem;
+  align-items: flex-start;
 }
 
 .vocab-view--study .vocab-main-layout {
@@ -2415,8 +2417,22 @@
   padding: 0.5rem 0.85rem;
 }
 
+/* Cột danh sách cao bằng cột chính; danh sách từ cuộn bên trong */
 .vocab-view--study .vocab-word-list {
-  max-height: min(640px, calc(100vh - 7rem));
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 280px;
+  max-height: none;
+  overflow: hidden;
+}
+
+.vocab-view--study .vocab-body-layout > .vocab-main-layout {
+  margin-left: calc(280px + 1.25rem);
+  width: auto;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Mặt sau: bớt khoảng trống trên (chỉ chừa chỗ cho nút nghe ở góc) */
@@ -2433,11 +2449,21 @@
 
 /* Màn hẹp: thẻ học lên trước, danh sách từ xuống dưới và thấp lại */
 @media (max-width: 800px) {
+  .vocab-view--study .vocab-body-layout {
+    position: static;
+  }
+
   .vocab-view--study .vocab-body-layout > .vocab-main-layout {
     order: -1;
+    margin-left: 0;
+    width: 100%;
   }
 
   .vocab-view--study .vocab-word-list {
+    position: static;
+    top: auto;
+    bottom: auto;
+    left: auto;
     width: 100%;
     max-height: 45vh;
   }

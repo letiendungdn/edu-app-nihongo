@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech, playAudio } from '../utils/speech';
-import { ExampleEnglish, FuriganaWord, JmdictAttribution, VocabExtraMeanings } from '../components/VocabReading';
+import { ExampleEnglish, FuriganaWord, VocabExtraMeanings } from '../components/VocabReading';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
@@ -653,7 +653,6 @@ export default function VocabView({
               </div>
             </section>
           ) : null}
-          {currentVocab.meaningEnSource === 'jmdict' ? <JmdictAttribution /> : null}
           </>
           ) : (
             <div className="empty-state">
