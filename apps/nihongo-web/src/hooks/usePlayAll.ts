@@ -3,6 +3,8 @@ import { playAudioSequence, stopAudio, type SpeechSequenceItem } from '../utils/
 
 interface PlayAllOptions {
   onItemIndex?: (index: number) => void;
+  /** Gọi khi hết playlist hoặc bị dừng. */
+  onComplete?: () => void;
   lang?: string;
   rate?: number;
   pauseMs?: number;
@@ -25,26 +27,29 @@ export function usePlayAll(): {
   }, []);
 
   const startPlayAll = useCallback(
-    async (texts: Array<string | SpeechSequenceItem>, { onItemIndex, lang, rate, pauseMs }: PlayAllOptions = {}) => {
+    async (
+      texts: Array<string | SpeechSequenceItem>,
+      { onItemIndex, onComplete, lang, rate, pauseMs }: PlayAllOptions = {},
+    ) => {
       const items = texts?.filter(Boolean) ?? [];
       if (!items.length || playingRef.current) return;
 
       playingRef.current = true;
       setIsPlayingAll(true);
 
+      const finish = () => {
+        playingRef.current = false;
+        setIsPlayingAll(false);
+        onComplete?.();
+      };
+
       await playAudioSequence(items, {
         lang,
         rate,
         pauseMs,
         onItem: (index) => onItemIndex?.(index),
-        onEnd: () => {
-          playingRef.current = false;
-          setIsPlayingAll(false);
-        },
-        onStop: () => {
-          playingRef.current = false;
-          setIsPlayingAll(false);
-        },
+        onEnd: finish,
+        onStop: finish,
       });
     },
     [],

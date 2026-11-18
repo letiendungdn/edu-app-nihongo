@@ -19,7 +19,13 @@ import AlsoInBooks from '../components/AlsoInBooks';
 import KanjiVocabSidepanel from '../components/KanjiVocabSidepanel';
 import { KANJI_BOOK_LABELS } from './KanjiLessonPickerView';
 import { toLocalImageUrl } from '@edu/vocab-images';
-import { getKanjiSpeakItems, splitKanjiReadingField, type KanjiReadingToken } from '../utils/kanjiSpeak';
+import {
+  getKanjiSpeakClips,
+  getKanjiSpeakItems,
+  splitKanjiReadingField,
+  type KanjiReadingToken,
+  type KanjiSpokenMark,
+} from '../utils/kanjiSpeak';
 import type { KanjiEntry, KanjiLesson } from '../types/api';
 import './VocabView.css';
 import './KanjiView.css';
@@ -41,9 +47,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingKanjiId, setPendingKanjiId] = useState<number | null>(null);
   const [cardAudioPlaying, setCardAudioPlaying] = useState(false);
-  const [spokenMark, setSpokenMark] = useState<
-    { kind: 'reading'; tone: 'on' | 'kun'; index: number } | { kind: 'vocab'; id: number } | null
-  >(null);
+  const [spokenMark, setSpokenMark] = useState<KanjiSpokenMark | null>(null);
   const cardAudioGen = useRef(0);
 
   const router = useRouter();
@@ -231,12 +235,17 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
     void playAudioSequence(getKanjiSpeakItems(currentKanji), { pauseMs: 550 });
   };
 
+  const handleStopPlayAll = () => {
+    stopPlayAll();
+    setSpokenMark(null);
+  };
+
   const handlePlayAll = () => {
     silenceCardAudio();
     const playlist = lessonKanji.flatMap((kanji, kanjiIndex) =>
-      getKanjiSpeakItems(kanji).map((text) => ({ text, kanjiIndex })),
+      getKanjiSpeakClips(kanji).map((clip) => ({ ...clip, kanjiIndex })),
     );
-    startPlayAll(
+    void startPlayAll(
       playlist.map((item) => item.text),
       {
         pauseMs: 550,
@@ -244,7 +253,9 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
           const item = playlist[index];
           if (!item) return;
           setCurrentIndex(item.kanjiIndex);
+          setSpokenMark(item.mark);
         },
+        onComplete: () => setSpokenMark(null),
       },
     );
   };
@@ -267,22 +278,10 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
 
   const playCardAudio = () => {
     if (!currentKanji) return;
-    const marks: Array<
-      { kind: 'reading'; tone: 'on' | 'kun'; index: number } | { kind: 'vocab'; id: number }
-    > = [];
-    const clips: { text: string; cue: number }[] = [];
-    const add = (text: string, mark: (typeof marks)[number]) => {
-      const value = text.replace(/-/g, '').trim();
-      if (!value) return;
-      clips.push({ text: value, cue: marks.length });
-      marks.push(mark);
-    };
-    onyomi.forEach((token, index) => add(token.speak, { kind: 'reading', tone: 'on', index }));
-    kunyomi.forEach((token, index) => add(token.speak, { kind: 'reading', tone: 'kun', index }));
-    for (const vocab of currentKanji.vocabularies ?? []) {
-      add(vocab.reading, { kind: 'vocab', id: vocab.id });
-    }
-    if (!clips.length) return;
+    const queue = getKanjiSpeakClips(currentKanji);
+    if (!queue.length) return;
+    const clips = queue.map((clip, cue) => ({ text: clip.text, cue }));
+    const marks = queue.map((clip) => clip.mark);
     const gen = ++cardAudioGen.current;
     stopPlayAll();
     setCardAudioPlaying(true);
@@ -531,7 +530,7 @@ export default function KanjiView({ initialLessonNumber }: { initialLessonNumber
                   ← Trước
                 </button>
                 <div className="kanji-ll__play-group">
-                  <PlayAllButton isPlaying={isPlayingAll} onPlay={handlePlayAll} onStop={stopPlayAll} />
+                  <PlayAllButton isPlaying={isPlayingAll} onPlay={handlePlayAll} onStop={handleStopPlayAll} />
                   <button
                     type="button"
                     className={`kanji-ll__vocab-play${cardAudioPlaying ? ' kanji-ll__vocab-play--on' : ''}`}

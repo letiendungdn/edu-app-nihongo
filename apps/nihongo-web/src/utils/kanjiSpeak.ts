@@ -2,12 +2,22 @@ type KanjiSpeakSource = {
   character?: string;
   onyomi?: string | null;
   kunyomi?: string | null;
-  vocabularies?: Array<{ reading?: string | null }>;
+  vocabularies?: Array<{ id?: number; reading?: string | null }>;
 };
 
 export type KanjiReadingToken = {
   display: string;
   speak: string;
+};
+
+/** Đánh dấu mục đang đọc để tô on/kun/từ vựng trên thẻ kanji. */
+export type KanjiSpokenMark =
+  | { kind: 'reading'; tone: 'on' | 'kun'; index: number }
+  | { kind: 'vocab'; id: number };
+
+export type KanjiSpeakClip = {
+  text: string;
+  mark: KanjiSpokenMark | null;
 };
 
 function speakForm(display: string): string {
@@ -30,23 +40,42 @@ export function getKanjiReadingGroups(kanji: KanjiSpeakSource): KanjiReadingToke
   );
 }
 
+/**
+ * Hàng đợi phát âm một chữ: on → kun → từ vựng, kèm mark để UI tô đúng chỗ đang đọc
+ * (giống lúc vào trang / bấm «Từ vựng»).
+ */
+export function getKanjiSpeakClips(kanji: KanjiSpeakSource): KanjiSpeakClip[] {
+  const clips: KanjiSpeakClip[] = [];
+  const add = (text: string | null | undefined, mark: KanjiSpokenMark | null) => {
+    const value = speakForm(text ?? '');
+    if (!value) return;
+    clips.push({ text: value, mark });
+  };
+
+  splitKanjiReadingField(kanji.onyomi).forEach((token, index) =>
+    add(token.speak, { kind: 'reading', tone: 'on', index }),
+  );
+  splitKanjiReadingField(kanji.kunyomi).forEach((token, index) =>
+    add(token.speak, { kind: 'reading', tone: 'kun', index }),
+  );
+  for (const vocab of kanji.vocabularies ?? []) {
+    if (vocab.id == null) {
+      add(vocab.reading, null);
+      continue;
+    }
+    add(vocab.reading, { kind: 'vocab', id: vocab.id });
+  }
+  if (!clips.length && kanji.character) add(kanji.character, null);
+  return clips;
+}
+
 export function getKanjiSpeakItems(kanji: KanjiSpeakSource): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-
-  const add = (text: string) => {
-    const value = text.trim();
-    if (!value || seen.has(value)) return;
-    seen.add(value);
-    out.push(value);
-  };
-
-  for (const group of getKanjiReadingGroups(kanji)) {
-    for (const token of group) add(token.speak);
+  for (const clip of getKanjiSpeakClips(kanji)) {
+    if (seen.has(clip.text)) continue;
+    seen.add(clip.text);
+    out.push(clip.text);
   }
-  for (const vocab of kanji.vocabularies ?? []) {
-    if (vocab.reading) add(speakForm(vocab.reading));
-  }
-  if (!out.length && kanji.character) add(kanji.character);
   return out;
 }
