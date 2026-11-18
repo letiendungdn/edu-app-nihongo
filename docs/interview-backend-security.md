@@ -44,17 +44,36 @@ Không (OWASP API5). Ai cũng gọi thẳng API bằng curl được. Phải ki�
 
 </details>
 
-### 4. 🟡 Bạn thiết kế access token và refresh token thế nào?
+### 4. 🟡 Stateful và Stateless trong authentication khác gì? Project dùng kiểu nào?
+
+<details><summary>Đáp án</summary>
+
+**Stateful (session):** server giữ phiên (memory / Redis / DB). Client chỉ cầm session id (thường cookie). Đăng xuất = xóa session → hết hiệu lực ngay. Scale ngang cần sticky session hoặc store dùng chung.
+
+**Stateless (JWT access):** server không nhớ phiên; mỗi request mang token, server chỉ **verify chữ ký + `exp`**. Scale ngang dễ. Đổi: thu hồi tức thì khó — token còn hạn vẫn dùng được trừ khi có blacklist / TTL rất ngắn.
+
+**Lai (thường gặp production):** access token JWT ngắn hạn (stateless) + refresh token lưu server (stateful) để logout / đổi mật khẩu / phát hiện reuse vẫn thu hồi được.
+
+**Trong project:** lai.
+- Access JWT ~15 phút — `JwtAuthGuard` / Passport JWT verify bằng `JWT_SECRET`, không tra session từng request.
+- Refresh token ~7 ngày — bảng `RefreshToken` (hash, `revoked` / `revokedAt`, rotation); cookie HttpOnly `refresh_token`; `POST /api/auth/refresh` và logout revoke trong DB ([auth.service.ts](../services/api-gateway/src/auth/auth.service.ts)).
+- Keycloak OIDC: verify JWT Keycloak rồi đổi sang cặp token nội bộ cùng mô hình trên.
+
+Trả lời phỏng vấn: *"Access của em stateless để API scale; refresh stateful trong Postgres để revoke được — không thuần session cũng không thuần JWT vô hạn."*
+
+</details>
+
+### 5. 🟡 Bạn thiết kế access token và refresh token thế nào?
 
 <details><summary>Đáp án</summary>
 
 Access token ngắn (15 phút), gửi qua header `Authorization`. Refresh token dài hơn, lưu **hash** trong DB, xoay vòng mỗi lần dùng, thu hồi khi đăng xuất hoặc đổi mật khẩu. Ký bằng thuật toán cố định, kiểm `exp`. Mật khẩu hash bằng bcrypt/argon2. Đăng nhập sai trả thông báo chung, không lộ email nào đã đăng ký.
 
-**Trong project:** web giữ access token trong localStorage, refresh token trong cookie HttpOnly `Path=/api/auth` 7 ngày (JavaScript không đọc được → XSS không lấy được refresh token). Nhiều request cùng gặp 401 thì chỉ gọi refresh một lần (`refreshInFlight` trong [api-client.ts](../apps/nihongo-web/src/lib/api-client.ts)). Bảng `RefreshToken` và `PasswordResetToken` lưu hash.
+**Trong project:** web giữ access token trong localStorage, refresh token trong cookie HttpOnly `Path=/api/auth` 7 ngày (JavaScript không đọc được → XSS không lấy được refresh token). Nhiều request cùng gặp 401 thì chỉ gọi refresh một lần (`refreshInFlight` trong [api-client.ts](../apps/nihongo-web/src/lib/api-client.ts)). Bảng `RefreshToken` và `PasswordResetToken` lưu hash. Xem thêm mục 4 (stateful vs stateless).
 
 </details>
 
-### 5. 🟡 Quên đặt `JWT_SECRET` ở production thì sao?
+### 6. 🟡 Quên đặt `JWT_SECRET` ở production thì sao?
 
 <details><summary>Đáp án</summary>
 
@@ -64,7 +83,7 @@ Trước đây code có fallback `'change-me-in-production'` — repo công khai
 
 </details>
 
-### 6. 🟡 CORS có phải là cơ chế bảo mật không?
+### 7. 🟡 CORS có phải là cơ chế bảo mật không?
 
 <details><summary>Đáp án</summary>
 
@@ -74,7 +93,7 @@ CORS chỉ quyết định **trình duyệt** có cho trang ở origin khác đ�
 
 </details>
 
-### 7. 🟡 Kể các cách chặn "tiêu tốn tài nguyên không giới hạn".
+### 8. 🟡 Kể các cách chặn "tiêu tốn tài nguyên không giới hạn".
 
 <details><summary>Đáp án</summary>
 
@@ -89,7 +108,7 @@ OWASP API4: kẻ tấn công không cần hack, chỉ cần làm server tốn t�
 
 </details>
 
-### 8. 🟡 Prisma có chống SQL injection không?
+### 9. 🟡 Prisma có chống SQL injection không?
 
 <details><summary>Đáp án</summary>
 
@@ -99,7 +118,7 @@ Có với query builder và `` $queryRaw`…${x}` `` dạng template tag (Prisma
 
 </details>
 
-### 9. 🔴 Upload file và SSRF: rủi ro và cách chặn?
+### 10. 🔴 Upload file và SSRF: rủi ro và cách chặn?
 
 <details><summary>Đáp án</summary>
 
@@ -110,7 +129,7 @@ Có với query builder và `` $queryRaw`…${x}` `` dạng template tag (Prisma
 
 </details>
 
-### 10. 🔴 Lộ secret trong một commit đã đẩy lên: làm gì?
+### 11. 🔴 Lộ secret trong một commit đã đẩy lên: làm gì?
 
 <details><summary>Đáp án</summary>
 
@@ -123,7 +142,7 @@ Có với query builder và `` $queryRaw`…${x}` `` dạng template tag (Prisma
 
 </details>
 
-### 11. 🟡 Vì sao `npm audit` sạch mà image vẫn có lỗ hổng?
+### 12. 🟡 Vì sao `npm audit` sạch mà image vẫn có lỗ hổng?
 
 <details><summary>Đáp án</summary>
 
@@ -137,7 +156,7 @@ Hai nguyên nhân: lỗ hổng nằm trong **image gốc** (npm CLI đi kèm `no
 
 ## B. Thanh toán và chống trùng
 
-### 12. 🟢 Idempotent là gì? Vì sao webhook bắt buộc phải idempotent?
+### 13. 🟢 Idempotent là gì? Vì sao webhook bắt buộc phải idempotent?
 
 <details><summary>Đáp án</summary>
 
@@ -145,7 +164,7 @@ Gọi một lần hay nhiều lần cho cùng kết quả. Stripe gửi webhook 
 
 </details>
 
-### 13. 🟡 Mô tả luồng xử lý webhook Stripe trong project.
+### 14. 🟡 Mô tả luồng xử lý webhook Stripe trong project.
 
 <details><summary>Đáp án</summary>
 
@@ -160,7 +179,7 @@ Không bao giờ bỏ kiểm chữ ký ở môi trường dev — dùng Stripe C
 
 </details>
 
-### 14. 🟡 Idempotency key khi *ta* gọi Stripe dùng để làm gì?
+### 15. 🟡 Idempotency key khi *ta* gọi Stripe dùng để làm gì?
 
 <details><summary>Đáp án</summary>
 
@@ -170,7 +189,7 @@ Cùng ý tưởng cho API của mình: client gửi header `Idempotency-Key`, se
 
 </details>
 
-### 15. 🔴 Đặt buổi học có thu tiền trải qua nhiều hệ thống. Làm sao nhất quán khi không có transaction chung?
+### 16. 🔴 Đặt buổi học có thu tiền trải qua nhiều hệ thống. Làm sao nhất quán khi không có transaction chung?
 
 <details><summary>Đáp án</summary>
 
@@ -184,7 +203,7 @@ Saga: chia thành các bước, mỗi bước có **hành động bù**. Giữ s
 
 ## C. Độ tin cậy khi có lỗi
 
-### 16. 🟡 Dual write là gì? Transactional outbox sửa nó thế nào?
+### 17. 🟡 Dual write là gì? Transactional outbox sửa nó thế nào?
 
 <details><summary>Đáp án</summary>
 
@@ -196,7 +215,7 @@ Outbox: trong **cùng transaction** với dữ liệu nghiệp vụ, chèn một
 
 </details>
 
-### 17. 🟡 Consumer idempotent làm thế nào?
+### 18. 🟡 Consumer idempotent làm thế nào?
 
 <details><summary>Đáp án</summary>
 
@@ -206,7 +225,7 @@ Bảng `ProcessedEvent(eventId UNIQUE)`: trong cùng một transaction, chèn d�
 
 </details>
 
-### 18. 🟡 Vì sao mọi lời gọi qua mạng phải có timeout?
+### 19. 🟡 Vì sao mọi lời gọi qua mạng phải có timeout?
 
 <details><summary>Đáp án</summary>
 
@@ -216,7 +235,7 @@ Service phía sau treo (deadlock DB, GC dài) thì request phía trước treo t
 
 </details>
 
-### 19. 🟡 Retry đúng cách thế nào? Khi nào không được retry?
+### 20. 🟡 Retry đúng cách thế nào? Khi nào không được retry?
 
 <details><summary>Đáp án</summary>
 
@@ -228,7 +247,7 @@ Chỉ retry thao tác idempotent. Retry `SubmitExam` không có khóa chống tr
 
 </details>
 
-### 20. 🔴 Circuit breaker hoạt động thế nào? Khác timeout ở đâu?
+### 21. 🔴 Circuit breaker hoạt động thế nào? Khác timeout ở đâu?
 
 <details><summary>Đáp án</summary>
 
@@ -238,7 +257,7 @@ Timeout giới hạn **một** lời gọi. Circuit breaker nhìn **nhiều** l�
 
 </details>
 
-### 21. 🔴 Graceful degradation: Redis, Kafka hoặc MongoDB chết thì app nên ra sao?
+### 22. 🔴 Graceful degradation: Redis, Kafka hoặc MongoDB chết thì app nên ra sao?
 
 <details><summary>Đáp án</summary>
 
@@ -251,7 +270,7 @@ Phân biệt phụ thuộc **bắt buộc** và **phụ**. Phụ (cache, audit l
 
 </details>
 
-### 22. 🟡 Graceful shutdown là gì? Vì sao cần trên Kubernetes?
+### 23. 🟡 Graceful shutdown là gì? Vì sao cần trên Kubernetes?
 
 <details><summary>Đáp án</summary>
 

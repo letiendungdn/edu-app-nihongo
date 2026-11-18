@@ -18,6 +18,11 @@
     // decode-uri-component <0.5.1 qua expo-router > query-string@7 (^0.2.2).
     // Bản vá 0.5.1 là ESM-only; ép override làm hỏng require() của Expo Router.
     // Gỡ khi query-string phụ thuộc decode-uri-component >= 0.5.1.
-    "GHSA-qr28-fpjm-wq7f"
+    "GHSA-qr28-fpjm-wq7f",
+    // picomatch ReDoS (GHSA-fc5q-39xc-vjpf / CVE-2026-112366): mọi bản ≤4.0.7
+    // (gồm latest 4.0.7) đều dính; chưa có patched version trên npm. Đi qua
+    // micromatch/tinyglobby/jest-util/metro/expo/workbox (next-pwa). Gỡ khi
+    // picomatch phát hành bản vá và thêm override lên phiên bản đó.
+    "GHSA-fc5q-39xc-vjpf"
   ]
 }

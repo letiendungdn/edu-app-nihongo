@@ -112,7 +112,18 @@ if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process
 }
 ```
 
-### 3.2. Checklist token
+### 3.2. Stateful vs Stateless (auth)
+
+| | Stateful (session) | Stateless (JWT access) |
+|---|---|---|
+| Server nhớ gì? | Session: userId, role, hết hạn… | Không nhớ phiên — chỉ verify chữ ký + `exp` |
+| Client cầm gì? | Session id (cookie) | `Authorization: Bearer <access_token>` |
+| Scale ngang | Cần sticky session hoặc Redis/DB dùng chung | Dễ — mọi instance cùng `JWT_SECRET` / public key |
+| Thu hồi | Xóa session → hết ngay | Token còn hạn vẫn dùng được (cần blacklist hoặc TTL ngắn + refresh) |
+
+**Project dùng kiểu lai:** access JWT ~15 phút (stateless, `JwtAuthGuard`) + refresh ~7 ngày lưu hash trong bảng `RefreshToken` (stateful: rotation, logout revoke). Cookie HttpOnly `refresh_token` chỉ gửi tới `/api/auth`. Ôn phỏng vấn: [interview-backend-security.md](./interview-backend-security.md) mục 4.
+
+### 3.3. Checklist token
 
 ```
 □ Access token ngắn (15 phút); refresh token dài, lưu hash trong DB (project có bảng RefreshToken), xoay vòng khi dùng

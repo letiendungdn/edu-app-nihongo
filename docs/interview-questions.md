@@ -312,6 +312,9 @@ Câu hỏi theo JD backend NestJS (RxJS, MQTT, Kafka, view/materialized view, Fl
 Q: gRPC khác REST ở điểm gì?
 A: Binary protocol (Protobuf) thay vì JSON, strongly typed contract, bi-directional streaming, tốt cho internal service-to-service. Project dùng gRPC cho content/exam service vì high-frequency internal calls.
 
+Q: Stateful vs Stateless trong authentication?
+A: Stateful = server giữ session (cookie session id); logout xóa session là hết ngay, scale cần store chung. Stateless = JWT access, server chỉ verify chữ ký/exp, không nhớ phiên. Project dùng lai: access JWT stateless + refresh token stateful trong bảng RefreshToken (revoke/rotation). Chi tiết: interview-backend-security.md mục 4.
+
 Q: JWT access token và refresh token khác gì?
 A: Access token short-lived (15m), stateless, verify bằng secret. Refresh token long-lived (7d), stateful (lưu DB), dùng 1 lần để lấy access token mới (rotation). Nếu refresh token bị steal → revoke trong DB.
 
