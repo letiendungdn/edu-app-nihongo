@@ -93,6 +93,13 @@ export function fetchVocabularies(lessonNumber: number) {
   );
 }
 
+/** Tải toàn bộ từ vựng công khai, qua từng trang API để không bỏ sót dữ liệu. */
+export function fetchAllVocabularies() {
+  return fetchPaginatedAll<Vocabulary>((page, limit) =>
+    `/vocabularies?page=${page}&limit=${limit}`,
+  );
+}
+
 /** Feature flag đang bật cho người xem (gửi token nếu có để nhận cờ theo vai trò). */
 export async function fetchFeatureFlags(token?: string | null): Promise<string[]> {
   const res = await apiRequest<{ enabled: string[] }>('/feature-flags', { token: token ?? undefined });

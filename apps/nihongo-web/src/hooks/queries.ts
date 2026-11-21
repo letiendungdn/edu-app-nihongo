@@ -39,6 +39,7 @@ import {
   fetchGrammarCountByJlpt,
   fetchKatakanaVocabularies,
   fetchVocabulariesRange,
+  fetchAllVocabularies,
   fetchListeningPlaylist,
 } from '../api';
 import type { AdminPaymentsFilters } from '../api';
@@ -191,6 +192,15 @@ export function useVocabRangeQuery(
     queryKey: queryKeys.vocabRange(from, to),
     queryFn: () => fetchVocabulariesRange(from, to),
     enabled: enabled && from > 0 && to >= from,
+    staleTime: STALE_5M,
+  });
+}
+
+/** Danh mục đầy đủ phục vụ các công cụ học không gắn với một bài cụ thể. */
+export function useAllVocabulariesQuery() {
+  return useQuery({
+    queryKey: queryKeys.vocab.allLibrary,
+    queryFn: fetchAllVocabularies,
     staleTime: STALE_5M,
   });
 }

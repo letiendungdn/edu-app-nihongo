@@ -36,6 +36,7 @@ export const NAV_GROUPS = [
     label: 'Phát âm',
     items: [
       { href: '/pronunciation',       icon: '音', label: 'Luyện phát âm' },
+      { href: '/mora',                icon: '拍', label: 'Tách nhịp mora' },
       { href: '/pronunciation-rules', icon: '則', label: 'Quy tắc phát âm' },
       { href: '/tts',                 icon: '声', label: 'Đọc văn bản' },
       { href: '/stt',                 icon: '録', label: 'Ghi âm → chữ' },

@@ -1,0 +1,34 @@
+.mora-view { display: flex; flex-direction: column; gap: 1.5rem; max-width: 1120px; padding-bottom: 3rem; }
+.mora-view-header { text-align: center; }
+.mora-view-header p, .mora-analyzer-heading p, .mora-database-heading p, .mora-placeholder { color: var(--text-secondary); }
+.mora-analyzer, .mora-database { padding: 1.35rem; }
+.mora-analyzer-heading, .mora-database-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.mora-analyzer h3, .mora-database h3 { margin: 0; color: var(--text-primary); }
+.mora-analyzer-heading p, .mora-database-heading p { margin: 0.35rem 0 0; font-size: 0.9rem; }
+.mora-analyzer label { display: block; margin-top: 1rem; color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; }
+.mora-text-input, .mora-search { border: 1px solid var(--border-color, rgba(128, 128, 128, 0.35)); border-radius: 0.6rem; background: var(--surface-color-light); color: var(--text-primary); }
+.mora-text-input { box-sizing: border-box; width: 100%; margin-top: 0.35rem; padding: 0.7rem 0.85rem; font-size: 1.5rem; }
+.mora-search { width: min(100%, 21rem); padding: 0.65rem 0.75rem; }
+.mora-beats { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.mora-beat { position: relative; display: grid; min-width: 5rem; min-height: 5.5rem; place-items: center; align-content: center; gap: 0.15rem; padding: 0.6rem; border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent); border-radius: 0.75rem; background: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color)); }
+.mora-beat-number { position: absolute; top: 0.3rem; left: 0.45rem; color: var(--text-secondary); font-size: 0.7rem; font-weight: 700; }
+.mora-beat-character { color: var(--text-primary); font-size: 1.75rem; line-height: 1; }
+.mora-beat-kind { color: var(--text-secondary); font-size: 0.68rem; text-align: center; }
+.mora-beat--sokuon { border-style: dashed; border-color: #f97316; background: color-mix(in srgb, #f97316 10%, var(--surface-color)); }
+.mora-beat--syllabic-n { border-color: #0ea5e9; background: color-mix(in srgb, #0ea5e9 10%, var(--surface-color)); }
+.mora-beat--long-vowel { border-color: #8b5cf6; background: color-mix(in srgb, #8b5cf6 10%, var(--surface-color)); }
+.mora-result-summary { margin: 0.85rem 0 0; color: var(--text-primary); }
+.mora-level-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.1rem 0 0.75rem; }
+.mora-level-tabs button { border: 1px solid var(--border-color, rgba(128, 128, 128, 0.35)); border-radius: 999px; background: transparent; color: var(--text-secondary); padding: 0.4rem 0.85rem; cursor: pointer; font-weight: 700; }
+.mora-level-tabs button.active { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
+.mora-match-count { margin: 0 0 0.55rem; color: var(--text-secondary); font-size: 0.85rem; }
+.mora-word-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.55rem; }
+.mora-word { position: relative; display: grid; grid-template-columns: auto 1fr; column-gap: 0.45rem; align-items: baseline; min-height: 4.2rem; padding: 0.55rem 2.7rem 0.55rem 0.7rem; border: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent); border-radius: 0.6rem; background: var(--surface-color-light); color: var(--text-primary); cursor: pointer; text-align: left; }
+.mora-word:hover { border-color: var(--primary-color); }
+.mora-word-kana { font-size: 1.1rem; font-weight: 700; }
+.mora-word-kanji { color: var(--text-secondary); font-size: 0.8rem; }
+.mora-word-meaning { grid-column: 1 / -1; overflow: hidden; color: var(--text-secondary); font-size: 0.74rem; text-overflow: ellipsis; white-space: nowrap; }
+.mora-word-level { position: absolute; top: 0.55rem; right: 0.65rem; color: var(--primary-color); font-size: 0.7rem; font-weight: 800; }
+.mora-pagination { display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-top: 1rem; color: var(--text-secondary); font-size: 0.85rem; }
+.mora-pagination .btn { padding: 0.4rem 0.7rem; }
+@media (max-width: 640px) { .mora-analyzer-heading, .mora-database-heading { flex-direction: column; } .mora-search { width: 100%; box-sizing: border-box; } }

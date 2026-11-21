@@ -49,6 +49,7 @@ export interface Vocabulary {
   lessonId: number;
   sortOrder?: number;
   partOfSpeech?: string | null;
+  jlptLevel?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | null;
   imageUrl?: string | null;
   pitchAccent?: string | null;
   /** Nghĩa tiếng Anh; nguồn: manual (người soạn) | jmdict | ai (dịch máy, hiện nhãn) */
