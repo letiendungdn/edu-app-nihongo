@@ -9,7 +9,9 @@ import type { AdminPaymentsFilters } from './index';
 export const queryKeys = {
   vocab: {
     all: ['vocab'] as const,
-    allLibrary: ['vocab', 'all-library'] as const,
+    moraPage: (level: string, page: number, query: string) =>
+      ['vocab', 'mora', level, page, query] as const,
+    moraTraps: ['vocab', 'mora-traps'] as const,
     byLesson: (id: number) => ['vocab', 'lesson', id] as const,
     byRange: (from: number, to: number) => ['vocab', 'range', from, to] as const,
     katakana: ['vocab', 'katakana'] as const,

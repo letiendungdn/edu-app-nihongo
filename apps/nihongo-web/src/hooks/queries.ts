@@ -39,7 +39,8 @@ import {
   fetchGrammarCountByJlpt,
   fetchKatakanaVocabularies,
   fetchVocabulariesRange,
-  fetchAllVocabularies,
+  fetchVocabulariesPage,
+  fetchAllVocabulariesForMora,
   fetchListeningPlaylist,
 } from '../api';
 import type { AdminPaymentsFilters } from '../api';
@@ -196,12 +197,34 @@ export function useVocabRangeQuery(
   });
 }
 
-/** Danh mục đầy đủ phục vụ các công cụ học không gắn với một bài cụ thể. */
-export function useAllVocabulariesQuery() {
+/** Một trang từ vựng cho công cụ mora; chỉ tải dữ liệu đang xem để tránh chạm rate limit. */
+export function useMoraVocabularyQuery(
+  level: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1',
+  page: number,
+  query: string,
+) {
   return useQuery({
-    queryKey: queryKeys.vocab.allLibrary,
-    queryFn: fetchAllVocabularies,
+    queryKey: queryKeys.vocab.moraPage(level, page, query),
+    queryFn: () => fetchVocabulariesPage({
+      page,
+      limit: 100,
+      ...(level === 'all' ? {} : { jlptLevel: level }),
+      ...(query ? { query } : {}),
+    }),
     staleTime: STALE_5M,
+  });
+}
+
+/** Ghép cặp bẫy mora từ toàn bộ từ vựng trong CSDL (cache dài vì dữ liệu ít đổi). */
+export function useMoraTrapPairsQuery() {
+  return useQuery({
+    queryKey: queryKeys.vocab.moraTraps,
+    queryFn: async () => {
+      const { buildMoraTrapPairsFromVocab } = await import('../utils/moraTraps');
+      const vocab = await fetchAllVocabulariesForMora();
+      return buildMoraTrapPairsFromVocab(vocab);
+    },
+    staleTime: 30 * 60 * 1000,
   });
 }
 

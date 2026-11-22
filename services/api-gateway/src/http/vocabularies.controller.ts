@@ -13,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import { Role } from "@prisma/client";
 import { firstValueFrom } from "rxjs";
 import {
@@ -44,6 +45,9 @@ export class VocabulariesController {
 
   @Get()
   @Public()
+  // SPA (mora / từ điển tranh / chia động từ…) đọc nhiều trang; ceiling toàn cục 120
+  // dễ 429 khi tải dải bài. GET công khai này nới hơn — auth/AI vẫn giữ limit chặt.
+  @Throttle({ default: { ttl: 60_000, limit: 300 } })
   @ApiOperation({ summary: "List vocabularies, optionally by lesson" })
   findAll(@Query() query: LessonPaginationDto) {
     return firstValueFrom(

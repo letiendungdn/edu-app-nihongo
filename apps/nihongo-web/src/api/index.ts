@@ -93,10 +93,26 @@ export function fetchVocabularies(lessonNumber: number) {
   );
 }
 
-/** Tải toàn bộ từ vựng công khai, qua từng trang API để không bỏ sót dữ liệu. */
-export function fetchAllVocabularies() {
-  return fetchPaginatedAll<Vocabulary>((page, limit) =>
-    `/vocabularies?page=${page}&limit=${limit}`,
+export function fetchVocabulariesPage(options: {
+  page: number;
+  limit: number;
+  jlptLevel?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+  query?: string;
+}) {
+  const params = new URLSearchParams({
+    page: String(options.page),
+    limit: String(options.limit),
+  });
+  if (options.jlptLevel) params.set('jlptLevel', options.jlptLevel);
+  if (options.query) params.set('q', options.query);
+  return apiRequest<PaginatedResponse<Vocabulary>>(`/vocabularies?${params.toString()}`);
+}
+
+/** Toàn bộ từ vựng (phân trang) — dùng để ghép cặp bẫy mora từ CSDL. */
+export function fetchAllVocabulariesForMora() {
+  return fetchPaginatedAll<Vocabulary>(
+    (page, limit) => `/vocabularies?page=${page}&limit=${limit}`,
+    200,
   );
 }
 
@@ -171,6 +187,28 @@ export function reorderVocabularies(
 
 export type VocabularyWithLesson = Vocabulary & { lessonNumber: number };
 
+/** Không Promise.all cả dải bài: 50 bài × vài trang → vượt throttle 120 req/phút (429). */
+const VOCAB_RANGE_CONCURRENCY = 4;
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  async function run() {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await worker(items[index], index);
+    }
+  }
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, () => run());
+  await Promise.all(runners);
+  return results;
+}
+
 export async function fetchVocabulariesRange(
   lessonFrom: number,
   lessonTo: number,
@@ -178,7 +216,9 @@ export async function fetchVocabulariesRange(
   const from = Math.min(lessonFrom, lessonTo);
   const to = Math.max(lessonFrom, lessonTo);
   const lessonNumbers = Array.from({ length: to - from + 1 }, (_, index) => from + index);
-  const batches = await Promise.all(lessonNumbers.map((n) => fetchVocabularies(n)));
+  const batches = await mapPool(lessonNumbers, VOCAB_RANGE_CONCURRENCY, (n) =>
+    fetchVocabularies(n),
+  );
 
   return batches.flatMap((list, index) =>
     list.map((entry) => ({ ...entry, lessonNumber: lessonNumbers[index] })),

@@ -187,6 +187,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
           continue;
         }
 
+        // Rate limit: chờ cửa sổ rồi thử lại (GET). Tránh fail cứng khi UI tải nhiều bài cùng lúc.
+        if (res.status === 429 && IDEMPOTENT_METHODS.has(method) && attempt < retries) {
+          await sleep(Math.max(startupWaitMs(res), RETRY_DELAY_MS * (attempt + 1) * 4));
+          continue;
+        }
+
         if (res.status >= 500 && attempt < retries) {
           await sleep(RETRY_DELAY_MS * (attempt + 1));
           continue;

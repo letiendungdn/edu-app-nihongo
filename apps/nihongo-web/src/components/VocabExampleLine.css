@@ -1,0 +1,303 @@
+.vocab-examples__item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.vocab-examples__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.vocab-examples__kana {
+  display: block;
+  width: 100%;
+  font-size: 0.88rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.vocab-examples__ja {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vocab-examples__ja ruby,
+.vocab-example-analysis__clean-ja ruby {
+  ruby-position: over;
+  ruby-align: center;
+}
+
+.vocab-examples__ja rt,
+.vocab-example-analysis__clean-ja rt {
+  font-size: 0.48em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--vc-example-muted, var(--text-secondary, #5a6570));
+}
+
+.vocab-examples__analyze {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--primary-color, #e11d48) 40%, transparent);
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 10%, transparent);
+  color: var(--primary-color, #e11d48);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vocab-examples__analyze:hover,
+.vocab-examples__analyze:focus-visible {
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 18%, transparent);
+}
+
+.vocab-examples__analyze.is-open {
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 22%, transparent);
+}
+
+.vocab-example-analysis {
+  margin: 0.55rem 0 0.2rem;
+  padding: 0.75rem 0.9rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-color, #1a1d23) 88%, var(--primary-color, #e11d48) 12%);
+  color: var(--vc-example-text, var(--text-primary));
+}
+
+[data-theme='light'] .vocab-example-analysis {
+  background: color-mix(in srgb, #fff 92%, var(--primary-color, #e11d48) 8%);
+  color: var(--vc-example-text, #1e1b17);
+}
+
+.vocab-example-analysis__tabs {
+  display: flex;
+  gap: 0.15rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color, #d8dee6) 70%, transparent);
+}
+
+.vocab-example-analysis__tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.7rem 0.55rem;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.vocab-example-analysis__tab.is-active {
+  color: var(--primary-color, #e11d48);
+  border-bottom-color: var(--primary-color, #e11d48);
+}
+
+.vocab-example-analysis__panel {
+  min-width: 0;
+}
+
+.vocab-example-analysis__detailed-row,
+.vocab-example-analysis__clean-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.vocab-example-analysis__detailed-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.vocab-example-analysis__picture {
+  width: 5.5rem;
+  height: 5.5rem;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, #fff 70%, transparent);
+  background: #fff;
+}
+
+.vocab-example-analysis__section {
+  margin: 0 0 0.75rem;
+}
+
+.vocab-example-analysis__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.vocab-example-analysis__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.vocab-example-analysis__list li + li {
+  margin-top: 0.32rem;
+}
+
+.vocab-example-analysis__surface {
+  font-weight: 800;
+  color: inherit;
+}
+
+.vocab-example-analysis__reading {
+  opacity: 0.88;
+  color: inherit;
+}
+
+.vocab-example-analysis__gloss {
+  color: var(--vc-example-muted, var(--text-secondary, #5a6570));
+}
+
+.vocab-example-analysis__kanji {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vocab-example-analysis__kanji-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vc-example-text, #fff) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 70%, transparent);
+  color: inherit;
+}
+
+.vocab-example-analysis__kanji-char {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.vocab-example-analysis__clean-lead {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__clean-ja {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.9;
+  color: inherit;
+}
+
+.vocab-example-analysis__typed-romaji {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vc-example-muted, var(--text-secondary));
+  letter-spacing: 0.01em;
+}
+
+.vocab-example-analysis__cards {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vocab-example-analysis__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 75%, transparent);
+  background: color-mix(in srgb, var(--vc-example-text, #fff) 6%, transparent);
+  color: inherit;
+}
+
+[data-theme='light'] .vocab-example-analysis__card {
+  background: color-mix(in srgb, #fff 88%, var(--primary-color, #e11d48) 12%);
+}
+
+.vocab-example-analysis__card-ja {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.vocab-example-analysis__card-reading {
+  font-size: 0.78rem;
+  color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__card-pos {
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary-color, #e11d48);
+  text-transform: none;
+}
+
+.vocab-example-analysis__card-detail {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__footer {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--vc-example-muted, var(--text-secondary, #5a6570));
+  line-height: 1.4;
+}
+
+.vocab-example-analysis__footer a {
+  color: var(--primary-color, #e11d48);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .vocab-example-analysis__detailed-row,
+  .vocab-example-analysis__clean-body {
+    flex-direction: column;
+  }
+
+  .vocab-example-analysis__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .vocab-example-analysis__picture {
+    align-self: flex-end;
+  }
+}

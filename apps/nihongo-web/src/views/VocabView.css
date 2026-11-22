@@ -2624,9 +2624,10 @@
   --vc-row-bg: rgba(255 255 255 / 0.04);
   --vc-row-border: rgba(255 255 255 / 0.08);
   --vc-row-active-bg: linear-gradient(135deg, rgba(150 36 52 / 0.5), rgba(46 30 40 / 0.85));
-  --vc-example-bg: linear-gradient(135deg, #fde4e2 0%, #fbcfcd 100%);
-  --vc-example-border: rgba(232 64 72 / 0.35);
-  --vc-example-text: #1e1b17;
+  --vc-example-bg: linear-gradient(135deg, rgba(120 28 40 / 0.55), rgba(46 30 40 / 0.92));
+  --vc-example-border: rgba(232 64 72 / 0.45);
+  --vc-example-text: #f4ecea;
+  --vc-example-muted: rgba(244 236 234 / 0.78);
   --vc-watermark: rgba(255 255 255 / 0.07);
 }
 
@@ -2634,6 +2635,10 @@
   --vc-row-bg: #ffffff;
   --vc-row-border: rgba(60 40 20 / 0.07);
   --vc-row-active-bg: linear-gradient(135deg, #fff1f1, #ffe4e4);
+  --vc-example-bg: linear-gradient(135deg, #fde4e2 0%, #fbcfcd 100%);
+  --vc-example-border: rgba(232 64 72 / 0.35);
+  --vc-example-text: #1e1b17;
+  --vc-example-muted: #5a4a48;
   --vc-watermark: rgba(0 0 0 / 0.05);
 }
 
@@ -2858,7 +2863,7 @@
 .vocab-view--study .flashcard-front.vocab-card {
   position: relative;
   overflow: hidden;
-  padding: 1.75rem 1.75rem 1.5rem;
+  padding: 1.35rem 1.5rem 1.35rem;
   border-radius: 1.25rem;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -2868,9 +2873,10 @@
 
 .vocab-card__watermark {
   position: absolute;
-  top: 0.75rem;
-  left: 1.5rem;
-  font-size: clamp(4rem, 8vw, 5.5rem);
+  top: 0.35rem;
+  right: 1rem;
+  z-index: 0;
+  font-size: clamp(3.5rem, 7vw, 5rem);
   font-weight: 900;
   line-height: 1;
   color: var(--vc-watermark);
@@ -2913,11 +2919,12 @@
 }
 
 .vocab-view--study .vocab-card .flashcard-front-body {
-  align-items: stretch;
-  text-align: left;
-  gap: 1rem;
-  padding-top: 2.6rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  padding-top: 0.25rem;
   position: relative;
+  z-index: 1;
 }
 
 .vocab-view--study .vocab-card__cols {
@@ -3056,81 +3063,18 @@
   padding-top: 3.75rem;
 }
 
-/* Bố cục thẻ theo mẫu 2: tiêu đề + số mờ ở đầu, KANJI | nét viết | KANA, ví dụ tách khỏi thẻ */
-.vocab-card__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
+/* Hero: nét viết lớn → kana → romaji | nghĩa → tag EN (không lặp tiêu đề furigana) */
+.vocab-view--study .vocab-card .flashcard-front-body {
+  padding-top: 0.15rem;
+  gap: 0.7rem;
 }
 
-.vocab-card__heading {
+.vocab-card__hero {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.vocab-card__title {
-  margin: 0;
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: left;
-}
-
-.vocab-card__title-romaji {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.vocab-view--study .vocab-card .vocab-card__watermark {
-  position: static;
-  font-size: clamp(2.6rem, 5vw, 3.4rem);
-  margin-top: -0.4rem;
-}
-
-.vocab-view--study .vocab-card .flashcard-front-body {
-  padding-top: 0.5rem;
-  gap: 0.75rem;
-}
-
-.vocab-view--study .vocab-card__cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 1rem;
-  padding-bottom: 0.9rem;
-}
-
-.vocab-view--study .vocab-card__cols .flashcard-text-col {
-  padding: 0;
-  border: none !important;
-}
-
-.vocab-view--study .vocab-card__cols .flashcard-text-col--kana {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.vocab-view--study .vocab-card .vocab-kanji,
-.vocab-view--study .vocab-card .vocab-kana {
-  font-size: clamp(1.8rem, 3.6vw, 2.4rem);
-  font-weight: 700;
-}
-
-.vocab-card__col-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.35rem;
-}
-
-.vocab-card__col-actions .vocab-copy-btn {
-  margin: 0;
-  align-self: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0 0.35rem;
 }
 
 .vocab-card__strokes {
@@ -3141,9 +3085,37 @@
   cursor: default;
 }
 
+.vocab-card__strokes--hero {
+  width: 100%;
+}
+
 .vocab-card__strokes-hint {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+.vocab-card__reading {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+  font-weight: 650;
+  color: var(--text-secondary);
+  letter-spacing: 0.06em;
+}
+
+.vocab-view--study .flashcard-front.vocab-card .vocab-card__toolbar {
+  position: absolute;
+  top: 0.85rem;
+  left: 1rem;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.vocab-card__toolbar .vocab-copy-btn {
+  margin: 0;
 }
 
 .vocab-view--study .vocab-card__strokes text {
@@ -3156,6 +3128,7 @@
 
 .vocab-view--study .vocab-card__meta {
   align-items: center;
+  gap: 0.45rem;
 }
 
 .vocab-view--study .vocab-card__headline {
@@ -3165,6 +3138,38 @@
 
 .vocab-view--study .vocab-card__headline .vocab-meaning {
   font-weight: 600;
+}
+
+.vocab-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.vocab-card__type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.vocab-view--study .vocab-card__tags .vocab-extra {
+  margin: 0;
+  justify-content: center;
+}
+
+.vocab-view--study .vocab-card .also-in-books {
+  justify-content: center;
+  opacity: 0.85;
+  font-size: 0.78rem;
 }
 
 /* Ví dụ: khối riêng dưới thẻ */
@@ -3195,6 +3200,17 @@
   gap: 0.75rem;
 }
 
+.vocab-examples__body--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.vocab-examples__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .vocab-examples__copy {
   flex: 1;
   min-width: 0;
@@ -3216,8 +3232,13 @@
 
 .vocab-examples__item {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.vocab-examples__item-main .vocab-examples__line {
+  flex: 1;
 }
 
 .vocab-examples__line {
@@ -3247,6 +3268,8 @@
 .vocab-examples__ja {
   font-size: 1.15rem;
   font-weight: 600;
+  /* Chừa chỗ cho furigana (ruby) phía trên */
+  line-height: 1.85;
 }
 
 .vocab-examples__ja:hover,
@@ -3286,7 +3309,7 @@
 .vocab-examples__note {
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--vc-example-muted, var(--text-secondary));
 }
 
 .vocab-examples__picture {
@@ -3305,8 +3328,15 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .vocab-card__strokes {
-    display: none;
+  .vocab-view--study .flashcard-front.vocab-card .vocab-card__toolbar {
+    position: static;
+    justify-content: center;
+    margin-bottom: 0.35rem;
+  }
+
+  .vocab-view--study .vocab-card__strokes--hero {
+    transform: scale(0.92);
+    transform-origin: center top;
   }
 }
 

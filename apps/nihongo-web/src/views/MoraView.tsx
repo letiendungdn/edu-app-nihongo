@@ -1,139 +1,529 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAllVocabulariesQuery } from '../hooks/queries';
+import LessonSelector from '../components/LessonSelector';
+import { useLessons, useMoraTrapPairsQuery, useVocab } from '../hooks/queries';
 import { playAudio } from '../utils/speech';
-import { splitKanaIntoMora } from '../utils/kana';
+import { splitKanaIntoMora, type Mora } from '../utils/kana';
+import { lessonHeading, lessonShortLabel } from '../utils/lessonHeading';
+import { groupLessons } from '../utils/lessonGroups';
+import {
+  MORA_DEMO,
+  MORA_TRAP_PAIRS,
+  beatLabel,
+  beatRomajiHint,
+  moraCount,
+  moraJoin,
+  moraRomaji,
+  sokuonTrapOf,
+  type MoraTrapKind,
+} from '../utils/moraTraps';
 import './MoraView.css';
 
-type JlptFilter = 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+type TrapFilter = 'all' | MoraTrapKind;
 
-const JLPT_FILTERS: JlptFilter[] = ['all', 'N5', 'N4', 'N3', 'N2', 'N1'];
-const PAGE_SIZE = 30;
+const TRAP_FILTERS: Array<{ id: TrapFilter; label: string }> = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'sokuon', label: 'Âm ngắt [っ]' },
+  { id: 'long-vowel', label: 'Trường âm' },
+  { id: 'yoon', label: 'Âm ghép' },
+];
 
-const MORA_LABELS = {
-  regular: '1 nhịp',
-  sokuon: 'dừng 1 nhịp',
-  'syllabic-n': 'ん: 1 nhịp',
-  'long-vowel': 'kéo dài 1 nhịp',
-} as const;
+const TRAP_PAGE_SIZE = 24;
+
+function MoraBeatCard({ mora, index }: { mora: Mora; index: number }) {
+  return (
+    <div className={`mora-beat mora-beat--${mora.kind}`}>
+      <span className="mora-beat-number">{index + 1}</span>
+      <span className="mora-beat-character japanese-text">{mora.text}</span>
+      <span className="mora-beat-romaji">{beatRomajiHint(mora)}</span>
+      <span className="mora-beat-kind">{beatLabel(mora.kind)}</span>
+    </div>
+  );
+}
 
 export default function MoraView() {
-  const [level, setLevel] = useState<JlptFilter>('all');
+  const [lessonNumber, setLessonNumber] = useState(1);
   const [query, setQuery] = useState('');
-  const [moraInput, setMoraInput] = useState('');
-  const [page, setPage] = useState(0);
-  const { data: vocabulary = [], isLoading, isError } = useAllVocabulariesQuery();
+  const [trapFilter, setTrapFilter] = useState<TrapFilter>('all');
+  const [trapQuery, setTrapQuery] = useState('');
+  const [trapPage, setTrapPage] = useState(1);
+  const [moraInput, setMoraInput] = useState<string>(MORA_DEMO.kana);
+  const { data: lessons = [] } = useLessons({ has: 'vocab' });
+  const { data: lessonVocab = [], isLoading, isError } = useVocab(lessonNumber);
+  const {
+    data: dbTrapPairs,
+    isLoading: trapsLoading,
+    isError: trapsError,
+  } = useMoraTrapPairsQuery();
 
-  const morae = useMemo(() => splitKanaIntoMora(moraInput), [moraInput]);
-  const filteredVocabulary = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    return vocabulary
-      .filter((word) => level === 'all' || word.jlptLevel === level)
-      .filter((word) => !normalizedQuery || [word.kana, word.kanji, word.romaji, word.meaning]
+  const currentLesson = useMemo(
+    () => lessons.find((l) => l.lessonNumber === lessonNumber),
+    [lessons, lessonNumber],
+  );
+  const curriculumGroups = useMemo(() => groupLessons(lessons), [lessons]);
+  const activeGroupKey = useMemo(() => {
+    const hit = curriculumGroups.find((g) =>
+      g.items.some((l) => l.lessonNumber === lessonNumber),
+    );
+    return hit?.key ?? curriculumGroups[0]?.key ?? '';
+  }, [curriculumGroups, lessonNumber]);
+  const activeGroup = curriculumGroups.find((g) => g.key === activeGroupKey);
+
+  const filteredVocab = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return lessonVocab;
+    return lessonVocab.filter((w) => {
+      const hay = [w.kana, w.kanji, w.romaji, w.meaning]
         .filter(Boolean)
-        .some((value) => value!.toLocaleLowerCase().includes(normalizedQuery)))
-      .sort((a, b) => a.kana.localeCompare(b.kana, 'ja'));
-  }, [level, query, vocabulary]);
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [lessonVocab, query]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredVocabulary.length / PAGE_SIZE));
-  const visibleVocabulary = filteredVocabulary.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const kanaOnly = useMemo(
+    () => moraInput.replace(/[（(].*?[）)]/g, '').replace(/[^\u3040-\u309F\u30A0-\u30FFーっッ]/g, ''),
+    [moraInput],
+  );
+  const morae = useMemo(() => splitKanaIntoMora(kanaOnly), [kanaOnly]);
 
-  useEffect(() => setPage(0), [level, query]);
+  const isDemo = kanaOnly === MORA_DEMO.kana;
+  const trapKana = useMemo(() => {
+    if (isDemo) return MORA_DEMO.wrong.kana;
+    return sokuonTrapOf(kanaOnly);
+  }, [isDemo, kanaOnly]);
+  const trapMorae = useMemo(
+    () => (trapKana ? splitKanaIntoMora(trapKana) : []),
+    [trapKana],
+  );
+
+  const summaryRomaji = moraRomaji(kanaOnly);
+  const trapMeaning = isDemo
+    ? `${MORA_DEMO.wrong.meaning} ${MORA_DEMO.wrong.emoji}`
+    : 'Từ khác (thiếu âm ngắt)';
+  const lessonTitle = lessonHeading('vocab', currentLesson);
+
+  const trapPairs = dbTrapPairs?.length ? dbTrapPairs : MORA_TRAP_PAIRS;
+  const filteredTrapPairs = useMemo(() => {
+    const q = trapQuery.trim().toLowerCase();
+    return trapPairs.filter((pair) => {
+      if (trapFilter !== 'all' && pair.kind !== trapFilter) return false;
+      if (!q) return true;
+      const hay = [
+        pair.correct.kana,
+        pair.correct.kanji,
+        pair.correct.meaning,
+        pair.wrong.kana,
+        pair.wrong.kanji,
+        pair.wrong.meaning,
+        pair.title,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [trapPairs, trapFilter, trapQuery]);
+
+  const trapPageCount = Math.max(1, Math.ceil(filteredTrapPairs.length / TRAP_PAGE_SIZE));
+  const pagedTrapPairs = useMemo(() => {
+    const start = (trapPage - 1) * TRAP_PAGE_SIZE;
+    return filteredTrapPairs.slice(start, start + TRAP_PAGE_SIZE);
+  }, [filteredTrapPairs, trapPage]);
+
+  useEffect(() => setTrapPage(1), [trapFilter, trapQuery, dbTrapPairs]);
+  useEffect(() => {
+    if (trapPage > trapPageCount) setTrapPage(trapPageCount);
+  }, [trapPage, trapPageCount]);
 
   return (
     <div className="container mora-view">
-      <header className="mora-view-header">
-        <h2 className="view-title">Tách nhịp mora</h2>
-        <p>
-          Mỗi ô là một nhịp khi nói tiếng Nhật. Chọn từ trong cơ sở dữ liệu N5–N1 hoặc nhập kana bất kỳ.
-        </p>
-      </header>
-
       <section className="mora-analyzer glass-panel" aria-labelledby="mora-analyzer-title">
         <div className="mora-analyzer-heading">
           <div>
-            <h3 id="mora-analyzer-title">Phân tích phát âm</h3>
-            <p>っ là một khoảng dừng, ん là một nhịp riêng, còn ー là một nhịp kéo dài.</p>
+            <h2 id="mora-analyzer-title" className="mora-analyzer-title">
+              <span aria-hidden="true">🔊</span> Phân tích phát âm (Mora)
+            </h2>
+            <p className="mora-analyzer-warn">
+              ⚠️ Ngắt nhịp sai là ra từ khác! (Lỗi phát âm kinh điển)
+            </p>
           </div>
-          <button type="button" className="btn btn-primary" disabled={!moraInput.trim()} onClick={() => playAudio(moraInput, 'ja-JP')}>
-            🔊 Nghe từ
-          </button>
         </div>
-        <label htmlFor="mora-text-input">Kana cần tách</label>
-        <input
-          id="mora-text-input"
-          className="mora-text-input japanese-text"
-          value={moraInput}
-          onChange={(event) => setMoraInput(event.target.value)}
-          placeholder="Ví dụ: がっこう"
-        />
+
+        <div className="mora-input-row">
+          <div className="mora-input-field">
+            <label htmlFor="mora-text-input">Kana cần phân tích</label>
+            <input
+              id="mora-text-input"
+              className="mora-text-input japanese-text"
+              value={moraInput}
+              onChange={(event) => setMoraInput(event.target.value)}
+              placeholder="Ví dụ: きって (切手 - Con tem)"
+            />
+          </div>
+          {morae.length > 0 ? (
+            <span className="mora-count-badge" aria-live="polite">
+              {morae.length} mora ({morae.length} nhịp)
+            </span>
+          ) : null}
+        </div>
+
         {morae.length > 0 ? (
-          <>
-            <div className="mora-beats" aria-label={`${morae.length} mora`}>
-              {morae.map((mora, index) => (
-                <div key={`${mora.text}-${index}`} className={`mora-beat mora-beat--${mora.kind}`}>
-                  <span className="mora-beat-number">{index + 1}</span>
-                  <span className="mora-beat-character japanese-text">{mora.text}</span>
-                  <span className="mora-beat-kind">{MORA_LABELS[mora.kind]}</span>
+          <div className={`mora-compare${trapKana ? '' : ' mora-compare--solo'}`}>
+            <article className="mora-panel mora-panel--ok">
+              <h3 className="mora-panel-title mora-panel-title--ok">
+                ⏱️ NHỊP CHUẨN ({morae.length} NHỊP)
+              </h3>
+              <div className="mora-beats" aria-label={`${morae.length} mora chuẩn`}>
+                {morae.map((mora, index) => (
+                  <MoraBeatCard key={`${mora.text}-${index}`} mora={mora} index={index} />
+                ))}
+              </div>
+              <p className="mora-panel-summary">
+                Total: {morae.length} nhịp • {moraJoin(morae)}
+                {isDemo
+                  ? ` (${capitalize(summaryRomaji)} - ${MORA_DEMO.meaning} ${MORA_DEMO.emoji})`
+                  : summaryRomaji
+                    ? ` (${capitalize(summaryRomaji)})`
+                    : ''}
+              </p>
+              <button
+                type="button"
+                className="mora-listen-btn"
+                onClick={() => playAudio(kanaOnly, 'ja-JP')}
+              >
+                📢 Nghe chuẩn: {summaryRomaji || kanaOnly}
+              </button>
+            </article>
+
+            {trapKana ? (
+              <article className="mora-panel mora-panel--trap">
+                <h3 className="mora-panel-title mora-panel-title--trap">
+                  ⚠️ CẢNH BÁO: BẪY NGẮT SAI! ⚠️
+                </h3>
+                <p className="mora-trap-lead">
+                  Nếu nuốt âm ngắt <strong>[っ]</strong>, chỉ còn {trapMorae.length} nhịp:
+                </p>
+                <div className="mora-trap-equation" aria-hidden="true">
+                  {trapMorae.map((mora, index) => (
+                    <span key={`${mora.text}-t-${index}`} className="mora-trap-chip japanese-text">
+                      {mora.text}
+                    </span>
+                  ))}
+                  <span className="mora-trap-eq">=</span>
+                  <span className="mora-trap-result">
+                    <span className="japanese-text">{trapKana}</span>
+                    <span className="mora-trap-result-meaning">({trapMeaning})</span>
+                  </span>
                 </div>
-              ))}
-            </div>
-            <p className="mora-result-summary"><strong>{morae.length} nhịp:</strong> {morae.map((mora) => mora.text).join(' ・ ')}</p>
-          </>
+                <div className="mora-trap-pair">
+                  <div className="mora-trap-box mora-trap-box--ok">
+                    <span className="japanese-text">{kanaOnly}</span>
+                    <span>
+                      {morae.length} nhịp ={' '}
+                      {isDemo ? `${MORA_DEMO.meaning} ${MORA_DEMO.emoji}` : 'đúng'}
+                    </span>
+                  </div>
+                  <div className="mora-trap-box mora-trap-box--bad">
+                    <span className="japanese-text">{trapKana}</span>
+                    <span>
+                      {trapMorae.length} nhịp = {trapMeaning}
+                    </span>
+                  </div>
+                </div>
+                <p className="mora-trap-banner">
+                  ⚠️ Bỏ âm ngắt [っ] → Biến thành từ khác hoàn toàn!
+                </p>
+                <button
+                  type="button"
+                  className="mora-listen-btn mora-listen-btn--ghost"
+                  onClick={() => playAudio(trapKana, 'ja-JP')}
+                >
+                  🔊 Nghe bản sai nhịp: {moraRomaji(trapKana) || trapKana}
+                </button>
+              </article>
+            ) : null}
+          </div>
         ) : (
-          <p className="mora-placeholder">Chọn một từ bên dưới hoặc nhập kana để xem từng nhịp.</p>
+          <p className="mora-placeholder">
+            Nhập kana (vd. きって) hoặc chọn từ bên dưới để xem từng nhịp.
+          </p>
+        )}
+      </section>
+
+      <section className="mora-traps glass-panel" aria-labelledby="mora-traps-title">
+        <div className="mora-traps-heading">
+          <div>
+            <h3 id="mora-traps-title" className="mora-traps-title">
+              CẶP BẪY MORA TRONG CSDL{' '}
+              <span className="mora-traps-title-warn">(⚠️ Đọc sai → Đổi nghĩa)</span>
+            </h3>
+            <p className="mora-traps-sub">
+              {trapsLoading
+                ? 'Đang quét toàn bộ từ vựng…'
+                : trapsError
+                  ? 'Không tải được CSDL — đang hiện 3 cặp mẫu.'
+                  : `${filteredTrapPairs.length.toLocaleString('vi-VN')} cặp${
+                      trapFilter !== 'all' || trapQuery.trim()
+                        ? ` (lọc từ ${(dbTrapPairs?.length ?? 0).toLocaleString('vi-VN')})`
+                        : ''
+                    } — cả hai phía đều có trong DB`}
+            </p>
+          </div>
+          <input
+            className="mora-search"
+            value={trapQuery}
+            onChange={(event) => setTrapQuery(event.target.value)}
+            placeholder="Lọc cặp: kana, kanji, nghĩa…"
+            aria-label="Lọc cặp bẫy mora"
+          />
+        </div>
+
+        <div className="mora-curriculum-tabs" aria-label="Loại bẫy mora">
+          {TRAP_FILTERS.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              className={trapFilter === filter.id ? 'active' : ''}
+              onClick={() => setTrapFilter(filter.id)}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        {trapsLoading && !dbTrapPairs ? (
+          <p className="mora-placeholder">Đang tìm các cặp chỉ khác nhau một nhịp mora…</p>
+        ) : filteredTrapPairs.length === 0 ? (
+          <p className="mora-placeholder">Không có cặp bẫy khớp bộ lọc.</p>
+        ) : (
+          <>
+            <div className="mora-traps-grid">
+              {pagedTrapPairs.map((pair) => {
+                const leftN = moraCount(pair.correct.kana);
+                const rightN = moraCount(pair.wrong.kana);
+                return (
+                  <article key={pair.id} className="mora-trap-card">
+                    <h4 className="mora-trap-card-title">{pair.title}</h4>
+                    <div className="mora-trap-card-pair">
+                      <button
+                        type="button"
+                        className="mora-trap-side"
+                        onClick={() => {
+                          setMoraInput(pair.correct.kana);
+                          playAudio(pair.correct.kana, 'ja-JP');
+                        }}
+                      >
+                        <span className="japanese-text mora-trap-side-kana">
+                          {pair.correct.kana}
+                        </span>
+                        {pair.correct.kanji ? (
+                          <span className="mora-trap-side-kanji japanese-text">
+                            {pair.correct.kanji}
+                          </span>
+                        ) : null}
+                        <span className="mora-trap-side-meta">
+                          {leftN} nhịp · {moraRomaji(pair.correct.kana)}
+                        </span>
+                        <span className="mora-trap-side-meaning">
+                          {pair.correct.meaning}
+                          {pair.correct.emoji ? ` ${pair.correct.emoji}` : ''}
+                        </span>
+                      </button>
+                      <span className="mora-trap-vs" aria-hidden="true">
+                        vs
+                      </span>
+                      <button
+                        type="button"
+                        className="mora-trap-side mora-trap-side--alt"
+                        onClick={() => {
+                          setMoraInput(pair.wrong.kana);
+                          playAudio(pair.wrong.kana, 'ja-JP');
+                        }}
+                      >
+                        <span className="japanese-text mora-trap-side-kana">
+                          {pair.wrong.kana}
+                        </span>
+                        {pair.wrong.kanji ? (
+                          <span className="mora-trap-side-kanji japanese-text">
+                            {pair.wrong.kanji}
+                          </span>
+                        ) : null}
+                        <span className="mora-trap-side-meta">
+                          {rightN} nhịp · {moraRomaji(pair.wrong.kana)}
+                        </span>
+                        <span className="mora-trap-side-meaning">
+                          {pair.wrong.meaning}
+                          {pair.wrong.emoji ? ` ${pair.wrong.emoji}` : ''}
+                        </span>
+                      </button>
+                    </div>
+                    <p className="mora-trap-card-note">{pair.note}</p>
+                  </article>
+                );
+              })}
+            </div>
+            {trapPageCount > 1 ? (
+              <nav className="mora-pagination" aria-label="Phân trang cặp bẫy mora">
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={trapPage === 1}
+                  onClick={() => setTrapPage((current) => current - 1)}
+                >
+                  ← Trước
+                </button>
+                <span>
+                  Trang {trapPage}/{trapPageCount}
+                </span>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={trapPage === trapPageCount}
+                  onClick={() => setTrapPage((current) => current + 1)}
+                >
+                  Sau →
+                </button>
+              </nav>
+            ) : null}
+          </>
         )}
       </section>
 
       <section className="mora-database glass-panel" aria-labelledby="mora-database-title">
         <div className="mora-database-heading">
           <div>
-            <h3 id="mora-database-title">Toàn bộ từ vựng trong cơ sở dữ liệu</h3>
-            <p>{isLoading ? 'Đang tải từ vựng...' : `${vocabulary.length} từ đã tải`}</p>
+            <h3 id="mora-database-title">Từ vựng theo giáo trình</h3>
+            <p>
+              Chọn bài → bấm từ để phân tích nhịp
+              {isLoading
+                ? ' · Đang tải…'
+                : ` · ${filteredVocab.length}${
+                    query.trim() ? `/${lessonVocab.length}` : ''
+                  } từ trong bài`}
+            </p>
           </div>
           <input
             className="mora-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm kana, kanji, romaji hoặc nghĩa"
-            aria-label="Tìm từ vựng"
+            placeholder="Lọc trong bài: kana, kanji, nghĩa…"
+            aria-label="Lọc từ trong bài"
           />
         </div>
-        <div className="mora-level-tabs" aria-label="Lọc theo cấp JLPT">
-          {JLPT_FILTERS.map((filter) => (
-            <button key={filter} type="button" className={level === filter ? 'active' : ''} onClick={() => setLevel(filter)}>
-              {filter === 'all' ? 'Tất cả' : filter}
-            </button>
-          ))}
+
+        {curriculumGroups.length > 1 ? (
+          <div className="mora-curriculum-tabs" aria-label="Giáo trình">
+            {curriculumGroups.map((group) => (
+              <button
+                key={group.key}
+                type="button"
+                className={group.key === activeGroupKey ? 'active' : ''}
+                onClick={() => {
+                  const first = group.items[0];
+                  if (first) {
+                    setLessonNumber(first.lessonNumber);
+                    setQuery('');
+                  }
+                }}
+              >
+                {group.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mora-lesson-toolbar">
+          <LessonSelector
+            value={lessonNumber}
+            onChange={(n) => {
+              setLessonNumber(n);
+              setQuery('');
+            }}
+            id="mora-lesson-select"
+            countKind="vocab"
+          />
         </div>
-        {isError ? (
-          <p className="mora-placeholder">Không tải được danh sách từ vựng. Hãy thử lại sau.</p>
-        ) : !isLoading && filteredVocabulary.length === 0 ? (
-          <p className="mora-placeholder">Không có từ phù hợp với bộ lọc hiện tại.</p>
-        ) : (
-          <>
-            <p className="mora-match-count">{isLoading ? '' : `${filteredVocabulary.length} từ phù hợp`}</p>
-            <div className="mora-word-list">
-              {visibleVocabulary.map((word) => (
-                <button key={word.id} type="button" className="mora-word" onClick={() => setMoraInput(word.kana)}>
-                  <span className="mora-word-kana japanese-text">{word.kana}</span>
-                  {word.kanji && <span className="mora-word-kanji japanese-text">{word.kanji}</span>}
-                  <span className="mora-word-meaning">{word.meaning}</span>
-                  {word.jlptLevel && <span className="mora-word-level">{word.jlptLevel}</span>}
+
+        {activeGroup && activeGroup.items.length > 1 ? (
+          <div className="mora-lesson-chips" aria-label={`Bài trong ${activeGroup.label}`}>
+            {activeGroup.items.map((lesson) => {
+              const isMinna =
+                lesson.textbook === 'MINNA' ||
+                (lesson.lessonNumber >= 1 && lesson.lessonNumber <= 50);
+              const label = isMinna
+                ? String(lesson.lessonNumber)
+                : lesson.title?.trim() || lessonShortLabel(lesson);
+              return (
+                <button
+                  key={lesson.lessonNumber}
+                  type="button"
+                  className={
+                    lesson.lessonNumber === lessonNumber
+                      ? 'mora-lesson-chip active'
+                      : 'mora-lesson-chip'
+                  }
+                  onClick={() => {
+                    setLessonNumber(lesson.lessonNumber);
+                    setQuery('');
+                  }}
+                  title={lesson.title || `Bài ${lesson.lessonNumber}`}
+                >
+                  {label}
                 </button>
-              ))}
-            </div>
-            {pageCount > 1 && (
-              <nav className="mora-pagination" aria-label="Phân trang từ vựng">
-                <button type="button" className="btn" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>← Trước</button>
-                <span>Trang {page + 1}/{pageCount}</span>
-                <button type="button" className="btn" disabled={page === pageCount - 1} onClick={() => setPage((current) => current + 1)}>Sau →</button>
-              </nav>
-            )}
-          </>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <p className="mora-lesson-current" aria-live="polite">
+          <span className="mora-lesson-current-book">{lessonTitle}</span>
+          {currentLesson?.title ? (
+            <span className="mora-lesson-current-title">
+              · Bài {currentLesson.lessonNumber}: {currentLesson.title}
+            </span>
+          ) : currentLesson ? (
+            <span className="mora-lesson-current-title">· Bài {currentLesson.lessonNumber}</span>
+          ) : null}
+        </p>
+
+        {isError ? (
+          <p className="mora-placeholder">Không tải được từ vựng bài này. Hãy thử lại sau.</p>
+        ) : !isLoading && lessonVocab.length === 0 ? (
+          <p className="mora-placeholder">Bài này chưa có từ vựng.</p>
+        ) : !isLoading && filteredVocab.length === 0 ? (
+          <p className="mora-placeholder">Không có từ khớp bộ lọc trong bài này.</p>
+        ) : (
+          <div className="mora-word-list">
+            {filteredVocab.map((word) => {
+              const beats = moraCount(word.kana);
+              return (
+                <button
+                  key={word.id}
+                  type="button"
+                  className="mora-word"
+                  onClick={() => setMoraInput(word.kana)}
+                >
+                  <span className="mora-word-kana japanese-text">{word.kana}</span>
+                  {word.kanji ? (
+                    <span className="mora-word-kanji japanese-text">{word.kanji}</span>
+                  ) : null}
+                  <span className="mora-word-meaning">{word.meaning}</span>
+                  <span className="mora-word-beats">{beats} nhịp</span>
+                  {word.jlptLevel ? <span className="mora-word-level">{word.jlptLevel}</span> : null}
+                </button>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>
   );
+}
+
+function capitalize(s: string): string {
+  const t = s.trim();
+  if (!t) return t;
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }

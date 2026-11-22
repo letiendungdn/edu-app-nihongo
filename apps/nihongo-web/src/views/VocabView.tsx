@@ -4,17 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech, playAudio } from '../utils/speech';
-import { ExampleEnglish, FuriganaWord, VocabExtraMeanings } from '../components/VocabReading';
+import { VocabExtraMeanings } from '../components/VocabReading';
 import LessonSelector from '../components/LessonSelector';
 import TextbookFrameworkNote from '../components/TextbookFrameworkNote';
 import PlayAllButton from '../components/PlayAllButton';
 import VocabWordList from '../components/VocabWordList';
+import VocabExampleLine from '../components/VocabExampleLine';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
 import { useFeatureFlag, useLessons, useVocab, useVocabSearchQuery } from '../hooks/queries';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import StrokeOrder from '../components/StrokeOrder';
-import VocabPicture from '../components/VocabPicture';
 import {
   parseReadingVariants,
   flashcardTextTier,
@@ -24,7 +24,6 @@ import FlashcardJapaneseText from '../components/FlashcardJapaneseText';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import AlsoInBooks from '../components/AlsoInBooks';
 import { getVocabExamples } from '../utils/vocabPatternExample';
-import { highlightKeys } from '../utils/grammarHighlight';
 import { isKanji } from '../utils/kanji-structure';
 import { logActivity } from '../api';
 import SpeakerIcon from '../components/SpeakerIcon';
@@ -135,8 +134,6 @@ export default function VocabView({
       ? [...currentVocab.kana].filter((c) => /[ぁ-ゖァ-ヺー]/.test(c)).slice(0, 4)
       : [];
   const strokeText = strokeChars.join('');
-  // Trợ từ trong câu ví dụ tô đỏ, như mẫu (は, を, に…). Cụm dài xếp trước để khớp hết.
-  const exampleKeys = ['から', 'まで', 'より', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'へ'];
   const hasMultipleReadings =
     currentVocab != null &&
     parseReadingVariants(currentVocab.kana, currentVocab.romaji).length > 1;
@@ -150,16 +147,11 @@ export default function VocabView({
     (hasOptionalBracketParts(currentVocab.kanji) ||
       hasOptionalBracketParts(currentVocab.kana) ||
       hasOptionalBracketParts(currentVocab.romaji));
-  // Cụm dài ("［どうぞ］よろしく［お願いします］。"): 3 cột không đủ chỗ → thẻ xếp dọc
   const isLongWord = frontTextTier === 'lg' || frontTextTier === 'xl' || hasOptionalBrackets;
-  // Cỡ ô nét viết theo số chữ. Thẻ dài xếp dọc nên ô nét viết có cả hàng riêng → vẽ to hơn.
+  // Hero: ô nét viết là tâm thẻ — vẽ to hơn bố cục 3 cột cũ.
   const strokeSize = isLongWord
-    ? ([200, 200, 160, 130][strokeChars.length] ?? 110)
-    : ([160, 160, 112, 84][strokeChars.length] ?? 68);
-  const frontTextTierClass = [
-    frontTextTier === 'sm' ? '' : ` flashcard-text-dual--tier-${frontTextTier}`,
-    hasOptionalBrackets ? ' flashcard-text-dual--optional-brackets' : '',
-  ].join('');
+    ? ([220, 220, 180, 140][strokeChars.length] ?? 120)
+    : ([200, 200, 150, 110][strokeChars.length] ?? 90);
 
   useEffect(() => {
     if (!currentVocab || vocabLoggedRef.current) return;
@@ -498,47 +490,34 @@ export default function VocabView({
             <div
               className={`flashcard${hasMultipleReadings ? ' flashcard--multi-reading' : ''}`}
             >
-              <div className={`flashcard-face flashcard-front vocab-card${isLongWord ? ' vocab-card--long' : ''}`}>
-                <div className="vocab-card__top">
-                  <div className="vocab-card__heading">
-                    <p className="vocab-card__title japanese-text">
-                      {currentVocab.kanji ? (
-                        <>
-                          <FuriganaWord vocab={currentVocab} className="vocab-card__title-word" />
-                          {' - '}
-                        </>
-                      ) : null}
-                      {currentVocab.kana}
-                      {currentVocab.romaji ? <span className="vocab-card__title-romaji"> ({currentVocab.romaji})</span> : null}
-                    </p>
-                    <AlsoInBooks books={currentVocab.alsoInTextbooks} />
-                  </div>
-                  <span className="vocab-card__watermark" aria-hidden="true">
-                    {String(currentIndex + 1).padStart(2, '0')}
-                  </span>
+              <div className={`flashcard-face flashcard-front vocab-card vocab-card--hero${isLongWord ? ' vocab-card--long' : ''}`}>
+                <span className="vocab-card__watermark" aria-hidden="true">
+                  {String(currentIndex + 1).padStart(2, '0')}
+                </span>
+                <div className="vocab-card__toolbar" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={`vocab-copy-btn${flashcardCopied ? ' vocab-copy-btn--copied' : ''}`}
+                    onClick={handleCopyVocab}
+                    title="Sao chép từ vựng"
+                  >
+                    {flashcardCopied ? '✓ Đã copy' : 'Copy ⧉'}
+                  </button>
+                  <KanjiStructureButton text={currentVocab.kanji} withLabel className="ks-open-btn--sm" />
+                  <button
+                    type="button"
+                    className="vocab-round-btn vocab-round-btn--soft"
+                    onClick={handlePronounce}
+                    title="Nghe phát âm"
+                    aria-label="Nghe phát âm"
+                  >
+                    <SpeakerIcon className="vocab-speaker-icon" size={18} />
+                  </button>
                 </div>
                 <div className="flashcard-front-body">
-                  <div className={`flashcard-text-dual vocab-card__cols${frontTextTierClass}`}>
-                    <div className="flashcard-text-col flashcard-text-col--kanji">
-                      <span className="flashcard-char-label">Kanji</span>
-                      <FlashcardJapaneseText
-                        text={currentVocab.kanji || currentVocab.kana}
-                        className="vocab-kanji japanese-text"
-                      />
-                      <div className="vocab-card__col-actions">
-                        <button
-                          type="button"
-                          className={`vocab-copy-btn${flashcardCopied ? ' vocab-copy-btn--copied' : ''}`}
-                          onClick={handleCopyVocab}
-                          title="Sao chép từ vựng"
-                        >
-                          {flashcardCopied ? '✓ Đã copy' : 'Copy ⧉'}
-                        </button>
-                        <KanjiStructureButton text={currentVocab.kanji} className="ks-open-btn--sm" />
-                      </div>
-                    </div>
+                  <div className="vocab-card__hero">
                     <div
-                      className="vocab-card__strokes"
+                      className="vocab-card__strokes vocab-card__strokes--hero"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <StrokeOrder
@@ -550,32 +529,34 @@ export default function VocabView({
                         rainbow
                         onCharClick={handleStrokeCharClick}
                       />
-                      <span className="vocab-card__strokes-hint">Nhấp vào chữ để tập viết</span>
+                      <span className="sr-only">Nhấp vào chữ để tập viết</span>
                     </div>
-                    <div className="flashcard-text-col flashcard-text-col--kana">
-                      <span className="flashcard-char-label">Kana</span>
-                      <FlashcardJapaneseText text={currentVocab.kana} className="vocab-kana japanese-text" />
-                      <div className="vocab-card__col-actions">
-                        <KanjiStructureButton text={currentVocab.kanji} withLabel />
-                        <button
-                          type="button"
-                          className="vocab-round-btn vocab-round-btn--soft"
-                          onClick={handlePronounce}
-                          title="Nghe phát âm"
-                          aria-label="Nghe phát âm"
-                        >
-                          <SpeakerIcon className="vocab-speaker-icon" size={18} />
-                        </button>
-                      </div>
-                    </div>
+                    {currentVocab.kanji &&
+                    currentVocab.kana &&
+                    currentVocab.kanji !== currentVocab.kana ? (
+                      <p
+                        className="vocab-card__reading japanese-text"
+                        aria-label={`Cách đọc: ${currentVocab.kana}`}
+                      >
+                        {currentVocab.kana}
+                      </p>
+                    ) : !currentVocab.kanji && currentVocab.kana ? (
+                      <p className="vocab-card__reading japanese-text">{currentVocab.kana}</p>
+                    ) : null}
                   </div>
                   <div className="flashcard-front-meta vocab-card__meta">
                     <p className="vocab-card__headline">
                       <FlashcardJapaneseText text={currentVocab.romaji} className="vocab-romaji" />
-                      <span className="vocab-card__sep" aria-hidden="true">|</span>
+                      <span className="vocab-card__sep" aria-hidden="true">
+                        |
+                      </span>
                       <span className="vocab-meaning">{currentVocab.meaning}</span>
                     </p>
-                    <VocabExtraMeanings vocab={currentVocab} />
+                    <div className="vocab-card__tags">
+                      <span className="vocab-card__type-tag">TỪ</span>
+                      <VocabExtraMeanings vocab={currentVocab} />
+                    </div>
+                    <AlsoInBooks books={currentVocab.alsoInTextbooks} />
                     {currentVocab.pitchAccent ? (
                       <span className="vocab-pitch">Cao điệu {currentVocab.pitchAccent}</span>
                     ) : null}
@@ -588,68 +569,33 @@ export default function VocabView({
             <section className="vocab-examples" aria-label="Ví dụ">
               <div className="vocab-examples__head">
                 <span className="vocab-card__examples-label">Ví dụ</span>
-                <KanjiStructureButton text={patternExamples[0].ja} className="ks-open-btn--sm" />
+                <div className="vocab-examples__head-actions">
+                  <KanjiStructureButton text={patternExamples[0].ja} className="ks-open-btn--sm" />
+                </div>
               </div>
-              <div className="vocab-examples__body">
+              <div className="vocab-examples__body vocab-examples__body--stack">
                 <div className="vocab-examples__copy">
                   <ul className="vocab-examples__list">
                     {patternExamples.map((example) => (
-                      <li key={`ex-${example.ja}`} className="vocab-examples__item">
-                        <p className="vocab-examples__line">
-                          <button
-                            type="button"
-                            className="vocab-examples__ja japanese-text"
-                            title="Bấm để nghe tiếng Nhật"
-                            aria-label={`Nghe tiếng Nhật: ${example.ja}`}
-                            onClick={(e) => handleExampleJapanese(e, example.speak || example.ja)}
-                          >
-                            {highlightKeys(example.ja, exampleKeys).map((seg, i) =>
-                              seg.kind === 'key' ? (
-                                <mark key={i} className="vocab-examples__hl">{seg.text}</mark>
-                              ) : (
-                                <span key={i}>{seg.text}</span>
-                              ),
-                            )}
-                          </button>
-                          {example.vi ? (
-                            <button
-                              type="button"
-                              className="vocab-examples__vi"
-                              title="Bấm để nghe tiếng Việt"
-                              aria-label={`Nghe tiếng Việt: ${example.vi}`}
-                              onClick={(e) => handleExampleVietnamese(e, example.vi)}
-                            >
-                              {example.vi}
-                            </button>
-                          ) : null}
-                          <ExampleEnglish text={example.en} className="vocab-examples__en" />
-                        </p>
-                        <button
-                          type="button"
-                          className="vocab-round-btn vocab-round-btn--sm"
-                          title="Nghe ví dụ (Nhật rồi Việt)"
-                          aria-label="Nghe ví dụ (Nhật rồi Việt)"
-                          onClick={(e) => handleExamplePronounce(e, example.speak, example.vi)}
-                        >
-                          <SpeakerIcon className="vocab-speaker-icon" size={16} />
-                        </button>
-                      </li>
+                      <VocabExampleLine
+                        key={`ex-${example.ja}`}
+                        example={example}
+                        focusKanji={currentVocab.kanji}
+                        focusMeaning={currentVocab.meaning}
+                        focusKana={currentVocab.kana}
+                        focusRomaji={currentVocab.romaji}
+                        imageUrl={currentVocab.imageUrl}
+                        onSpeakJa={handleExampleJapanese}
+                        onSpeakVi={handleExampleVietnamese}
+                        onSpeakBoth={handleExamplePronounce}
+                      />
                     ))}
                   </ul>
                   <p className="vocab-examples__note">
-                    Bấm câu Nhật để nghe JA · bấm bản Việt để nghe VI · EN: dịch máy, bấm để nghe
+                    Bấm câu Nhật để nghe JA · bấm bản Việt để nghe VI · tab Detailed / Clean typography ·
+                    EN: dịch máy
                   </p>
                 </div>
-                <VocabPicture
-                  word={currentVocab.romaji}
-                  meaning={currentVocab.meaning}
-                  kana={currentVocab.kana}
-                  kanji={currentVocab.kanji}
-                  imageUrl={currentVocab.imageUrl}
-                  size="sm"
-                  className="vocab-examples__picture"
-                  alt={currentVocab.kana}
-                />
               </div>
             </section>
           ) : null}
