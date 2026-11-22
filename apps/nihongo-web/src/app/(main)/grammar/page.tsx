@@ -11,6 +11,9 @@ function GrammarPageInner() {
   const raw = searchParams.get('lesson');
   const lesson = raw ? Number(raw) : NaN;
   const initialLessonNumber = Number.isFinite(lesson) && lesson > 0 ? Math.floor(lesson) : undefined;
+  const gRaw = searchParams.get('g');
+  const gNum = gRaw ? Number(gRaw) : NaN;
+  const initialGrammarId = Number.isFinite(gNum) && gNum > 0 ? Math.floor(gNum) : undefined;
 
   if (initialLessonNumber == null) {
     return (
@@ -35,7 +38,12 @@ function GrammarPageInner() {
     );
   }
 
-  return <GrammarView initialLessonNumber={initialLessonNumber} />;
+  return (
+    <GrammarView
+      initialLessonNumber={initialLessonNumber}
+      initialGrammarId={initialGrammarId}
+    />
+  );
 }
 
 export default function GrammarPage() {

@@ -47,15 +47,22 @@ function alignOne(kanji: string, kana: string): FuriganaSegment[] | null {
   return segments;
 }
 
+/** Bỏ khoảng trắng / fullwidth space — DB thường lưu "あの かたは きむらさん です。" */
+function normalizeKana(kana: string): string {
+  return kana.replace(/[\s　]+/g, '');
+}
+
 export function toFurigana(kanji: string | null | undefined, kana: string): FuriganaSegment[] | null {
   if (!kanji || !kana || !KANJI.test(kanji)) return null;
-  const whole = alignOne(kanji, kana);
+  const reading = normalizeKana(kana);
+  const surface = kanji.replace(/[\s　]+/g, '');
+  const whole = alignOne(surface, reading);
   if (whole) return whole;
 
-  if (kanji.includes(VARIANT_SEP) && !kana.includes(VARIANT_SEP)) {
+  if (surface.includes(VARIANT_SEP) && !reading.includes(VARIANT_SEP)) {
     const out: FuriganaSegment[] = [];
-    for (const [i, variant] of kanji.split(VARIANT_SEP).entries()) {
-      const seg = KANJI.test(variant) ? alignOne(variant, kana) : null;
+    for (const [i, variant] of surface.split(VARIANT_SEP).entries()) {
+      const seg = KANJI.test(variant) ? alignOne(variant, reading) : null;
       if (!seg) return null;
       if (i > 0) out.push([VARIANT_SEP, '']);
       out.push(...seg);

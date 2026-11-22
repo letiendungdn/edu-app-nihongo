@@ -127,6 +127,18 @@ const COMMON_WORDS: Record<
     detail: 'Book',
     reading: 'ほん',
   },
+  方: {
+    gloss: 'Vị / người (kính ngữ).',
+    pos: 'Danh từ kính ngữ',
+    detail: 'Person (polite) — かた',
+    reading: 'かた',
+  },
+  木村: {
+    gloss: 'Họ Kimura (tên người).',
+    pos: 'Tên riêng',
+    detail: 'Family name: Kimura',
+    reading: 'きむら',
+  },
 };
 
 const PARTICLE_KEYS = Object.keys(PARTICLE_META).sort((a, b) => b.length - a.length);
@@ -331,6 +343,43 @@ function buildTypedRomaji(parts: ExampleAnalysisPart[]): string {
   return `${capitalizeRomaji(chunks.join(' '))}.`;
 }
 
+/** Khi không ghép được furigana: vẫn tách trợ từ / cụm để có thẻ phân tích. */
+function partsFromPlainJa(
+  ja: string,
+  focusKanji?: string | null,
+  focusMeaning?: string | null,
+): ExampleAnalysisPart[] {
+  const tokens = splitKanaRun(ja);
+  return tokens
+    .filter((t) => t.trim().length > 0)
+    .map((token) => {
+      if (hasKanji(token)) {
+        const meta = metaForKanji(token, undefined, focusKanji, focusMeaning);
+        return {
+          surface: token,
+          ...meta,
+          kind: 'kanji' as const,
+        };
+      }
+      const clean = token.replace(/[。！？、．，\s]+/g, '');
+      const isParticle = Boolean(PARTICLE_META[clean] || PARTICLE_META[token]);
+      const kind: ExampleAnalysisPart['kind'] = isParticle ? 'particle' : 'other';
+      const reading = /[ぁ-んァ-ンー]/.test(token)
+        ? token.replace(/[。！？、．，\s]+/g, '')
+        : undefined;
+      const romaji = tokenRomaji(token, reading, kind);
+      const specialParticle = particleRomaji(token);
+      return {
+        surface: token,
+        reading: reading || undefined,
+        romaji,
+        moraRomaji: specialParticle || (reading ? moraHyphenRomaji(reading) : romaji),
+        ...metaForToken(token),
+        kind,
+      };
+    });
+}
+
 /**
  * Xây nội dung phân tích câu ví dụ từ ja + kana (+ nghĩa VI / từ đang học).
  */
@@ -341,9 +390,11 @@ export function buildExampleAnalysis(
   focus?: { kanji?: string | null; meaning?: string | null },
 ): ExampleAnalysis {
   const segments = kana?.trim() ? toFurigana(ja, kana.trim()) : null;
-  const parts = segments ? partsFromSegments(segments, focus?.kanji, focus?.meaning) : [];
+  const parts = segments
+    ? partsFromSegments(segments, focus?.kanji, focus?.meaning)
+    : partsFromPlainJa(ja, focus?.kanji, focus?.meaning);
   const cards = parts.filter((p) => !/^[。！？、．，\s]+$/.test(p.surface));
-  const readingLine = kana?.trim() || '';
+  const readingLine = kana?.trim().replace(/[\s　]+/g, '') || '';
   const typedRomaji = buildTypedRomaji(parts);
   const romajiPlain = parts
     .map((p) => p.romaji)

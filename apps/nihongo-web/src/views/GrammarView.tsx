@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,7 +25,7 @@ import AlsoInBooks from '../components/AlsoInBooks';
 import PlayAllButton from '../components/PlayAllButton';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
-import { useGrammar, useLessons } from '../hooks/queries';
+import { useGrammar, useLessons, useVocab } from '../hooks/queries';
 import { queryKeys } from '../api/query-keys';
 import { createGrammar, deleteGrammar, updateGrammar } from '../api';
 import {
@@ -45,6 +45,7 @@ import {
   pinGrammar,
   unpinGrammar,
 } from '../utils/grammarSrs';
+import { exampleMatchesGrammar } from '../utils/matchGrammarsInExample';
 import SpeakerIcon from '../components/SpeakerIcon';
 import { ExampleEnglish } from '../components/VocabReading';
 import './GrammarView.css';
@@ -193,10 +194,13 @@ function HighlightedJapanese({
 
 export default function GrammarView({
   initialLessonNumber,
+  initialGrammarId,
   hideLessonSelector = false,
   startInEditMode = false,
 }: {
   initialLessonNumber?: number;
+  /** Mở và cuộn tới mẫu ngữ pháp (từ link ví dụ từ vựng ?g=). */
+  initialGrammarId?: number;
   hideLessonSelector?: boolean;
   startInEditMode?: boolean;
 } = {}) {
@@ -204,6 +208,9 @@ export default function GrammarView({
   const [currentLesson, setCurrentLesson] = useState(initialLessonNumber ?? 1);
   const [autoRead, setAutoRead] = useState(false);
   const [speechFocus, setSpeechFocus] = useState<SpeechFocus | null>(null);
+  const [focusGrammarId, setFocusGrammarId] = useState<number | null>(
+    initialGrammarId ?? null,
+  );
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const exampleRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const { isAdmin, token } = useAuth();
@@ -211,8 +218,66 @@ export default function GrammarView({
   const { data: lessons = [] } = useLessons();
   const { data: grammarLessons = [] } = useLessons({ has: 'grammar' });
   const { data: lessonGrammar = [], isLoading: loading } = useGrammar(currentLesson);
+  const { data: lessonVocab = [] } = useVocab(currentLesson);
   const { isPlayingAll, startPlayAll, stopPlayAll } = usePlayAll();
   const [editMode, setEditMode] = useState(Boolean(startInEditMode));
+
+  /** Câu ví dụ từ bảng Vocabulary (CSDL) — gắn vào từng mẫu ngữ pháp của bài. */
+  const vocabExamplesByGrammarId = useMemo(() => {
+    const map = new Map<
+      number,
+      Array<{
+        vocabId: number;
+        word: string;
+        ja: string;
+        kana?: string | null;
+        vi?: string | null;
+        en?: string | null;
+      }>
+    >();
+    for (const grammar of lessonGrammar) {
+      const hits: Array<{
+        vocabId: number;
+        word: string;
+        ja: string;
+        kana?: string | null;
+        vi?: string | null;
+        en?: string | null;
+      }> = [];
+      const seen = new Set<string>();
+      for (const vocab of lessonVocab) {
+        const rows =
+          vocab.examples?.length
+            ? vocab.examples
+            : vocab.exampleJa
+              ? [
+                  {
+                    ja: vocab.exampleJa,
+                    kana: vocab.exampleKana,
+                    vi: vocab.exampleVi,
+                    en: vocab.exampleEn,
+                  },
+                ]
+              : [];
+        for (const ex of rows) {
+          if (!ex.ja?.trim() || !exampleMatchesGrammar(ex.ja, grammar.pattern)) continue;
+          const key = `${vocab.id}:${ex.ja}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          hits.push({
+            vocabId: vocab.id,
+            word: vocab.kanji || vocab.kana,
+            ja: ex.ja,
+            kana: ex.kana,
+            vi: ex.vi,
+            en: ex.en,
+          });
+        }
+      }
+      map.set(grammar.id, hits.slice(0, 8));
+    }
+    return map;
+  }, [lessonGrammar, lessonVocab]);
 
   const goToLesson = (next: number) => {
     setCurrentLesson(next);
@@ -228,8 +293,23 @@ export default function GrammarView({
   }, [initialLessonNumber]);
 
   useEffect(() => {
+    setFocusGrammarId(initialGrammarId ?? null);
+  }, [initialGrammarId]);
+
+  useEffect(() => {
     if (startInEditMode && isAdmin) setEditMode(true);
   }, [startInEditMode, isAdmin]);
+
+  useEffect(() => {
+    if (focusGrammarId == null || loading || !lessonGrammar.length) return;
+    const index = lessonGrammar.findIndex((g) => g.id === focusGrammarId);
+    if (index < 0) return;
+    const timer = window.setTimeout(() => {
+      cardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setSpeechFocus({ grammarIndex: index, exampleIndex: null });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [focusGrammarId, loading, lessonGrammar]);
 
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -769,15 +849,19 @@ export default function GrammarView({
               );
             }
 
+            const isDeepLinked = focusGrammarId != null && grammar.id === focusGrammarId;
             return (
               <div
                 key={grammarCardId(grammar, index)}
+                id={`grammar-${grammar.id}`}
                 ref={(el) => {
                   cardRefs.current[index] = el;
                 }}
-                className={`grammar-card glass-panel${isCardActive ? ' grammar-card--speaking' : ''}`}
+                className={`grammar-card glass-panel${isCardActive ? ' grammar-card--speaking' : ''}${
+                  isDeepLinked ? ' grammar-card--linked' : ''
+                }`}
                 data-grammar-index={index}
-                aria-current={isCardActive ? 'true' : undefined}
+                aria-current={isCardActive || isDeepLinked ? 'true' : undefined}
               >
                 <span className="grammar-card-watermark" aria-hidden="true">
                   {lessonBadge}
@@ -876,7 +960,7 @@ export default function GrammarView({
 
                 {(grammar.examples || []).length > 0 && (
                   <div className="grammar-examples">
-                    <h4>Ví dụ:</h4>
+                    <h4>Ví dụ giáo trình:</h4>
                     <ul className="example-list">
                       {(grammar.examples || []).map((ex, exIndex) => {
                         const isExActive = isCardActive && activeExampleIndex === exIndex;
@@ -924,6 +1008,54 @@ export default function GrammarView({
                           </li>
                         );
                       })}
+                    </ul>
+                  </div>
+                )}
+
+                {(vocabExamplesByGrammarId.get(grammar.id) ?? []).length > 0 && (
+                  <div className="grammar-examples grammar-examples--from-vocab">
+                    <h4>
+                      Ví dụ từ vựng trong CSDL
+                      <span className="grammar-examples__count">
+                        {' '}
+                        ({vocabExamplesByGrammarId.get(grammar.id)?.length})
+                      </span>
+                    </h4>
+                    <ul className="example-list">
+                      {(vocabExamplesByGrammarId.get(grammar.id) ?? []).map((ex) => (
+                        <li key={`${ex.vocabId}-${ex.ja}`} className="example-item example-item--vocab">
+                          <div className="example-jp">
+                            <div className="example-jp-text">
+                              <HighlightedJapanese
+                                className="japanese-text"
+                                text={ex.ja}
+                                keys={patternKeys}
+                                showFuri={showFuri}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-audio-small btn-example-audio"
+                              onClick={() => playExample(index, 0, ex.ja, ex.vi || ex.en)}
+                              title="Nghe phát âm"
+                              aria-label="Nghe phát âm ví dụ từ vựng"
+                            >
+                              <SpeakerIcon className="grammar-speaker-icon" />
+                            </button>
+                          </div>
+                          {ex.vi ? <div className="example-vi">{ex.vi}</div> : null}
+                          {ex.en ? <ExampleEnglish text={ex.en} /> : null}
+                          <div className="example-vocab-meta">
+                            <span className="japanese-text">{ex.word}</span>
+                            <Link
+                              href={`/vocab?lesson=${currentLesson}&word=${ex.vocabId}`}
+                              className="example-vocab-link"
+                            >
+                              Mở thẻ từ →
+                            </Link>
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}

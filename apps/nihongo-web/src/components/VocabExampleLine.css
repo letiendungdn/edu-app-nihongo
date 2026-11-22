@@ -46,6 +46,27 @@
   color: var(--vc-example-muted, var(--text-secondary, #5a6570));
 }
 
+.vocab-examples__grammar-jump {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--primary-color, #e11d48) 55%, transparent);
+  background: var(--primary-color, #e11d48);
+  color: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.vocab-examples__grammar-jump:hover,
+.vocab-examples__grammar-jump:focus-visible {
+  filter: brightness(1.06);
+}
+
 .vocab-examples__analyze {
   appearance: none;
   border: 1px solid color-mix(in srgb, var(--primary-color, #e11d48) 40%, transparent);
@@ -76,6 +97,91 @@
   border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 80%, transparent);
   background: color-mix(in srgb, var(--surface-color, #1a1d23) 88%, var(--primary-color, #e11d48) 12%);
   color: var(--vc-example-text, var(--text-primary));
+}
+
+.vocab-example-analysis__grammar-links {
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--primary-color, #e11d48) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 10%, transparent);
+}
+
+.vocab-example-analysis__grammar-links--outside {
+  margin: 0.55rem 0 0.35rem;
+  color: var(--vc-example-text, var(--text-primary));
+}
+
+.vocab-example-analysis__grammar-list {
+  list-style: none;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.vocab-example-analysis__grammar-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  gap: 0.35rem 0.65rem;
+  align-items: baseline;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary-color, #e11d48) 35%, transparent);
+  background: color-mix(in srgb, var(--vc-example-text, #fff) 6%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+
+.vocab-example-analysis__grammar-link:hover,
+.vocab-example-analysis__grammar-link:focus-visible {
+  border-color: var(--primary-color, #e11d48);
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 16%, transparent);
+}
+
+.vocab-example-analysis__grammar-pattern {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.vocab-example-analysis__grammar-meaning {
+  font-size: 0.82rem;
+  color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__grammar-cta {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary-color, #e11d48);
+  white-space: nowrap;
+}
+
+.vocab-example-analysis__grammar-empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__grammar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.vocab-example-analysis__grammar-lesson {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary-color, #e11d48);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .vocab-example-analysis__grammar-link {
+    grid-template-columns: 1fr;
+  }
 }
 
 [data-theme='light'] .vocab-example-analysis {

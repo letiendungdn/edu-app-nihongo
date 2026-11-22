@@ -236,6 +236,11 @@
   background: color-mix(in srgb, var(--primary-color) 28%, transparent);
 }
 
+.grammar-card--linked {
+  outline: 2px solid var(--primary-color, #e11d48);
+  outline-offset: 2px;
+}
+
 .grammar-card--speaking {
   outline: 2px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
   box-shadow:
@@ -777,6 +782,39 @@
 .grammar-view .grammar-pattern-header,
 .grammar-view .grammar-meaning,
 .grammar-view .grammar-explain-box,
+.grammar-view .grammar-examples--from-vocab {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed color-mix(in srgb, var(--primary-color, #e11d48) 35%, transparent);
+}
+
+.grammar-view .grammar-examples__count {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.grammar-view .example-item--vocab {
+  border-color: color-mix(in srgb, var(--primary-color, #e11d48) 28%, transparent);
+}
+
+.grammar-view .example-vocab-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.grammar-view .example-vocab-link {
+  font-weight: 800;
+  color: var(--primary-color, #e11d48);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .grammar-view .grammar-examples {
   position: relative;
 }

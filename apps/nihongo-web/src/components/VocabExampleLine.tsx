@@ -11,6 +11,11 @@ import {
   buildExampleAnalysis,
   exampleFuriganaSegments,
 } from '../utils/vocabExampleAnalysis';
+import {
+  grammarLessonHref,
+  matchGrammarsInExample,
+  type GrammarMatchInput,
+} from '../utils/matchGrammarsInExample';
 import type { VocabPatternExample } from '../utils/vocabPatternExample';
 import type { FuriganaSegment } from '../utils/toFurigana';
 import './VocabExampleLine.css';
@@ -61,6 +66,8 @@ export default function VocabExampleLine({
   focusKana,
   focusRomaji,
   imageUrl,
+  lessonNumber,
+  lessonGrammars = [],
   onSpeakJa,
   onSpeakVi,
   onSpeakBoth,
@@ -74,6 +81,9 @@ export default function VocabExampleLine({
   focusKana?: string | null;
   focusRomaji?: string | null;
   imageUrl?: string | null;
+  /** Bài hiện tại — để link sang trang ngữ pháp cùng bài. */
+  lessonNumber?: number;
+  lessonGrammars?: GrammarMatchInput[];
   onSpeakJa: (e: MouseEvent, text: string) => void;
   onSpeakVi: (e: MouseEvent, text: string) => void;
   onSpeakBoth: (e: MouseEvent, speak: string, vi: string) => void;
@@ -99,6 +109,10 @@ export default function VocabExampleLine({
         meaning: focusMeaning,
       }),
     [example.ja, example.kana, example.vi, focusKanji, focusMeaning],
+  );
+  const grammarHits = useMemo(
+    () => matchGrammarsInExample(example.ja, lessonGrammars),
+    [example.ja, lessonGrammars],
   );
 
   const picture = (
@@ -155,6 +169,21 @@ export default function VocabExampleLine({
           >
             <SpeakerIcon className="vocab-speaker-icon" size={16} />
           </button>
+          {lessonNumber != null ? (
+            <Link
+              href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+              className="vocab-examples__grammar-jump"
+              target="_blank"
+              rel="noopener noreferrer"
+              title={
+                grammarHits[0]
+                  ? `Mở ngữ pháp: ${grammarHits[0].pattern}`
+                  : `Mở ngữ pháp bài ${lessonNumber}`
+              }
+            >
+              Ngữ pháp →
+            </Link>
+          ) : null}
           <button
             type="button"
             className={`vocab-examples__analyze${open ? ' is-open' : ''}`}
@@ -165,6 +194,57 @@ export default function VocabExampleLine({
           </button>
         </div>
       </div>
+
+      {lessonNumber != null ? (
+        <section
+          className="vocab-example-analysis__grammar-links vocab-example-analysis__grammar-links--outside"
+          aria-label="Ngữ pháp dùng trong câu ví dụ"
+        >
+          <h4 className="vocab-example-analysis__title">Ngữ pháp dùng trong câu</h4>
+          {grammarHits.length ? (
+            <ul className="vocab-example-analysis__grammar-list">
+              {grammarHits.map((g) => (
+                <li key={g.id}>
+                  <Link
+                    href={grammarLessonHref(lessonNumber, g.id)}
+                    className="vocab-example-analysis__grammar-link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="vocab-example-analysis__grammar-pattern japanese-text">
+                      {g.pattern}
+                    </span>
+                    <span className="vocab-example-analysis__grammar-meaning">{g.meaning}</span>
+                    <span className="vocab-example-analysis__grammar-cta">Mở ngữ pháp →</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="vocab-example-analysis__grammar-empty">
+              Chưa khớp mẫu cụ thể — bấm mở ngữ pháp bài {lessonNumber}.
+            </p>
+          )}
+          <div className="vocab-example-analysis__grammar-actions">
+            <Link
+              href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+              className="vocab-example-analysis__grammar-lesson"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ngữ pháp bài {lessonNumber}
+            </Link>
+            <Link
+              href={`/particles?lesson=${lessonNumber}`}
+              className="vocab-example-analysis__grammar-lesson"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Luyện trợ từ bài {lessonNumber}
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {open ? (
         <div className="vocab-example-analysis" aria-label="Phân tích câu ví dụ">
@@ -195,7 +275,7 @@ export default function VocabExampleLine({
                 <div className="vocab-example-analysis__detailed-copy">
                   {analysis.cards.length ? (
                     <section className="vocab-example-analysis__section">
-                      <h4 className="vocab-example-analysis__title">1. Cấu trúc ngữ pháp</h4>
+                      <h4 className="vocab-example-analysis__title">1. Cấu trúc câu</h4>
                       <ul className="vocab-example-analysis__list">
                         {analysis.cards.map((part, i) => (
                           <li key={`${part.surface}-${i}`}>
@@ -280,7 +360,20 @@ export default function VocabExampleLine({
           )}
 
           <p className="vocab-example-analysis__footer">
-            Xem thêm cấu tạo chi tiết tại{' '}
+            {lessonNumber != null ? (
+              <>
+                Học mẫu câu tại{' '}
+                <Link
+                  href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ngữ pháp bài {lessonNumber}
+                </Link>
+                {' · '}
+              </>
+            ) : null}
+            Cấu tạo chi tiết tại{' '}
             <Link href="/kanji/structure" target="_blank" rel="noopener noreferrer">
               Cấu tạo Kanji
             </Link>{' '}

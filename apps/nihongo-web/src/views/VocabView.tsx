@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { speakJapaneseThenMeaning, meaningForSpeech, playAudio } from '../utils/speech';
@@ -12,7 +12,7 @@ import VocabWordList from '../components/VocabWordList';
 import VocabExampleLine from '../components/VocabExampleLine';
 import { usePlayAll } from '../hooks/usePlayAll';
 import { useAuth } from '../hooks/useAuth';
-import { useFeatureFlag, useLessons, useVocab, useVocabSearchQuery } from '../hooks/queries';
+import { useFeatureFlag, useGrammar, useLessons, useVocab, useVocabSearchQuery } from '../hooks/queries';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import StrokeOrder from '../components/StrokeOrder';
 import {
@@ -68,6 +68,16 @@ export default function VocabView({
   const { isAdmin } = useAuth();
   const { data: lessons = [] } = useLessons();
   const { data: lessonVocab = [], isLoading: loading } = useVocab(currentLesson);
+  const { data: lessonGrammar = [] } = useGrammar(currentLesson);
+  const lessonGrammarLinks = useMemo(
+    () =>
+      lessonGrammar.map((g) => ({
+        id: g.id,
+        pattern: g.pattern,
+        meaning: g.meaning,
+      })),
+    [lessonGrammar],
+  );
   // Ô tra từ trên mọi bài bật/tắt bằng feature flag (admin: PATCH /api/admin/feature-flags/vocab-search-all-lessons)
   const searchAllLessonsOn = useFeatureFlag('vocab-search-all-lessons');
   const { data: search, isFetching: searching } = useVocabSearchQuery(searchAllLessonsOn ? searchQuery : '');
@@ -585,6 +595,8 @@ export default function VocabView({
                         focusKana={currentVocab.kana}
                         focusRomaji={currentVocab.romaji}
                         imageUrl={currentVocab.imageUrl}
+                        lessonNumber={currentLesson}
+                        lessonGrammars={lessonGrammarLinks}
                         onSpeakJa={handleExampleJapanese}
                         onSpeakVi={handleExampleVietnamese}
                         onSpeakBoth={handleExamplePronounce}
