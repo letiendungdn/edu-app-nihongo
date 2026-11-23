@@ -45,6 +45,7 @@ struct NavCard: View {
             .padding(14)
             .background(.background, in: RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(.separator, lineWidth: 0.5))
+            .contentShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("nav-\(title)")

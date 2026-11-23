@@ -22,7 +22,7 @@ final class NihongoEDUUITests: XCTestCase {
 
     private func homeCard(_ title: String) -> XCUIElement {
         // NavCard gắn accessibilityLabel(title) + id nav-…; fallback StaticText cho bản cũ.
-        let byId = app.descendants(matching: .any)["nav-\(title)"]
+        let byId = app.buttons["nav-\(title)"]
         if byId.exists { return byId }
         let button = app.buttons[title]
         if button.exists { return button }
