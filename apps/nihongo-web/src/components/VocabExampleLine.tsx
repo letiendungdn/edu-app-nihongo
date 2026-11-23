@@ -335,22 +335,30 @@ export default function VocabExampleLine({
               <div className="vocab-example-analysis__clean-body">
                 <ul className="vocab-example-analysis__cards">
                   {analysis.cards.map((part, i) => (
-                    <li key={`${part.surface}-card-${i}`} className="vocab-example-analysis__card">
-                      <span className="vocab-example-analysis__card-ja japanese-text">
-                        {part.surface}
-                      </span>
-                      {part.reading ? (
-                        <span className="vocab-example-analysis__card-reading japanese-text">
-                          {part.reading}
-                          {part.romaji ? <span lang="en"> ({part.romaji})</span> : null}
+                    <li key={`${part.surface}-card-${i}`}>
+                      <button
+                        type="button"
+                        className="vocab-example-analysis__card"
+                        title="Bấm để nghe phát âm"
+                        aria-label={`Nghe phát âm: ${part.reading || part.surface}`}
+                        onClick={(e) => onSpeakJa(e, part.reading || part.surface)}
+                      >
+                        <span className="vocab-example-analysis__card-ja japanese-text">
+                          {part.surface}
                         </span>
-                      ) : part.romaji ? (
-                        <span className="vocab-example-analysis__card-reading" lang="en">
-                          {part.romaji}
-                        </span>
-                      ) : null}
-                      <span className="vocab-example-analysis__card-pos">{part.pos}</span>
-                      <span className="vocab-example-analysis__card-detail">{part.detail}</span>
+                        {part.reading ? (
+                          <span className="vocab-example-analysis__card-reading japanese-text">
+                            {part.reading}
+                            {part.romaji ? <span lang="en"> ({part.romaji})</span> : null}
+                          </span>
+                        ) : part.romaji ? (
+                          <span className="vocab-example-analysis__card-reading" lang="en">
+                            {part.romaji}
+                          </span>
+                        ) : null}
+                        <span className="vocab-example-analysis__card-pos">{part.pos}</span>
+                        <span className="vocab-example-analysis__card-detail">{part.detail}</span>
+                      </button>
                     </li>
                   ))}
                 </ul>

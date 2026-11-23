@@ -339,6 +339,7 @@
 }
 
 .vocab-example-analysis__card {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -347,6 +348,21 @@
   border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 75%, transparent);
   background: color-mix(in srgb, var(--vc-example-text, #fff) 6%, transparent);
   color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.vocab-example-analysis__card:hover {
+  border-color: var(--primary-color, #e11d48);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--primary-color, #e11d48) 14%, transparent);
+  transform: translateY(-1px);
+}
+
+.vocab-example-analysis__card:focus-visible {
+  outline: 2px solid var(--primary-color, #e11d48);
+  outline-offset: 2px;
 }
 
 [data-theme='light'] .vocab-example-analysis__card {
