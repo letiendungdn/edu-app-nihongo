@@ -92,6 +92,8 @@ function draftFromGrammar(grammar: Grammar): GrammarDraft {
 type SpeechFocus = {
   grammarIndex: number;
   exampleIndex?: number | null;
+  exampleSource?: 'grammar' | 'vocab';
+  shouldScroll?: boolean;
 };
 
 function readAutoReadPreference(): boolean {
@@ -213,6 +215,7 @@ export default function GrammarView({
   );
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const exampleRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  const vocabExampleRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const { isAdmin, token } = useAuth();
   const queryClient = useQueryClient();
   const { data: lessons = [] } = useLessons();
@@ -339,19 +342,35 @@ export default function GrammarView({
 
   useEffect(() => {
     if (!speechFocus) return;
+    if (speechFocus.shouldScroll === false) return;
 
     const { grammarIndex, exampleIndex } = speechFocus;
     const target =
       exampleIndex != null && exampleIndex >= 0
-        ? exampleRefs.current[`${grammarIndex}-${exampleIndex}`]
+        ? speechFocus.exampleSource === 'vocab'
+          ? vocabExampleRefs.current[`${grammarIndex}-${exampleIndex}`]
+          : exampleRefs.current[`${grammarIndex}-${exampleIndex}`]
         : cardRefs.current[grammarIndex];
 
     target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [speechFocus]);
 
-  const focusGrammar = useCallback((grammarIndex: number, exampleIndex?: number | null) => {
-    setSpeechFocus({ grammarIndex, exampleIndex: exampleIndex ?? null });
-  }, []);
+  const focusGrammar = useCallback(
+    (
+      grammarIndex: number,
+      exampleIndex?: number | null,
+      exampleSource: 'grammar' | 'vocab' = 'grammar',
+      shouldScroll = true,
+    ) => {
+      setSpeechFocus({
+        grammarIndex,
+        exampleIndex: exampleIndex ?? null,
+        exampleSource,
+        shouldScroll,
+      });
+    },
+    [],
+  );
 
   const clearFocus = useCallback(() => setSpeechFocus(null), []);
 
@@ -456,9 +475,15 @@ export default function GrammarView({
     clearFocus();
   };
 
-  const playExample = (grammarIndex: number, exampleIndex: number, jp: string, vi?: string | null) => {
+  const playExample = (
+    grammarIndex: number,
+    exampleIndex: number,
+    jp: string,
+    vi?: string | null,
+    exampleSource: 'grammar' | 'vocab' = 'grammar',
+  ) => {
     stopPlayAll();
-    focusGrammar(grammarIndex, exampleIndex);
+    focusGrammar(grammarIndex, exampleIndex, exampleSource, false);
     void playAudioSequence(
       [
         { text: grammarExampleSpeechText(jp), lang: SPEECH_LANG.ja },
@@ -963,7 +988,10 @@ export default function GrammarView({
                     <h4>Ví dụ giáo trình:</h4>
                     <ul className="example-list">
                       {(grammar.examples || []).map((ex, exIndex) => {
-                        const isExActive = isCardActive && activeExampleIndex === exIndex;
+                        const isExActive =
+                          isCardActive &&
+                          (speechFocus?.exampleSource ?? 'grammar') === 'grammar' &&
+                          activeExampleIndex === exIndex;
                         const quickAnalysis = grammarQuickAnalysis(grammar.pattern, ex.jp);
 
                         return (
@@ -1022,8 +1050,19 @@ export default function GrammarView({
                       </span>
                     </h4>
                     <ul className="example-list">
-                      {(vocabExamplesByGrammarId.get(grammar.id) ?? []).map((ex) => (
-                        <li key={`${ex.vocabId}-${ex.ja}`} className="example-item example-item--vocab">
+                      {(vocabExamplesByGrammarId.get(grammar.id) ?? []).map((ex, vocabExIndex) => (
+                        <li
+                          key={`${ex.vocabId}-${ex.ja}`}
+                          ref={(el) => {
+                            vocabExampleRefs.current[`${index}-${vocabExIndex}`] = el;
+                          }}
+                          className={`example-item example-item--vocab${
+                            isCardActive && speechFocus?.exampleSource === 'vocab' &&
+                            speechFocus.exampleIndex === vocabExIndex
+                              ? ' example-item--speaking'
+                              : ''
+                          }`}
+                        >
                           <div className="example-jp">
                             <div className="example-jp-text">
                               <HighlightedJapanese
@@ -1036,7 +1075,9 @@ export default function GrammarView({
                             <button
                               type="button"
                               className="btn-audio-small btn-example-audio"
-                              onClick={() => playExample(index, 0, ex.ja, ex.vi || ex.en)}
+                              onClick={() =>
+                                playExample(index, vocabExIndex, ex.ja, ex.vi || ex.en, 'vocab')
+                              }
                               title="Nghe phát âm"
                               aria-label="Nghe phát âm ví dụ từ vựng"
                             >
