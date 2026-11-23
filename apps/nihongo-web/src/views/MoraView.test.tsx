@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hooks = vi.hoisted(() => ({
   useLessons: vi.fn(() => ({ data: [] })),
@@ -18,6 +18,8 @@ vi.mock('../components/LessonSelector', () => ({ default: () => null }));
 
 import MoraView from './MoraView';
 
+beforeEach(() => vi.clearAllMocks());
+
 describe('MoraView word cards', () => {
   it('plays the Japanese reading when a vocabulary card is clicked', () => {
     render(<MoraView />);
@@ -26,5 +28,17 @@ describe('MoraView word cards', () => {
 
     expect(speech.playAudio).toHaveBeenCalledWith('わたし', 'ja-JP');
     expect(screen.getByLabelText('Kana cần phân tích')).toHaveValue('わたし');
+  });
+
+  it('plays the correct, incorrect, and result words in the mora trap', () => {
+    render(<MoraView />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe cách đọc đúng: きって' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe cách đọc sai: きて' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe từ sai nhịp: きて' }));
+
+    expect(speech.playAudio).toHaveBeenNthCalledWith(1, 'きって', 'ja-JP');
+    expect(speech.playAudio).toHaveBeenNthCalledWith(2, 'きて', 'ja-JP');
+    expect(speech.playAudio).toHaveBeenNthCalledWith(3, 'きて', 'ja-JP');
   });
 });

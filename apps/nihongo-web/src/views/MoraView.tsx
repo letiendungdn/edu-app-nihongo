@@ -205,32 +205,50 @@ export default function MoraView() {
                 <p className="mora-trap-lead">
                   Nếu nuốt âm ngắt <strong>[っ]</strong>, chỉ còn {trapMorae.length} nhịp:
                 </p>
-                <div className="mora-trap-equation" aria-hidden="true">
+                <div className="mora-trap-equation">
                   {trapMorae.map((mora, index) => (
                     <span key={`${mora.text}-t-${index}`} className="mora-trap-chip japanese-text">
                       {mora.text}
                     </span>
                   ))}
                   <span className="mora-trap-eq">=</span>
-                  <span className="mora-trap-result">
+                  <button
+                    type="button"
+                    className="mora-trap-result"
+                    title="Bấm để nghe từ sai nhịp"
+                    aria-label={`Nghe từ sai nhịp: ${trapKana}`}
+                    onClick={() => playAudio(trapKana, 'ja-JP')}
+                  >
                     <span className="japanese-text">{trapKana}</span>
                     <span className="mora-trap-result-meaning">({trapMeaning})</span>
-                  </span>
+                  </button>
                 </div>
                 <div className="mora-trap-pair">
-                  <div className="mora-trap-box mora-trap-box--ok">
+                  <button
+                    type="button"
+                    className="mora-trap-box mora-trap-box--ok"
+                    title="Bấm để nghe cách đọc đúng"
+                    aria-label={`Nghe cách đọc đúng: ${kanaOnly}`}
+                    onClick={() => playAudio(kanaOnly, 'ja-JP')}
+                  >
                     <span className="japanese-text">{kanaOnly}</span>
                     <span>
                       {morae.length} nhịp ={' '}
                       {isDemo ? `${MORA_DEMO.meaning} ${MORA_DEMO.emoji}` : 'đúng'}
                     </span>
-                  </div>
-                  <div className="mora-trap-box mora-trap-box--bad">
+                  </button>
+                  <button
+                    type="button"
+                    className="mora-trap-box mora-trap-box--bad"
+                    title="Bấm để nghe cách đọc sai"
+                    aria-label={`Nghe cách đọc sai: ${trapKana}`}
+                    onClick={() => playAudio(trapKana, 'ja-JP')}
+                  >
                     <span className="japanese-text">{trapKana}</span>
                     <span>
                       {trapMorae.length} nhịp = {trapMeaning}
                     </span>
-                  </div>
+                  </button>
                 </div>
                 <p className="mora-trap-banner">
                   ⚠️ Bỏ âm ngắt [っ] → Biến thành từ khác hoàn toàn!
