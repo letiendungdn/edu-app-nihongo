@@ -396,7 +396,7 @@ export default function MoraView() {
           <div>
             <h3 id="mora-database-title">Từ vựng theo giáo trình</h3>
             <p>
-              Chọn bài → bấm từ để phân tích nhịp
+              Chọn bài → bấm từ để nghe và phân tích nhịp
               {isLoading
                 ? ' · Đang tải…'
                 : ` · ${filteredVocab.length}${
@@ -503,7 +503,11 @@ export default function MoraView() {
                   key={word.id}
                   type="button"
                   className="mora-word"
-                  onClick={() => setMoraInput(word.kana)}
+                  title="Bấm để nghe và phân tích nhịp"
+                  onClick={() => {
+                    setMoraInput(word.kana);
+                    playAudio(word.kana, 'ja-JP');
+                  }}
                 >
                   <span className="mora-word-kana japanese-text">{word.kana}</span>
                   {word.kanji ? (

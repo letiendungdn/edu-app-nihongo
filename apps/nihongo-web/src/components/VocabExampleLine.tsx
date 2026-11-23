@@ -323,8 +323,19 @@ export default function VocabExampleLine({
               <p className="vocab-example-analysis__clean-lead">
                 Câu ví dụ với furigana và cách đọc tách mora
               </p>
-              <div className="vocab-example-analysis__clean-ja japanese-text">
-                {renderFurigana(example.ja, segments, keys)}
+              <div className="vocab-example-analysis__clean-ja-row">
+                <div className="vocab-example-analysis__clean-ja japanese-text">
+                  {renderFurigana(example.ja, segments, keys)}
+                </div>
+                <button
+                  type="button"
+                  className="vocab-round-btn vocab-round-btn--sm"
+                  title="Nghe câu ví dụ tiếng Nhật"
+                  aria-label={`Nghe câu ví dụ tiếng Nhật: ${example.ja}`}
+                  onClick={(e) => onSpeakJa(e, example.speak || example.ja)}
+                >
+                  <SpeakerIcon className="vocab-speaker-icon" size={16} />
+                </button>
               </div>
               {analysis.typedRomaji ? (
                 <p className="vocab-example-analysis__typed-romaji" lang="en">

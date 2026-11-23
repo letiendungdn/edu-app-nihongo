@@ -27,4 +27,28 @@ describe('VocabExampleLine pronunciation cards', () => {
 
     expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'わたし');
   });
+
+  it('speaks the full Japanese example from the speaker button', () => {
+    const onSpeakJa = vi.fn();
+    render(
+      <VocabExampleLine
+        example={{
+          ja: '私は学生です。',
+          kana: 'わたしはがくせいです。',
+          vi: 'Tôi là học sinh.',
+          en: '',
+          speak: 'わたしはがくせいです。',
+        }}
+        onSpeakJa={onSpeakJa}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Nghe câu ví dụ tiếng Nhật: 私は学生です。' }),
+    );
+
+    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'わたしはがくせいです。');
+  });
 });
