@@ -5,6 +5,7 @@ import {
   parseReadingVariants,
   shouldShowKanaStroke,
   flashcardTextTier,
+  flashcardStrokeText,
   parseOptionalBracketSegments,
   hasOptionalBracketParts,
 } from './japanese';
@@ -33,6 +34,18 @@ describe('getStrokeText', () => {
 
   it('xử lý mixed text', () => {
     expect(getStrokeText('食べる (taberu)')).toBe('食べる');
+  });
+});
+
+describe('flashcardStrokeText', () => {
+  it('keeps kana that is part of a mixed kanji spelling', () => {
+    expect(flashcardStrokeText('此れ', 'これ')).toBe('此れ');
+  });
+
+  it('excludes optional notes and falls back to kana when the spelling has no kanji', () => {
+    expect(flashcardStrokeText('食べます［朝食を～］', 'たべます')).toBe('食べます');
+    expect(flashcardStrokeText('あいます［事故に～］', 'あいます')).toBe('あいます');
+    expect(flashcardStrokeText(null, 'テレビです')).toBe('テレビで');
   });
 });
 

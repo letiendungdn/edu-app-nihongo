@@ -18,13 +18,13 @@ import StrokeOrder from '../components/StrokeOrder';
 import {
   parseReadingVariants,
   flashcardTextTier,
+  flashcardStrokeText,
   hasOptionalBracketParts,
 } from '../utils/japanese';
 import FlashcardJapaneseText from '../components/FlashcardJapaneseText';
 import KanjiStructureButton from '../components/KanjiStructureButton';
 import AlsoInBooks from '../components/AlsoInBooks';
 import { getVocabExamples } from '../utils/vocabPatternExample';
-import { isKanji } from '../utils/kanji-structure';
 import { logActivity } from '../api';
 import SpeakerIcon from '../components/SpeakerIcon';
 import './VocabView.css';
@@ -135,15 +135,11 @@ export default function VocabView({
 
   const currentVocab = lessonVocab[currentIndex];
   const patternExamples = currentVocab ? getVocabExamples(currentVocab) : [];
-  // Ô nét viết giữa thẻ: mọi chữ kanji của từ (先生 → 先生, あの人 → 人);
-  // từ không có kanji thì vẽ phần kana (tối đa 4 chữ). Chữ nhỏ dần khi nhiều chữ.
-  const strokeKanji = currentVocab ? [...(currentVocab.kanji ?? '')].filter(isKanji) : [];
-  const strokeChars = strokeKanji.length
-    ? strokeKanji
-    : currentVocab
-      ? [...currentVocab.kana].filter((c) => /[ぁ-ゖァ-ヺー]/.test(c)).slice(0, 4)
-      : [];
-  const strokeText = strokeChars.join('');
+  // Vẽ đủ cách viết chính (kể cả kana xen trong kanji), không vẽ chú thích tùy chọn.
+  const strokeText = currentVocab
+    ? flashcardStrokeText(currentVocab.kanji, currentVocab.kana)
+    : '';
+  const strokeChars = [...strokeText];
   const hasMultipleReadings =
     currentVocab != null &&
     parseReadingVariants(currentVocab.kana, currentVocab.romaji).length > 1;
@@ -159,9 +155,10 @@ export default function VocabView({
       hasOptionalBracketParts(currentVocab.romaji));
   const isLongWord = frontTextTier === 'lg' || frontTextTier === 'xl' || hasOptionalBrackets;
   // Hero: ô nét viết là tâm thẻ — vẽ to hơn bố cục 3 cột cũ.
-  const strokeSize = isLongWord
-    ? ([220, 220, 180, 140][strokeChars.length] ?? 120)
-    : ([200, 200, 150, 110][strokeChars.length] ?? 90);
+  const strokeSize = Math.max(
+    24,
+    Math.min(104, Math.floor(240 / Math.max(strokeChars.length, 1))),
+  );
 
   useEffect(() => {
     if (!currentVocab || vocabLoggedRef.current) return;
@@ -513,16 +510,6 @@ export default function VocabView({
                   >
                     {flashcardCopied ? '✓ Đã copy' : 'Copy ⧉'}
                   </button>
-                  <KanjiStructureButton text={currentVocab.kanji} withLabel className="ks-open-btn--sm" />
-                  <button
-                    type="button"
-                    className="vocab-round-btn vocab-round-btn--soft"
-                    onClick={handlePronounce}
-                    title="Nghe phát âm"
-                    aria-label="Nghe phát âm"
-                  >
-                    <SpeakerIcon className="vocab-speaker-icon" size={18} />
-                  </button>
                 </div>
                 <div className="flashcard-front-body">
                   <div className="vocab-card__hero">
@@ -541,35 +528,53 @@ export default function VocabView({
                       />
                       <span className="sr-only">Nhấp vào chữ để tập viết</span>
                     </div>
-                    {currentVocab.kanji &&
-                    currentVocab.kana &&
-                    currentVocab.kanji !== currentVocab.kana ? (
+                    <div className="vocab-card__word">
+                      {currentVocab.kanji && currentVocab.kanji !== currentVocab.kana ? (
+                        <p className="vocab-card__spelling japanese-text">
+                          {currentVocab.kanji}
+                          <span>（{currentVocab.kana}）</span>
+                        </p>
+                      ) : null}
                       <p
                         className="vocab-card__reading japanese-text"
                         aria-label={`Cách đọc: ${currentVocab.kana}`}
                       >
                         {currentVocab.kana}
                       </p>
-                    ) : !currentVocab.kanji && currentVocab.kana ? (
-                      <p className="vocab-card__reading japanese-text">{currentVocab.kana}</p>
-                    ) : null}
-                  </div>
-                  <div className="flashcard-front-meta vocab-card__meta">
-                    <p className="vocab-card__headline">
-                      <FlashcardJapaneseText text={currentVocab.romaji} className="vocab-romaji" />
-                      <span className="vocab-card__sep" aria-hidden="true">
-                        |
-                      </span>
-                      <span className="vocab-meaning">{currentVocab.meaning}</span>
-                    </p>
-                    <div className="vocab-card__tags">
-                      <span className="vocab-card__type-tag">TỪ</span>
-                      <VocabExtraMeanings vocab={currentVocab} />
+                      <div className="flashcard-front-meta vocab-card__meta">
+                        <p className="vocab-card__headline">
+                          <FlashcardJapaneseText text={currentVocab.romaji} className="vocab-romaji" />
+                          <span className="vocab-card__sep" aria-hidden="true">
+                            |
+                          </span>
+                          <span className="vocab-meaning">{currentVocab.meaning}</span>
+                        </p>
+                        <div className="vocab-card__tags">
+                          <span className="vocab-card__type-tag">TỪ</span>
+                          <VocabExtraMeanings vocab={currentVocab} />
+                        </div>
+                        <AlsoInBooks books={currentVocab.alsoInTextbooks} />
+                        {currentVocab.pitchAccent ? (
+                          <span className="vocab-pitch">Cao điệu {currentVocab.pitchAccent}</span>
+                        ) : null}
+                      </div>
                     </div>
-                    <AlsoInBooks books={currentVocab.alsoInTextbooks} />
-                    {currentVocab.pitchAccent ? (
-                      <span className="vocab-pitch">Cao điệu {currentVocab.pitchAccent}</span>
-                    ) : null}
+                    <div className="vocab-card__hero-actions" onClick={(e) => e.stopPropagation()}>
+                      <KanjiStructureButton
+                        text={currentVocab.kanji}
+                        withLabel
+                        className="ks-open-btn--sm"
+                      />
+                      <button
+                        type="button"
+                        className="vocab-round-btn vocab-round-btn--soft"
+                        onClick={handlePronounce}
+                        title="Nghe phát âm"
+                        aria-label="Nghe phát âm"
+                      >
+                        <SpeakerIcon className="vocab-speaker-icon" size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

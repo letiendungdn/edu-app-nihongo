@@ -165,6 +165,19 @@ export function uniqueKanji(text: string | null | undefined): string {
   return [...new Set([...text].filter(isKanjiChar))].join('');
 }
 
+/** Chữ cần vẽ trên thẻ từ: giữ kana trong cách viết, bỏ phần chú thích tùy chọn. */
+export function flashcardStrokeText(
+  kanji: string | null | undefined,
+  kana: string,
+): string {
+  const writtenText = parseOptionalBracketSegments(kanji ?? '')
+    .filter((segment) => !segment.optional)
+    .map((segment) => segment.text)
+    .join('');
+  if (uniqueKanji(writtenText)) return getStrokeText(writtenText);
+  return [...getStrokeText(kana)].slice(0, 4).join('');
+}
+
 export type FlashcardStrokeRow = { label?: string; text: string };
 
 /**
