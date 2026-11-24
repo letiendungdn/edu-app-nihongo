@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { ExampleEnglish } from './VocabReading';
 import KanjiStructureButton from './KanjiStructureButton';
 import SpeakerIcon from './SpeakerIcon';
+import StrokeOrder from './StrokeOrder';
 import VocabPicture from './VocabPicture';
 import { highlightKeys } from '../utils/grammarHighlight';
+import { getStrokeText } from '../utils/japanese';
 import {
   buildExampleAnalysis,
   exampleFuriganaSegments,
@@ -92,6 +94,7 @@ export default function VocabExampleLine({
 }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [tab, setTab] = useState<AnalysisTab>('clean');
+  const [openStrokeIndex, setOpenStrokeIndex] = useState<number | null>(null);
   const open = analysisOpen ?? localOpen;
   const toggleOpen = () => {
     if (onToggleAnalysis) onToggleAnalysis();
@@ -345,33 +348,81 @@ export default function VocabExampleLine({
 
               <div className="vocab-example-analysis__clean-body">
                 <ul className="vocab-example-analysis__cards">
-                  {analysis.cards.map((part, i) => (
-                    <li key={`${part.surface}-card-${i}`}>
-                      <button
-                        type="button"
-                        className="vocab-example-analysis__card"
-                        title="Bấm để nghe phát âm"
-                        aria-label={`Nghe phát âm: ${part.reading || part.surface}`}
-                        onClick={(e) => onSpeakJa(e, part.reading || part.surface)}
+                  {analysis.cards.map((part, i) => {
+                    const strokeText = getStrokeText(part.surface);
+                    const strokeCount = [...strokeText].length;
+                    const strokeSize = Math.max(
+                      48,
+                      Math.min(128, Math.floor(200 / Math.max(strokeCount, 1))),
+                    );
+                    const isStrokeOpen = openStrokeIndex === i;
+
+                    return (
+                      <li
+                        key={`${part.surface}-card-${i}`}
+                        className="vocab-example-analysis__card-item"
                       >
-                        <span className="vocab-example-analysis__card-ja japanese-text">
-                          {part.surface}
-                        </span>
-                        {part.reading ? (
-                          <span className="vocab-example-analysis__card-reading japanese-text">
-                            {part.reading}
-                            {part.romaji ? <span lang="en"> ({part.romaji})</span> : null}
-                          </span>
-                        ) : part.romaji ? (
-                          <span className="vocab-example-analysis__card-reading" lang="en">
-                            {part.romaji}
-                          </span>
+                        <div className="vocab-example-analysis__card">
+                          <div className="vocab-example-analysis__card-content">
+                            <span className="vocab-example-analysis__card-ja japanese-text">
+                              {part.surface}
+                            </span>
+                            {part.reading ? (
+                              <span className="vocab-example-analysis__card-reading japanese-text">
+                                {part.reading}
+                                {part.romaji ? <span lang="en"> ({part.romaji})</span> : null}
+                              </span>
+                            ) : part.romaji ? (
+                              <span className="vocab-example-analysis__card-reading" lang="en">
+                                {part.romaji}
+                              </span>
+                            ) : null}
+                            <span className="vocab-example-analysis__card-pos">{part.pos}</span>
+                            <span className="vocab-example-analysis__card-detail">{part.detail}</span>
+                          </div>
+                          <div className="vocab-example-analysis__card-actions">
+                            <button
+                              type="button"
+                              className="vocab-example-analysis__card-action"
+                              title={`Nghe ${part.reading || part.surface}`}
+                              aria-label={`Nghe phát âm: ${part.reading || part.surface}`}
+                              onClick={(e) => onSpeakJa(e, part.reading || part.surface)}
+                            >
+                              <SpeakerIcon size={16} />
+                            </button>
+                            {strokeCount > 0 ? (
+                              <button
+                                type="button"
+                                className="vocab-example-analysis__card-action"
+                                title={isStrokeOpen ? 'Ẩn cách viết' : `Xem cách viết ${part.surface}`}
+                                aria-label={
+                                  isStrokeOpen ? 'Ẩn cách viết' : `Xem cách viết ${part.surface}`
+                                }
+                                aria-expanded={isStrokeOpen}
+                                onClick={() => setOpenStrokeIndex(isStrokeOpen ? null : i)}
+                              >
+                                筆
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        {isStrokeOpen ? (
+                          <div className="vocab-example-analysis__stroke-preview">
+                            <p className="vocab-example-analysis__stroke-label">
+                              Cách viết · nhấn chữ để xem lại nét
+                            </p>
+                            <StrokeOrder
+                              key={`${part.surface}-${part.reading ?? ''}`}
+                              text={strokeText}
+                              width={strokeSize}
+                              height={strokeSize}
+                              compact
+                            />
+                          </div>
                         ) : null}
-                        <span className="vocab-example-analysis__card-pos">{part.pos}</span>
-                        <span className="vocab-example-analysis__card-detail">{part.detail}</span>
-                      </button>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
                 {picture}
               </div>

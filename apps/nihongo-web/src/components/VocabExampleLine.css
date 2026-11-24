@@ -346,11 +346,16 @@
   padding: 0;
 }
 
+.vocab-example-analysis__card-item {
+  min-width: 0;
+}
+
 .vocab-example-analysis__card {
   width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--vc-example-border, var(--border-color, #d8dee6)) 75%, transparent);
@@ -358,17 +363,50 @@
   color: inherit;
   font: inherit;
   text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vocab-example-analysis__card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.vocab-example-analysis__card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.vocab-example-analysis__card-action {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--vc-example-border, var(--border-color, #d8dee6));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--vc-example-text, #fff) 5%, transparent);
+  color: var(--vc-example-muted, var(--text-secondary));
+  font-family: var(--font-jp, sans-serif);
+  font-size: 0.9rem;
+  line-height: 1;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.vocab-example-analysis__card:hover {
+.vocab-example-analysis__card-action:hover,
+.vocab-example-analysis__card-action:focus-visible {
   border-color: var(--primary-color, #e11d48);
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--primary-color, #e11d48) 14%, transparent);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 10%, transparent);
+  color: var(--primary-color, #e11d48);
 }
 
-.vocab-example-analysis__card:focus-visible {
+.vocab-example-analysis__card-action:focus-visible {
   outline: 2px solid var(--primary-color, #e11d48);
   outline-offset: 2px;
 }
@@ -401,6 +439,24 @@
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--vc-example-muted, var(--text-secondary));
+}
+
+.vocab-example-analysis__stroke-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  padding: 0.55rem;
+  border: 1px dashed var(--vc-example-border, var(--border-color, #d8dee6));
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--vc-example-text, #fff) 4%, transparent);
+}
+
+.vocab-example-analysis__stroke-label {
+  margin: 0;
+  color: var(--vc-example-muted, var(--text-secondary));
+  font-size: 0.75rem;
 }
 
 .vocab-example-analysis__footer {

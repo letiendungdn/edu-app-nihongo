@@ -33,7 +33,7 @@ final class NihongoEDUUITests: XCTestCase {
         app.launch()
         for title in ["Tiến độ học", "Bài học", "Đọc hiểu", "Thi thử JLPT", "Luyện kana", "Chat cộng đồng"] {
             let card = homeCard(title)
-            XCTAssertTrue(reveal(card), "thiếu thẻ \(title)")
+            XCTAssertTrue(card.waitForExistence(timeout: 5), "thiếu thẻ \(title)")
         }
     }
 
