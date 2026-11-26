@@ -1,18 +1,13 @@
-'use client';
-
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import MoriCourseView from '@/views/MoriCourseView';
+import { isMoriCourseAvailable } from '@/server/moriCourseAvailability';
 
-function MoriPageInner() {
-  const searchParams = useSearchParams();
-  return <MoriCourseView initialLevel={searchParams.get('level') ?? undefined} />;
-}
-
-export default function MoriPage() {
-  return (
-    <Suspense fallback={<div className="page-loading">Đang tải...</div>}>
-      <MoriPageInner />
-    </Suspense>
-  );
+export default async function MoriPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ level?: string }>;
+}) {
+  if (!await isMoriCourseAvailable()) notFound();
+  const params = await searchParams;
+  return <MoriCourseView initialLevel={params.level} />;
 }

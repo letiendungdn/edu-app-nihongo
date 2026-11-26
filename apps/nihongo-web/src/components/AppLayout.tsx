@@ -148,7 +148,13 @@ function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-export default function MainLayout({ children }: { children: ReactNode }) {
+export default function MainLayout({
+  children,
+  showMoriCourse,
+}: {
+  children: ReactNode;
+  showMoriCourse: boolean;
+}) {
   const pathname  = usePathname() ?? '';
   const isAuth    = pathname === '/login' || pathname === '/profile';
   const [open, setOpen] = useState(false);
@@ -216,9 +222,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     () =>
       NAV_GROUPS.map((group) => ({
         ...group,
-        items: q ? group.items.filter((item) => fold(item.label).includes(q)) : group.items,
-      })).filter((group) => !q || group.items.length > 0),
-    [q],
+        items: (showMoriCourse || group.label !== 'Giáo trình'
+          ? group.items
+          : group.items.filter((item) => item.href !== '/mori'))
+          .filter((item) => !q || fold(item.label).includes(q)),
+      })).filter((group) => group.items.length > 0),
+    [q, showMoriCourse],
   );
 
   // Close on Escape

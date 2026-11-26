@@ -150,18 +150,18 @@ Khai báo trong [docker-compose.yml](../docker-compose.yml), service `nihongo-we
 | Thư mục trên máy | Trong container | Nội dung |
 |------------------|-----------------|----------|
 | `apps/nihongo-web/public/media/book-audio/` | `/app/apps/nihongo-web/public/media/book-audio` | Audio sách |
-| `${MORI_COURSE_DIR}` (mặc định `apps/nihongo-web/public/media/mori-course/`) | `/media/mori-course` (chỉ đọc) | Video khóa học, trang `/mori` |
+| `${MORI_COURSE_DIR}` (mặc định `apps/nihongo-web/public/media/mori-course/`) | `/media/mori-course` (chỉ đọc) | Video khóa học; menu `/mori` chỉ hiện khi tệp video có sẵn |
 | volume `mori_hls_cache` | `/tmp/mori-hls` | Bản HLS sinh ra khi phát video (tạo lại được) |
 
 - Hai thư mục đầu nằm trong `.gitignore` vì nặng và có bản quyền. **Máy mới phải tự chép sang.**
 
-**Khóa học Mori đang để trên USB** (từ 09/11/2026). Trong `.env`:
+**Không cần cắm USB để chạy Docker.** Nếu không cấu hình `MORI_COURSE_DIR`, web mount thư mục mặc định trong repo; khi chưa có video, mục `/mori` được ẩn và các trang khác vẫn chạy. Để bật video từ ổ USB, khai báo trong `.env`:
 
 ```bash
 MORI_COURSE_DIR="/Volumes/ESD-ISO/309. [Tiếng Nhật][Dũng Mori] - Combo Tiếng Nhật Từ N1 đến N5 của Dũng Mori"
 ```
 
-- **Phải cắm USB trước khi bật container web.** Docker gắn thư mục lúc tạo container. Cắm USB sau thì phải chạy lại `docker compose up -d --no-deps --force-recreate nihongo-web`.
+- Cắm USB trước khi bật container web. Docker gắn thư mục lúc tạo container. Cắm USB sau thì chạy `docker compose up -d --no-deps --force-recreate nihongo-web`.
 - **Không dùng được thư mục Google Drive** (`~/Library/CloudStorage/...`): app Google Drive phải đang chạy, và macOS chặn Docker đọc thư mục này ("Operation not permitted"). Muốn dùng thì phải đặt thư mục ở chế độ offline và cấp Full Disk Access cho Docker.
 - **Kiểm tra nhanh:** `docker exec edu-nihongo-web sh -c 'find /media/mori-course -name "*.mp4" | wc -l'` phải ra khoảng 1.839. Ra 0 là container không đọc được thư mục.
 - Danh sách bài nằm trong `apps/nihongo-web/src/data/mori-course.json` (đường dẫn file tương đối với `MORI_COURSE_DIR`). Danh sách này đóng vào image, nên sửa xong phải build lại web.
