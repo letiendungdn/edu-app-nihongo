@@ -434,7 +434,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infra/backups/backup.ps1
 bash infra/backups/backup.sh
 ```
 
-Script dump vào [`infra/backups/`](../infra/backups/). Snapshot `nihongo_*.sql` / `nihongo_schema_*.sql` **được commit** trong repo (restore nhanh).
+Script dump vào [`infra/backups/`](../infra/backups/). Full dump `nihongo_*.sql` chứa dữ liệu cá nhân và được ignore; chỉ schema-only `nihongo_schema_*.sql` được phép commit.
 
 | File | Nội dung |
 |------|----------|

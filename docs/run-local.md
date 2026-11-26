@@ -208,7 +208,7 @@ Copy `whsec_...` → `STRIPE_WEBHOOK_SECRET` trong `services/.env` → **restart
 | `npm run docker:up` | `docker compose up -d` (mọi service) |
 | `npm run docker:down` | Dừng containers |
 | `npm run prisma:generate` | Generate Prisma client |
-| `npm run db:backup` | Dump DB → `infra/backups/` (snapshot được commit) |
+| `npm run db:backup` | Dump DB → `infra/backups/` (full dump được ignore; schema-only được phép commit) |
 | `npm run media:setup` | Tải + sync media |
 
 ---
