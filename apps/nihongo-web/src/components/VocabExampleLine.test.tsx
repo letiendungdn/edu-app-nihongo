@@ -7,6 +7,9 @@ vi.mock('./VocabPicture', () => ({ default: () => null }));
 vi.mock('./StrokeOrder', () => ({
   default: ({ text }: { text: string }) => <div data-testid="stroke-order">{text}</div>,
 }));
+vi.mock('../api/hooks/use-vocab', () => ({
+  useVocabAnalysisMeta: () => ({ data: [] }),
+}));
 
 describe('VocabExampleLine pronunciation cards', () => {
   it('speaks the reading from the analysis card speaker button', () => {
