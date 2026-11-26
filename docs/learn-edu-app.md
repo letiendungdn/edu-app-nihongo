@@ -753,9 +753,10 @@ Dành cho người chọn **hướng Mobile** sau Tuần 1–5 (hoặc sau Tuầ
 8. [canvas-tools.md](./canvas-tools.md) ← Canvas Tools + Japan Map (tùy chọn, sau Tuần 6)
 9. [learn-testing.md](./learn-testing.md) · [learn-jest.md](./learn-jest.md) (Jest qua test thật của backend)
 10. [learn-kafka.md](./learn-kafka.md)
-11. [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) ← MQTT, RxJS, Flyway, view, DDD
-12. [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) ← câu hỏi phỏng vấn theo JD backend NestJS
-13. [interview-questions.md](./interview-questions.md) + [interview-mobile.md](./interview-mobile.md)
+11. [learn-rxjs.md](./learn-rxjs.md) ← RxJS từ Observable tới luồng chat SSE
+12. [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) ← MQTT, Flyway, view, DDD
+13. [interview-nestjs-mqtt-db.md](./interview-nestjs-mqtt-db.md) ← câu hỏi phỏng vấn theo JD backend NestJS
+14. [interview-questions.md](./interview-questions.md) + [interview-mobile.md](./interview-mobile.md)
 
 
 

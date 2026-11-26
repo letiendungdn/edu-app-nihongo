@@ -304,9 +304,9 @@ Câu hỏi phỏng vấn kèm đáp án về bảo mật API, thanh toán chốn
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 7/9.
+Bạn đang ở **3. Backend (NestJS)** — bài 8/10.
 
-- Bài trước: [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) — MQTT, RxJS, Flyway, view và DDD
+- Bài trước: [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) — MQTT, Flyway, view và DDD; phần RxJS dựa trên bài riêng
 - **Bài tiếp: [learn-stripe-idempotency.md](./learn-stripe-idempotency.md)** — Thanh toán Stripe không trừ tiền hai lần
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)

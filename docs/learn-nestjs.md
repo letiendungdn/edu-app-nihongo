@@ -1230,10 +1230,10 @@ Câu hỏi phỏng vấn kèm đáp án: NestJS, Kafka, PostgreSQL, thiết kế
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 2/9.
+Bạn đang ở **3. Backend (NestJS)** — bài 2/10.
 
 - Bài trước: [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) — Làm một tính năng backend trọn vẹn (Sổ từ của tôi): bảng, migration an toàn, module NestJS, chống IDOR, test Postgres thật
-- **Bài tiếp: [redis.md](./redis.md)** — Redis dùng vào việc gì trong project
+- **Bài tiếp: [learn-rxjs.md](./learn-rxjs.md)** — RxJS từ Observable, operator, cancellation đến luồng chat thật
 
 Mục lục toàn bộ tài liệu: [docs/README.md](./README.md)
 

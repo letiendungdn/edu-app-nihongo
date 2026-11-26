@@ -83,6 +83,7 @@ Thứ tự bài nằm **duy nhất** trong các bảng của [README.md](./READM
 - [ ] redis.md
 - [ ] mongodb.md
 - [ ] learn-kafka.md
+- [x] learn-rxjs.md (mới)
 - [ ] learn-mqtt-flyway-ddd.md
 - [ ] learn-reliability-patterns.md
 - [ ] learn-stripe-idempotency.md

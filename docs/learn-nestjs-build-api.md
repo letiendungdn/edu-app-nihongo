@@ -484,7 +484,7 @@ Câu hỏi NestJS, Postgres, Prisma: [interview-nestjs-mqtt-db.md](./interview-n
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 1/9.
+Bạn đang ở **3. Backend (NestJS)** — bài 1/10.
 
 - **Bài tiếp: [learn-nestjs.md](./learn-nestjs.md)** — NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe
 

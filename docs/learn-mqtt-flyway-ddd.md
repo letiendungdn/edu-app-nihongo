@@ -173,6 +173,8 @@ Kết quả thật: terminal 1 chỉ in `user/4/notify to4`. Tin `to5` bị brok
 
 ## 2. RxJS: luồng SSE của chat
 
+Muốn học Observable, operator và cách hủy subscription từ căn bản, xem [learn-rxjs.md](./learn-rxjs.md). Phần dưới tập trung vào cách RxJS được dùng trong luồng chat của project.
+
 `ChatEventsService.observe` (`services/api-gateway/src/realtime/chat-events.service.ts`):
 
 ```typescript
@@ -558,7 +560,7 @@ Xong mục 8 là nói được trọn vòng: thiết kế, viết, đo, sửa, d
 
 ## Đi tiếp
 
-Bạn đang ở **3. Backend (NestJS)** — bài 6/9.
+Bạn đang ở **3. Backend (NestJS)** — bài 7/10.
 
 - Bài trước: [learn-kafka.md](./learn-kafka.md) — Kafka: vì sao dùng, producer/consumer
 - **Bài tiếp: [learn-reliability-patterns.md](./learn-reliability-patterns.md)** — Outbox, timeout, retry, consumer idempotent, circuit breaker

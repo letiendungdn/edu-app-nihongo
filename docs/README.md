@@ -106,13 +106,14 @@ Gateway, message queue, cache và các pattern backend.
 |---|----------|----------|
 | 1 | [learn-nestjs-build-api.md](./learn-nestjs-build-api.md) | Làm một tính năng backend trọn vẹn (Sổ từ của tôi): bảng, migration an toàn, module NestJS, chống IDOR, test Postgres thật |
 | 2 | [learn-nestjs.md](./learn-nestjs.md) | NestJS: thứ tự pipeline, guard, interceptor, DI, rate limit, pipe |
-| 3 | [redis.md](./redis.md) | Redis dùng vào việc gì trong project |
-| 4 | [mongodb.md](./mongodb.md) | MongoDB chỉ dùng cho audit log |
-| 5 | [learn-kafka.md](./learn-kafka.md) | Kafka: vì sao dùng, producer/consumer |
-| 6 | [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) | MQTT, RxJS, Flyway, view và DDD |
-| 7 | [learn-reliability-patterns.md](./learn-reliability-patterns.md) | Outbox, timeout, retry, consumer idempotent, circuit breaker |
-| 8 | [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) | Thanh toán Stripe không trừ tiền hai lần |
-| 9 | [learn-security-backend.md](./learn-security-backend.md) | Bảo mật API theo OWASP API Top 10 |
+| 3 | [learn-rxjs.md](./learn-rxjs.md) | RxJS từ Observable, operator, cancellation đến luồng chat thật |
+| 4 | [redis.md](./redis.md) | Redis dùng vào việc gì trong project |
+| 5 | [mongodb.md](./mongodb.md) | MongoDB chỉ dùng cho audit log |
+| 6 | [learn-kafka.md](./learn-kafka.md) | Kafka: vì sao dùng, producer/consumer |
+| 7 | [learn-mqtt-flyway-ddd.md](./learn-mqtt-flyway-ddd.md) | MQTT, Flyway, view và DDD; phần RxJS dựa trên bài riêng |
+| 8 | [learn-reliability-patterns.md](./learn-reliability-patterns.md) | Outbox, timeout, retry, consumer idempotent, circuit breaker |
+| 9 | [learn-stripe-idempotency.md](./learn-stripe-idempotency.md) | Thanh toán Stripe không trừ tiền hai lần |
+| 10 | [learn-security-backend.md](./learn-security-backend.md) | Bảo mật API theo OWASP API Top 10 |
 
 ---
 
