@@ -65,6 +65,7 @@ packages/nest-*/src/**/*.js
 packages/nest-*/src/**/*.js.map
 packages/nest-*/src/**/*.d.ts
 
-# Full dump chứa dữ liệu cá nhân: chỉ giữ trên máy; schema-only dump được phép commit
+# Full dump chứa dữ liệu cá nhân: ignore mặc định; schema-only và file ngoại lệ bên dưới được phép commit
 infra/backups/*.sql
 !infra/backups/nihongo_schema_*.sql
+!infra/backups/nihongo_20261126_231007.sql
