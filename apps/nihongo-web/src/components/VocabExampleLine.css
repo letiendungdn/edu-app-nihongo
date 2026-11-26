@@ -90,6 +90,31 @@
   background: color-mix(in srgb, var(--primary-color, #e11d48) 22%, transparent);
 }
 
+.vocab-examples__copy-btn {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--primary-color, #e11d48) 40%, transparent);
+  background: transparent;
+  color: var(--primary-color, #e11d48);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vocab-examples__copy-btn:hover,
+.vocab-examples__copy-btn:focus-visible {
+  background: color-mix(in srgb, var(--primary-color, #e11d48) 10%, transparent);
+}
+
+.vocab-examples__copy-btn.is-copied {
+  border-color: #2e9b67;
+  background: color-mix(in srgb, #2e9b67 10%, transparent);
+  color: #2e9b67;
+}
+
 .vocab-example-analysis {
   margin: 0.55rem 0 0.2rem;
   padding: 0.75rem 0.9rem 0.9rem;
@@ -194,6 +219,12 @@
   gap: 0.15rem;
   margin-bottom: 0.85rem;
   border-bottom: 1px solid color-mix(in srgb, var(--border-color, #d8dee6) 70%, transparent);
+}
+
+.vocab-example-analysis__meta-error {
+  margin: 0 0 0.6rem;
+  color: #b42318;
+  font-size: 0.82rem;
 }
 
 .vocab-example-analysis__tab {

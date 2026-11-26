@@ -65,5 +65,6 @@ packages/nest-*/src/**/*.js
 packages/nest-*/src/**/*.js.map
 packages/nest-*/src/**/*.d.ts
 
-# Backup DB đầy đủ chứa dữ liệu cá nhân: chỉ giữ trên máy, không commit (docs/adr/0009-db-backups-out-of-git.md)
+# Full dump chứa dữ liệu cá nhân: chỉ giữ trên máy; schema-only dump được phép commit
 infra/backups/*.sql
+!infra/backups/nihongo_schema_*.sql

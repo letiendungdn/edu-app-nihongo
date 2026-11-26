@@ -78,6 +78,18 @@ export interface VocabularyExample {
   en?: string | null;
 }
 
+export interface VocabAnalysisToken {
+  id: number;
+  surface: string;
+  kind: 'particle' | 'common' | 'greeting';
+  reading: string | null;
+  romaji: string | null;
+  gloss: string;
+  pos: string;
+  detail: string;
+  sortOrder: number;
+}
+
 /** Kết quả tra từ vựng (GET /vocabularies?q=) — kèm bài chứa từ để mở đúng bài. */
 export interface VocabularySearchHit extends Vocabulary {
   lesson?: {

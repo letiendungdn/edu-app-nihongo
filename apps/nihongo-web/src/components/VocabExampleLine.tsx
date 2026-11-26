@@ -13,6 +13,7 @@ import {
   buildExampleAnalysis,
   exampleFuriganaSegments,
 } from '../utils/vocabExampleAnalysis';
+import { useVocabAnalysisMeta } from '../api/hooks/use-vocab';
 import {
   grammarLessonHref,
   matchGrammarsInExample,
@@ -95,10 +96,21 @@ export default function VocabExampleLine({
   const [localOpen, setLocalOpen] = useState(true);
   const [tab, setTab] = useState<AnalysisTab>('clean');
   const [openStrokeIndex, setOpenStrokeIndex] = useState<number | null>(null);
+  const [copiedExample, setCopiedExample] = useState(false);
+  const { data: analysisMeta = [], isError: analysisMetaError } = useVocabAnalysisMeta();
   const open = analysisOpen ?? localOpen;
   const toggleOpen = () => {
     if (onToggleAnalysis) onToggleAnalysis();
     else setLocalOpen((v) => !v);
+  };
+  const copyExample = async () => {
+    try {
+      await navigator.clipboard.writeText(example.ja);
+      setCopiedExample(true);
+      window.setTimeout(() => setCopiedExample(false), 1500);
+    } catch {
+      setCopiedExample(false);
+    }
   };
 
   const segments = useMemo(
@@ -110,8 +122,8 @@ export default function VocabExampleLine({
       buildExampleAnalysis(example.ja, example.kana, example.vi, {
         kanji: focusKanji,
         meaning: focusMeaning,
-      }),
-    [example.ja, example.kana, example.vi, focusKanji, focusMeaning],
+      }, analysisMeta),
+    [example.ja, example.kana, example.vi, focusKanji, focusMeaning, analysisMeta],
   );
   const grammarHits = useMemo(
     () => matchGrammarsInExample(example.ja, lessonGrammars),
@@ -171,6 +183,15 @@ export default function VocabExampleLine({
             onClick={(e) => onSpeakBoth(e, example.speak, example.vi)}
           >
             <SpeakerIcon className="vocab-speaker-icon" size={16} />
+          </button>
+          <button
+            type="button"
+            className={`vocab-examples__copy-btn${copiedExample ? ' is-copied' : ''}`}
+            title={copiedExample ? 'Đã sao chép' : 'Sao chép câu ví dụ'}
+            aria-label={copiedExample ? 'Đã sao chép câu ví dụ' : 'Sao chép câu ví dụ'}
+            onClick={() => void copyExample()}
+          >
+            {copiedExample ? '✓ Đã copy' : 'Copy'}
           </button>
           {lessonNumber != null ? (
             <Link
@@ -251,6 +272,11 @@ export default function VocabExampleLine({
 
       {open ? (
         <div className="vocab-example-analysis" aria-label="Phân tích câu ví dụ">
+          {analysisMetaError ? (
+            <p className="vocab-example-analysis__meta-error" role="alert">
+              Không tải được dữ liệu phân tích từ máy chủ.
+            </p>
+          ) : null}
           <div className="vocab-example-analysis__tabs" role="tablist" aria-label="Kiểu phân tích">
             <button
               type="button"

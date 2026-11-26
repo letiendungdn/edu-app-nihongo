@@ -1018,6 +1018,21 @@ model VocabularyExample {
   @@unique([vocabularyId, sortOrder])
 }
 
+/// Metadata dùng để phân tích câu ví dụ: trợ từ, từ thường gặp và cụm cố định.
+model VocabAnalysisToken {
+  id        Int     @id @default(autoincrement())
+  surface   String  @unique
+  kind      String
+  reading   String?
+  romaji    String?
+  gloss     String
+  pos       String
+  detail    String
+  sortOrder Int     @default(0)
+
+  @@index([kind, sortOrder])
+}
+
 model VocabularyKanjiLink {
   id           Int        @id @default(autoincrement())
   vocabularyId Int

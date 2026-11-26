@@ -24,13 +24,24 @@ import {
   UpdateVocabularyDto,
 } from "@app/contracts";
 import { Public, Roles, RolesGuard } from "@app/common";
+import { PrismaService } from "@app/prisma";
 
 @ApiTags("vocabularies")
 @Controller("api/vocabularies")
 export class VocabulariesController {
   constructor(
     @Inject("CONTENT_SERVICE") private readonly contentClient: ClientProxy,
+    private readonly prisma: PrismaService,
   ) {}
+
+  @Get("analysis-meta")
+  @Public()
+  @ApiOperation({ summary: "Metadata phân tích trợ từ và từ thường gặp trong câu ví dụ" })
+  async analysisMeta() {
+    return this.prisma.vocabAnalysisToken.findMany({
+      orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { surface: "asc" }],
+    });
+  }
 
   @Post()
   @UseGuards(RolesGuard)
