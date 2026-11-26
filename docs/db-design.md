@@ -16,7 +16,7 @@ MongoDB: TTL index 90 ngày trên audit_logs — tự dọn sạch, không cần
 
 ### Sơ đồ quan hệ
 
-Sơ đồ ER đầy đủ (107 bảng, chia 8 phân hệ, kèm cột/khóa) nằm ở **[db-erd.md](db-erd.md)** — tự sinh từ
+Sơ đồ ER đầy đủ (116 bảng, chia 9 phân hệ, kèm cột/khóa) nằm ở **[db-erd.md](db-erd.md)** — tự sinh từ
 `schema.prisma`: `npm run db:erd` ở root (chạy lại mỗi khi đổi schema).
 
 Tổng quan liên kết giữa các phân hệ (mũi tên: bảng cha → bảng con, quan hệ 1–n):
@@ -91,23 +91,34 @@ Index:  (userId, nextReviewAt)           — lấy cards cần review hôm nay
 Index:  (userId, contentType, mastered)  — lọc theo loại + trạng thái
 ```
 
-**SM-2 Algorithm:**
+**SRS update behavior:**
 ```
-quality 0-2 (sai/quên):
-  interval = 0
-  repetitions = 0
-  easeFactor không thay đổi
+SrsService.reviewCard:
+  quality < 3: interval = 0, repetitions = 0, giữ easeFactor
+  quality >= 3:
+    if repetitions == 0: interval = 1
+    if repetitions == 1: interval = 6
+    else: interval = round(interval * easeFactor)
+    repetitions += 1
+    easeFactor = max(1.3, easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  mastered = (interval >= 21)
 
-quality 3-5 (đúng):
-  if repetitions == 0: interval = 1
-  if repetitions == 1: interval = 6
-  else: interval = round(interval * easeFactor)
-  repetitions += 1
-  easeFactor = max(1.3, easeFactor + 0.1 * (quality - 5))
+SrsCardRepository (exam-service):
+  quality được giới hạn trong 0..5
+  easeFactor = max(1.3, easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  quality < 3: interval = 1, repetitions = 0
+  quality >= 3:
+    if repetitions == 0: interval = 1
+    if repetitions == 1: interval = 6
+    else: interval = round(interval * easeFactor mới)
+    repetitions += 1
+  mastered = (repetitions >= 5 && interval >= 21)
 
-nextReviewAt = now + interval days
-mastered = (interval >= 21)
+Cả hai luồng: nextReviewAt = now + interval ngày
 ```
+
+Hai luồng đang có cách xử lý khác nhau: [`SrsService`](../packages/nest-prisma/src/srs.service.ts) và
+[`SrsCardRepository`](../packages/nest-prisma/src/srs-card.repository.ts). Khi sửa thuật toán, cần đồng bộ cả hai.
 
 #### `Subscription` — Stripe subscription lifecycle
 
@@ -150,10 +161,11 @@ learnerId          → User.id
 coachId            → CoachProfile.id
 status             → PENDING | CONFIRMED | IN_PROGRESS | COMPLETED | CANCELED | NO_SHOW
 scheduledAt        DateTime
+durationMin        Int  default 60
 priceUsdCents      Int  — snapshot tại thời điểm book (tránh thay đổi sau)
 platformFeePercent Int  default 20
 
-Conflict check: findFirst WHERE coachId=? AND scheduledAt=? AND status != CANCELED
+Conflict check: transaction + advisory lock theo coach; chặn các session có khoảng thời gian chồng lấn, trừ session CANCELED.
 
 Index: (learnerId, scheduledAt)  — lịch học của learner
 Index: (coachId, scheduledAt)    — lịch dạy của coach
@@ -163,16 +175,18 @@ Index: (status, scheduledAt)     — admin overview
 #### `Payment` — Mọi giao dịch
 
 ```
-Liên kết với một trong hai (không đồng thời):
+Ứng dụng dùng một trong hai ngữ cảnh:
   subscriptionId → Subscription.id  (recurring billing)
-  sessionId      → CoachingSession.id (unique — 1 session 1 payment)
+  sessionId      → CoachingSession.id (unique — tối đa 1 payment cho một session)
+
+Hai cột đều nullable; schema không có CHECK constraint buộc phải chọn đúng một liên kết.
 
 stripePaymentIntentId String? unique  — idempotency key với Stripe
 
 Status flow:
   PENDING → SUCCEEDED (webhook: payment_intent.succeeded)
   PENDING → FAILED    (webhook: payment_intent.payment_failed)
-  SUCCEEDED → REFUNDED (webhook: charge.refunded)
+  SUCCEEDED → PARTIALLY_REFUNDED hoặc REFUNDED (tuỳ số tiền hoàn)
 ```
 
 #### `Payout` — Coach nhận tiền (Stripe Connect)
@@ -198,16 +212,18 @@ displayName     String
 priceUsdCents   Int
 intervalMonths  Int
 trialDays       Int
-stripePriceId   String?  — Stripe Price ID thực tế (sau khi seed)
+stripePriceId   String?  — Stripe Price ID cấu hình riêng, seed không gán
 features        Json     — mảng String
-isActive        Boolean  default true
+active          Boolean  default true
 
-Dữ liệu seed (sau khi chạy seed-plans.ts):
+Dữ liệu seed (theo seed-plans.ts):
   FREE       $0          stripePriceId: null
-  BASIC      $9.99/mo    stripePriceId: price_1TmsXHR9EzTwyHww08aPARlc  (trial 7d)
-  PRO        $19.99/mo   stripePriceId: price_1TmsXIR9EzTwyHwwq8rmK0NB  (trial 7d)
-  PRO_ANNUAL $99/yr      stripePriceId: price_1TmsXIR9EzTwyHwwzL0JNQ7e  (trial 14d)
+  BASIC      $9.99/mo    stripePriceId: null  (trial 7d)
+  PRO        $19.99/mo   stripePriceId: null  (trial 7d)
+  PRO_ANNUAL $99/yr      stripePriceId: null  (trial 14d)
 ```
+
+Stripe Price ID phải được cấu hình riêng sau khi tạo giá trên Stripe; seed không tạo hay gán ID này.
 
 #### `ChatMessage` — Tin nhắn coaching session (learner ↔ coach)
 
@@ -216,6 +232,8 @@ id          Int        auto-increment
 sessionId   → CoachingSession.id  ON DELETE CASCADE
 senderId    → User.id
 content     String
+fileUrl     String?
+fileType    String?
 readAt      DateTime?  — null = chưa đọc
 createdAt   DateTime   default now()
 
@@ -246,7 +264,7 @@ SupportThread:
 
 SupportMessage:
   id, threadId → SupportThread, senderId → User
-  content, readAt, createdAt
+  content, fileUrl?, fileType?, readAt, createdAt
   Index: (threadId, createdAt)
 ```
 
@@ -265,7 +283,7 @@ LearnerChatMember:
   Index: (userId)
 
 LearnerChatMessage:
-  id, roomId, senderId, content, readAt, createdAt
+  id, roomId, senderId, content, fileUrl?, fileType?, readAt, createdAt
   Index: (roomId, createdAt)
 ```
 
@@ -320,8 +338,7 @@ MindMapKind:  GRAMMAR | VOCAB | KANJI                         (MindMapLevel.kind
 
 ### Migration history (nihongo)
 
-Migrations đã được gộp (squash) thành một baseline ngày 2026-09-26 — project học tập, không có production.
-Các migration cũ trước đó được giữ trong `packages/prisma-nihongo/migrations-archive/` (chỉ để tham khảo, Prisma không chạy).
+Migration hiện tại gồm baseline ngày 2026-09-26 và các migration tiếp theo. Các migration cũ trước đó được giữ trong `packages/prisma-nihongo/migrations-archive/` (chỉ để tham khảo, Prisma không chạy).
 
 | Tên | Thay đổi chính |
 |-----|----------------|
@@ -330,6 +347,16 @@ Các migration cũ trước đó được giữ trong `packages/prisma-nihongo/m
 | `20260926160000_textbook_catalog` | Bảng `TextbookSeries`, `TextbookBook` (danh mục giáo trình) |
 | `20260929120000_outbox_drop_redundant_indexes` | Bảng `OutboxEvent` (transactional outbox, ADR-0006); xoá 6 index trùng với UNIQUE |
 | `20260929180000_processed_event_feature_flag` | `ProcessedEvent` (consumer idempotent), `FeatureFlag` + cờ mặc định `vocab-search-all-lessons` |
+| `20261021090000_payout_claim_refresh_reuse_cron_run` | `RefreshToken.revokedAt`; liên kết payout với session, bộ đếm retry và `CronRun` |
+| `20261027100000_vocabulary_example` | Tách câu ví dụ từ vựng sang `VocabularyExample` |
+| `20261101090000_kanji_component` | Bảng `KanjiComponent` |
+| `20261102090000_content_unique_views` | Cột `HomeStat.metric`; các view nội dung đã gộp trùng |
+| `20261109090000_grammar_embedding` | Bảng `GrammarEmbedding` cho hỏi đáp ngữ pháp |
+| `20261111090000_vocabulary_han_viet_meaning_en_source` | Cột Hán Việt và nguồn nghĩa tiếng Anh của từ vựng |
+| `20261111100000_vocabulary_furigana` | Cột `Vocabulary.furigana` |
+| `20261112100000_example_english` | Bản dịch tiếng Anh cho ví dụ từ vựng và kanji |
+| `20261113100000_personal_word` | Bảng `PersonalWord` |
+| `20261126140000_vocab_analysis_token` | Bảng `VocabAnalysisToken` |
 
 Seed dữ liệu: `seed.ts` nạp nội dung học từ `infra/postgres/nihongo-content-seed.sql` (xem [ADR-0007](adr/0007-content-seed-sql-only.md)), rồi gọi các seed con còn lại (`seed:textbooks`, `seed-plans.ts`…).
 
@@ -434,7 +461,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infra/backups/backup.ps1
 bash infra/backups/backup.sh
 ```
 
-Script dump vào [`infra/backups/`](../infra/backups/). Full dump `nihongo_*.sql` chứa dữ liệu cá nhân và được ignore; chỉ schema-only `nihongo_schema_*.sql` được phép commit.
+Script dump vào [`infra/backups/`](../infra/backups/). Full dump `nihongo_*.sql` chứa dữ liệu cá nhân và bị ignore mặc định; ngoại lệ `nihongo_20261126_231007.sql` đã được commit. Các full dump khác vẫn bị ignore; schema-only `nihongo_schema_*.sql` được phép commit theo quy tắc chung. Hãy coi repo và lịch sử Git có chứa full dump là dữ liệu nhạy cảm.
 
 | File | Nội dung |
 |------|----------|

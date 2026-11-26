@@ -3,7 +3,7 @@
 > **Tự sinh** từ `packages/prisma-nihongo/schema.prisma` bởi `npm run db:erd`.
 > Đừng sửa tay — sửa schema (hoặc cách chia phân hệ trong `packages/prisma-nihongo/scripts/gen-erd.ts`) rồi chạy lại.
 
-**112 bảng · 17 enum · 78 quan hệ khóa ngoại.**
+**116 bảng · 17 enum · 80 quan hệ khóa ngoại.**
 Ký hiệu: `PK` khóa chính · `FK` khóa ngoại · `UK` duy nhất · `"null"` cho phép null · `_list` mảng (Postgres array).
 Bảng thu gọn (`→ xem phân hệ khác`) thuộc phân hệ khác, chỉ vẽ để thấy liên kết.
 
@@ -17,11 +17,11 @@ Bảng thu gọn (`→ xem phân hệ khác`) thuộc phân hệ khác, chỉ v�
 - [Tiến độ học](#tiến-độ-học) — 14 bảng
 - [Thanh toán & marketplace coach](#thanh-toán--marketplace-coach) — 9 bảng
 - [Giao tiếp & thông báo](#giao-tiếp--thông-báo) — 10 bảng
-- [Khác](#khác) — 1 bảng
+- [Khác](#khác) — 5 bảng
 
 ## Nội dung học
 
-Bài học (Minna, JLPT, giáo trình Sou Matome/Shinkanzen/TRY — `Lesson.textbook`), kanji, đọc hiểu, mind map, danh mục giáo trình. (17 bảng; liên kết ngoài: `DictationAttempt`, `ReadingAttempt`)
+Bài học (Minna, JLPT, giáo trình Sou Matome/Shinkanzen/TRY — `Lesson.textbook`), kanji, đọc hiểu, mind map, danh mục giáo trình. (17 bảng; liên kết ngoài: `DictationAttempt`, `GrammarEmbedding`, `ReadingAttempt`)
 
 ```mermaid
 erDiagram
@@ -44,6 +44,9 @@ erDiagram
     string romaji
     string meaning
     string meaningEn "null"
+    string meaningEnSource "null"
+    string hanViet "null"
+    string furigana "null"
     string partOfSpeech "null"
     JlptLevel jlptLevel "null"
     string pitchAccent "null"
@@ -135,6 +138,7 @@ erDiagram
     string exampleJa "null"
     string exampleKana "null"
     string exampleVi "null"
+    string exampleEn "null"
     int sortOrder
     int kanjiEntryId FK
     int vocabularyId FK "null"
@@ -151,6 +155,7 @@ erDiagram
     string ja
     string kana "null"
     string vi "null"
+    string en "null"
     int sortOrder
     datetime createdAt
     datetime updatedAt
@@ -222,12 +227,16 @@ erDiagram
   DictationAttempt {
     string ref "→ xem phân hệ khác"
   }
+  GrammarEmbedding {
+    string ref "→ xem phân hệ khác"
+  }
   ReadingAttempt {
     string ref "→ xem phân hệ khác"
   }
   TextbookSeries ||--}o TextbookBook : series
   Lesson ||--}o Vocabulary : lesson
   Lesson ||--}o Grammar : lesson
+  Grammar ||--}o GrammarEmbedding : grammar
   Grammar ||--}o Example : grammar
   Lesson ||--}o Exercise : lesson
   Exercise ||--}o ExerciseOption : exercise
@@ -641,6 +650,7 @@ erDiagram
     string value
     string label
     string suffix
+    string metric "null"
     int sortOrder
     datetime createdAt
     datetime updatedAt
@@ -833,7 +843,7 @@ erDiagram
 
 ## Người dùng & xác thực
 
-Tài khoản, token, tùy chọn email, thiết bị push. (6 bảng; liên kết ngoài: `ChatMessage`, `CoachProfile`, `CoachReview`, `CoachingSession`, `DailyActivity`, `DailyGoal`, `DailyNote`, `ExamResult`, `LearnerChatMember`, `LearnerChatMessage`, `LearnerChatRoom`, `ListeningLog`, `LiveSession`, `Notification`, `Payment`, `SrsCard`, `StudySession`, `StudyStreak`, `Subscription`, `SupportMessage`, `SupportThread`)
+Tài khoản, token, tùy chọn email, thiết bị push. (6 bảng; liên kết ngoài: `ChatMessage`, `CoachProfile`, `CoachReview`, `CoachingSession`, `DailyActivity`, `DailyGoal`, `DailyNote`, `ExamResult`, `LearnerChatMember`, `LearnerChatMessage`, `LearnerChatRoom`, `ListeningLog`, `LiveSession`, `Notification`, `Payment`, `PersonalWord`, `SrsCard`, `StudySession`, `StudyStreak`, `Subscription`, `SupportMessage`, `SupportThread`)
 
 ```mermaid
 erDiagram
@@ -941,6 +951,9 @@ erDiagram
   Payment {
     string ref "→ xem phân hệ khác"
   }
+  PersonalWord {
+    string ref "→ xem phân hệ khác"
+  }
   SrsCard {
     string ref "→ xem phân hệ khác"
   }
@@ -985,6 +998,7 @@ erDiagram
   User ||--}o EmailVerificationToken : user
   User ||--|o EmailPrefs : user
   User ||--}o PushDeviceToken : user
+  User ||--}o PersonalWord : user
 ```
 
 ## Tiến độ học
@@ -1437,18 +1451,69 @@ erDiagram
 
 ## Khác
 
-Bảng chưa được xếp phân hệ trong packages/prisma-nihongo/scripts/gen-erd.ts. (1 bảng)
+Bảng chưa được xếp phân hệ trong packages/prisma-nihongo/scripts/gen-erd.ts. (5 bảng; liên kết ngoài: `Grammar`, `User`)
 
 ```mermaid
 erDiagram
+  GrammarEmbedding {
+    int grammarId PK, FK
+    string model
+    string contentHash
+    int dims
+    bytes vector
+    datetime updatedAt
+  }
+  KanjiComponent {
+    int id PK
+    string component UK
+    string hanViet
+    string meaningVi
+    string nameJp "null"
+    string baseChar "null"
+    bool isRadical
+    datetime createdAt
+    datetime updatedAt
+  }
+  VocabAnalysisToken {
+    int id PK
+    string surface UK
+    string kind
+    string reading "null"
+    string romaji "null"
+    string gloss
+    string pos
+    string detail
+    int sortOrder
+  }
   CronRun {
     string name
     string slot
     datetime startedAt
   }
+  PersonalWord {
+    int id PK
+    int userId FK
+    string kana
+    string meaning
+    int lesson
+    datetime createdAt
+    datetime updatedAt
+  }
+  Grammar {
+    string ref "→ xem phân hệ khác"
+  }
+  User {
+    string ref "→ xem phân hệ khác"
+  }
+  Grammar ||--}o GrammarEmbedding : grammar
+  User ||--}o PersonalWord : user
 ```
 
+- **GrammarEmbedding** — Vector embedding của một mẫu ngữ pháp, dùng cho hỏi đáp ngữ pháp (RAG). Dữ liệu SINH RA từ Grammar + Example: xóa đi thì chạy reindex là có lại, không đưa vào file seed. `contentHash` = hash nội dung đã embed: nội dung đổi thì hash đổi → reindex chỉ làm lại dòng đó. `vector` lưu float32 little-endian. Chưa dùng pgvector vì image Postgres hiện tại không có extension này; ~1.700 vector tìm trong bộ nhớ vẫn dưới 5 ms. Lên hàng trăm nghìn dòng thì chuyển sang pgvector (HNSW).
+- **KanjiComponent** — Thành phần / bộ thủ trong cây cấu tạo KanjiVG (亻, 氵, 艹, 袁…) — tên Hán Việt, nghĩa, tên gọi Nhật. `component` là chữ KanjiVG ghi trong kvg:element / kvg:original (hoặc mã CHISE như CDP-8BC4).
+- **VocabAnalysisToken** — Metadata dùng để phân tích câu ví dụ: trợ từ, từ thường gặp và cụm cố định.
 - **CronRun** — Mỗi lượt chạy của một cron (ví dụ "push.daily-srs" + "2026-10-21"). Khóa chính chặn pod thứ hai chạy lại cùng lượt: gateway chạy nhiều pod, @Cron nổ ở TẤT CẢ các pod.
+- **PersonalWord** — Sổ từ vựng cá nhân: từ người học tự thêm (ngoài từ vựng của giáo trình). Bảng thuộc api-gateway (ADR-0010). Bài học: docs/learn-nestjs-build-api.md
 
 ## Enum
 
