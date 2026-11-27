@@ -28,11 +28,72 @@ vi.mock('../api/hooks/use-vocab', () => ({
         pos: 'Câu chào',
         detail: 'Good morning.',
       },
+      {
+        surface: 'へ',
+        kind: 'particle',
+        reading: 'へ',
+        romaji: 'e',
+        gloss: 'Trợ từ chỉ hướng đi.',
+        pos: 'Trợ từ hướng',
+        detail: 'Direction marker (e).',
+      },
+    ],
+  }),
+}));
+vi.mock('../api/hooks/use-grammar', () => ({
+  useGrammarSearch: () => ({
+    data: [
+      {
+        id: 7647,
+        pattern: 'N（địa điểm）へ 行きます／来ます／帰ります',
+        meaning: 'đi / đến / về N',
+        lessonId: 5,
+      },
     ],
   }),
 }));
 
 describe('VocabExampleLine pronunciation cards', () => {
+  it('links a へ grammar match to its actual lesson and grammar card', () => {
+    const onSpeakJa = vi.fn();
+    render(
+      <VocabExampleLine
+        example={{
+          ja: '大学へ行きます。',
+          kana: 'だいがくへいきます。',
+          vi: 'Tôi đi đến trường đại học.',
+          en: '',
+          speak: 'だいがくへいきます。',
+        }}
+        lessonNumber={1}
+        grammarLessonNumberById={{ 5: 5 }}
+        onSpeakJa={onSpeakJa}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: 'Ngữ pháp →' })).toHaveAttribute(
+      'href',
+      '/grammar?lesson=5&g=7647',
+    );
+    expect(screen.getByText('N（địa điểm）へ 行きます／来ます／帰ります')).toBeInTheDocument();
+
+    const heCard = [...document.querySelectorAll('.vocab-example-analysis__card-item')].find(
+      (item) => item.querySelector('.vocab-example-analysis__card-ja')?.textContent === 'へ',
+    );
+    expect(heCard?.querySelector('.vocab-example-analysis__card-reading')).toHaveTextContent(
+      'he; khi là trợ từ đọc là e',
+    );
+    expect(heCard?.querySelector('a.vocab-example-analysis__card-action')).toHaveAttribute(
+      'href',
+      '/grammar?lesson=5&g=7647',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe phát âm trợ từ へ: e' }));
+    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'え');
+  });
+
   it('renders the Vietnamese gloss for greetings, not the English detail', () => {
     render(
       <VocabExampleLine

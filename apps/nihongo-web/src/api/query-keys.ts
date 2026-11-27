@@ -20,6 +20,7 @@ export const queryKeys = {
   },
   grammar: {
     byLesson: (id: number) => ['grammar', 'lesson', id] as const,
+    search: (query: string) => ['grammar', 'search', query] as const,
   },
   lessons: {
     all: ['lessons'] as const,

@@ -231,6 +231,13 @@ export function fetchGrammars(lessonNumber: number) {
   );
 }
 
+export function searchGrammars(query: string) {
+  return fetchPaginatedAll<Grammar>(
+    (page, limit) =>
+      `/grammars?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
+  );
+}
+
 /** Chỉ lấy total — không tải hết mẫu ngữ pháp theo cấp. */
 export async function fetchGrammarCountByJlpt(jlptLevel: string): Promise<number> {
   const res = await apiRequest<PaginatedResponse<Grammar>>(

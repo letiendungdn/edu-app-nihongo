@@ -9,6 +9,7 @@ import StrokeOrder from './StrokeOrder';
 import VocabPicture from './VocabPicture';
 import { highlightKeys } from '../utils/grammarHighlight';
 import { getStrokeText } from '../utils/japanese';
+import { useGrammarSearch } from '../api/hooks/use-grammar';
 import {
   buildExampleAnalysis,
   exampleFuriganaSegments,
@@ -17,6 +18,7 @@ import { useVocabAnalysisMeta } from '../api/hooks/use-vocab';
 import {
   grammarLessonHref,
   matchGrammarsInExample,
+  type GrammarExampleMatch,
   type GrammarMatchInput,
 } from '../utils/matchGrammarsInExample';
 import type { VocabPatternExample } from '../utils/vocabPatternExample';
@@ -71,6 +73,7 @@ export default function VocabExampleLine({
   imageUrl,
   lessonNumber,
   lessonGrammars = [],
+  grammarLessonNumberById,
   onSpeakJa,
   onSpeakVi,
   onSpeakBoth,
@@ -87,6 +90,7 @@ export default function VocabExampleLine({
   /** Bài hiện tại — để link sang trang ngữ pháp cùng bài. */
   lessonNumber?: number;
   lessonGrammars?: GrammarMatchInput[];
+  grammarLessonNumberById?: Record<number, number>;
   onSpeakJa: (e: MouseEvent, text: string) => void;
   onSpeakVi: (e: MouseEvent, text: string) => void;
   onSpeakBoth: (e: MouseEvent, speak: string, vi: string) => void;
@@ -98,6 +102,8 @@ export default function VocabExampleLine({
   const [openStrokeIndex, setOpenStrokeIndex] = useState<number | null>(null);
   const [copiedExample, setCopiedExample] = useState(false);
   const { data: analysisMeta = [], isError: analysisMetaError } = useVocabAnalysisMeta();
+  const grammarSearchQuery = example.ja.includes('へ') ? 'へ' : '';
+  const { data: searchedGrammars = [] } = useGrammarSearch(grammarSearchQuery);
   const open = analysisOpen ?? localOpen;
   const toggleOpen = () => {
     if (onToggleAnalysis) onToggleAnalysis();
@@ -125,10 +131,30 @@ export default function VocabExampleLine({
       }, analysisMeta),
     [example.ja, example.kana, example.vi, focusKanji, focusMeaning, analysisMeta],
   );
-  const grammarHits = useMemo(
-    () => matchGrammarsInExample(example.ja, lessonGrammars),
-    [example.ja, lessonGrammars],
+  const grammarLessonLinks = useMemo(
+    () =>
+      searchedGrammars.flatMap((grammar) => {
+        const targetLesson = grammarLessonNumberById?.[grammar.lessonId];
+        if (targetLesson == null) return [];
+        return [
+          {
+            id: grammar.id,
+            pattern: grammar.pattern,
+            meaning: grammar.meaning,
+            lessonNumber: targetLesson,
+          },
+        ];
+      }),
+    [searchedGrammars, grammarLessonNumberById],
   );
+  const grammarHits = useMemo(
+    () => matchGrammarsInExample(example.ja, [...lessonGrammars, ...grammarLessonLinks]),
+    [example.ja, lessonGrammars, grammarLessonLinks],
+  );
+  const grammarHrefForHit = (hit?: GrammarExampleMatch) => {
+    const targetLesson = hit?.lessonNumber ?? lessonNumber;
+    return targetLesson == null ? '/grammar' : grammarLessonHref(targetLesson, hit?.id);
+  };
 
   const picture = (
     <VocabPicture
@@ -195,7 +221,7 @@ export default function VocabExampleLine({
           </button>
           {lessonNumber != null ? (
             <Link
-              href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+              href={grammarHrefForHit(grammarHits[0])}
               className="vocab-examples__grammar-jump"
               target="_blank"
               rel="noopener noreferrer"
@@ -230,7 +256,7 @@ export default function VocabExampleLine({
               {grammarHits.map((g) => (
                 <li key={g.id}>
                   <Link
-                    href={grammarLessonHref(lessonNumber, g.id)}
+                    href={grammarHrefForHit(g)}
                     className="vocab-example-analysis__grammar-link"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -251,12 +277,12 @@ export default function VocabExampleLine({
           )}
           <div className="vocab-example-analysis__grammar-actions">
             <Link
-              href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+              href={grammarHrefForHit(grammarHits[0])}
               className="vocab-example-analysis__grammar-lesson"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Ngữ pháp bài {lessonNumber}
+              Ngữ pháp bài {grammarHits[0]?.lessonNumber ?? lessonNumber}
             </Link>
             <Link
               href={`/particles?lesson=${lessonNumber}`}
@@ -382,6 +408,12 @@ export default function VocabExampleLine({
                       Math.min(128, Math.floor(200 / Math.max(strokeCount, 1))),
                     );
                     const isStrokeOpen = openStrokeIndex === i;
+                    const isHeParticle = part.kind === 'particle' && part.surface === 'へ';
+                    const cardSpeakText = isHeParticle ? 'え' : part.reading || part.surface;
+                    const cardGrammarHit =
+                      part.kind === 'particle'
+                        ? grammarHits.find((hit) => hit.skeleton.includes(part.surface))
+                        : undefined;
 
                     return (
                       <li
@@ -396,7 +428,11 @@ export default function VocabExampleLine({
                             {part.reading ? (
                               <span className="vocab-example-analysis__card-reading japanese-text">
                                 {part.reading}
-                                {part.romaji ? <span lang="en"> ({part.romaji})</span> : null}
+                                {isHeParticle ? (
+                                  <span> (he; khi là trợ từ đọc là e)</span>
+                                ) : part.romaji ? (
+                                  <span lang="en"> ({part.romaji})</span>
+                                ) : null}
                               </span>
                             ) : part.romaji ? (
                               <span className="vocab-example-analysis__card-reading" lang="en">
@@ -410,12 +446,30 @@ export default function VocabExampleLine({
                             <button
                               type="button"
                               className="vocab-example-analysis__card-action"
-                              title={`Nghe ${part.reading || part.surface}`}
-                              aria-label={`Nghe phát âm: ${part.reading || part.surface}`}
-                              onClick={(e) => onSpeakJa(e, part.reading || part.surface)}
+                              title={
+                                isHeParticle ? 'Nghe e (cách đọc trợ từ へ)' : `Nghe ${cardSpeakText}`
+                              }
+                              aria-label={
+                                isHeParticle
+                                  ? 'Nghe phát âm trợ từ へ: e'
+                                  : `Nghe phát âm: ${cardSpeakText}`
+                              }
+                              onClick={(e) => onSpeakJa(e, cardSpeakText)}
                             >
                               <SpeakerIcon size={16} />
                             </button>
+                            {cardGrammarHit ? (
+                              <Link
+                                href={grammarHrefForHit(cardGrammarHit)}
+                                className="vocab-example-analysis__card-action"
+                                title={`Mở ngữ pháp: ${cardGrammarHit.pattern}`}
+                                aria-label={`Mở ngữ pháp: ${cardGrammarHit.pattern}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                文
+                              </Link>
+                            ) : null}
                             {strokeCount > 0 ? (
                               <button
                                 type="button"
@@ -460,11 +514,11 @@ export default function VocabExampleLine({
               <>
                 Học mẫu câu tại{' '}
                 <Link
-                  href={grammarLessonHref(lessonNumber, grammarHits[0]?.id)}
+                  href={grammarHrefForHit(grammarHits[0])}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Ngữ pháp bài {lessonNumber}
+                  Ngữ pháp bài {grammarHits[0]?.lessonNumber ?? lessonNumber}
                 </Link>
                 {' · '}
               </>

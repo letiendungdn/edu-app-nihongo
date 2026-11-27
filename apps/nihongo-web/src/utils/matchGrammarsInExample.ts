@@ -2,6 +2,7 @@ export type GrammarMatchInput = {
   id: number;
   pattern: string;
   meaning: string;
+  lessonNumber?: number;
 };
 
 export type GrammarExampleMatch = GrammarMatchInput & {
@@ -14,6 +15,7 @@ export type GrammarExampleMatch = GrammarMatchInput & {
  */
 export function patternSkeletons(pattern: string): string[] {
   const base = pattern
+    .replace(/N\d*\s*[（(][^）)]*[）)]/gi, '')
     .replace(/N\d*/gi, '')
     .replace(/(^|[^A-Za-z])S(?=[^A-Za-z]|$)/g, '$1')
     .replace(/[〜～＋+\s　]/g, '')
@@ -27,6 +29,19 @@ export function patternSkeletons(pattern: string): string[] {
     return [`${prefix}${primary}${suffix}`, `${prefix}${alt}${suffix}`]
       .map((s) => s.replace(/[（）()]/g, ''))
       .filter(Boolean);
+  }
+  const slashAlternatives = base.split(/[／/]/);
+  if (slashAlternatives.length > 1) {
+    const first = slashAlternatives[0];
+    const verb = first.match(/(行きます|来ます|帰ります)$/)?.[0];
+    if (verb) {
+      const prefix = first.slice(0, -verb.length);
+      return [verb, ...slashAlternatives.slice(1)]
+        .map((alternative) => `${prefix}${alternative}`)
+        .map((s) => s.replace(/[（）()]/g, ''))
+        .filter(Boolean);
+    }
+    return slashAlternatives.map((s) => s.replace(/[（）()]/g, '')).filter(Boolean);
   }
   return [base.replace(/[（）()]/g, '')].filter(Boolean);
 }

@@ -75,8 +75,13 @@ export default function VocabView({
         id: g.id,
         pattern: g.pattern,
         meaning: g.meaning,
+        lessonNumber: currentLesson,
       })),
-    [lessonGrammar],
+    [lessonGrammar, currentLesson],
+  );
+  const grammarLessonNumberById = useMemo(
+    () => Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson.lessonNumber])),
+    [lessons],
   );
   // Ô tra từ trên mọi bài bật/tắt bằng feature flag (admin: PATCH /api/admin/feature-flags/vocab-search-all-lessons)
   const searchAllLessonsOn = useFeatureFlag('vocab-search-all-lessons');
@@ -602,6 +607,7 @@ export default function VocabView({
                         imageUrl={currentVocab.imageUrl}
                         lessonNumber={currentLesson}
                         lessonGrammars={lessonGrammarLinks}
+                        grammarLessonNumberById={grammarLessonNumberById}
                         onSpeakJa={handleExampleJapanese}
                         onSpeakVi={handleExampleVietnamese}
                         onSpeakBoth={handleExamplePronounce}
