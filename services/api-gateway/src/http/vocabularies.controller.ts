@@ -36,11 +36,69 @@ export class VocabulariesController {
 
   @Get("analysis-meta")
   @Public()
-  @ApiOperation({ summary: "Metadata phân tích trợ từ và từ thường gặp trong câu ví dụ" })
+  @ApiOperation({ summary: "Metadata phân tích câu ví dụ từ từ điển và trợ từ" })
   async analysisMeta() {
-    return this.prisma.vocabAnalysisToken.findMany({
-      orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { surface: "asc" }],
-    });
+    const [tokens, vocabularies] = await Promise.all([
+      this.prisma.vocabAnalysisToken.findMany({
+        orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { surface: "asc" }],
+      }),
+      this.prisma.vocabulary.findMany({
+        select: {
+          id: true,
+          kanji: true,
+          kana: true,
+          romaji: true,
+          meaning: true,
+          partOfSpeech: true,
+          sortOrder: true,
+          lessonId: true,
+        },
+        orderBy: [{ lessonId: "asc" }, { sortOrder: "asc" }, { id: "asc" }],
+      }),
+    ]);
+
+    const reservedSurfaces = new Set(
+      tokens.filter((token) => token.kind !== "common").map((token) => token.surface),
+    );
+    const vocabularyTokens = new Map<
+      string,
+      {
+        id: number;
+        surface: string;
+        kind: "common";
+        reading: string;
+        romaji: string;
+        gloss: string;
+        pos: string;
+        detail: string;
+        sortOrder: number;
+      }
+    >();
+
+    for (const vocabulary of vocabularies) {
+      const surface = vocabulary.kanji?.trim() || vocabulary.kana.trim();
+      const meaning = vocabulary.meaning.trim();
+      if (!surface || !meaning || reservedSurfaces.has(surface) || vocabularyTokens.has(surface)) {
+        continue;
+      }
+      vocabularyTokens.set(surface, {
+        id: vocabulary.id,
+        surface,
+        kind: "common",
+        reading: vocabulary.kana,
+        romaji: vocabulary.romaji,
+        gloss: meaning,
+        pos: vocabulary.partOfSpeech || "Từ vựng",
+        detail: meaning,
+        sortOrder: vocabulary.sortOrder,
+      });
+    }
+
+    const databaseSurfaces = new Set(vocabularyTokens.keys());
+    return [
+      ...tokens.filter((token) => token.kind !== "common" || !databaseSurfaces.has(token.surface)),
+      ...vocabularyTokens.values(),
+    ];
   }
 
   @Post()

@@ -66,6 +66,33 @@ const ANALYSIS_META: VocabAnalysisTokenMeta[] = [
     detail: 'Person (polite)',
   },
   {
+    surface: '人',
+    kind: 'common',
+    reading: 'ひと',
+    romaji: 'hito',
+    gloss: 'Người.',
+    pos: 'Danh từ',
+    detail: 'Person / people',
+  },
+  {
+    surface: '誰',
+    kind: 'common',
+    reading: 'だれ',
+    romaji: 'dare',
+    gloss: 'Ai? Người nào?',
+    pos: 'Đại từ nghi vấn',
+    detail: 'Ai? Người nào?',
+  },
+  {
+    surface: 'ねこ',
+    kind: 'common',
+    reading: 'ねこ',
+    romaji: 'neko',
+    gloss: 'Mèo.',
+    pos: 'Danh từ',
+    detail: 'Cat',
+  },
+  {
     surface: '木村',
     kind: 'common',
     reading: 'きむら',
@@ -141,5 +168,31 @@ describe('buildExampleAnalysis', () => {
     expect(greeting?.pos).toBe('Câu chào');
     expect(greeting?.romaji).toBe('ohayou gozaimasu');
     expect(analysis.typedRomaji).toContain('ohayou gozaimasu');
+  });
+
+  it('dùng nghĩa tiếng Việt cho từng kanji và ưu tiên nghĩa của từ đang học', () => {
+    const analysis = analyze(
+      '人は誰ですか。',
+      'ひとはだれですか。',
+      'Người đó là ai?',
+      { kanji: '人', meaning: 'người' },
+    );
+
+    expect(analysis.cards.find((part) => part.surface === '人')?.gloss).toBe('người');
+    expect(analysis.cards.find((part) => part.surface === '人')?.detail).toBe('người');
+    expect(analysis.cards.find((part) => part.surface === '誰')?.reading).toBe('だれ');
+    expect(analysis.cards.find((part) => part.surface === '誰')?.gloss).toBe('Ai? Người nào?');
+  });
+
+  it('dùng nghĩa và cách đọc từ dữ liệu từ vựng cho từ kana-only và câu thiếu kana', () => {
+    const kanaOnly = analyze('ねこです。', '', 'Là mèo.');
+    const cat = kanaOnly.cards.find((part) => part.surface === 'ねこ');
+    expect(cat?.gloss).toBe('Mèo.');
+    expect(cat?.reading).toBe('ねこ');
+
+    const kanjiOnly = analyze('誰', '', 'Ai?', { kanji: null, meaning: null });
+    const who = kanjiOnly.cards.find((part) => part.surface === '誰');
+    expect(who?.gloss).toBe('Ai? Người nào?');
+    expect(who?.reading).toBe('だれ');
   });
 });

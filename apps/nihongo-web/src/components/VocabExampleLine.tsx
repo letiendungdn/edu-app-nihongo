@@ -404,7 +404,7 @@ export default function VocabExampleLine({
                               </span>
                             ) : null}
                             <span className="vocab-example-analysis__card-pos">{part.pos}</span>
-                            <span className="vocab-example-analysis__card-detail">{part.detail}</span>
+                            <span className="vocab-example-analysis__card-detail">{part.gloss}</span>
                           </div>
                           <div className="vocab-example-analysis__card-actions">
                             <button

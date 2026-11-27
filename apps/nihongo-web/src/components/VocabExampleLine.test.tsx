@@ -8,10 +8,80 @@ vi.mock('./StrokeOrder', () => ({
   default: ({ text }: { text: string }) => <div data-testid="stroke-order">{text}</div>,
 }));
 vi.mock('../api/hooks/use-vocab', () => ({
-  useVocabAnalysisMeta: () => ({ data: [] }),
+  useVocabAnalysisMeta: () => ({
+    data: [
+      {
+        surface: '誰',
+        kind: 'common',
+        reading: 'だれ',
+        romaji: 'dare',
+        gloss: 'Ai? Người nào?',
+        pos: 'Đại từ nghi vấn',
+        detail: 'Ai? Người nào?',
+      },
+      {
+        surface: 'おはようございます',
+        kind: 'greeting',
+        reading: 'おはようございます',
+        romaji: 'ohayou gozaimasu',
+        gloss: 'Lời chào buổi sáng lịch sự.',
+        pos: 'Câu chào',
+        detail: 'Good morning.',
+      },
+    ],
+  }),
 }));
 
 describe('VocabExampleLine pronunciation cards', () => {
+  it('renders the Vietnamese gloss for greetings, not the English detail', () => {
+    render(
+      <VocabExampleLine
+        example={{
+          ja: 'おはようございます。',
+          kana: 'おはようございます。',
+          vi: 'Chào buổi sáng.',
+          en: '',
+          speak: 'おはようございます。',
+        }}
+        onSpeakJa={vi.fn()}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Lời chào buổi sáng lịch sự.')).toBeInTheDocument();
+    expect(screen.queryByText('Good morning.')).not.toBeInTheDocument();
+  });
+
+  it('shows Vietnamese card meanings instead of English metadata details', () => {
+    const { container } = render(
+      <VocabExampleLine
+        example={{
+          ja: '人は誰ですか。',
+          kana: 'ひとはだれですか。',
+          vi: 'Người đó là ai?',
+          en: '',
+          speak: '人は誰ですか。',
+        }}
+        focusKanji="人"
+        focusMeaning="người"
+        onSpeakJa={vi.fn()}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('người')).toBeInTheDocument();
+    expect(screen.getByText('Ai? Người nào?')).toBeInTheDocument();
+    const whoCard = [...container.querySelectorAll('.vocab-example-analysis__card-item')].find(
+      (item) => item.querySelector('.vocab-example-analysis__card-ja')?.textContent === '誰',
+    );
+    expect(
+      whoCard?.querySelector('.vocab-example-analysis__card-reading'),
+    ).toHaveTextContent('だれ');
+    expect(screen.queryByText('Person / people')).not.toBeInTheDocument();
+  });
+
   it('speaks the reading from the analysis card speaker button', () => {
     const onSpeakJa = vi.fn();
     render(

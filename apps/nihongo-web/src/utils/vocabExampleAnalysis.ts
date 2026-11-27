@@ -94,6 +94,9 @@ function splitKanaRun(text: string, metadata: VocabAnalysisTokenMeta[]): string[
     .filter((token) => token.kind === 'particle')
     .map((token) => token.surface)
     .sort((a, b) => b.length - a.length);
+  const commonKeys = new Set(
+    metadata.filter((token) => token.kind === 'common').map((token) => token.surface),
+  );
   const greetingKeys = metadata
     .filter((token) => token.kind === 'greeting')
     .map((token) => token.surface)
@@ -102,6 +105,7 @@ function splitKanaRun(text: string, metadata: VocabAnalysisTokenMeta[]): string[
   while (i < text.length) {
     let greetingMatch: { index: number; key: string } | null = null;
     let particleMatch: { index: number; key: string } | null = null;
+    let commonMatch: { index: number; key: string } | null = null;
 
     for (let j = i; j < text.length; j += 1) {
       if (!greetingMatch) {
@@ -112,19 +116,26 @@ function splitKanaRun(text: string, metadata: VocabAnalysisTokenMeta[]): string[
         const key = particleKeys.find((candidate) => text.startsWith(candidate, j));
         if (key) particleMatch = { index: j, key };
       }
-      if (greetingMatch && particleMatch) break;
+      if (!commonMatch) {
+        for (let end = text.length; end > j; end -= 1) {
+          const key = text.slice(j, end);
+          if (commonKeys.has(key)) {
+            commonMatch = { index: j, key };
+            break;
+          }
+        }
+      }
+      if (greetingMatch && particleMatch && commonMatch) break;
     }
 
-    if (!greetingMatch && !particleMatch) {
+    if (!greetingMatch && !particleMatch && !commonMatch) {
       out.push(text.slice(i));
       break;
     }
 
-    const match =
-      greetingMatch &&
-      (!particleMatch || greetingMatch.index <= particleMatch.index)
-        ? greetingMatch
-        : particleMatch;
+    const match = [greetingMatch, particleMatch, commonMatch]
+      .filter((candidate): candidate is { index: number; key: string } => candidate !== null)
+      .sort((a, b) => a.index - b.index || b.key.length - a.key.length)[0];
     if (!match) break;
 
     if (match.index > i) out.push(text.slice(i, match.index));
@@ -144,9 +155,9 @@ function metaForKanji(
   const known = metadata[surface];
   if (focusKanji && surface.includes(focusKanji) && focusMeaning?.trim()) {
     return {
-      gloss: `Từ đang học: ${focusMeaning.trim()}.`,
+      gloss: focusMeaning.trim(),
       pos: known?.pos || 'Từ vựng',
-      detail: known?.detail || focusMeaning.trim(),
+      detail: focusMeaning.trim(),
     };
   }
   if (known) {
@@ -264,9 +275,13 @@ function partsFromPlainJa(
     .filter((t) => t.trim().length > 0)
     .map((token) => {
       if (hasKanji(token)) {
+        const known = metadataBySurface[token];
         const meta = metaForKanji(token, undefined, focusKanji, focusMeaning, metadataBySurface);
         return {
           surface: token,
+          reading: known?.reading || undefined,
+          romaji: known?.romaji || undefined,
+          moraRomaji: known?.reading ? moraHyphenRomaji(known.reading) : known?.romaji || undefined,
           ...meta,
           kind: 'kanji' as const,
         };
