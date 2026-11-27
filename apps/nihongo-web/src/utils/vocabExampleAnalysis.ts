@@ -58,15 +58,31 @@ export function moraHyphenRomaji(kana: string): string {
   const morae = splitKanaIntoMora(kana);
   if (!morae.length) return kanaToRomaji(kana);
   const parts: string[] = [];
+  let doubleNextConsonant = false;
   for (const m of morae) {
-    if (m.kind === 'sokuon') continue;
+    if (m.kind === 'sokuon') {
+      doubleNextConsonant = true;
+      continue;
+    }
     const r = kanaToRomaji(m.text);
     if (!r) continue;
+    let rendered = r;
+    if (doubleNextConsonant) {
+      if (/^[bcdfghjklmnpqrstvwxyz]/.test(r)) {
+        rendered = `${r.startsWith('ch') ? 't' : r[0]}${r}`;
+      }
+      doubleNextConsonant = false;
+    }
     const prev = parts[parts.length - 1];
-    if (prev && ((prev.endsWith('e') && r === 'i') || (prev.endsWith('o') && r === 'u'))) {
-      parts[parts.length - 1] = `${prev}${r}`;
+    if (
+      prev &&
+      ((prev.endsWith('e') && rendered === 'i') ||
+        (prev.endsWith('o') && rendered === 'u') ||
+        (prev.endsWith('a') && rendered === 'i'))
+    ) {
+      parts[parts.length - 1] = `${prev}${rendered}`;
     } else {
-      parts.push(r);
+      parts.push(rendered);
     }
   }
   return parts.join('-');

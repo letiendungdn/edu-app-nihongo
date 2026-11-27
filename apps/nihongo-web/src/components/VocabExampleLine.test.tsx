@@ -37,6 +37,15 @@ vi.mock('../api/hooks/use-vocab', () => ({
         pos: 'Trợ từ hướng',
         detail: 'Direction marker (e).',
       },
+      {
+        surface: 'は',
+        kind: 'particle',
+        reading: 'は',
+        romaji: 'wa',
+        gloss: 'Trợ từ chủ đề.',
+        pos: 'Trợ từ chủ đề',
+        detail: 'Topic marker.',
+      },
     ],
   }),
 }));
@@ -92,6 +101,61 @@ describe('VocabExampleLine pronunciation cards', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Nghe phát âm trợ từ へ: e' }));
     expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'え');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe tiếng Nhật: 大学へ行きます。' }));
+    expect(onSpeakJa).toHaveBeenLastCalledWith(expect.anything(), 'だいがくえいきます');
+  });
+
+  it('separates the は particle from はたち so speech reads it as one wa and hatachi', () => {
+    const onSpeakJa = vi.fn();
+    const onSpeakBoth = vi.fn();
+    render(
+      <VocabExampleLine
+        example={{
+          ja: '私は二十歳です。',
+          kana: 'わたしは はたち です。',
+          vi: 'Tôi hai mươi tuổi.',
+          en: '',
+          speak: 'わたしは はたち です',
+        }}
+        onSpeakJa={onSpeakJa}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={onSpeakBoth}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe tiếng Nhật: 私は二十歳です。' }));
+    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'わたしわ、はたちです');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nghe ví dụ (Nhật rồi Việt)' }));
+    expect(onSpeakBoth).toHaveBeenCalledWith(
+      expect.anything(),
+      'わたしわ、はたちです',
+      'Tôi hai mươi tuổi.',
+    );
+  });
+
+  it('keeps にじゅっさい as kana for the alternate 二十歳 reading', () => {
+    const onSpeakJa = vi.fn();
+    render(
+      <VocabExampleLine
+        example={{
+          ja: '二十歳になりました。',
+          kana: 'にじゅっさいに なりました。',
+          vi: 'Tôi đã tròn 20 tuổi.',
+          en: '',
+          speak: 'にじゅっさいに なりました。',
+        }}
+        onSpeakJa={onSpeakJa}
+        onSpeakVi={vi.fn()}
+        onSpeakBoth={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Nghe tiếng Nhật: 二十歳になりました。' }),
+    );
+    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'にじゅっさいになりました');
   });
 
   it('renders the Vietnamese gloss for greetings, not the English detail', () => {
@@ -209,6 +273,6 @@ describe('VocabExampleLine pronunciation cards', () => {
       screen.getByRole('button', { name: 'Nghe câu ví dụ tiếng Nhật: 私は学生です。' }),
     );
 
-    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'わたしはがくせいです。');
+    expect(onSpeakJa).toHaveBeenCalledWith(expect.anything(), 'わたしわがくせいです');
   });
 });

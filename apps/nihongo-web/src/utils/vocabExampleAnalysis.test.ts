@@ -137,6 +137,16 @@ describe('buildExampleAnalysis', () => {
     expect(wa?.gloss).toMatch(/chủ đề/i);
   });
 
+  it('keeps the geminated consonant in the alternate reading にじゅっさい', () => {
+    const analysis = analyze(
+      '二十歳になりました。',
+      'にじゅっさいに なりました。',
+      'Tôi đã tròn 20 tuổi.',
+    );
+
+    expect(analysis.typedRomaji).toContain('Ni-ju-ssai');
+  });
+
   it('phân tích được câu có khoảng trắng trong kana CSDL', () => {
     const analysis = analyze(
       'あの方は木村さんです。',

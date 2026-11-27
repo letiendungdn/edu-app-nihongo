@@ -131,6 +131,24 @@ export default function VocabExampleLine({
       }, analysisMeta),
     [example.ja, example.kana, example.vi, focusKanji, focusMeaning, analysisMeta],
   );
+  const spokenExample = useMemo(() => {
+    const reading = analysis.parts
+      .map((part, index) => {
+        if (part.kind === 'particle') {
+          const particle = part.surface.replace(/[。！？、．，\s]+/g, '');
+          if (particle === 'は') {
+            const next = analysis.parts[index + 1];
+            const nextReading = next?.reading || next?.surface;
+            return `わ${nextReading?.startsWith('は') ? '、' : ''}`;
+          }
+          if (particle === 'へ') return 'え';
+          if (particle === 'を') return 'お';
+        }
+        return part.reading || part.surface;
+      })
+      .join('');
+    return reading || example.speak || example.ja;
+  }, [analysis.parts, example.ja, example.speak]);
   const grammarLessonLinks = useMemo(
     () =>
       searchedGrammars.flatMap((grammar) => {
@@ -178,7 +196,7 @@ export default function VocabExampleLine({
             className="vocab-examples__ja japanese-text"
             title="Bấm để nghe tiếng Nhật"
             aria-label={`Nghe tiếng Nhật: ${example.ja}`}
-            onClick={(e) => onSpeakJa(e, example.speak || example.ja)}
+            onClick={(e) => onSpeakJa(e, spokenExample)}
           >
             {renderFurigana(example.ja, segments, keys)}
           </button>
@@ -206,7 +224,7 @@ export default function VocabExampleLine({
             className="vocab-round-btn vocab-round-btn--sm"
             title="Nghe ví dụ (Nhật rồi Việt)"
             aria-label="Nghe ví dụ (Nhật rồi Việt)"
-            onClick={(e) => onSpeakBoth(e, example.speak, example.vi)}
+            onClick={(e) => onSpeakBoth(e, spokenExample, example.vi)}
           >
             <SpeakerIcon className="vocab-speaker-icon" size={16} />
           </button>
@@ -387,7 +405,7 @@ export default function VocabExampleLine({
                   className="vocab-round-btn vocab-round-btn--sm"
                   title="Nghe câu ví dụ tiếng Nhật"
                   aria-label={`Nghe câu ví dụ tiếng Nhật: ${example.ja}`}
-                  onClick={(e) => onSpeakJa(e, example.speak || example.ja)}
+                  onClick={(e) => onSpeakJa(e, spokenExample)}
                 >
                   <SpeakerIcon className="vocab-speaker-icon" size={16} />
                 </button>
