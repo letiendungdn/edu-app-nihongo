@@ -20,6 +20,25 @@ final class NihongoEDUUITests: XCTestCase {
         return query.waitForExistence(timeout: 3) && query.isHittable
     }
 
+    private func tapWhenVisible(_ query: XCUIElement, maxSwipes: Int = 8) -> Bool {
+        guard query.waitForExistence(timeout: 5) else { return false }
+        for _ in 0...maxSwipes {
+            let frame = query.frame
+            let visibleFrame = frame.intersection(app.frame)
+            if !visibleFrame.isNull, visibleFrame.width > 1, visibleFrame.height > 1,
+               frame.width > 0, frame.height > 0 {
+                let point = CGVector(
+                    dx: (visibleFrame.midX - frame.minX) / frame.width,
+                    dy: (visibleFrame.midY - frame.minY) / frame.height
+                )
+                query.coordinate(withNormalizedOffset: point).tap()
+                return true
+            }
+            app.swipeUp()
+        }
+        return false
+    }
+
     private func homeCard(_ title: String) -> XCUIElement {
         // NavCard gắn accessibilityLabel(title) + id nav-…; fallback StaticText cho bản cũ.
         let byId = app.buttons["nav-\(title)"]
@@ -53,8 +72,7 @@ final class NihongoEDUUITests: XCTestCase {
     func testKanaQuizCountsAnswer() {
         app.launch()
         let kana = homeCard("Luyện kana")
-        XCTAssertTrue(reveal(kana), "không thấy Luyện kana")
-        kana.tap()
+        XCTAssertTrue(tapWhenVisible(kana), "không thể mở Luyện kana")
 
         XCTAssertTrue(app.staticTexts["kanaChar"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["Đúng 0/0"].waitForExistence(timeout: 3))
