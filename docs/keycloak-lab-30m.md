@@ -156,9 +156,10 @@ Thấy mảng `keys` (RSA). Gateway dùng các key này verify chữ ký token �
 | Triệu chứng | Nguyên nhân gần đúng |
 |-------------|----------------------|
 | `invalid_redirect_uri` | Redirect URI client ≠ URL thật của app |
+| `Invalid scopes: openid profile email` | Realm thiếu client scopes `profile` / `email` hoặc chưa gán chúng cho `nihongo-web`; xem [hướng dẫn sửa scope](./keycloak-setup.md#lỗi-invalid-scopes-openid-profile-email) |
 | Không mở được `*.localhost` | Thêm hosts (xem `docs/keycloak-setup.md`) |
 | OIDC exchange 401 | Thiếu `idToken`, hoặc issuer trong token ≠ `KEYCLOAK_ISSUER` |
-| Client `nihongo-mobile` không thấy | Realm import cũ — tạo tay hoặc reset volume Keycloak |
+| Client `nihongo-mobile` không thấy | Realm import cũ — tạo client trong Admin Console hoặc chỉ reset volume nếu dữ liệu dev có thể mất |
 
 ---
 

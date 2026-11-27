@@ -29,7 +29,7 @@ Mobile apps (Flutter / Android / iOS / Expo) dùng client `nihongo-mobile`, rồ
 | Flutter | `com.edu.nihongoapp:/oauth2redirect` | `http://10.0.2.2:8080` |
 | iOS | `com.edu.nihongo.ios:/oauth2redirect` | `http://localhost:8080` (simulator) |
 
-> Realm chỉ import lần đầu. Nếu thiếu client / role / mapper mới, tạo thủ công trong Admin Console hoặc xóa volume Keycloak rồi import lại (xem [lab #1](./keycloak-lab-refresh-roles.md)).
+> Realm chỉ import lần đầu. Nếu realm đã tồn tại, `--import-realm` bỏ qua realm đó; sửa file JSON rồi restart Keycloak không cập nhật cấu hình hiện tại. Ưu tiên chỉnh trong Admin Console. Chỉ xóa volume Keycloak khi dữ liệu trong đó có thể mất và bạn chủ động muốn tạo realm mới (xem [lab #1](./keycloak-lab-refresh-roles.md)).
 
 ## Demo users (realm)
 
@@ -83,6 +83,18 @@ docker compose up -d --build nginx api-gateway nihongo-web
 ```
 
 Realm import: `infra/keycloak/realm-edu-app.json` (chỉ import lần đầu khi volume Keycloak trống).
+
+## Lỗi `Invalid scopes: openid profile email`
+
+Web client yêu cầu `openid profile email`. Nếu Keycloak trả `invalid_scope`, kiểm tra realm `edu-app` đang chạy có các client scope chuẩn `profile` và `email`, và client `nihongo-web` được gán chúng trong **Default Client Scopes**:
+
+1. Admin Console → realm `edu-app` → **Client scopes**: xác nhận `profile` và `email` tồn tại.
+2. **Clients** → `nihongo-web` → **Client scopes**: gán `profile` và `email` làm scope mặc định. Làm tương tự với `nihongo-mobile` nếu client này cũng đăng nhập.
+3. Thử đăng nhập lại từ `/login`; không cần rebuild web sau khi đổi client scope.
+
+Có thể kiểm tra metadata công khai tại `http://auth.localhost:8080/realms/edu-app/.well-known/openid-configuration`; `scopes_supported` cần có `profile` và `email`. `openid` là scope bắt buộc, không bỏ nó khỏi yêu cầu đăng nhập.
+
+Nếu thiếu scope, lưu ý realm import chỉ chạy khi tạo realm lần đầu. Log `Realm 'edu-app' already exists. Import skipped` nghĩa là file [realm-edu-app.json](../infra/keycloak/realm-edu-app.json) chưa được áp dụng vào database Keycloak hiện tại. Khôi phục scope trong Admin Console; không xóa volume/database nếu chưa xác nhận dữ liệu trong đó có thể mất.
 
 <!-- nav:start -->
 
