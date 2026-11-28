@@ -113,7 +113,10 @@ export default function VocabView({
   const expectedCount = currentLessonMeta?._count?.vocabularies ?? null;
   const vocabTitle = lessonHeading('vocab', currentLessonMeta);
 
+  const previousLessonRef = useRef(currentLesson);
   useEffect(() => {
+    if (previousLessonRef.current === currentLesson) return;
+    previousLessonRef.current = currentLesson;
     stopPlayAll();
     setCurrentIndex(0);
   }, [currentLesson, stopPlayAll]);
@@ -263,8 +266,7 @@ export default function VocabView({
   const handleCopyVocab = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentVocab) return;
-    const parts = [currentVocab.kanji, currentVocab.kana, currentVocab.romaji, currentVocab.meaning].filter(Boolean);
-    copyFlashcard(parts.join('\t'));
+    copyFlashcard(currentVocab.kanji || currentVocab.kana);
   };
 
   const handlePlayAll = () => {
